@@ -125,15 +125,15 @@
     "@types/node": "^22.19.18",
     "@vitest/coverage-v8": "^4.1.6",
     "fast-check": "^4.8.0",
-    "knip": "^6.14.1",
-    "oxlint": "^1.65.0",
+    "knip": "^6.14.2",
+    "oxlint": "^1.67.0",
     "size-limit": "^12.1.0",
-    "tsdown": "^0.22.0",
+    "tsdown": "^0.22.1",
     "typedoc": "^0.28.19",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
   },
-  "packageManager": "pnpm@11.1.2",
+  "packageManager": "pnpm@11.5.0",
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"

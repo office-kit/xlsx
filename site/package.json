@@ -17,7 +17,7 @@
     "@types/node": "^22.19.18",
     "mdsvex": "^0.12.7",
     "pagefind": "^1.5.2",
-    "shiki": "^4.0.2",
+    "shiki": "^4.1.0",
     "svelte": "^5.55.7",
     "svelte-check": "^4.4.8",
     "typescript": "^5.9.3",
