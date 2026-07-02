@@ -12,15 +12,15 @@
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.60.1",
+    "@sveltejs/kit": "^2.69.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@types/node": "^22.19.18",
     "mdsvex": "^0.12.7",
     "pagefind": "^1.5.2",
     "shiki": "^4.1.0",
-    "svelte": "^5.55.7",
-    "svelte-check": "^4.4.8",
+    "svelte": "^5.56.4",
+    "svelte-check": "^4.7.1",
     "typescript": "^5.9.3",
-    "vite": "^8.0.13"
+    "vite": "^8.1.3"
   }
 }
