@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-xlsx-kit is pre-1.0. Security fixes ship on the latest `0.x` minor release.
+@office-kit/xlsx is pre-1.0. Security fixes ship on the latest `0.x` minor release.
 Older minor versions do not receive backports — please upgrade to the latest
 `0.x` to pick up patches. Once `1.0` ships, a longer support window will be
 defined here.
@@ -17,12 +17,12 @@ defined here.
 Please report vulnerabilities **privately** so users have time to upgrade
 before the issue becomes public:
 
-1. **Preferred:** open a [GitHub Private Security Advisory](https://github.com/baseballyama/xlsx-kit/security/advisories/new).
+1. **Preferred:** open a [GitHub Private Security Advisory](https://github.com/office-kit/xlsx/security/advisories/new).
    This keeps the report invisible to the public, lets us coordinate the fix
    in a private fork, and produces a CVE on disclosure.
 2. **Alternative:** email the maintainer at the address listed in
    `package.json` (`author` field). Use a subject line beginning with
-   `[xlsx-kit security]` so the report is triaged ahead of normal mail.
+   `[@office-kit/xlsx security]` so the report is triaged ahead of normal mail.
 
 Please include:
 

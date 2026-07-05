@@ -24,7 +24,7 @@
     <div class="footer-grid">
       <div class="cell">
         <span class="label">Project</span>
-        <a href="https://github.com/baseballyama/xlsx-kit">xlsx-kit</a>
+        <a href="https://github.com/office-kit/xlsx">@office-kit/xlsx</a>
       </div>
       <div class="cell">
         <span class="label">License</span>

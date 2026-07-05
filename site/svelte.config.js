@@ -21,7 +21,7 @@ const mdsvexOptions = {
 };
 
 // BASE_PATH lets the same build run locally (=''), on a GitHub user page
-// or custom domain (=''), or on a project page (e.g. '/xlsx-kit'). Set
+// or custom domain (=''), or on a project page (e.g. '/xlsx'). Set
 // it in CI for GitHub Actions deploys.
 const basePath = process.env.BASE_PATH ?? '';
 
@@ -34,21 +34,21 @@ const config = {
     prerender: { entries: ['*'] },
     paths: { base: basePath, relative: true },
     alias: {
-      'xlsx-kit/cell': '../src/cell/index.ts',
-      'xlsx-kit/chart': '../src/chart/index.ts',
-      'xlsx-kit/chartsheet': '../src/chartsheet/index.ts',
-      'xlsx-kit/drawing': '../src/drawing/index.ts',
-      'xlsx-kit/io': '../src/io/index.ts',
-      'xlsx-kit/node': '../src/node.ts',
-      'xlsx-kit/packaging': '../src/packaging/index.ts',
-      'xlsx-kit/schema': '../src/schema/index.ts',
-      'xlsx-kit/streaming': '../src/streaming/index.ts',
-      'xlsx-kit/styles': '../src/styles/index.ts',
-      'xlsx-kit/utils': '../src/utils/index.ts',
-      'xlsx-kit/workbook': '../src/workbook/index.ts',
-      'xlsx-kit/worksheet': '../src/worksheet/index.ts',
-      'xlsx-kit/xml': '../src/xml/index.ts',
-      'xlsx-kit/zip': '../src/zip/index.ts',
+      '@office-kit/xlsx/cell': '../src/cell/index.ts',
+      '@office-kit/xlsx/chart': '../src/chart/index.ts',
+      '@office-kit/xlsx/chartsheet': '../src/chartsheet/index.ts',
+      '@office-kit/xlsx/drawing': '../src/drawing/index.ts',
+      '@office-kit/xlsx/io': '../src/io/index.ts',
+      '@office-kit/xlsx/node': '../src/node.ts',
+      '@office-kit/xlsx/packaging': '../src/packaging/index.ts',
+      '@office-kit/xlsx/schema': '../src/schema/index.ts',
+      '@office-kit/xlsx/streaming': '../src/streaming/index.ts',
+      '@office-kit/xlsx/styles': '../src/styles/index.ts',
+      '@office-kit/xlsx/utils': '../src/utils/index.ts',
+      '@office-kit/xlsx/workbook': '../src/workbook/index.ts',
+      '@office-kit/xlsx/worksheet': '../src/worksheet/index.ts',
+      '@office-kit/xlsx/xml': '../src/xml/index.ts',
+      '@office-kit/xlsx/zip': '../src/zip/index.ts',
     },
   },
 };

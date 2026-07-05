@@ -2,16 +2,16 @@
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
 
-  // xlsx-kit is consumed via the source-tree path aliases set in
-  // svelte.config.js (`xlsx-kit/io` → `../src/io/index.ts`, etc). The
+  // @office-kit/xlsx is consumed via the source-tree path aliases set in
+  // svelte.config.js (`@office-kit/xlsx/io` → `../src/io/index.ts`, etc). The
   // playground exercises the real surface the same way the rest of the
   // docs site does.
-  import { fromArrayBuffer, loadWorkbook, workbookToBytes } from 'xlsx-kit/io';
-  import { addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
-  import { appendRow, getMaxCol, getMaxRow, getCell } from 'xlsx-kit/worksheet';
-  import type { CellValue } from 'xlsx-kit/cell';
-  import type { Workbook } from 'xlsx-kit/workbook';
-  import type { Worksheet } from 'xlsx-kit/worksheet';
+  import { fromArrayBuffer, loadWorkbook, workbookToBytes } from '@office-kit/xlsx/io';
+  import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
+  import { appendRow, getMaxCol, getMaxRow, getCell } from '@office-kit/xlsx/worksheet';
+  import type { CellValue } from '@office-kit/xlsx/cell';
+  import type { Workbook } from '@office-kit/xlsx/workbook';
+  import type { Worksheet } from '@office-kit/xlsx/worksheet';
 
   type GridCell = { value: string; kind: string };
 
@@ -99,7 +99,7 @@
       appendRow(sales, [region, q1, q2, q3, q4, q1 + q2 + q3 + q4]);
     }
     appendRow(sales, ['']);
-    appendRow(sales, ['Note', 'All figures in USD. Built in the browser by xlsx-kit.']);
+    appendRow(sales, ['Note', 'All figures in USD. Built in the browser by @office-kit/xlsx.']);
 
     const inventory = addWorksheet(wb, 'Inventory');
     appendRow(inventory, ['SKU', 'Item', 'On hand', 'Reorder at']);
@@ -207,7 +207,7 @@
 </script>
 
 <svelte:head>
-  <title>Playground · xlsx-kit</title>
+  <title>Playground · @office-kit/xlsx</title>
 </svelte:head>
 
 <section class="head">

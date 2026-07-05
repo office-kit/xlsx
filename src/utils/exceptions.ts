@@ -1,4 +1,4 @@
-// Error hierarchy for xlsx-kit. Public APIs throw subclasses of OpenXmlError;
+// Error hierarchy for @office-kit/xlsx. Public APIs throw subclasses of OpenXmlError;
 // internals chain via the `cause` option (Node 18+ / modern browsers all
 // support Error.cause).
 //

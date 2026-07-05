@@ -50,7 +50,7 @@ export interface CategoryRef {
  * sourceLinked="0|1"/>`).
  *
  * Named `ChartNumberFormat` to avoid colliding with the cell-stylesheet
- * `NumberFormat` exported from `xlsx-kit/styles`, which is a different shape
+ * `NumberFormat` exported from `@office-kit/xlsx/styles`, which is a different shape
  * (`{ numFmtId, formatCode }`).
  */
 export interface ChartNumberFormat {

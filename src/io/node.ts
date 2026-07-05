@@ -1,9 +1,9 @@
 // In-memory Node helpers.
 //
 // `fromBuffer` / `toBuffer` rely only on the global `Buffer` symbol — no
-// `node:*` imports — so they're safe to ship through the `xlsx-kit/streaming`
+// `node:*` imports — so they're safe to ship through the `@office-kit/xlsx/streaming`
 // browser-targeted entry too. Filesystem + Readable / Writable helpers live in
-// `./node-fs.ts` (re-exported via `xlsx-kit/node`) where the `node:fs` /
+// `./node-fs.ts` (re-exported via `@office-kit/xlsx/node`) where the `node:fs` /
 // `node:stream` imports stay out of the browser-safe surface.
 
 import { OpenXmlIoError } from '../utils/exceptions';

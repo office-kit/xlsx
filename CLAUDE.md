@@ -6,7 +6,7 @@ something in here conflicts with what you would do by default, this file wins.
 
 ## Project overview
 
-**xlsx-kit** is a TypeScript library for reading and writing Excel `.xlsx`
+**@office-kit/xlsx** is a TypeScript library for reading and writing Excel `.xlsx`
 workbooks from Node 22+ and modern browsers, with no runtime dependencies on
 Python or Excel. Inspired by [openpyxl](https://openpyxl.readthedocs.io/).
 
@@ -97,8 +97,8 @@ existing one — just because it's shorter, more discoverable, or "feels nicer."
   (Pre-1.0: rename outright. Post-1.0: deprecate + remove on next major.)
 - A capability is reachable but only at an abstraction so low that every real user
   re-implements the same wrapper — graduate the wrapper into the library and
-  hide the low-level path behind an "escape hatch" subpath. xlsx-kit's
-  `xlsx-kit/xml`, `/zip`, `/packaging`, `/schema` subpaths exist as those
+  hide the low-level path behind an "escape hatch" subpath. @office-kit/xlsx's
+  `@office-kit/xlsx/xml`, `/zip`, `/packaging`, `/schema` subpaths exist as those
   escape hatches; new high-level features should extend `io`, `streaming`,
   `workbook`, `worksheet`, `cell`, `styles`, `chart`, `drawing` instead.
 
@@ -114,8 +114,8 @@ Decision flow when evaluating a feature request:
 
 ## Subpath imports — no root barrel
 
-xlsx-kit has **no root barrel export**. Every export lives behind a section
-subpath (`xlsx-kit/io`, `xlsx-kit/streaming`, …). Each export has exactly one
+@office-kit/xlsx has **no root barrel export**. Every export lives behind a section
+subpath (`@office-kit/xlsx/io`, `@office-kit/xlsx/streaming`, …). Each export has exactly one
 home — no convenience re-exports.
 
 Consequences when adding code:
@@ -123,7 +123,7 @@ Consequences when adding code:
 - New public APIs live in the subpath that owns the area. If you're tempted to
   re-export from a second subpath "for ergonomics," stop — that's a parallel
   path.
-- `xlsx-kit/io` and `xlsx-kit/streaming` have hard bundle budgets enforced by
+- `@office-kit/xlsx/io` and `@office-kit/xlsx/streaming` have hard bundle budgets enforced by
   `size-limit`. New dependencies in those graphs need a budget conversation.
 - `"sideEffects": false`. Anything you add must be tree-shakable.
 
@@ -237,7 +237,7 @@ import it, they will, and you'll be on the hook for it.
 
 ### CHANGELOG is for users, not for you
 
-Write from the user's perspective. xlsx-kit uses
+Write from the user's perspective. @office-kit/xlsx uses
 [Changesets](https://github.com/changesets/changesets) — run `pnpm changeset`
 to add an entry.
 

@@ -1,11 +1,11 @@
 // Add a clustered column chart driven by a data range on the same sheet.
 
-import { makeBarChart, makeBarSeries, makeChartSpace } from 'xlsx-kit/chart';
-import { addChartAt } from 'xlsx-kit/drawing';
-import { saveWorkbook } from 'xlsx-kit/io';
-import { toFile } from 'xlsx-kit/node';
-import { addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
-import { setCell } from 'xlsx-kit/worksheet';
+import { makeBarChart, makeBarSeries, makeChartSpace } from '@office-kit/xlsx/chart';
+import { addChartAt } from '@office-kit/xlsx/drawing';
+import { saveWorkbook } from '@office-kit/xlsx/io';
+import { toFile } from '@office-kit/xlsx/node';
+import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
+import { setCell } from '@office-kit/xlsx/worksheet';
 
 const wb = createWorkbook();
 const ws = addWorksheet(wb, 'Sales');

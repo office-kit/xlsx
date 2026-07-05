@@ -1,6 +1,6 @@
-# xlsx-kit policy: one way to do one thing
+# @office-kit/xlsx policy: one way to do one thing
 
-Read this when evaluating any **feature request** against xlsx-kit's
+Read this when evaluating any **feature request** against @office-kit/xlsx's
 design philosophy. The policy decides whether a request is accepted or
 rejected — not your aesthetic preference, not whether the proposed API
 looks nice in isolation.
@@ -9,7 +9,7 @@ looks nice in isolation.
 
 > **There is exactly one way to do one thing.**
 
-If a capability is already reachable through xlsx-kit's existing API, we
+If a capability is already reachable through @office-kit/xlsx's existing API, we
 do not add a second path to it — even if the second path is more
 convenient, more discoverable, or shorter to type.
 
@@ -24,7 +24,7 @@ This is a deliberate trade-off, not a stylistic accident.
 
 2. **Cognitive load on the writer.** Auto-complete that lists three
    functions doing similar things is worse than auto-complete that lists
-   one. xlsx-kit ships subpath imports specifically so each subpath's
+   one. @office-kit/xlsx ships subpath imports specifically so each subpath's
    surface stays minimal.
 
 3. **Maintenance multiplier.** Every public path is a forever
@@ -37,7 +37,7 @@ This is a deliberate trade-off, not a stylistic accident.
    Either we keep the docs honest by removing the alternate path, or we
    double the doc surface. The former is cheaper.
 
-5. **Bundle size.** xlsx-kit holds tight bundle budgets (≤120 KB
+5. **Bundle size.** @office-kit/xlsx holds tight bundle budgets (≤120 KB
    min+brotli for the full lib, ≤80 KB for streaming). A "convenience
    helper" that re-implements an existing primitive is bytes shipped to
    every user for the benefit of one.
@@ -52,7 +52,7 @@ situation, pick either. Examples of paths that are the same thing:
 - `setRowHeight(ws, n, h)` as a convenience over a row-dim mutator that
   already exists. Reject.
 - `loadWorkbookFromFile(path)` as a sugar over
-  `loadWorkbook(fromFile(path))`. Reject — `xlsx-kit/node` already
+  `loadWorkbook(fromFile(path))`. Reject — `@office-kit/xlsx/node` already
   composes this.
 - A "fluent" chained builder mirroring an existing imperative API.
   Reject.
@@ -77,12 +77,12 @@ Run through these in order. Stop at the first NO and reject.
    unreachable?** If the user can already do it with the public API,
    reject.
 
-2. **Is the unreachable capability inside xlsx-kit's scope?** Scope is
+2. **Is the unreachable capability inside @office-kit/xlsx's scope?** Scope is
    reading and writing OOXML `.xlsx` files (and `.xlsm` passthrough).
    Out of scope: `.xls` (BIFF), `.xlsb`, `.ods`, `.csv`, generic
    spreadsheet UI rendering. Out-of-scope requests are rejected with a
    pointer to the appropriate library (SheetJS for legacy formats, etc.)
-   — see the README's "When NOT to use xlsx-kit" section.
+   — see the README's "When NOT to use @office-kit/xlsx" section.
 
 3. **If the request replaces an existing path, is the replacement
    strictly better?** "Strictly better" means: every existing caller
@@ -92,14 +92,14 @@ Run through these in order. Stop at the first NO and reject.
    strictly better, the existing path must be removed in the same
    change (with a deprecation window if pre-1.0 churn matters).
 
-4. **Does the new path round-trip?** xlsx-kit's CI gate includes a
+4. **Does the new path round-trip?** @office-kit/xlsx's CI gate includes a
    3-tier validator (OPC structure + ECMA-376 XSD + semantic
    invariants). A new write API that produces files that don't parse
    back, or that modifies bytes that should be passthrough, is not
    shippable.
 
-5. **Does it fit inside the bundle budget?** `xlsx-kit/io` ≤ 120 KB,
-   `xlsx-kit/streaming` ≤ 80 KB. A feature that pushes a subpath over
+5. **Does it fit inside the bundle budget?** `@office-kit/xlsx/io` ≤ 120 KB,
+   `@office-kit/xlsx/streaming` ≤ 80 KB. A feature that pushes a subpath over
    budget needs a story for what comes out — and "nothing comes out" is
    not a story.
 
@@ -118,7 +118,7 @@ Template (translate to the issue's language):
 
 > Thanks for the suggestion!
 >
-> xlsx-kit already covers this via `<existing API>`:
+> @office-kit/xlsx already covers this via `<existing API>`:
 >
 > ```ts
 > <minimal example>
@@ -147,7 +147,7 @@ The policy is strict but not absolute. It bends when:
 - A capability is reachable but only at a level of abstraction so low
   that every real user would re-implement the same wrapper. In that
   case the wrapper graduates into the library — but the low-level path
-  is hidden behind a subpath like `xlsx-kit/xml` so it's clearly the
+  is hidden behind a subpath like `@office-kit/xlsx/xml` so it's clearly the
   escape hatch, not the primary API.
 
 In both cases, the result is still **one path per thing** for the

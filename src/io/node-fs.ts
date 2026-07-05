@@ -1,10 +1,10 @@
 // Node filesystem + Readable / Writable I/O helpers.
 //
 // Kept separate from `./node.ts` so the buffer-only entry stays free of
-// `node:fs` / `node:stream` imports — important for the `xlsx-kit/streaming`
+// `node:fs` / `node:stream` imports — important for the `@office-kit/xlsx/streaming`
 // browser-targeted bundle, which can re-export `fromBuffer` / `toBuffer`
 // without dragging Node-only modules into the browser surface. Users who want
-// filesystem I/O reach this module directly (or through `xlsx-kit/node` once
+// filesystem I/O reach this module directly (or through `@office-kit/xlsx/node` once
 // that subpath lands).
 
 import { createReadStream, createWriteStream, readFileSync } from 'node:fs';

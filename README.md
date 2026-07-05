@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="./assets/logo.png" alt="xlsx-kit" width="180" height="180" />
+  <img src="./assets/logo.png" alt="@office-kit/xlsx" width="180" height="180" />
 </p>
 
-# xlsx-kit
+# @office-kit/xlsx
 
 A TypeScript library for reading and writing Excel `.xlsx` workbooks
 from Node 22+ and modern browsers, with no runtime dependencies on
@@ -12,7 +12,7 @@ Python or Excel. Inspired by [openpyxl](https://openpyxl.readthedocs.io/).
 > in place and round-trips real-world fixtures (including pivot tables and
 > macro-enabled `.xlsm`), but APIs may shift before `1.0`.
 
-## Why xlsx-kit?
+## Why @office-kit/xlsx?
 
 The JavaScript xlsx ecosystem in 2026 is split between **commercial upsell
 tiers** and **stalled open-source projects**. SheetJS Community Edition
@@ -24,7 +24,7 @@ and its maintainers explicitly call it inactive; the dependency footprint
 unpacks to 21.8 MB. excel4node was [archived in 2022][e4n-archive].
 xlsx-js-style is frozen at a 2022 SheetJS fork.
 
-xlsx-kit is the third option: an actively-developed, pure-MIT,
+@office-kit/xlsx is the third option: an actively-developed, pure-MIT,
 TypeScript-first library with no Pro tier and no missing features behind a
 paywall.
 
@@ -32,7 +32,7 @@ paywall.
 [exceljs-discussion]: https://github.com/exceljs/exceljs/discussions/2987
 [e4n-archive]: https://github.com/natergj/excel4node
 
-| Concern                | Other libraries                                                                  | xlsx-kit                                                              |
+| Concern                | Other libraries                                                                  | @office-kit/xlsx                                                              |
 |------------------------|----------------------------------------------------------------------------------|-----------------------------------------------------------------------|
 | TypeScript types       | hand-written `.d.ts` retrofitted (SheetJS) or community typings (xlsx-populate, excel4node) | first-party, written in TS under `exactOptionalPropertyTypes` + `noUncheckedIndexedAccess` |
 | Bundle size            | ExcelJS unpacks to 21.8 MB; xlsx ~7.5 MB                                         | full lib ≤120 KB min+brotli (currently ~85 KB); streaming entry ~49 KB |
@@ -42,7 +42,7 @@ paywall.
 | Maintenance            | ExcelJS stalled since 2023; excel4node archived 2022; xlsx-js-style frozen 2022; SheetJS npm artifact frozen 2022 (still distributed via private CDN) | active                                                                |
 | License                | SheetJS CE strips features for Pro upsell; SheetJS Pro pricing not published      | MIT, single tier, no upsell                                            |
 | Conformance            | none of the major libraries validate against ECMA-376 in CI                       | 3-tier validator (OPC structure + ECMA-376 XSD + semantic invariants) gates every CI build, including a fast-check property-based oracle |
-| Modules                | monolithic root barrel                                                           | subpath imports — `xlsx-kit/io`, `/streaming`, `/cell`, `/styles`, etc., each independently tree-shakable |
+| Modules                | monolithic root barrel                                                           | subpath imports — `@office-kit/xlsx/io`, `/streaming`, `/cell`, `/styles`, etc., each independently tree-shakable |
 
 [exceljs-pivot]: https://github.com/exceljs/exceljs/issues/261
 
@@ -57,7 +57,7 @@ paywall.
 [rexf]: https://www.npmjs.com/package/read-excel-file
 [wexf]: https://www.npmjs.com/package/write-excel-file
 
-### xlsx-kit's home turf
+### @office-kit/xlsx's home turf
 
 - You write modern TypeScript and want types that actually behave under
   strict mode (cell values are a discriminated union, not `any`).
@@ -72,7 +72,7 @@ paywall.
 - You want **proof** that the bytes you emit are valid OOXML, not "Excel
   happens to open them today."
 
-### When NOT to use xlsx-kit
+### When NOT to use @office-kit/xlsx
 
 Honest list:
 
@@ -89,18 +89,18 @@ Honest list:
 
 ### Motivation
 
-The reasons xlsx-kit exists, written down so future contributors don't
+The reasons @office-kit/xlsx exists, written down so future contributors don't
 relitigate them:
 
 1. **The reference implementation is in Python.** [openpyxl][openpyxl] has
-   spent 15 years collecting Excel / LibreOffice corner cases. xlsx-kit
+   spent 15 years collecting Excel / LibreOffice corner cases. @office-kit/xlsx
    consumes its fixture corpus directly (`reference/openpyxl/` is a git
    submodule), so edge cases the Python world solved years ago don't get
    re-discovered painfully in JS.
 2. **The 2010-era JS stack is heavy.** Most existing libraries pull in
    `jszip`, `lodash`, `archiver`, `xmlbuilder`, `sax`. In 2026 we have
    `fflate`, `fast-xml-parser`, and `saxes` — the toolchain is an order
-   of magnitude lighter. xlsx-kit ships with three runtime dependencies.
+   of magnitude lighter. @office-kit/xlsx ships with three runtime dependencies.
 3. **TypeScript-first changes the API surface.** A library authored in TS
    under strict-mode flags from day one exposes different ergonomics than
    `.d.ts` typings retrofitted onto an old JS codebase.
@@ -116,7 +116,7 @@ relitigate them:
 ## Install
 
 ```sh
-pnpm add xlsx-kit   # or npm / yarn / bun
+pnpm add @office-kit/xlsx   # or npm / yarn / bun
 ```
 
 Requires Node `>=22` for the built-in `Web Streams`, `Blob`, and `fetch`
@@ -131,45 +131,45 @@ convenience re-exports).
 
 | Import                 | Use case                                          |
 |------------------------|---------------------------------------------------|
-| `xlsx-kit/io`           | `loadWorkbook` / `saveWorkbook` / `workbookToBytes` plus byte-level Source/Sink + browser helpers (Blob/Response/Stream) |
-| `xlsx-kit/node`         | Node fs glue (`fromFile` / `toFile` / `fromBuffer` / `toBuffer` / `fromReadable` / `toWritable`) |
-| `xlsx-kit/streaming`    | Read-only iter (`loadWorkbookStream`) + write-only append (`createWriteOnlyWorkbook`) |
-| `xlsx-kit/workbook`     | `createWorkbook`, `addWorksheet`, defined names   |
-| `xlsx-kit/worksheet`    | `setCell`, `getCell`, `mergeCells`, tables, …     |
-| `xlsx-kit/cell`         | Cell value-model + inline rich text               |
-| `xlsx-kit/styles`       | Fonts, fills, borders, alignment, number formats  |
-| `xlsx-kit/chart`        | `c:` and `cx:` chart kinds                        |
-| `xlsx-kit/chartsheet`   | Standalone chartsheets                            |
-| `xlsx-kit/drawing`      | Anchors, images, chart placement                  |
+| `@office-kit/xlsx/io`           | `loadWorkbook` / `saveWorkbook` / `workbookToBytes` plus byte-level Source/Sink + browser helpers (Blob/Response/Stream) |
+| `@office-kit/xlsx/node`         | Node fs glue (`fromFile` / `toFile` / `fromBuffer` / `toBuffer` / `fromReadable` / `toWritable`) |
+| `@office-kit/xlsx/streaming`    | Read-only iter (`loadWorkbookStream`) + write-only append (`createWriteOnlyWorkbook`) |
+| `@office-kit/xlsx/workbook`     | `createWorkbook`, `addWorksheet`, defined names   |
+| `@office-kit/xlsx/worksheet`    | `setCell`, `getCell`, `mergeCells`, tables, …     |
+| `@office-kit/xlsx/cell`         | Cell value-model + inline rich text               |
+| `@office-kit/xlsx/styles`       | Fonts, fills, borders, alignment, number formats  |
+| `@office-kit/xlsx/chart`        | `c:` and `cx:` chart kinds                        |
+| `@office-kit/xlsx/chartsheet`   | Standalone chartsheets                            |
+| `@office-kit/xlsx/drawing`      | Anchors, images, chart placement                  |
 
-Other subpaths: `xlsx-kit/packaging`, `xlsx-kit/utils`, `xlsx-kit/xml`,
-`xlsx-kit/zip`, `xlsx-kit/schema`. All exports are tree-shakable
+Other subpaths: `@office-kit/xlsx/packaging`, `@office-kit/xlsx/utils`, `@office-kit/xlsx/xml`,
+`@office-kit/xlsx/zip`, `@office-kit/xlsx/schema`. All exports are tree-shakable
 (`"sideEffects": false`).
 
 Bundle budgets (min + brotli):
 
-- `xlsx-kit/streaming` ≤ 80 KB    (currently ~49 KB)
-- `xlsx-kit/io` ≤ 120 KB           (currently ~85 KB)
+- `@office-kit/xlsx/streaming` ≤ 80 KB    (currently ~49 KB)
+- `@office-kit/xlsx/io` ≤ 120 KB           (currently ~85 KB)
 
 ## Quick examples
 
 For a one-page lookup of task → exact functions to import and call, see
-the [Cheatsheet](https://baseballyama.github.io/xlsx-kit/docs/cheatsheet).
+the [Cheatsheet](https://baseballyama.github.io/@office-kit/xlsx/docs/cheatsheet).
 For prose-style worked examples (styling, charts, validation, streaming),
-see the [Recipes](https://baseballyama.github.io/xlsx-kit/docs/recipes).
+see the [Recipes](https://baseballyama.github.io/@office-kit/xlsx/docs/recipes).
 
 ### Read + edit + write
 
 ```ts
-import { loadWorkbook, workbookToBytes } from 'xlsx-kit/io';
-import { setCell } from 'xlsx-kit/worksheet';
-import { fromBuffer } from 'xlsx-kit/node';
+import { loadWorkbook, workbookToBytes } from '@office-kit/xlsx/io';
+import { setCell } from '@office-kit/xlsx/worksheet';
+import { fromBuffer } from '@office-kit/xlsx/node';
 import { readFile, writeFile } from 'node:fs/promises';
 
 const wb = await loadWorkbook(fromBuffer(await readFile('input.xlsx')));
 const sheet = wb.sheets[0];
 if (sheet?.kind === 'worksheet') {
-  setCell(sheet.sheet, /* row */ 1, /* col */ 1, 'Hello from xlsx-kit');
+  setCell(sheet.sheet, /* row */ 1, /* col */ 1, 'Hello from @office-kit/xlsx');
 }
 await writeFile('output.xlsx', await workbookToBytes(wb));
 ```
@@ -177,8 +177,8 @@ await writeFile('output.xlsx', await workbookToBytes(wb));
 ### Read directly from disk (Node)
 
 ```ts
-import { loadWorkbook, saveWorkbook } from 'xlsx-kit/io';
-import { fromFile, toFile } from 'xlsx-kit/node';
+import { loadWorkbook, saveWorkbook } from '@office-kit/xlsx/io';
+import { fromFile, toFile } from '@office-kit/xlsx/node';
 
 const wb = await loadWorkbook(fromFile('input.xlsx'));
 // …mutate wb…
@@ -188,7 +188,7 @@ await saveWorkbook(wb, toFile('output.xlsx'));
 ### Read directly from a `fetch` response (browser)
 
 ```ts
-import { fromResponse, loadWorkbook } from 'xlsx-kit/io';
+import { fromResponse, loadWorkbook } from '@office-kit/xlsx/io';
 
 const response = await fetch('/sheet.xlsx');
 const wb = await loadWorkbook(fromResponse(response));
@@ -197,8 +197,8 @@ const wb = await loadWorkbook(fromResponse(response));
 ### Streaming write — millions of rows in a fixed memory budget
 
 ```ts
-import { createWriteOnlyWorkbook } from 'xlsx-kit/streaming';
-import { toFile } from 'xlsx-kit/node';
+import { createWriteOnlyWorkbook } from '@office-kit/xlsx/streaming';
+import { toFile } from '@office-kit/xlsx/node';
 
 const sink = toFile('big.xlsx');
 const wb = await createWriteOnlyWorkbook(sink);
@@ -221,8 +221,8 @@ full archive resident so `result()` can hand it back in one piece.
 ### Streaming read — iterate row-by-row without materialising the sheet
 
 ```ts
-import { loadWorkbookStream } from 'xlsx-kit/streaming';
-import { fromFile } from 'xlsx-kit/node';
+import { loadWorkbookStream } from '@office-kit/xlsx/streaming';
+import { fromFile } from '@office-kit/xlsx/node';
 
 const wb = await loadWorkbookStream(fromFile('big.xlsx'));
 const sheet = wb.openWorksheet(wb.sheetNames[0] ?? '');
@@ -244,23 +244,23 @@ band queries reuse the cached index.
 
 ### Migrating from openpyxl
 
-xlsx-kit is shaped after openpyxl, but a few defaults differ. The most
+@office-kit/xlsx is shaped after openpyxl, but a few defaults differ. The most
 common surprise for direct ports:
 
 - **`createWorkbook()` returns an empty workbook with no sheets.**
   `openpyxl.Workbook()` creates a default sheet named `Sheet` that
-  callers usually remove with `wb.remove(wb.active)`. xlsx-kit skips
+  callers usually remove with `wb.remove(wb.active)`. @office-kit/xlsx skips
   that step — call `addWorksheet(wb, 'Data')` directly. Translating a
   `remove(active)` call literally produces a no-op (or, worse, a guard
   that hides a real bug elsewhere).
-- **`setCell(ws, row, col, value)`** is the xlsx-kit equivalent of
+- **`setCell(ws, row, col, value)`** is the @office-kit/xlsx equivalent of
   openpyxl's `ws.cell(row=r, column=c, value=v)`. Coordinates are
   1-based on both sides.
 - **`makeBorder({ left: makeSide({ style: 'thin' }) })`** is the
-  xlsx-kit equivalent of openpyxl's
+  @office-kit/xlsx equivalent of openpyxl's
   `Border(left=Side(style='thin'))`. Same with `makeFill`, `makeFont`,
   etc. — every style primitive has a `make*` constructor under
-  `xlsx-kit/styles`.
+  `@office-kit/xlsx/styles`.
 
 ## What's supported
 
@@ -298,7 +298,7 @@ clone with submodules (or run `pnpm install`, which auto-inits via the
 `prepare` script):
 
 ```sh
-git clone --recursive https://github.com/baseballyama/xlsx-kit.git
+git clone --recursive https://github.com/office-kit/xlsx.git
 # or, if you already cloned without --recursive:
 git submodule update --init --recursive
 

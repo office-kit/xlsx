@@ -9,7 +9,7 @@ exact functions you import. The snippets below the index expand the most
 common patterns. For prose context see <a href="{base}/docs/recipes">Recipes</a>;
 for every export see <a href="{base}/api">API reference</a>.
 
-> Each function lives in exactly one subpath — `xlsx-kit/io`, `/node`,
+> Each function lives in exactly one subpath — `@office-kit/xlsx/io`, `/node`,
 > `/streaming`, `/workbook`, `/worksheet`, `/cell`, `/styles`, `/chart`,
 > `/drawing`. Function name → subpath is unique, so once you know the
 > name you know where to import from.
@@ -86,8 +86,8 @@ you can copy-paste a single block into your file.
 ### Read xlsx file (Node) → Workbook
 
 ```ts
-import { loadWorkbook } from 'xlsx-kit/io';
-import { fromFile } from 'xlsx-kit/node';
+import { loadWorkbook } from '@office-kit/xlsx/io';
+import { fromFile } from '@office-kit/xlsx/node';
 
 const wb = await loadWorkbook(fromFile('in.xlsx'));
 ```
@@ -95,8 +95,8 @@ const wb = await loadWorkbook(fromFile('in.xlsx'));
 ### Read xlsx Buffer (Node) → Workbook
 
 ```ts
-import { loadWorkbook } from 'xlsx-kit/io';
-import { fromBuffer } from 'xlsx-kit/node';
+import { loadWorkbook } from '@office-kit/xlsx/io';
+import { fromBuffer } from '@office-kit/xlsx/node';
 
 const wb = await loadWorkbook(fromBuffer(buf));
 ```
@@ -104,7 +104,7 @@ const wb = await loadWorkbook(fromBuffer(buf));
 ### Read xlsx from `fetch` (browser) → Workbook
 
 ```ts
-import { fromResponse, loadWorkbook } from 'xlsx-kit/io';
+import { fromResponse, loadWorkbook } from '@office-kit/xlsx/io';
 
 const wb = await loadWorkbook(fromResponse(await fetch('/sheet.xlsx')));
 ```
@@ -112,7 +112,7 @@ const wb = await loadWorkbook(fromResponse(await fetch('/sheet.xlsx')));
 ### Read xlsx from `<input type="file">` (browser) → Workbook
 
 ```ts
-import { fromBlob, loadWorkbook } from 'xlsx-kit/io';
+import { fromBlob, loadWorkbook } from '@office-kit/xlsx/io';
 
 const wb = await loadWorkbook(fromBlob(file));
 ```
@@ -120,7 +120,7 @@ const wb = await loadWorkbook(fromBlob(file));
 ### Iterate every cell of a worksheet → 2D array
 
 ```ts
-import { iterValues } from 'xlsx-kit/worksheet';
+import { iterValues } from '@office-kit/xlsx/worksheet';
 
 const rows = [...iterValues(ws)]; // CellValue[][]
 ```
@@ -128,7 +128,7 @@ const rows = [...iterValues(ws)]; // CellValue[][]
 ### Find the populated extents of a worksheet
 
 ```ts
-import { getMaxRow, getMaxCol } from 'xlsx-kit/worksheet';
+import { getMaxRow, getMaxCol } from '@office-kit/xlsx/worksheet';
 
 const lastRow = getMaxRow(ws);
 const lastCol = getMaxCol(ws);
@@ -137,8 +137,8 @@ const lastCol = getMaxCol(ws);
 ### Stream-read: iterate a huge sheet without loading it
 
 ```ts
-import { fromFile } from 'xlsx-kit/node';
-import { loadWorkbookStream } from 'xlsx-kit/streaming';
+import { fromFile } from '@office-kit/xlsx/node';
+import { loadWorkbookStream } from '@office-kit/xlsx/streaming';
 
 const wb = await loadWorkbookStream(fromFile('big.xlsx'));
 const sheet = wb.openWorksheet(wb.sheetNames[0] ?? '');
@@ -151,8 +151,8 @@ await wb.close();
 ### Stream-read: only rows N..M of a huge sheet
 
 ```ts
-import { fromFile } from 'xlsx-kit/node';
-import { loadWorkbookStream } from 'xlsx-kit/streaming';
+import { fromFile } from '@office-kit/xlsx/node';
+import { loadWorkbookStream } from '@office-kit/xlsx/streaming';
 
 const wb = await loadWorkbookStream(fromFile('big.xlsx'));
 const sheet = wb.openWorksheet(wb.sheetNames[0] ?? '');
@@ -165,9 +165,9 @@ await wb.close();
 ### Build a small workbook in memory → `Uint8Array`
 
 ```ts
-import { workbookToBytes } from 'xlsx-kit/io';
-import { addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
-import { setCell } from 'xlsx-kit/worksheet';
+import { workbookToBytes } from '@office-kit/xlsx/io';
+import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
+import { setCell } from '@office-kit/xlsx/worksheet';
 
 const wb = createWorkbook();
 const ws = addWorksheet(wb, 'Sheet1');
@@ -178,10 +178,10 @@ const bytes = await workbookToBytes(wb);
 ### Build a small workbook → save to file (Node)
 
 ```ts
-import { saveWorkbook } from 'xlsx-kit/io';
-import { toFile } from 'xlsx-kit/node';
-import { addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
-import { setCell } from 'xlsx-kit/worksheet';
+import { saveWorkbook } from '@office-kit/xlsx/io';
+import { toFile } from '@office-kit/xlsx/node';
+import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
+import { setCell } from '@office-kit/xlsx/worksheet';
 
 const wb = createWorkbook();
 const ws = addWorksheet(wb, 'Sheet1');
@@ -192,9 +192,9 @@ await saveWorkbook(wb, toFile('out.xlsx'));
 ### Build a small workbook → `Buffer` (Node)
 
 ```ts
-import { workbookToBuffer } from 'xlsx-kit/node';
-import { addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
-import { setCell } from 'xlsx-kit/worksheet';
+import { workbookToBuffer } from '@office-kit/xlsx/node';
+import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
+import { setCell } from '@office-kit/xlsx/worksheet';
 
 const wb = createWorkbook();
 const ws = addWorksheet(wb, 'Sheet1');
@@ -205,9 +205,9 @@ const buf = await workbookToBuffer(wb); // Buffer
 ### Edit one cell of an existing file (Node)
 
 ```ts
-import { loadWorkbook, saveWorkbook } from 'xlsx-kit/io';
-import { fromFile, toFile } from 'xlsx-kit/node';
-import { setCell } from 'xlsx-kit/worksheet';
+import { loadWorkbook, saveWorkbook } from '@office-kit/xlsx/io';
+import { fromFile, toFile } from '@office-kit/xlsx/node';
+import { setCell } from '@office-kit/xlsx/worksheet';
 
 const wb = await loadWorkbook(fromFile('in.xlsx'));
 const sheet = wb.sheets[0];
@@ -220,7 +220,7 @@ await saveWorkbook(wb, toFile('out.xlsx'));
 ### Append rows to a worksheet
 
 ```ts
-import { appendRows } from 'xlsx-kit/worksheet';
+import { appendRows } from '@office-kit/xlsx/worksheet';
 
 appendRows(ws, [
   ['name', 'qty'],
@@ -232,8 +232,8 @@ appendRows(ws, [
 ### Stream-write millions of rows to a file
 
 ```ts
-import { toFile } from 'xlsx-kit/node';
-import { createWriteOnlyWorkbook } from 'xlsx-kit/streaming';
+import { toFile } from '@office-kit/xlsx/node';
+import { createWriteOnlyWorkbook } from '@office-kit/xlsx/streaming';
 
 const wb = await createWriteOnlyWorkbook(toFile('big.xlsx'));
 const ws = await wb.addWorksheet('Data');
@@ -249,8 +249,8 @@ await wb.finalize();
 ### Bold + font size + fill on a header cell
 
 ```ts
-import { setBold, setCellBackgroundColor, setFontSize } from 'xlsx-kit/styles';
-import { setCell } from 'xlsx-kit/worksheet';
+import { setBold, setCellBackgroundColor, setFontSize } from '@office-kit/xlsx/styles';
+import { setCell } from '@office-kit/xlsx/worksheet';
 
 const c = setCell(ws, 1, 1, 'Header');
 setBold(wb, c);
@@ -261,8 +261,8 @@ setCellBackgroundColor(wb, c, 'FFEFEFEF');
 ### Number format: currency / percent
 
 ```ts
-import { setCellAsCurrency, setCellAsPercent } from 'xlsx-kit/styles';
-import { setCell } from 'xlsx-kit/worksheet';
+import { setCellAsCurrency, setCellAsPercent } from '@office-kit/xlsx/styles';
+import { setCell } from '@office-kit/xlsx/worksheet';
 
 setCellAsCurrency(wb, setCell(ws, 1, 1, 1234.5));
 setCellAsPercent(wb, setCell(ws, 1, 2, 0.125));
@@ -271,8 +271,8 @@ setCellAsPercent(wb, setCell(ws, 1, 2, 0.125));
 ### Number format: date
 
 ```ts
-import { FORMAT_DATE_DATETIME, setCellNumberFormat } from 'xlsx-kit/styles';
-import { setCell } from 'xlsx-kit/worksheet';
+import { FORMAT_DATE_DATETIME, setCellNumberFormat } from '@office-kit/xlsx/styles';
+import { setCell } from '@office-kit/xlsx/worksheet';
 
 setCellNumberFormat(wb, setCell(ws, 1, 1, new Date()), FORMAT_DATE_DATETIME);
 ```
@@ -280,8 +280,8 @@ setCellNumberFormat(wb, setCell(ws, 1, 1, new Date()), FORMAT_DATE_DATETIME);
 ### Add a formula (with cached value)
 
 ```ts
-import { setFormula } from 'xlsx-kit/cell';
-import { setCell } from 'xlsx-kit/worksheet';
+import { setFormula } from '@office-kit/xlsx/cell';
+import { setCell } from '@office-kit/xlsx/worksheet';
 
 const c = setCell(ws, 3, 1, null);
 setFormula(c, 'SUM(A1:A2)', { cachedValue: 42 });
@@ -290,7 +290,7 @@ setFormula(c, 'SUM(A1:A2)', { cachedValue: 42 });
 ### Make a cell clickable
 
 ```ts
-import { setHyperlink } from 'xlsx-kit/worksheet';
+import { setHyperlink } from '@office-kit/xlsx/worksheet';
 
 setHyperlink(ws, 'A1', { target: 'https://example.com', display: 'Open' });
 ```
@@ -298,7 +298,7 @@ setHyperlink(ws, 'A1', { target: 'https://example.com', display: 'Open' });
 ### Merge cells + freeze the header row
 
 ```ts
-import { makeFreezePane, makeSheetView, mergeCells } from 'xlsx-kit/worksheet';
+import { makeFreezePane, makeSheetView, mergeCells } from '@office-kit/xlsx/worksheet';
 
 mergeCells(ws, 'A1:C1');
 ws.views.push(makeSheetView({ pane: makeFreezePane('A2') }));
@@ -307,7 +307,7 @@ ws.views.push(makeSheetView({ pane: makeFreezePane('A2') }));
 ### Multiple sheets + a defined name
 
 ```ts
-import { addDefinedName, addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
+import { addDefinedName, addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
 
 const wb = createWorkbook();
 addWorksheet(wb, 'Q1');
@@ -318,7 +318,7 @@ addDefinedName(wb, { name: 'Totals', value: 'Q1!$A$1:$A$10,Q2!$A$1:$A$10' });
 ### Promote a range to an Excel Table
 
 ```ts
-import { addExcelTable } from 'xlsx-kit/worksheet';
+import { addExcelTable } from '@office-kit/xlsx/worksheet';
 
 addExcelTable(wb, ws, {
   name: 'Items',
@@ -331,7 +331,7 @@ addExcelTable(wb, ws, {
 ### AutoFilter on a header row (no table styling)
 
 ```ts
-import { addAutoFilter } from 'xlsx-kit/worksheet';
+import { addAutoFilter } from '@office-kit/xlsx/worksheet';
 
 addAutoFilter(ws, 'A1:C1');
 ```
@@ -339,7 +339,7 @@ addAutoFilter(ws, 'A1:C1');
 ### Dropdown data validation
 
 ```ts
-import { addDataValidation, makeDataValidation } from 'xlsx-kit/worksheet';
+import { addDataValidation, makeDataValidation } from '@office-kit/xlsx/worksheet';
 
 addDataValidation(
   ws,
@@ -354,7 +354,7 @@ addDataValidation(
 ### Insert an image at a cell
 
 ```ts
-import { addImageAt, loadImage } from 'xlsx-kit/drawing';
+import { addImageAt, loadImage } from '@office-kit/xlsx/drawing';
 
 const img = loadImage(bytes); // bytes: Uint8Array
 addImageAt(ws, 'B2', img, { widthPx: 200, heightPx: 80 });
@@ -363,8 +363,8 @@ addImageAt(ws, 'B2', img, { widthPx: 200, heightPx: 80 });
 ### Add a clustered column chart
 
 ```ts
-import { makeBarChart, makeBarSeries, makeChartSpace } from 'xlsx-kit/chart';
-import { addChartAt } from 'xlsx-kit/drawing';
+import { makeBarChart, makeBarSeries, makeChartSpace } from '@office-kit/xlsx/chart';
+import { addChartAt } from '@office-kit/xlsx/drawing';
 
 const chart = makeBarChart({
   barDir: 'col',

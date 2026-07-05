@@ -16,7 +16,7 @@ describe('extendedProperties — basic', () => {
 
   it('round-trips simple flat fields', () => {
     const p = {
-      application: 'xlsx-kit',
+      application: '@office-kit/xlsx',
       appVersion: '0.0.0',
       docSecurity: 0,
       scaleCrop: false,

@@ -1,7 +1,7 @@
 // Open a workbook and walk every cell on the first sheet.
 
-import { loadWorkbook } from 'xlsx-kit/io';
-import { fromFile } from 'xlsx-kit/node';
+import { loadWorkbook } from '@office-kit/xlsx/io';
+import { fromFile } from '@office-kit/xlsx/node';
 
 const wb = await loadWorkbook(fromFile('input.xlsx'));
 const first = wb.sheets[0];

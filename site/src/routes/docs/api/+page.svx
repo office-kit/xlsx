@@ -15,34 +15,34 @@ The package has no root barrel — every export lives behind a section subpath, 
 ```ts
 // Load and save xlsx — loadWorkbook / saveWorkbook / workbookToBytes,
 // plus byte-level Source/Sink types and browser helpers (Blob/Response/Stream).
-import { loadWorkbook, saveWorkbook, fromResponse } from 'xlsx-kit/io';
+import { loadWorkbook, saveWorkbook, fromResponse } from '@office-kit/xlsx/io';
 
 // Node fs glue (filesystem / Readable / Writable bridges + Buffer source/sink).
-import { fromFile, toFile, fromBuffer, fromReadable } from 'xlsx-kit/node';
+import { fromFile, toFile, fromBuffer, fromReadable } from '@office-kit/xlsx/node';
 
 // Streaming — read iter, write-only append.
-import { loadWorkbookStream, createWriteOnlyWorkbook } from 'xlsx-kit/streaming';
+import { loadWorkbookStream, createWriteOnlyWorkbook } from '@office-kit/xlsx/streaming';
 
 // Workbook root model — createWorkbook, addWorksheet, defined names, etc.
-import { createWorkbook, addWorksheet } from 'xlsx-kit/workbook';
+import { createWorkbook, addWorksheet } from '@office-kit/xlsx/workbook';
 
 // Worksheet — setCell, getCell, mergeCells, freeze panes, tables, hyperlinks…
-import { setCell, mergeCells } from 'xlsx-kit/worksheet';
+import { setCell, mergeCells } from '@office-kit/xlsx/worksheet';
 
 // Cell value-model + inline rich text.
-import { makeCell, makeRichText } from 'xlsx-kit/cell';
+import { makeCell, makeRichText } from '@office-kit/xlsx/cell';
 
 // Styles — fonts, fills, borders, alignment, number formats, named styles.
-import { makeFont, setBold } from 'xlsx-kit/styles';
+import { makeFont, setBold } from '@office-kit/xlsx/styles';
 
 // Charts (legacy `c:` + chartex `cx:`).
-import { makeBarChart, makeChartSpace } from 'xlsx-kit/chart';
+import { makeBarChart, makeChartSpace } from '@office-kit/xlsx/chart';
 
 // Drawings — anchors, images, chart placement.
-import { addImageAt, loadImage } from 'xlsx-kit/drawing';
+import { addImageAt, loadImage } from '@office-kit/xlsx/drawing';
 ```
 
-Other available subpaths: `xlsx-kit/chartsheet`, `xlsx-kit/packaging`, `xlsx-kit/utils`, `xlsx-kit/xml`, `xlsx-kit/zip`, `xlsx-kit/schema`.
+Other available subpaths: `@office-kit/xlsx/chartsheet`, `@office-kit/xlsx/packaging`, `@office-kit/xlsx/utils`, `@office-kit/xlsx/xml`, `@office-kit/xlsx/zip`, `@office-kit/xlsx/schema`.
 
 Each entry has the bundle budgets enforced by `pnpm size` in CI. All exports are tree-shakable — `"sideEffects": false` is set in `package.json`.
 
@@ -50,27 +50,27 @@ Each entry has the bundle budgets enforced by `pnpm size` in CI. All exports are
 
 The library exposes a layered model split across subpaths:
 
-- **I/O** (`xlsx-kit/io`) — `loadWorkbook`, `saveWorkbook`, `workbookToBytes` plus byte-level `XlsxSource` / `XlsxSink` types and browser-safe helpers (`fromBlob`, `fromResponse`, `fromStream`, `fromArrayBuffer`, `toBlob`, `toArrayBuffer`).
-- **Node fs glue** (`xlsx-kit/node`) — `fromFile`, `toFile`, `fromBuffer`, `toBuffer`, `fromReadable`, `toWritable`.
-- **Streaming** (`xlsx-kit/streaming`) — `loadWorkbookStream`, `createWriteOnlyWorkbook`.
-- **Workbook** (`xlsx-kit/workbook`) — `createWorkbook`, `addWorksheet`, `Workbook` shape, defined names, calc properties, file metadata.
-- **Worksheet** (`xlsx-kit/worksheet`) — cells, rows, columns, merged cells, freeze panes, autoFilter, Tables, hyperlinks, data validations, conditional formatting, legacy comments.
-- **Cell** (`xlsx-kit/cell`) — Cell shape, formula helpers, inline rich-text composition.
-- **Styles** (`xlsx-kit/styles`) — `Font`, `Fill`, `Border`, `Alignment`, `Protection`, `NumberFormat`, full stylesheet pool with dedup, named styles + DXF.
-- **Drawings** (`xlsx-kit/drawing`) — anchors, images (PNG/JPEG/GIF/BMP/WebP/TIFF/SVG/EMF/WMF) with auto-detected format + dimensions.
-- **Charts** (`xlsx-kit/chart`) — 16 legacy `c:` chart kinds + 8 `cx:` chartex kinds (Sunburst, Treemap, Waterfall, Histogram, Pareto, Funnel, BoxWhisker, RegionMap).
-- **Packaging / XML / ZIP / schema** (`xlsx-kit/packaging`, `xlsx-kit/xml`, `xlsx-kit/zip`, `xlsx-kit/schema`) — the OPC layer below the workbook plus low-level XML reader / writer + Excel namespace constants. You won't touch these directly unless you're extending the library.
+- **I/O** (`@office-kit/xlsx/io`) — `loadWorkbook`, `saveWorkbook`, `workbookToBytes` plus byte-level `XlsxSource` / `XlsxSink` types and browser-safe helpers (`fromBlob`, `fromResponse`, `fromStream`, `fromArrayBuffer`, `toBlob`, `toArrayBuffer`).
+- **Node fs glue** (`@office-kit/xlsx/node`) — `fromFile`, `toFile`, `fromBuffer`, `toBuffer`, `fromReadable`, `toWritable`.
+- **Streaming** (`@office-kit/xlsx/streaming`) — `loadWorkbookStream`, `createWriteOnlyWorkbook`.
+- **Workbook** (`@office-kit/xlsx/workbook`) — `createWorkbook`, `addWorksheet`, `Workbook` shape, defined names, calc properties, file metadata.
+- **Worksheet** (`@office-kit/xlsx/worksheet`) — cells, rows, columns, merged cells, freeze panes, autoFilter, Tables, hyperlinks, data validations, conditional formatting, legacy comments.
+- **Cell** (`@office-kit/xlsx/cell`) — Cell shape, formula helpers, inline rich-text composition.
+- **Styles** (`@office-kit/xlsx/styles`) — `Font`, `Fill`, `Border`, `Alignment`, `Protection`, `NumberFormat`, full stylesheet pool with dedup, named styles + DXF.
+- **Drawings** (`@office-kit/xlsx/drawing`) — anchors, images (PNG/JPEG/GIF/BMP/WebP/TIFF/SVG/EMF/WMF) with auto-detected format + dimensions.
+- **Charts** (`@office-kit/xlsx/chart`) — 16 legacy `c:` chart kinds + 8 `cx:` chartex kinds (Sunburst, Treemap, Waterfall, Histogram, Pareto, Funnel, BoxWhisker, RegionMap).
+- **Packaging / XML / ZIP / schema** (`@office-kit/xlsx/packaging`, `@office-kit/xlsx/xml`, `@office-kit/xlsx/zip`, `@office-kit/xlsx/schema`) — the OPC layer below the workbook plus low-level XML reader / writer + Excel namespace constants. You won't touch these directly unless you're extending the library.
 
 ## Cell helpers
 
 | Function | Purpose |
 |----------|---------|
 | `setCell(sheet, row, col, value)` | Set a cell value; coercion handled (string / number / boolean). |
-| `setFormula(cell, formula)` | Apply a formula to a Cell returned by `setCell`. Use `setSharedFormula` / `setArrayFormula` from `xlsx-kit/cell` for the array / shared variants. |
+| `setFormula(cell, formula)` | Apply a formula to a Cell returned by `setCell`. Use `setSharedFormula` / `setArrayFormula` from `@office-kit/xlsx/cell` for the array / shared variants. |
 | `getCell(sheet, row, col)` | Read a cell. Returns `undefined` if empty. |
 | `setCellStyle(wb, cell, opts)` | Apply per-aspect style (font / fill / border / alignment / numberFormat) to a cell. |
 
-Coordinates are 1-indexed (`row=1, col=1` is `A1`). For A1 ↔ row/col conversion, reach for `xlsx-kit/utils`.
+Coordinates are 1-indexed (`row=1, col=1` is `A1`). For A1 ↔ row/col conversion, reach for `@office-kit/xlsx/utils`.
 
 ## Loading and saving
 
@@ -85,9 +85,9 @@ saveWorkbook(wb: Workbook, sink: XlsxSink): Promise<void>
 createWriteOnlyWorkbook(sink: XlsxSink): Promise<WriteOnlyWorkbook>
 ```
 
-`loadWorkbook` / `saveWorkbook` / `workbookToBytes` come from `xlsx-kit/io`; `loadWorkbookStream` / `createWriteOnlyWorkbook` from `xlsx-kit/streaming`.
+`loadWorkbook` / `saveWorkbook` / `workbookToBytes` come from `@office-kit/xlsx/io`; `loadWorkbookStream` / `createWriteOnlyWorkbook` from `@office-kit/xlsx/streaming`.
 
-`XlsxSource` accepts anything from a `Uint8Array` to a `ReadableStream<Uint8Array>` to a `Blob` to a Node `Readable`. The matching `from*` helpers are split between `xlsx-kit/node` (fs / buffer / readable) and `xlsx-kit/io` (blob / response / web stream / array buffer).
+`XlsxSource` accepts anything from a `Uint8Array` to a `ReadableStream<Uint8Array>` to a `Blob` to a Node `Readable`. The matching `from*` helpers are split between `@office-kit/xlsx/node` (fs / buffer / readable) and `@office-kit/xlsx/io` (blob / response / web stream / array buffer).
 
 ## Errors
 

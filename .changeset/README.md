@@ -1,13 +1,13 @@
 # Changesets
 
 This directory contains [changesets](https://github.com/changesets/changesets)
-that drive version bumps, changelog entries, and npm publishes for `xlsx-kit`.
+that drive version bumps, changelog entries, and npm publishes for `@office-kit/xlsx`.
 
 ## Workflow
 
 1. Make a change that should ship in a release.
 2. Run `pnpm changeset` and follow the prompts:
-   - Select `xlsx-kit` (the `xlsx-kit-site` package is private and ignored).
+   - Select `@office-kit/xlsx` (the `@office-kit/xlsx-site` package is private and ignored).
    - Pick the bump type — `patch`, `minor`, or `major` — following [semver](https://semver.org/).
    - Write a short summary; this becomes the changelog entry.
 3. Commit the generated `.md` file in `.changeset/` along with your code change.

@@ -1,5 +1,5 @@
 // Phase 7 acceptance: VBA / pivot / activeX / customXml passthrough. The goal
-// is "openpyxl が壊さない xlsx は xlsx-kit も壊さない" — these tests pin that contract.
+// is "openpyxl が壊さない xlsx は @office-kit/xlsx も壊さない" — these tests pin that contract.
 
 import { describe, expect, it } from 'vitest';
 import { fromBuffer } from '../../src/io/node';

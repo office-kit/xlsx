@@ -1,16 +1,16 @@
 // Apply font, fill, alignment, and a thin border to a header row.
 
-import { saveWorkbook } from 'xlsx-kit/io';
-import { toFile } from 'xlsx-kit/node';
+import { saveWorkbook } from '@office-kit/xlsx/io';
+import { toFile } from '@office-kit/xlsx/node';
 import {
   centerCell,
   setBold,
   setCellBackgroundColor,
   setCellBorderAll,
   setFontSize,
-} from 'xlsx-kit/styles';
-import { addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
-import { setCell } from 'xlsx-kit/worksheet';
+} from '@office-kit/xlsx/styles';
+import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
+import { setCell } from '@office-kit/xlsx/worksheet';
 
 const wb = createWorkbook();
 const ws = addWorksheet(wb, 'Report');

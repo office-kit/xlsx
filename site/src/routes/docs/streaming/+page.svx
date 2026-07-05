@@ -13,7 +13,7 @@ Two orthogonal modes:
 - **Streaming write** — append rows to a sheet that's being deflated and written to disk on the fly. Heap stays bounded no matter how many rows you push.
 - **Streaming read** — walk a workbook's worksheets row-by-row without materializing the full sheet. Backed by a SAX parser.
 
-Both live behind the `xlsx-kit/streaming` entry, which is browser-safe (no `node:fs` imports). Use `xlsx-kit/node` to bridge to a `fs.ReadStream` / `fs.WriteStream`.
+Both live behind the `@office-kit/xlsx/streaming` entry, which is browser-safe (no `node:fs` imports). Use `@office-kit/xlsx/node` to bridge to a `fs.ReadStream` / `fs.WriteStream`.
 
 ## Streaming write — 10M rows under 100 MB heap
 

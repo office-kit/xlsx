@@ -14,7 +14,7 @@
     {
       num: '02',
       title: 'Streaming, both directions',
-      body: 'createWriteOnlyWorkbook deflates rows as they arrive. loadWorkbookStream walks a file once and yields each row. Browser-safe via xlsx-kit/streaming.',
+      body: 'createWriteOnlyWorkbook deflates rows as they arrive. loadWorkbookStream walks a file once and yields each row. Browser-safe via @office-kit/xlsx/streaming.',
     },
     {
       num: '03',
@@ -24,7 +24,7 @@
     {
       num: '04',
       title: 'Tiny & tree-shakeable',
-      body: 'xlsx-kit ≤ 120 KB brotli (currently ~78 KB). xlsx-kit/streaming ≤ 80 KB brotli (~47 KB). Every export is side-effect-free.',
+      body: '@office-kit/xlsx ≤ 120 KB brotli (currently ~78 KB). @office-kit/xlsx/streaming ≤ 80 KB brotli (~47 KB). Every export is side-effect-free.',
     },
   ];
 
@@ -36,7 +36,7 @@
 </script>
 
 <svelte:head>
-  <title>xlsx-kit — Read and write Excel .xlsx in Node and the browser</title>
+  <title>@office-kit/xlsx — Read and write Excel .xlsx in Node and the browser</title>
 </svelte:head>
 
 <section class="hero">
@@ -71,17 +71,17 @@
       </a>
       <a href="{base}/docs/recipes" class="btn ghost">Recipes</a>
       <a href="{base}/api" class="btn ghost">API reference</a>
-      <a href="https://github.com/baseballyama/xlsx-kit" class="btn ghost">
+      <a href="https://github.com/office-kit/xlsx" class="btn ghost">
         GitHub <span class="ext">↗</span>
       </a>
     </div>
 
     <div class="install" role="group" aria-label="Install command">
       <span class="install-coord">$</span>
-      <code class="install-cmd">pnpm add xlsx-kit</code>
+      <code class="install-cmd">pnpm add @office-kit/xlsx</code>
       <span class="install-alt">
         <span class="alt-sep">/</span>
-        <code>npm i xlsx-kit</code>
+        <code>npm i @office-kit/xlsx</code>
       </span>
     </div>
 

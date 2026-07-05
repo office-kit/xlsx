@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Question / How do I ...
-    url: https://github.com/baseballyama/xlsx-kit/discussions
+    url: https://github.com/office-kit/xlsx/discussions
     about: For usage questions, ideas, or anything that isn't a confirmed bug or a concrete feature request, please use Discussions instead of opening an issue.
   - name: Security vulnerability
-    url: https://github.com/baseballyama/xlsx-kit/security/advisories/new
+    url: https://github.com/office-kit/xlsx/security/advisories/new
     about: Please report security issues privately via GitHub Security Advisories. See SECURITY.md for the full process.

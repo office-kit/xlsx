@@ -10,7 +10,7 @@ import { OpenXmlIoError } from '../../src/utils/exceptions';
 
 let scratch: string;
 beforeAll(() => {
-  scratch = mkdtempSync(join(tmpdir(), 'xlsx-kit-io-'));
+  scratch = mkdtempSync(join(tmpdir(), 'office-kit-xlsx-io-'));
 });
 afterAll(() => {
   rmSync(scratch, { recursive: true, force: true });

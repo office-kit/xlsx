@@ -1,4 +1,4 @@
-// Conformance smoke test. Locks in the contract that anything xlsx-kit
+// Conformance smoke test. Locks in the contract that anything @office-kit/xlsx
 // emits is OPC-clean, schema-valid, and semantically consistent.
 //
 // Each new feature added to the writer should grow this file (or a sibling)
@@ -18,7 +18,7 @@ import { validateXlsx } from './validate';
 const dump = (issues: { tier: string; part: string; message: string }[]): string =>
   issues.map((i) => `[${i.tier}] ${i.part}: ${i.message}`).join('\n');
 
-describe('conformance: xlsx-kit output validates against ECMA-376', () => {
+describe('conformance: @office-kit/xlsx output validates against ECMA-376', () => {
   it('empty single-sheet workbook', async () => {
     const wb = createWorkbook();
     addWorksheet(wb, 'Only');
