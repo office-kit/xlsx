@@ -7,7 +7,8 @@
         "typedoc.json",
         ".size-limit.json"
       ],
-      "project": ["src/**/*.ts", "tests/**/*.ts"]
+      "project": ["src/**/*.ts", "tests/**/*.ts"],
+      "ignoreBinaries": ["xmllint"]
     },
     "site": {
       "entry": ["src/**/*.{ts,svelte}"],
