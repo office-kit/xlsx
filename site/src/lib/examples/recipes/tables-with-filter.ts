@@ -1,10 +1,10 @@
 // Promote a range to an Excel Table (named range with banded styling and
 // a built-in filter dropdown on every header).
 
-import { saveWorkbook } from 'xlsx-kit/io';
-import { toFile } from 'xlsx-kit/node';
-import { addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
-import { addExcelTable, setCell } from 'xlsx-kit/worksheet';
+import { saveWorkbook } from '@office-kit/xlsx/io';
+import { toFile } from '@office-kit/xlsx/node';
+import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
+import { addExcelTable, setCell } from '@office-kit/xlsx/worksheet';
 
 const wb = createWorkbook();
 const ws = addWorksheet(wb, 'Inventory');

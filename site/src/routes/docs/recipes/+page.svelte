@@ -17,7 +17,7 @@
 </script>
 
 <svelte:head>
-  <title>Recipes · xlsx-kit</title>
+  <title>Recipes · @office-kit/xlsx</title>
 </svelte:head>
 
 <article class="prose">
@@ -26,7 +26,7 @@
 
   <p class="lede">
     Every snippet below lives under <code>site/src/lib/examples/</code> and is type-checked by
-    <code>svelte-check</code> against the live <code>xlsx-kit</code> surface on every build —
+    <code>svelte-check</code> against the live <code>@office-kit/xlsx</code> surface on every build —
     an API rename breaks this page before anything ships. Need a one-line lookup? See the
     <a href="{base}/docs/cheatsheet">Cheatsheet</a>. Looking up a specific function? Jump to
     the <a href="{base}/api">API reference</a>.

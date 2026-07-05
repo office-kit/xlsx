@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 
 describe('migrate-from-openpyxl — public API smoke', () => {
-  it('Loading and saving — fromFile / toFile from xlsx-kit/node, load/save from xlsx-kit/io', async () => {
+  it('Loading and saving — fromFile / toFile from @office-kit/xlsx/node, load/save from @office-kit/xlsx/io', async () => {
     const node = await import('../../src/node');
     const io = await import('../../src/io/index');
     expect(typeof node.fromFile).toBe('function');

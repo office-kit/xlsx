@@ -1,11 +1,11 @@
 // Build several worksheets in one workbook and use named ranges
 // to refer between them.
 
-import { setFormula } from 'xlsx-kit/cell';
-import { saveWorkbook } from 'xlsx-kit/io';
-import { toFile } from 'xlsx-kit/node';
-import { addDefinedName, addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
-import { setCell } from 'xlsx-kit/worksheet';
+import { setFormula } from '@office-kit/xlsx/cell';
+import { saveWorkbook } from '@office-kit/xlsx/io';
+import { toFile } from '@office-kit/xlsx/node';
+import { addDefinedName, addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
+import { setCell } from '@office-kit/xlsx/worksheet';
 
 const wb = createWorkbook();
 const inputs = addWorksheet(wb, 'Inputs');

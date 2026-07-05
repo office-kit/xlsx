@@ -1,10 +1,10 @@
 // Add a list-type data validation — gives the user a dropdown of
 // allowed values when they click into the range.
 
-import { saveWorkbook } from 'xlsx-kit/io';
-import { toFile } from 'xlsx-kit/node';
-import { addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
-import { addDataValidation, makeDataValidation, setCell } from 'xlsx-kit/worksheet';
+import { saveWorkbook } from '@office-kit/xlsx/io';
+import { toFile } from '@office-kit/xlsx/node';
+import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
+import { addDataValidation, makeDataValidation, setCell } from '@office-kit/xlsx/worksheet';
 
 const wb = createWorkbook();
 const ws = addWorksheet(wb, 'Form');

@@ -1,6 +1,6 @@
 # Third Party Notices
 
-`xlsx-kit` is a TypeScript port of, and incorporates work derived from, the
+`@office-kit/xlsx` is a TypeScript port of, and incorporates work derived from, the
 following projects.
 
 ## openpyxl (MIT)
@@ -33,7 +33,7 @@ THE SOFTWARE.
 
 ## Runtime dependencies
 
-The following npm packages ship as part of `xlsx-kit` at runtime. Each is
+The following npm packages ship as part of `@office-kit/xlsx` at runtime. Each is
 licensed under its own terms — links go to the upstream repository where the
 license text lives.
 

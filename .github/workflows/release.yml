@@ -13,7 +13,7 @@ name: Release
 # Authentication:
 #   Publishing uses npm Trusted Publishers (OIDC). The package on npm must be
 #   configured to trust this repo + workflow at
-#   https://www.npmjs.com/package/xlsx-kit/access. No NPM_TOKEN secret is
+#   https://www.npmjs.com/package/@office-kit/xlsx/access. No NPM_TOKEN secret is
 #   needed; OIDC is brokered via the `id-token: write` permission below.
 #
 # Required repo settings:

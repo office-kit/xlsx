@@ -1,7 +1,7 @@
 // Round-trip genuine xlsx fixtures from third-party producers (Excel,
 // LibreOffice, openpyxl) and assert the bytes we re-emit are still ECMA-376
 // compliant. This catches a different class of bugs than the writer survey:
-// it exposes the parser/serializer to markup variants xlsx-kit didn't author
+// it exposes the parser/serializer to markup variants @office-kit/xlsx didn't author
 // — extension namespaces, alternate ordering, optional flags — and makes
 // sure the round-trip preserves OPC validity.
 

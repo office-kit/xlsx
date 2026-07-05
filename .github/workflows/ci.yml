@@ -34,7 +34,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm knip
       - run: pnpm build
-      # Bundle-size gate: xlsx-kit/streaming ≤80KB, full lib ≤120KB
+      # Bundle-size gate: @office-kit/xlsx/streaming ≤80KB, full lib ≤120KB
       # (docs/plan/06-streaming.md §3.4 acceptance).
       - run: pnpm size
 

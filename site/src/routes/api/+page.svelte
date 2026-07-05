@@ -6,15 +6,15 @@
 </script>
 
 <svelte:head>
-  <title>API reference — xlsx-kit</title>
+  <title>API reference — @office-kit/xlsx</title>
 </svelte:head>
 
 <div class="content">
   <p class="eyebrow">Reference</p>
   <h1>API reference</h1>
   <p class="lede">
-    Every public export of <code>xlsx-kit</code>, <code>xlsx-kit/streaming</code>, and
-    <code>xlsx-kit/node</code>, organized by section. Generated from the source via typedoc
+    Every public export of <code>@office-kit/xlsx</code>, <code>@office-kit/xlsx/streaming</code>, and
+    <code>@office-kit/xlsx/node</code>, organized by section. Generated from the source via typedoc
     and rendered inline so types stay in lockstep with the package.
   </p>
 

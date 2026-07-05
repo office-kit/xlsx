@@ -1,15 +1,15 @@
 // Apply number formats: currency, percentage, and a date-time.
 
-import { saveWorkbook } from 'xlsx-kit/io';
-import { toFile } from 'xlsx-kit/node';
+import { saveWorkbook } from '@office-kit/xlsx/io';
+import { toFile } from '@office-kit/xlsx/node';
 import {
   FORMAT_DATE_DATETIME,
   setCellAsCurrency,
   setCellAsPercent,
   setCellNumberFormat,
-} from 'xlsx-kit/styles';
-import { addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
-import { setCell } from 'xlsx-kit/worksheet';
+} from '@office-kit/xlsx/styles';
+import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
+import { setCell } from '@office-kit/xlsx/worksheet';
 
 const wb = createWorkbook();
 const ws = addWorksheet(wb, 'Numbers');

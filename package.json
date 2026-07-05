@@ -1,5 +1,5 @@
 {
-  "name": "xlsx-kit",
+  "name": "@office-kit/xlsx",
   "version": "0.8.0",
   "description": "TypeScript library for reading and writing Excel xlsx files in Node and the browser.",
   "type": "module",
@@ -7,11 +7,11 @@
   "author": "Yuichiro Yamashita",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baseballyama/xlsx-kit.git"
+    "url": "git+https://github.com/office-kit/xlsx.git"
   },
-  "homepage": "https://github.com/baseballyama/xlsx-kit#readme",
+  "homepage": "https://github.com/office-kit/xlsx#readme",
   "bugs": {
-    "url": "https://github.com/baseballyama/xlsx-kit/issues"
+    "url": "https://github.com/office-kit/xlsx/issues"
   },
   "keywords": [
     "xlsx",
@@ -126,7 +126,7 @@
     "@vitest/coverage-v8": "^4.1.6",
     "fast-check": "^4.8.0",
     "knip": "^6.14.2",
-    "oxlint": "^1.67.0",
+    "oxlint": "^1.72.0",
     "size-limit": "^12.1.0",
     "tsdown": "^0.22.1",
     "typedoc": "^0.28.19",

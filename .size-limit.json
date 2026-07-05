@@ -1,36 +1,36 @@
 [
   {
-    "name": "xlsx-kit/streaming (createWriteOnlyWorkbook + loadWorkbookStream)",
+    "name": "@office-kit/xlsx/streaming (createWriteOnlyWorkbook + loadWorkbookStream)",
     "path": "dist/streaming.mjs",
     "import": "*",
     "limit": "80 KB"
   },
   {
-    "name": "xlsx-kit/io (loadWorkbook + saveWorkbook)",
+    "name": "@office-kit/xlsx/io (loadWorkbook + saveWorkbook)",
     "path": "dist/io.mjs",
     "import": "*",
     "limit": "120 KB"
   },
   {
-    "name": "xlsx-kit/workbook",
+    "name": "@office-kit/xlsx/workbook",
     "path": "dist/workbook.mjs",
     "import": "*",
     "limit": "100 KB"
   },
   {
-    "name": "xlsx-kit/worksheet",
+    "name": "@office-kit/xlsx/worksheet",
     "path": "dist/worksheet.mjs",
     "import": "*",
     "limit": "100 KB"
   },
   {
-    "name": "xlsx-kit/styles",
+    "name": "@office-kit/xlsx/styles",
     "path": "dist/styles.mjs",
     "import": "*",
     "limit": "60 KB"
   },
   {
-    "name": "xlsx-kit/streaming (minified parse size, transitive)",
+    "name": "@office-kit/xlsx/streaming (minified parse size, transitive)",
     "path": "dist/streaming.mjs",
     "import": "*",
     "limit": "220 KB",
@@ -38,7 +38,7 @@
     "gzip": false
   },
   {
-    "name": "xlsx-kit/io (minified parse size, transitive)",
+    "name": "@office-kit/xlsx/io (minified parse size, transitive)",
     "path": "dist/io.mjs",
     "import": "*",
     "limit": "420 KB",

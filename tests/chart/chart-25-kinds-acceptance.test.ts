@@ -1,6 +1,6 @@
 // Phase 6 acceptance: every chart kind we model — 16 legacy `c:` + 8 chartex
 // `cx:` = 24 distinct kinds (some references count Pie + Pie3D + OfPie as three
-// slots and call it "25"; xlsx-kit implements the same set either way). Each
+// slots and call it "25"; @office-kit/xlsx implements the same set either way). Each
 // chart goes through workbookToBytes → loadWorkbook and the loaded chart's kind
 // / key attributes must match what we wrote.
 

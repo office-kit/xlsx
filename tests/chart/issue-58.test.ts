@@ -3,7 +3,7 @@ import type { ChartNumberFormat, ValueAxis } from '../../src/chart';
 import { makeBarChart, makeBarSeries, makeChartSpace } from '../../src/chart/chart';
 import { chartToBytes } from '../../src/chart/chart-xml';
 
-describe('issue #58 — ChartNumberFormat is publicly importable from xlsx-kit/chart', () => {
+describe('issue #58 — ChartNumberFormat is publicly importable from @office-kit/xlsx/chart', () => {
   it('lets a caller name the type used by axis numFmt', () => {
     const fmt: ChartNumberFormat = { formatCode: '#,##0', sourceLinked: false };
     const valAx: Partial<ValueAxis> = { numFmt: fmt };

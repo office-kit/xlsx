@@ -1,7 +1,7 @@
 // Public surface for drawings (charts/images embedded in a worksheet),
 // anchors, image bytes, and DML shape properties.
 //
-// `xlsx-kit/drawing` doubles as the home for the DML primitives that
+// `@office-kit/xlsx/drawing` doubles as the home for the DML primitives that
 // `ShapeProperties` / `TextBody` are built from — colours, fills, lines,
 // effects, and the rich-text body — so callers building chart styling can
 // import everything from a single subpath.

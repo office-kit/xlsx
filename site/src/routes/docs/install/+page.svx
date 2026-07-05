@@ -4,16 +4,16 @@
 
 # Install
 
-`xlsx-kit` ships as ESM-only. Pick the entry that matches your runtime.
+`@office-kit/xlsx` ships as ESM-only. Pick the entry that matches your runtime.
 
 ## Package install
 
 ```sh
-pnpm add xlsx-kit
+pnpm add @office-kit/xlsx
 # or
-npm install xlsx-kit
+npm install @office-kit/xlsx
 # or
-bun add xlsx-kit
+bun add @office-kit/xlsx
 ```
 
 Requires **Node `>=18.18`** for the built-in `Web Streams`, `Blob`, and `fetch` globals. Modern browsers (Chromium, Firefox, Safari with Web Streams) work with the streaming entry. Bun and Deno work via Web Streams.
@@ -22,14 +22,14 @@ Requires **Node `>=18.18`** for the built-in `Web Streams`, `Blob`, and `fetch` 
 
 | Import | Use case |
 |--------|----------|
-| `xlsx-kit` | Full library: workbook model, charts, drawings. |
-| `xlsx-kit/streaming` | Read-only iter + write-only append. Browser-safe. |
-| `xlsx-kit/node` | Filesystem `fromFile` / `toFile` + Node `Readable` / `Writable` glue, plus the full lib. |
+| `@office-kit/xlsx` | Full library: workbook model, charts, drawings. |
+| `@office-kit/xlsx/streaming` | Read-only iter + write-only append. Browser-safe. |
+| `@office-kit/xlsx/node` | Filesystem `fromFile` / `toFile` + Node `Readable` / `Writable` glue, plus the full lib. |
 
 Bundle budgets, min + brotli:
 
-- `xlsx-kit` ≤ 120 KB *(currently ~78 KB)*
-- `xlsx-kit/streaming` ≤ 80 KB *(currently ~47 KB)*
+- `@office-kit/xlsx` ≤ 120 KB *(currently ~78 KB)*
+- `@office-kit/xlsx/streaming` ≤ 80 KB *(currently ~47 KB)*
 
 All exports are side-effect-free (`"sideEffects": false`), so unused chart / drawing / pivot code drops out under any modern bundler.
 

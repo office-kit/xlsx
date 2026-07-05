@@ -1,12 +1,12 @@
-# Migrating from openpyxl to xlsx-kit
+# Migrating from openpyxl to @office-kit/xlsx
 
-`xlsx-kit` is a TypeScript port of openpyxl. The data model, naming, and
+`@office-kit/xlsx` is a TypeScript port of openpyxl. The data model, naming, and
 semantics line up closely; the API shape is different by necessity (TypeScript
 prefers free functions over methods, and the project banned classes outside
 of `Error` subclasses).
 
 This guide walks through the most common openpyxl idioms and their
-xlsx-kit equivalents. Pinned to xlsx-kit `0.6.x`.
+@office-kit/xlsx equivalents. Pinned to @office-kit/xlsx `0.6.x`.
 
 ## Loading and saving
 
@@ -18,9 +18,9 @@ wb.save('output.xlsx')
 ```
 
 ```ts
-// xlsx-kit
-import { loadWorkbook, saveWorkbook } from 'xlsx-kit/io';
-import { fromFile, toFile } from 'xlsx-kit/node';
+// @office-kit/xlsx
+import { loadWorkbook, saveWorkbook } from '@office-kit/xlsx/io';
+import { fromFile, toFile } from '@office-kit/xlsx/node';
 const wb = await loadWorkbook(fromFile('input.xlsx'));
 await saveWorkbook(wb, toFile('output.xlsx'));
 ```
@@ -42,8 +42,8 @@ ws = wb.create_sheet('Data')
 ```
 
 ```ts
-// xlsx-kit
-import { addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
+// @office-kit/xlsx
+import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
 const wb = createWorkbook();         // no default sheet
 const ws = addWorksheet(wb, 'Data'); // call directly
 ```
@@ -54,7 +54,7 @@ hides a real bug elsewhere). Just call `addWorksheet` directly.
 
 ## Cells
 
-| openpyxl                                | xlsx-kit                            |
+| openpyxl                                | @office-kit/xlsx                            |
 | --------------------------------------- | ----------------------------------- |
 | `ws['A1'] = 42`                         | `setCellByCoord(ws, 'A1', 42)`      |
 | `ws.cell(row=1, column=1, value=42)`    | `setCell(ws, 1, 1, 42)`             |
@@ -77,8 +77,8 @@ openpyxl does:
 ## Styles
 
 openpyxl exposes `cell.font`, `cell.fill`, etc. as direct mutable properties
-that the cell points at via a styleId. xlsx-kit keeps the same model — the
-`Stylesheet` is a pool — but exposes it through the `xlsx-kit/styles` bridge:
+that the cell points at via a styleId. @office-kit/xlsx keeps the same model — the
+`Stylesheet` is a pool — but exposes it through the `@office-kit/xlsx/styles` bridge:
 
 ```ts
 import {
@@ -91,7 +91,7 @@ import {
   setCellFill,
   setCellFont,
   setCellNumberFormat,
-} from 'xlsx-kit/styles';
+} from '@office-kit/xlsx/styles';
 
 setCellFont(wb, cell, makeFont({ name: 'Arial', size: 14, bold: true }));
 setCellFill(wb, cell, makePatternFill({
@@ -109,7 +109,7 @@ Every style primitive has a `make*` constructor — `makeFont`,
 
 ## Worksheets
 
-| openpyxl                  | xlsx-kit                              |
+| openpyxl                  | @office-kit/xlsx                              |
 | ------------------------- | ------------------------------------- |
 | `wb.create_sheet('Data')` | `addWorksheet(wb, 'Data')`            |
 | `wb.active`               | `getActiveSheet(wb)`                  |
@@ -138,9 +138,9 @@ wb.save('big.xlsx')
 ```
 
 ```ts
-// xlsx-kit
-import { createWriteOnlyWorkbook } from 'xlsx-kit/streaming';
-import { toFile } from 'xlsx-kit/node';
+// @office-kit/xlsx
+import { createWriteOnlyWorkbook } from '@office-kit/xlsx/streaming';
+import { toFile } from '@office-kit/xlsx/node';
 
 const wb = await createWriteOnlyWorkbook(toFile('big.xlsx'));
 const ws = await wb.addWorksheet('Data');
@@ -168,9 +168,9 @@ wb.close()
 ```
 
 ```ts
-// xlsx-kit
-import { fromFile } from 'xlsx-kit/node';
-import { loadWorkbookStream } from 'xlsx-kit/streaming';
+// @office-kit/xlsx
+import { fromFile } from '@office-kit/xlsx/node';
+import { loadWorkbookStream } from '@office-kit/xlsx/streaming';
 
 const wb = await loadWorkbookStream(fromFile('big.xlsx'));
 const ws = wb.openWorksheet('Data');
@@ -187,7 +187,7 @@ iteration; the SAX path stops walking the bytes once it crosses `maxRow`.
 
 ## What's preserved verbatim (no model)
 
-xlsx-kit doesn't re-implement every OOXML schema; instead, parts that
+@office-kit/xlsx doesn't re-implement every OOXML schema; instead, parts that
 aren't worth modelling round-trip byte-for-byte through `wb.passthrough` (and
 their content types via `wb.passthroughContentTypes`). The following live
 there:
@@ -206,31 +206,31 @@ there:
 - `customUI/`, `customXml/`
 - Control VML drawings (`xl/drawings/*.vml` excluding comment VML)
 
-If openpyxl preserves it, `xlsx-kit` does too — but typically without a typed
+If openpyxl preserves it, `@office-kit/xlsx` does too — but typically without a typed
 editing surface.
 
 ## What's not yet supported
 
 - **Editing pivot tables** — passthrough-only round-trip. The underlying
-  caches and table definitions survive load → save, but xlsx-kit has no
+  caches and table definitions survive load → save, but @office-kit/xlsx has no
   typed API for mutating them. Build the pivot once in Excel, then drive
-  the data sheet from xlsx-kit.
+  the data sheet from @office-kit/xlsx.
 - **ZIP64 size overflow (per-archive > 4 GiB)** — entry-count overflow is
   patched in (archives can exceed the ZIP32 65 535-entry cap), but
   `OpenXmlNotImplementedError` is thrown if the archive byte size or
   central-directory offset crosses 4 GiB. xlsx in practice stays well under
   that.
 - **Encrypted xlsx** — decrypt with [`msoffcrypto-tool`][msoffcrypto] (or
-  similar) first; xlsx-kit has no decryption path.
+  similar) first; @office-kit/xlsx has no decryption path.
 
 [msoffcrypto]: https://github.com/nolze/msoffcrypto-tool
 
 ## Further reading
 
 - `README.md` — feature matrix, bundle budgets, subpath entries.
-- [Cheatsheet](https://baseballyama.github.io/xlsx-kit/docs/cheatsheet) —
+- [Cheatsheet](https://baseballyama.github.io/@office-kit/xlsx/docs/cheatsheet) —
   task → exact functions to import.
-- [Recipes](https://baseballyama.github.io/xlsx-kit/docs/recipes) —
+- [Recipes](https://baseballyama.github.io/@office-kit/xlsx/docs/recipes) —
   prose-style worked examples (styling, charts, validation, streaming).
 - `SECURITY.md` — `decompressionLimits` defaults and the threat model when
   loading untrusted input.

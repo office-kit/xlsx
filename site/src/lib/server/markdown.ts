@@ -58,7 +58,7 @@ export type MarkdownDoc = {
 function buildRecipesMarkdown(): string {
   const intro = `# Recipes
 
-Working code for the things people actually want to do with xlsx-kit — open a workbook, build one from scratch, style cells, add a chart, stream millions of rows. Every snippet below is a real \`.ts\` file in the repo, type-checked against \`xlsx-kit\` on every build.
+Working code for the things people actually want to do with @office-kit/xlsx — open a workbook, build one from scratch, style cells, add a chart, stream millions of rows. Every snippet below is a real \`.ts\` file in the repo, type-checked against \`@office-kit/xlsx\` on every build.
 `;
   const sections = recipeGroups.map((g) => {
     const recipes = g.recipes.map((r) => {

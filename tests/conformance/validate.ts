@@ -434,7 +434,7 @@ function checkWorksheet(
   cellCtx: CellChecksContext,
   issues: ValidationIssue[],
 ): void {
-  // Streaming-ish regex pass; sufficient because xlsx-kit's writers emit a
+  // Streaming-ish regex pass; sufficient because @office-kit/xlsx's writers emit a
   // canonical layout. If we ever validate hand-crafted XML, swap this for
   // a real parser.
   // Capturing group 2 is the trailing `/>` for self-closing rows, so we can

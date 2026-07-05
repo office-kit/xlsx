@@ -1,10 +1,10 @@
 // Insert a PNG / JPEG image at a cell anchor. Format and dimensions
 // are auto-detected from the bytes, so loadImage is the only call.
 
-import { addImageAt, loadImage } from 'xlsx-kit/drawing';
-import { saveWorkbook } from 'xlsx-kit/io';
-import { toFile } from 'xlsx-kit/node';
-import { addWorksheet, createWorkbook } from 'xlsx-kit/workbook';
+import { addImageAt, loadImage } from '@office-kit/xlsx/drawing';
+import { saveWorkbook } from '@office-kit/xlsx/io';
+import { toFile } from '@office-kit/xlsx/node';
+import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
 import { readFile } from 'node:fs/promises';
 
 const wb = createWorkbook();

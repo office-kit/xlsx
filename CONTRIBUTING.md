@@ -1,4 +1,4 @@
-# Contributing to xlsx-kit
+# Contributing to @office-kit/xlsx
 
 Thanks for your interest in contributing. This document covers the day-to-day
 workflow: how to set up a development environment, run the test suite, and
@@ -7,7 +7,7 @@ land a change.
 ## Reporting issues
 
 - **Bug reports** — please use [`bug_report.yml`](.github/ISSUE_TEMPLATE/bug_report.yml).
-  Include the xlsx-kit version, a minimal reproduction, and the offending
+  Include the @office-kit/xlsx version, a minimal reproduction, and the offending
   xlsx file (or at least a snippet that triggers it). Bugs in xlsx file
   output ("Excel says the file is corrupt") almost always need the file
   attached to be actionable.
@@ -20,8 +20,8 @@ land a change.
 
 ```sh
 # Requires Node 22+ and pnpm.
-git clone --recurse-submodules https://github.com/baseballyama/xlsx-kit
-cd xlsx-kit
+git clone --recurse-submodules https://github.com/office-kit/xlsx
+cd @office-kit/xlsx
 pnpm install
 ```
 
@@ -59,7 +59,7 @@ a PR to catch most failures up front.
    ship with unit + integration coverage. The test layout under `tests/`
    mirrors `src/` — drop your test next to the matching module.
 4. **Run the full gate locally.** `pnpm prepublishOnly` mirrors what CI runs.
-5. **Add a changeset.** xlsx-kit uses
+5. **Add a changeset.** @office-kit/xlsx uses
    [Changesets](https://github.com/changesets/changesets) for release notes
    and version bumps. Run `pnpm changeset` and pick `patch` for fixes,
    `minor` for additive features, `major` only after coordination with the
@@ -109,7 +109,7 @@ add it to the install step in `.github/workflows/ci.yml`.
 
 ## Releases
 
-xlsx-kit publishes via npm Trusted Publishers (OIDC) — only the
+@office-kit/xlsx publishes via npm Trusted Publishers (OIDC) — only the
 [`release.yml`](.github/workflows/release.yml) workflow can publish. The flow:
 
 1. PRs land on `main` with their associated changeset.

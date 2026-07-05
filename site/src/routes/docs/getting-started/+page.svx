@@ -8,11 +8,11 @@
 
 # Getting started
 
-This page walks the canonical xlsx-kit workflow: load a workbook, mutate it, write it back. Every snippet below is a real `.ts` file in this repo — `svelte-check` compiles them against the live `xlsx-kit` types on every build, so when this page renders, it's already proven that the code typechecks.
+This page walks the canonical @office-kit/xlsx workflow: load a workbook, mutate it, write it back. Every snippet below is a real `.ts` file in this repo — `svelte-check` compiles them against the live `@office-kit/xlsx` types on every build, so when this page renders, it's already proven that the code typechecks.
 
 ## Read, edit, write — full library
 
-The top-level `xlsx-kit` entry gives you the full workbook model: cells, styles, charts, drawings, the lot. Pair it with the platform-specific I/O helpers from `xlsx-kit/node` (or your own `XlsxSource`).
+The top-level `@office-kit/xlsx` entry gives you the full workbook model: cells, styles, charts, drawings, the lot. Pair it with the platform-specific I/O helpers from `@office-kit/xlsx/node` (or your own `XlsxSource`).
 
 <CodeBlock html={ex.basicReadWrite.html} title={ex.basicReadWrite.path} />
 
@@ -22,7 +22,7 @@ The top-level `xlsx-kit` entry gives you the full workbook model: cells, styles,
 
 ## Direct fs helpers (Node)
 
-`xlsx-kit/node` exposes `fromFile` / `toFile` so you can skip the `readFile` / `writeFile` glue:
+`@office-kit/xlsx/node` exposes `fromFile` / `toFile` so you can skip the `readFile` / `writeFile` glue:
 
 <CodeBlock html={ex.nodeFs.html} title={ex.nodeFs.path} />
 
@@ -41,4 +41,4 @@ This works in any environment with `fetch` + Web Streams: modern browsers, Bun, 
 - <strong><a href="{base}/docs/recipes">Recipes</a></strong> — copy-pasteable code for the most common tasks (styling, charts, validation, streaming, export).
 - <strong><a href="{base}/docs/streaming">Streaming</a></strong> — millions of rows in fixed memory.
 - <strong><a href="{base}/api">API reference</a></strong> — every export, organized by section.
-- **GitHub:** [`baseballyama/xlsx-kit`](https://github.com/baseballyama/xlsx-kit)
+- **GitHub:** [`office-kit/xlsx`](https://github.com/office-kit/xlsx)

@@ -1,12 +1,12 @@
 ---
 name: issue-triage
-description: Triage GitHub issues for the xlsx-kit repository — classify as bug / feature request / other, attach the matching label, and drive the right follow-up workflow (reproduce + fix-PR for bugs; policy check + spec + implement-PR for features; individual response for other). Invoke this whenever the user mentions an issue number, asks to "triage", "look at", "handle", "process" an issue, or pastes a GitHub issue URL — even if they don't say the word "triage".
+description: Triage GitHub issues for the @office-kit/xlsx repository — classify as bug / feature request / other, attach the matching label, and drive the right follow-up workflow (reproduce + fix-PR for bugs; policy check + spec + implement-PR for features; individual response for other). Invoke this whenever the user mentions an issue number, asks to "triage", "look at", "handle", "process" an issue, or pastes a GitHub issue URL — even if they don't say the word "triage".
 ---
 
-# Issue Triage Skill (xlsx-kit)
+# Issue Triage Skill (@office-kit/xlsx)
 
 Triage a GitHub issue end-to-end: read it, classify it, label it, and run
-the workflow that matches its kind. xlsx-kit uses three kinds:
+the workflow that matches its kind. @office-kit/xlsx uses three kinds:
 
 1. **Bug report** — something is broken or behaves contrary to docs.
 2. **Feature request** — a new capability or API surface.
@@ -38,8 +38,8 @@ referred to throughout this skill.
 
 Resolve what issue to operate on:
 
-- Number form (`#42`) or URL (`https://github.com/baseballyama/xlsx-kit/issues/42`):
-  fetch with `gh issue view <num> --repo baseballyama/xlsx-kit --json
+- Number form (`#42`) or URL (`https://github.com/office-kit/xlsx/issues/42`):
+  fetch with `gh issue view <num> --repo office-kit/xlsx --json
   number,title,body,labels,author,state,comments`.
 - If the user pastes the body inline, work from that and confirm the
   issue number with the user before posting anything.
@@ -74,7 +74,7 @@ Edge cases:
 ## Step 2 — Apply the label
 
 Available labels in this repo (see `gh label list --repo
-baseballyama/xlsx-kit`):
+office-kit/xlsx`):
 
 - `bug`, `enhancement`, `documentation`, `question`, `duplicate`,
   `invalid`, `wontfix`, `good first issue`, `help wanted`, `dependencies`
@@ -86,7 +86,7 @@ Map class → label:
 - other → the most specific of `documentation` / `question` /
   `dependencies`. Use `question` as the catch-all.
 
-Apply with `gh issue edit <num> --repo baseballyama/xlsx-kit --add-label
+Apply with `gh issue edit <num> --repo office-kit/xlsx --add-label
 "<label>"`. Don't remove existing labels unless they conflict; instead,
 mention the conflict in your triage comment so the maintainer can adjust.
 
@@ -124,7 +124,7 @@ test green, then a PR.
    on the issue:
    - what you tried (versions, fixture you used, code path you exercised)
    - what specific information you need from `op` to make progress
-     (minimal `.xlsx` fixture, exact xlsx-kit version, Node version,
+     (minimal `.xlsx` fixture, exact @office-kit/xlsx version, Node version,
      code snippet, full stack trace)
    - @-mention `op` (the issue author) — and only `op`
    - Then stop. Don't open a speculative PR.
@@ -136,7 +136,7 @@ test green, then a PR.
 
 ### 3b. Feature request (enhancement) workflow
 
-xlsx-kit's policy: **"There is exactly one way to do one thing."** Adding
+@office-kit/xlsx's policy: **"There is exactly one way to do one thing."** Adding
 a second way to do something — even a more convenient one — increases
 cognitive load for every future reader and forces a choice on every
 caller. See `references/policy.md` for the full rationale and the
@@ -149,14 +149,14 @@ checklist for evaluating a request against this rule.
 2. **Score the request against the policy.** Three outcomes:
 
    - **Reject (most common):** the request adds a parallel API to
-     something xlsx-kit already supports (e.g., "add a `getCellValue`
+     something @office-kit/xlsx already supports (e.g., "add a `getCellValue`
      helper" when `getCell(...).value` already works). Post a comment
      that:
      - thanks the reporter
      - shows the existing path that already covers their use case (with
        a code snippet pointing at the actual export, e.g.
-       `xlsx-kit/worksheet`'s `getCell`)
-     - explains *why* xlsx-kit does not add a second path — link to the
+       `@office-kit/xlsx/worksheet`'s `getCell`)
+     - explains *why* @office-kit/xlsx does not add a second path — link to the
        policy section in the README/motivation if applicable
      - leaves the maintainer to close. Do not close yourself.
 
@@ -177,7 +177,7 @@ checklist for evaluating a request against this rule.
       - the public API shape (subpath, exported names, types)
       - what existing path it replaces, if any (and a deprecation plan
         if relevant)
-      - schema/conformance implications (xlsx-kit validates against
+      - schema/conformance implications (@office-kit/xlsx validates against
         ECMA-376; new features must round-trip)
       - test plan (unit + at least one round-trip fixture)
 
@@ -230,20 +230,20 @@ the maintainer sees it.
 
 ```sh
 # Read the issue
-gh issue view <num> --repo baseballyama/xlsx-kit \
+gh issue view <num> --repo office-kit/xlsx \
   --json number,title,body,labels,author,state,comments
 
 # Apply a label
-gh issue edit <num> --repo baseballyama/xlsx-kit --add-label "<label>"
+gh issue edit <num> --repo office-kit/xlsx --add-label "<label>"
 
 # Comment (use HEREDOC to preserve formatting)
-gh issue comment <num> --repo baseballyama/xlsx-kit --body "$(cat <<'EOF'
+gh issue comment <num> --repo office-kit/xlsx --body "$(cat <<'EOF'
 <message>
 EOF
 )"
 
 # List labels
-gh label list --repo baseballyama/xlsx-kit
+gh label list --repo office-kit/xlsx
 
 # Run tests for a single file
 pnpm vitest run tests/<phase>/issue-<num>.test.ts

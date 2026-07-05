@@ -58,9 +58,9 @@ the template-compliance workflow.
 
 ## Existing paths considered
 
-<!-- What does the current xlsx-kit public API offer for this use case? Why is
+<!-- What does the current @office-kit/xlsx public API offer for this use case? Why is
      it insufficient? Be specific — link to the exported names you tried
-     (e.g., `loadWorkbook`, `addWorksheet`, `xlsx-kit/streaming`).
+     (e.g., `loadWorkbook`, `addWorksheet`, `@office-kit/xlsx/streaming`).
      If you haven't tried anything yet, do that first. -->
 
 ## Proposed solution

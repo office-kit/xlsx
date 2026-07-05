@@ -29,7 +29,7 @@ import {
   SCHEME_COLOR_NAMES,
 } from '../../src/drawing';
 
-describe('issues #55 + #56 — DML colour + fill + text helpers re-export from xlsx-kit/drawing', () => {
+describe('issues #55 + #56 — DML colour + fill + text helpers re-export from @office-kit/xlsx/drawing', () => {
   it('exposes makeSrgbColor / makeSchemeColor / makeColor as values', () => {
     const srgb = makeSrgbColor('FF0000');
     expect(srgb).toEqual({ kind: 'srgb', value: 'FF0000' });
