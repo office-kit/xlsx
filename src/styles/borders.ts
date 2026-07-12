@@ -9,6 +9,10 @@ import { OpenXmlSchemaError } from '../utils/exceptions';
 import { type Color, colorToHex, makeColor } from './colors';
 
 export type SideStyle =
+  // ECMA-376 §18.18.3 ST_BorderStyle lists `none` (no stroke) as a first-class
+  // value; Excel omits the side element for it, but OnlyOffice writes it out
+  // explicitly, so we must accept and round-trip it (issue #99).
+  | 'none'
   | 'thin'
   | 'medium'
   | 'thick'
@@ -24,6 +28,7 @@ export type SideStyle =
   | 'slantDashDot';
 
 export const SIDE_STYLES: ReadonlyArray<SideStyle> = Object.freeze([
+  'none',
   'thin',
   'medium',
   'thick',
