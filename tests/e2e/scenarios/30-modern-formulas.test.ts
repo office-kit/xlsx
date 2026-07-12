@@ -1,19 +1,21 @@
 // Scenario 30: classic single-value formulas. Output: 30-modern-formulas.xlsx
 //
 // The original scenario covered Excel 365 / 2021 modern formulas (LET,
-// LAMBDA, FILTER, SORT, UNIQUE, SEQUENCE, XLOOKUP, BYROW). Two layers
-// of Excel constraints make those impractical to ship from this writer
-// without a full metadata implementation:
-//   1. Bare `LET(...)` / `XLOOKUP(...)` resolve only on Excel 365
-//      (LET) or Excel 2019+ (XLOOKUP); older Excel shows #NAME?.
-//   2. The `_xlfn.LET` / `_xlfn._xlws.FILTER` storage form Excel writes
-//      itself requires a paired `xl/metadata.xml` part + `cm="N"`
-//      cell-metadata reference — without those, Excel raises the
-//      "We found a problem" recovery dialog on open.
+// LAMBDA, FILTER, SORT, UNIQUE, SEQUENCE, XLOOKUP, BYROW). This scenario
+// deliberately stays on formulas that resolve in every Excel since 2007
+// (AVERAGE / VLOOKUP) for one reason only: version compatibility. Bare
+// `LET(...)` resolves only on Excel 365 and `XLOOKUP(...)` only on Excel
+// 2019+; older Excel shows #NAME?. AVERAGE / VLOOKUP keep the same
+// demonstrative shape (single-value arithmetic + lookup) and evaluate
+// everywhere.
 //
-// Until the metadata-emitter lands, fall back to formulas that exist in
-// every Excel since 2007: AVERAGE / VLOOKUP. Same demonstrative shape
-// (single-value arithmetic + lookup), guaranteed to evaluate everywhere.
+// Note: the `_xlfn.` / `_xlfn._xlws.` *name* prefix is not what blocks
+// this — that prefix is preserved verbatim on round-trip (see
+// `handleFormula` in src/worksheet/reader.ts) and Excel accepts it in an
+// ordinary cell with no metadata. The `cm="N"` + `xl/metadata.xml`
+// coupling is a *separate* concern that only marks a spill as a resizing
+// dynamic array; we don't emit that metadata yet, so a round-tripped
+// spill survives as a CSE array (values correct, no auto-resize).
 //
 // What to verify in Excel:
 // - E2 = AVERAGE(C2:C8) returns the average salary (84428.57).

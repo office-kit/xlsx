@@ -59,4 +59,34 @@ describe('future-function `_xlfn.` prefix round-trip', () => {
     // A bare `SCAN(` (no prefix) would be the corruption we are guarding against.
     expect(xml2).not.toMatch(/(?<!\.)\bSCAN\(/);
   });
+
+  // The `_xlfn._xlws.` compound prefix is the worksheet-function form Excel
+  // writes for the spilling dynamic-array functions (FILTER, SORT, UNIQUE,
+  // …). Stripping only the leading `_xlfn.` would leave a bare `_xlws.FILTER`,
+  // and stripping both would leave bare `FILTER` — both #NAME? on reopen. The
+  // whole prefix must survive verbatim.
+  it('keeps the compound `_xlfn._xlws.` prefix (FILTER/SORT) intact', async () => {
+    const wb = createWorkbook();
+    const ws = addWorksheet(wb, 'Sheet1');
+    const formula = '_xlfn._xlws.SORT(_xlfn._xlws.FILTER(A2:A8,B2:B8>0))';
+    const anchor = setCell(ws, 2, 8, null); // H2
+    setArrayFormula(anchor, 'H2:H8', formula, { cachedValue: 1 });
+
+    const bytes1 = await workbookToBytes(wb);
+    const wb2 = await loadWorkbook(fromBuffer(bytes1));
+    const ref0 = wb2.sheets[0];
+    if (ref0?.kind !== 'worksheet') throw new Error('expected worksheet');
+    const value = ref0.sheet.rows.get(2)?.get(8)?.value;
+    if (!value || typeof value !== 'object' || !('kind' in value) || value.kind !== 'formula') {
+      throw new Error('H2 is not a formula');
+    }
+    // Model preserves the full compound prefix, not a partially-stripped form.
+    expect(value.formula).toBe(formula);
+
+    const xml2 = sheet1Xml(await workbookToBytes(wb2));
+    expect(xml2).toContain('_xlfn._xlws.FILTER');
+    expect(xml2).toContain('_xlfn._xlws.SORT');
+    // No partially- or fully-stripped name may leak through.
+    expect(xml2).not.toMatch(/(?<!\.)\b(?:FILTER|SORT)\(/);
+  });
 });
