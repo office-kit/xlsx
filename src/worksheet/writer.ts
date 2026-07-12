@@ -364,12 +364,16 @@ const serializeFormulaCell = (ref: string, styleAttr: string, f: FormulaValue): 
   if (f.del2) fAttrs.push('del2="1"');
   if (f.aca) fAttrs.push('aca="1"');
   if (f.ca) fAttrs.push('ca="1"');
-  // Pass the formula text through verbatim. Auto-prefixing future-functions
-  // with `_xlfn.` matches what Excel writes on save, but Excel itself only
-  // accepts that form in tandem with `cm="N"` cell metadata + an
-  // `xl/metadata.xml` part — otherwise it raises the "We found a problem"
-  // recovery dialog. Until we emit metadata, ship bare names: Excel 365 / 2021
-  // still resolves them; older Excel renders #NAME? but the workbook opens.
+  // Pass the formula text through verbatim, including any `_xlfn.` /
+  // `_xlfn._xlws.` future-function prefix the reader preserved. The prefix is
+  // part of the stored function name (`_xlfn.XLOOKUP`, `_xlfn.LET`, …) and
+  // Excel accepts it in an ordinary cell with no metadata — it is *not*
+  // coupled to `cm="N"` / `xl/metadata.xml`. That metadata coupling is a
+  // separate concern: it marks a spill as a *resizing* dynamic array, and we
+  // don't model it yet, so a round-tripped spill survives as a CSE array over
+  // its stored `ref` (values correct, no auto-resize) rather than a true
+  // dynamic array. We never synthesise a prefix here — we only echo what the
+  // source contained — so we can't emit a form Excel didn't itself author.
   const fAttrStr = fAttrs.length > 0 ? ` ${fAttrs.join(' ')}` : '';
   const formulaText = escapeXmlText(escapeCellString(f.formula));
   const fEl = formulaText.length > 0 ? `<f${fAttrStr}>${formulaText}</f>` : `<f${fAttrStr}/>`;
