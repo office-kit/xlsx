@@ -1,5 +1,34 @@
 # @office-kit/xlsx
 
+## 0.9.0
+
+### Minor Changes
+
+- [#100](https://github.com/office-kit/xlsx/pull/100) [`c74f9d0`](https://github.com/office-kit/xlsx/commit/c74f9d057f766a14c6dc26b41e57682d611e17ca) Thanks [@baseballyama](https://github.com/baseballyama)! - Renamed the package from `xlsx-kit` to `@office-kit/xlsx`. The old `xlsx-kit`
+  package on npm is deprecated and will receive no further releases — install
+  `@office-kit/xlsx` and update every subpath import (`xlsx-kit/io` →
+  `@office-kit/xlsx/io`, and likewise for `/streaming`, `/workbook`, `/worksheet`,
+  `/cell`, `/styles`, `/chart`, `/drawing`, `/node`, and the low-level `/xml`,
+  `/zip`, `/packaging`, `/schema` escape hatches). No runtime behaviour changed.
+
+### Patch Changes
+
+- [#102](https://github.com/office-kit/xlsx/pull/102) [`9b1feba`](https://github.com/office-kit/xlsx/commit/9b1febad6bb7a1f6d0279e0bb9fceea2eaa2a36b) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: `loadWorkbook` rejected borders with `style="none"` ([#99](https://github.com/office-kit/xlsx/issues/99))
+
+  Files written by OnlyOffice (and any producer that emits the explicit no-border
+  value) set border sides to `style="none"`, which is the first value of
+  ECMA-376's `ST_BorderStyle` enumeration. Loading such a file failed with
+  `expected one of [thin, medium, ...]; got "none"`. `none` is now accepted and
+  round-trips faithfully; it draws no stroke in HTML/SVG preview.
+
+- [#101](https://github.com/office-kit/xlsx/pull/101) [`06dbfd8`](https://github.com/office-kit/xlsx/commit/06dbfd868e30eb6056114f696c8fbe8932b93ceb) Thanks [@michaelcradock76-spec](https://github.com/michaelcradock76-spec)! - Preserve the `_xlfn.` future-function prefix on read so dynamic-array formulas
+  survive a load → save round-trip. The reader stripped `_xlfn.` / `_xlfn._xlws.`
+  into the model, and the writer emits formula text verbatim, so a loaded
+  `_xlfn.SCAN(...)` was written back as bare `SCAN(...)` — an unknown name that
+  Excel renders as `#NAME?`. Formula text is now kept verbatim (matching openpyxl),
+  fixing every future function (SCAN, BYCOL, LAMBDA, XLOOKUP, FILTER, SEQUENCE,
+  LET, ANCHORARRAY, …).
+
 ## 0.8.0
 
 ### Minor Changes
