@@ -16,7 +16,7 @@ import { escapeCellString, escapeXmlAttr as escapeXmlAttrShared, escapeXmlText a
 import { OpenXmlSchemaError } from '../utils/exceptions';
 import type { SharedStringsTable } from '../workbook/shared-strings';
 import { addSharedString, serializeRichTextRuns } from '../workbook/shared-strings';
-import { SHEET_MAIN_NS } from '../xml/namespaces';
+import { MARKUP_COMPAT_NS, SHEET_MAIN_NS, X14_NS } from '../xml/namespaces';
 import { serializeXml } from '../xml/serializer';
 import type { XmlNode } from '../xml/tree';
 import type { AutoFilter } from './auto-filter';
@@ -95,9 +95,12 @@ export function worksheetToBytes(ws: Worksheet, ctx: WorksheetWriteContext): Uin
 }
 
 function serializeWorksheet(ws: Worksheet, ctx: WorksheetWriteContext): string {
+  // `Requires="x14"` on the oleObjects / controls wrapper names a prefix, so
+  // the namespace has to be declared on the root — where Excel declares it.
+  const x14Decl = ws.oleObjects.length > 0 || ws.controls.length > 0 ? ` xmlns:mc="${MARKUP_COMPAT_NS}" xmlns:x14="${X14_NS}"` : '';
   const parts: string[] = [
     XML_HEADER,
-    `<worksheet xmlns="${SHEET_MAIN_NS}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">`,
+    `<worksheet xmlns="${SHEET_MAIN_NS}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"${x14Decl}>`,
   ];
   if (ws.sheetProperties) {
     const sp = serializeSheetProperties(ws.sheetProperties);
@@ -216,12 +219,14 @@ function serializeWorksheet(ws: Worksheet, ctx: WorksheetWriteContext): string {
   if (ws.legacyComments.length > 0 && ctx.registerComments) {
     const { vmlRelId } = ctx.registerComments(ws.legacyComments);
     parts.push(`<legacyDrawing r:id="${escapeXmlAttr(vmlRelId)}"/>`);
+  } else if (ws.legacyDrawingRId !== undefined) {
+    parts.push(`<legacyDrawing r:id="${escapeXmlAttr(ws.legacyDrawingRId)}"/>`);
   }
   if (ws.legacyDrawingHFRId !== undefined) {
     parts.push(`<legacyDrawingHF r:id="${escapeXmlAttr(ws.legacyDrawingHFRId)}"/>`);
   }
-  if (ws.oleObjects.length > 0) parts.push(serializeOleObjects(ws.oleObjects));
-  if (ws.controls.length > 0) parts.push(serializeControls(ws.controls));
+  if (ws.oleObjects.length > 0) parts.push(wrapInX14Choice(serializeOleObjects(ws.oleObjects)));
+  if (ws.controls.length > 0) parts.push(wrapInX14Choice(serializeControls(ws.controls)));
   if (ws.backgroundPictureRId !== undefined) {
     parts.push(`<picture r:id="${escapeXmlAttr(ws.backgroundPictureRId)}"/>`);
   }
@@ -1092,6 +1097,15 @@ const serializeOleObjects = (objs: ReadonlyArray<OleObject>): string => {
   parts.push('</oleObjects>');
   return parts.join('');
 };
+
+/**
+ * Excel 2007 predates `<objectPr>` / `<controlPr>`, so Excel 2010+ gates the
+ * whole oleObjects / controls block behind `mc:Choice Requires="x14"`. Mirror
+ * that so older readers skip the block instead of rejecting the part. The
+ * `x14` (and `mc`) prefixes are declared on the worksheet root.
+ */
+const wrapInX14Choice = (xml: string): string =>
+  `<mc:AlternateContent><mc:Choice Requires="x14">${xml}</mc:Choice></mc:AlternateContent>`;
 
 const serializeControls = (ctrls: ReadonlyArray<FormControl>): string => {
   const parts: string[] = ['<controls>'];

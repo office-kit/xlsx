@@ -22,7 +22,7 @@ import { findById } from '../packaging/relationships';
 import { coordinateToTuple, tupleToCoordinate } from '../utils/coordinate';
 import { OpenXmlSchemaError } from '../utils/exceptions';
 import { ERROR_CODES } from '../utils/inference';
-import { REL_NS, SHEET_MAIN_NS } from '../xml/namespaces';
+import { MARKUP_COMPAT_NS, REL_NS, SHEET_MAIN_NS } from '../xml/namespaces';
 import { parseXml } from '../xml/parser';
 import { serializeXml } from '../xml/serializer';
 import { findChild, findChildren, type XmlNode } from '../xml/tree';
@@ -130,7 +130,10 @@ const PROTECTED_RANGE_TAG = `{${SHEET_MAIN_NS}}protectedRange`;
 const SORT_STATE_TAG = `{${SHEET_MAIN_NS}}sortState`;
 const SORT_CONDITION_TAG = `{${SHEET_MAIN_NS}}sortCondition`;
 const PICTURE_TAG = `{${SHEET_MAIN_NS}}picture`;
+const LEGACY_DRAWING_TAG = `{${SHEET_MAIN_NS}}legacyDrawing`;
 const LEGACY_DRAWING_HF_TAG = `{${SHEET_MAIN_NS}}legacyDrawingHF`;
+const MC_ALTERNATE_CONTENT_TAG = `{${MARKUP_COMPAT_NS}}AlternateContent`;
+const MC_CHOICE_TAG = `{${MARKUP_COMPAT_NS}}Choice`;
 const CUSTOM_SHEET_VIEWS_TAG = `{${SHEET_MAIN_NS}}customSheetViews`;
 const CUSTOM_SHEET_VIEW_TAG = `{${SHEET_MAIN_NS}}customSheetView`;
 const OLE_OBJECTS_TAG = `{${SHEET_MAIN_NS}}oleObjects`;
@@ -388,6 +391,15 @@ export function parseWorksheetXml(bytes: Uint8Array | string, title: string, ctx
     if (rId) ws.backgroundPictureRId = rId;
   }
 
+  // <legacyDrawing r:id="rIdN"/> — comment / form-control VML. Whether the
+  // rId is kept or superseded by a regenerated comment VML is decided by the
+  // caller, which can see the VML part itself.
+  const ldEl = findChild(root, LEGACY_DRAWING_TAG);
+  if (ldEl) {
+    const rId = ldEl.attrs[`{${REL_NS}}id`];
+    if (rId) ws.legacyDrawingRId = rId;
+  }
+
   // <legacyDrawingHF r:id="rIdN"/> — header/footer background VML.
   const lhfEl = findChild(root, LEGACY_DRAWING_HF_TAG);
   if (lhfEl) {
@@ -406,18 +418,16 @@ export function parseWorksheetXml(bytes: Uint8Array | string, title: string, ctx
   }
 
   // <oleObjects><oleObject ...><objectPr.../></oleObject></oleObjects>
-  const ooWrap = findChild(root, OLE_OBJECTS_TAG);
-  if (ooWrap) {
-    for (const oo of findChildren(ooWrap, OLE_OBJECT_TAG)) {
+  for (const ooWrap of findChildrenThroughMc(root, OLE_OBJECTS_TAG)) {
+    for (const oo of findChildrenThroughMc(ooWrap, OLE_OBJECT_TAG)) {
       const parsed = parseOleObject(oo);
       if (parsed) ws.oleObjects.push(parsed);
     }
   }
 
   // <controls><control ...><controlPr.../></control></controls>
-  const cWrap = findChild(root, CONTROLS_TAG);
-  if (cWrap) {
-    for (const c of findChildren(cWrap, CONTROL_TAG)) {
+  for (const cWrap of findChildrenThroughMc(root, CONTROLS_TAG)) {
+    for (const c of findChildrenThroughMc(cWrap, CONTROL_TAG)) {
       const parsed = parseFormControl(c);
       if (parsed) ws.controls.push(parsed);
     }
@@ -1189,7 +1199,7 @@ function captureWorksheetBodyExtras(root: XmlNode, ws: Worksheet): void {
   const afterSheetData: XmlNode[] = [];
   let seenSheetData = false;
   for (const child of root.children) {
-    if (MODELED_WORKSHEET_TAGS.has(child.name)) {
+    if (MODELED_WORKSHEET_TAGS.has(child.name) || wrapsModeledElement(child)) {
       if (child.name === SHEETDATA_TAG) seenSheetData = true;
       continue;
     }
@@ -1200,6 +1210,38 @@ function captureWorksheetBodyExtras(root: XmlNode, ws: Worksheet): void {
     ws.bodyExtras = { beforeSheetData, afterSheetData };
   }
 }
+
+/**
+ * Excel 2010+ gates `<controls>` / `<oleObjects>` (and each entry inside them)
+ * behind `<mc:AlternateContent><mc:Choice Requires="x14">` so Excel 2007
+ * skips the `<controlPr>` / `<objectPr>` children it predates. Collect the
+ * named children whether they sit directly under `parent` or inside such a
+ * wrapper. `mc:Fallback` only carries a degraded copy of the same entry, so it
+ * is not consulted.
+ */
+const findChildrenThroughMc = (parent: XmlNode, name: string): XmlNode[] => {
+  const out: XmlNode[] = [];
+  for (const child of parent.children) {
+    if (child.name === name) {
+      out.push(child);
+    } else if (child.name === MC_ALTERNATE_CONTENT_TAG) {
+      for (const choice of findChildren(child, MC_CHOICE_TAG)) out.push(...findChildren(choice, name));
+    }
+  }
+  return out;
+};
+
+/** The only worksheet children the reader collects through an `mc:AlternateContent` wrapper. */
+const MC_WRAPPED_TAGS: ReadonlySet<string> = new Set([OLE_OBJECTS_TAG, CONTROLS_TAG]);
+
+/**
+ * True for an `mc:AlternateContent` whose Choice holds one of `MC_WRAPPED_TAGS`
+ * — those are re-emitted from the typed model, so the wrapper must not also
+ * land in bodyExtras. A wrapper around anything else is still a body extra.
+ */
+const wrapsModeledElement = (node: XmlNode): boolean =>
+  node.name === MC_ALTERNATE_CONTENT_TAG &&
+  findChildren(node, MC_CHOICE_TAG).some((choice) => choice.children.some((c) => MC_WRAPPED_TAGS.has(c.name)));
 
 const MODELED_WORKSHEET_TAGS: ReadonlySet<string> = new Set([
   `{${SHEET_MAIN_NS}}dimension`,
@@ -1237,9 +1279,7 @@ const MODELED_WORKSHEET_TAGS: ReadonlySet<string> = new Set([
   PHONETIC_PR_TAG,
   DATA_CONSOLIDATE_TAG,
   SCENARIOS_TAG,
-  // <legacyDrawing r:id> for VML comments — we regenerate it from
-  // ws.legacyComments + ctx.registerComments.
-  `{${SHEET_MAIN_NS}}legacyDrawing`,
+  LEGACY_DRAWING_TAG,
 ]);
 
 const PANE_TYPES: ReadonlyArray<PaneType> = ['bottomRight', 'topRight', 'bottomLeft', 'topLeft'];

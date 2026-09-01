@@ -30,7 +30,6 @@ import { parseSharedStringsXml, type SharedStringsTable } from '../workbook/shar
 import { createWorkbook, type SheetRef, type SheetState, type Workbook } from '../workbook/workbook';
 import { parseCommentsXml } from '../worksheet/comments-xml';
 import { parseWorksheetXml } from '../worksheet/reader';
-import type { Worksheet } from '../worksheet/worksheet';
 import { parseTableXml } from '../worksheet/table-xml';
 import {
   ARC_APP,
@@ -342,6 +341,7 @@ function loadWorkbookFromArchive(archive: ZipArchive): Workbook {
   if (definedNamesFromXml.length > 0) wb.definedNames = definedNamesFromXml;
   const seenTitles = new Set<string>();
   const passthroughRoots: string[] = [];
+  const vml = makeVmlPartCache(archive);
   for (const entry of sheetEntries) {
     if (seenTitles.has(entry.name)) {
       throw new OpenXmlSchemaError(`loadWorkbook: duplicate sheet name "${entry.name}"`);
@@ -484,7 +484,7 @@ function loadWorkbookFromArchive(archive: ZipArchive): Workbook {
       ...(loadDrawing ? { loadDrawing } : {}),
     });
     if (sheetRels) {
-      const extras = captureSheetRelsExtras(sheetRels, ws);
+      const extras = captureSheetRelsExtras(sheetRels, sheetPath, vml);
       if (extras.length > 0) {
         ws.relsExtras = extras;
         // The writer re-emits these rels verbatim, so whatever they point at
@@ -493,6 +493,12 @@ function loadWorkbookFromArchive(archive: ZipArchive): Workbook {
           if (e.targetMode !== 'External') passthroughRoots.push(resolveRelTarget(sheetPath, e.target));
         }
       }
+    }
+    // A <legacyDrawing> pointing at the comment VML (or at nothing) has no
+    // surviving rel; the writer regenerates the comment link from
+    // ws.legacyComments, so re-emitting this rId would dangle.
+    if (ws.legacyDrawingRId !== undefined && !ws.relsExtras?.some((e) => e.id === ws.legacyDrawingRId)) {
+      delete ws.legacyDrawingRId;
     }
     const ref: SheetRef = {
       kind: 'worksheet',
@@ -509,7 +515,7 @@ function loadWorkbookFromArchive(archive: ZipArchive): Workbook {
 
   // Pass-through: capture parts we don't model (VBA / pivot / activeX / OLE /
   // customUI / customXml / etc.) so re-saving doesn't drop them.
-  capturePassthrough(archive, manifest, wb, passthroughRoots);
+  capturePassthrough(archive, manifest, wb, passthroughRoots, vml);
   return wb;
 }
 
@@ -517,9 +523,9 @@ const SHEET_MODELED_REL_TYPES: ReadonlySet<string> = new Set([
   `${REL_NS}/hyperlink`,
   `${REL_NS}/table`,
   `${REL_NS}/comments`,
-  `${REL_NS}/vmlDrawing`,
   `${REL_NS}/drawing`,
 ]);
+const VML_DRAWING_REL = `${REL_NS}/vmlDrawing`;
 
 /**
  * Capture per-sheet rels entries that don't match a modeled type. The writer
@@ -528,17 +534,20 @@ const SHEET_MODELED_REL_TYPES: ReadonlySet<string> = new Set([
  * printerSettings / oleObject / customProperty / threadedComment) remain
  * reachable from the worksheet after a round-trip.
  *
- * `vmlDrawing` is a modeled type only for the comments VML (regenerated from
- * `ws.legacyComments`). The header/footer VML behind `<legacyDrawingHF>` is
- * re-emitted by its original r:id, so that one rel rides along as an extra.
+ * `vmlDrawing` rels are split by part content rather than by type: only the
+ * comments VML is regenerated (from `ws.legacyComments`), so its rel is
+ * dropped; header/footer and form-control VML is re-emitted by its original
+ * r:id and rides along as an extra.
  */
 function captureSheetRelsExtras(
   sheetRels: import('../packaging/relationships').Relationships,
-  ws: Worksheet,
+  sheetPath: string,
+  vml: VmlPartCache,
 ): Relationship[] {
   const extras: Relationship[] = [];
   for (const rel of sheetRels.rels) {
-    if (SHEET_MODELED_REL_TYPES.has(rel.type) && rel.id !== ws.legacyDrawingHFRId) continue;
+    if (SHEET_MODELED_REL_TYPES.has(rel.type)) continue;
+    if (rel.type === VML_DRAWING_REL && vml.isCommentVml(resolveRelTarget(sheetPath, rel.target))) continue;
     extras.push(rel);
   }
   return extras;
@@ -1113,6 +1122,33 @@ const isVmlDrawing = (path: string): boolean =>
 const containsCommentMarker = (bytes: Uint8Array): boolean =>
   LATIN1_DECODER.decode(bytes).includes(COMMENT_VML_MARKER);
 
+interface VmlPartCache {
+  /** Inflated VML bytes, read once per part. */
+  read(path: string): Uint8Array;
+  /** True when the part at `path` exists and is a comment overlay. */
+  isCommentVml(path: string): boolean;
+}
+
+/**
+ * Both the per-sheet rels capture and the passthrough sweep need to classify
+ * VML parts; share one inflate per part between them.
+ */
+const makeVmlPartCache = (archive: ZipArchive): VmlPartCache => {
+  const bytesByPath = new Map<string, Uint8Array>();
+  const read = (path: string): Uint8Array => {
+    let bytes = bytesByPath.get(path);
+    if (bytes === undefined) {
+      bytes = archive.read(path);
+      bytesByPath.set(path, bytes);
+    }
+    return bytes;
+  };
+  return {
+    read,
+    isCommentVml: (path) => archive.has(path) && containsCommentMarker(read(path)),
+  };
+};
+
 /**
  * Top-level xl/*.xml files that aren't modeled but Excel relies on (or
  * harmlessly preserves). Captured by exact path; their content types come
@@ -1140,13 +1176,12 @@ const PASSTHROUGH_EXACT_PATHS: ReadonlySet<string> = new Set([
   'docProps/thumbnail.emf',
 ]);
 
-const isPassthroughPath = (path: string, bytes?: Uint8Array): boolean => {
+const isPassthroughPath = (path: string, vml: VmlPartCache): boolean => {
   if (PASSTHROUGH_EXACT_PATHS.has(path)) return true;
   if (PASSTHROUGH_PREFIXES.some((p) => path.startsWith(p))) return true;
-  if (isVmlDrawing(path) && bytes) {
-    // Comment VML is regenerated; control / shape VML passes through.
-    return !containsCommentMarker(bytes);
-  }
+  // Comment VML is regenerated; control / shape / header-footer VML passes
+  // through.
+  if (isVmlDrawing(path)) return !vml.isCommentVml(path);
   return false;
 };
 
@@ -1167,6 +1202,7 @@ function capturePassthrough(
   manifest: import('../packaging/manifest').Manifest,
   wb: Workbook,
   roots: ReadonlyArray<string>,
+  vml: VmlPartCache,
 ): void {
   const overrides = new Map<string, string>();
   for (const o of manifest.overrides) {
@@ -1206,14 +1242,13 @@ function capturePassthrough(
       wb.vbaSignature = archive.read(path);
       continue;
     }
-    // VML drawings need a content peek to distinguish comment-VML (regenerated
-    // from ws.legacyComments) from form-control / shape VML (passthrough). Read
-    // once and reuse for the actual capture.
-    let cached: Uint8Array | undefined;
-    if (isVmlDrawing(path)) cached = archive.read(path);
-    if (!isPassthroughPath(path, cached)) continue;
-    capture(path, cached ?? archive.read(path));
-    if (cached !== undefined) closureRoots.push(path);
+    if (!isPassthroughPath(path, vml)) continue;
+    if (isVmlDrawing(path)) {
+      capture(path, vml.read(path));
+      closureRoots.push(path);
+    } else {
+      capture(path, archive.read(path));
+    }
   }
 
   // Breadth-first over rels so a chain like sheet → VML → image is captured
