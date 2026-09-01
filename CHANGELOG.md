@@ -1,5 +1,13 @@
 # @office-kit/xlsx
 
+## 0.9.1
+
+### Patch Changes
+
+- [#106](https://github.com/office-kit/xlsx/pull/106) [`994935e`](https://github.com/office-kit/xlsx/commit/994935ee6c6b736fe608b035a4e771103d524029) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: round-tripping a sheet with a header/footer picture (`<legacyDrawingHF>`) produced a file Excel refused to open ([#104](https://github.com/office-kit/xlsx/issues/104))
+
+  `loadWorkbook` → `saveWorkbook` re-emitted `<legacyDrawingHF r:id="…"/>` but dropped the `vmlDrawing` relationship it points at, the VML part's own `.rels`, and the image behind it, and the surviving `.vml` part had no content type. Parts referenced by relationships the writer re-emits verbatim are now carried over together with their own relationships (transitively), and `<Default>` content types from the source manifest are preserved for such parts.
+
 ## 0.9.0
 
 ### Minor Changes
