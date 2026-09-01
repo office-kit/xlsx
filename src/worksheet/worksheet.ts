@@ -136,9 +136,17 @@ export interface Worksheet {
    */
   backgroundPictureRId?: string;
   /**
+   * `<legacyDrawing r:id="…"/>` — VML drawing carrying form-control / shape
+   * overlays. Ignored on save when the sheet has `legacyComments`: Excel puts
+   * comment markers in the same VML, and the writer regenerates that part
+   * from the comment list instead. Otherwise re-emitted verbatim, with the
+   * rels link riding `relsExtras` and the VML part riding `passthrough`.
+   */
+  legacyDrawingRId?: string;
+  /**
    * `<legacyDrawingHF r:id="…"/>` — VML drawing used for header/footer
-   * background images on print. Parallel to legacyDrawing (which carries
-   * comment markers); the rels link rides relsExtras.
+   * background images on print. Parallel to legacyDrawing; the rels link
+   * rides relsExtras.
    */
   legacyDrawingHFRId?: string;
   /**
