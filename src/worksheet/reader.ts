@@ -1231,10 +1231,17 @@ const findChildrenThroughMc = (parent: XmlNode, name: string): XmlNode[] => {
   return out;
 };
 
-/** True for an `mc:AlternateContent` whose Choice holds a modeled element (so it is not a body extra). */
+/** The only worksheet children the reader collects through an `mc:AlternateContent` wrapper. */
+const MC_WRAPPED_TAGS: ReadonlySet<string> = new Set([OLE_OBJECTS_TAG, CONTROLS_TAG]);
+
+/**
+ * True for an `mc:AlternateContent` whose Choice holds one of `MC_WRAPPED_TAGS`
+ * — those are re-emitted from the typed model, so the wrapper must not also
+ * land in bodyExtras. A wrapper around anything else is still a body extra.
+ */
 const wrapsModeledElement = (node: XmlNode): boolean =>
   node.name === MC_ALTERNATE_CONTENT_TAG &&
-  findChildren(node, MC_CHOICE_TAG).some((choice) => choice.children.some((c) => MODELED_WORKSHEET_TAGS.has(c.name)));
+  findChildren(node, MC_CHOICE_TAG).some((choice) => choice.children.some((c) => MC_WRAPPED_TAGS.has(c.name)));
 
 const MODELED_WORKSHEET_TAGS: ReadonlySet<string> = new Set([
   `{${SHEET_MAIN_NS}}dimension`,
