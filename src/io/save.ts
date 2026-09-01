@@ -220,7 +220,10 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
     vmlBytes: Uint8Array;
   }
   const commentEmits: CommentEmit[] = [];
-  let nextCommentsId = 1;
+  // Passthrough carries form-control / header-footer VML under the same
+  // xl/drawings/vmlDrawingN.vml naming, so start past whatever is already
+  // taken — the zip writer rejects duplicate entries.
+  let nextCommentsId = nextFreeIndex(wb, /^xl\/drawings\/vmlDrawing(\d+)\.vml$/);
   // Drawings: workbook-global drawingN counter for xl/drawings/drawingN.xml +
   // matching drawing-rels file (when chart items are present).
   interface DrawingEmit {
@@ -255,7 +258,9 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
   }
   const imageEmits: ImageEmit[] = [];
   const imageExts = new Set<string>();
-  let nextImageId = 1;
+  // Same collision guard as for VML: images referenced by passthrough parts
+  // keep their original xl/media/imageN.* names.
+  let nextImageId = nextFreeIndex(wb, /^xl\/media\/image(\d+)\./);
   // Track separate counters so worksheet / chartsheet IDs do not collide (Excel
   // uses xl/worksheets/sheetN.xml and xl/chartsheets/sheetM.xml independently
   // of one another).
@@ -649,6 +654,12 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
   const manifest = makeManifest();
   addDefault(manifest, 'rels', 'application/vnd.openxmlformats-package.relationships+xml');
   addDefault(manifest, 'xml', 'application/xml');
+  // Defaults carried over for passthrough parts go first: addDefault is
+  // last-wins, so the writer's own registrations below (vml for comments, bin
+  // for VBA, image formats) still take precedence on a shared extension.
+  if (wb.passthroughDefaults) {
+    for (const [ext, ct] of wb.passthroughDefaults) addDefault(manifest, ext, ct);
+  }
   // VBA-bearing workbooks promote the workbook content type to xlsm.
   const workbookContentType = wb.vbaProject
     ? 'application/vnd.ms-excel.sheet.macroEnabled.main+xml'
@@ -704,6 +715,22 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
 
   // ---- 8. close ----------------------------------------------------------
   await writer.finalize();
+}
+
+/**
+ * 1 + the highest N among passthrough paths matching `pattern` (whose first
+ * capture group is N), so freshly numbered modeled parts never collide with a
+ * carried-over one.
+ */
+function nextFreeIndex(wb: Workbook, pattern: RegExp): number {
+  let max = 0;
+  if (wb.passthrough) {
+    for (const path of wb.passthrough.keys()) {
+      const m = pattern.exec(path);
+      if (m?.[1] !== undefined) max = Math.max(max, Number.parseInt(m[1], 10));
+    }
+  }
+  return max + 1;
 }
 
 /** Serialise the minimum `<workbook><sheets/></workbook>` Excel needs to load a sheet list. */
