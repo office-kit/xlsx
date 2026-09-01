@@ -99,6 +99,13 @@ export interface Workbook {
    */
   passthroughContentTypes?: Map<string, string>;
   /**
+   * Default content type per extension for pass-through parts that had no
+   * Override in the source manifest (`vml`, `jpeg`, `bin` …). The writer only
+   * knows the extensions of parts it produces itself, so these are re-emitted
+   * as `<Default>` entries to keep carried-over parts typed.
+   */
+  passthroughDefaults?: Map<string, string>;
+  /**
    * Top-level `<workbook>` children that aren't `<sheets>` or `<definedNames>`
    * (e.g. `<fileVersion>`, `<workbookPr>`, `<bookViews>`, `<calcPr>`,
    * `<pivotCaches>`, `<extLst>`). Captured verbatim so re-saving keeps

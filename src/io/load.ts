@@ -21,7 +21,7 @@ import { corePropsFromBytes } from '../packaging/core';
 import { customPropsFromBytes } from '../packaging/custom';
 import { extendedPropsFromBytes } from '../packaging/extended';
 import { manifestFromBytes } from '../packaging/manifest';
-import { findById, indexRelsById, relsFromBytes } from '../packaging/relationships';
+import { findById, indexRelsById, type Relationship, relsFromBytes } from '../packaging/relationships';
 import { parseStylesheetXml } from '../styles/stylesheet-reader';
 import { OpenXmlSchemaError } from '../utils/exceptions';
 import type { DefinedName } from '../workbook/defined-names';
@@ -30,6 +30,7 @@ import { parseSharedStringsXml, type SharedStringsTable } from '../workbook/shar
 import { createWorkbook, type SheetRef, type SheetState, type Workbook } from '../workbook/workbook';
 import { parseCommentsXml } from '../worksheet/comments-xml';
 import { parseWorksheetXml } from '../worksheet/reader';
+import type { Worksheet } from '../worksheet/worksheet';
 import { parseTableXml } from '../worksheet/table-xml';
 import {
   ARC_APP,
@@ -340,6 +341,7 @@ function loadWorkbookFromArchive(archive: ZipArchive): Workbook {
   if (themeXml) wb.themeXml = themeXml;
   if (definedNamesFromXml.length > 0) wb.definedNames = definedNamesFromXml;
   const seenTitles = new Set<string>();
+  const passthroughRoots: string[] = [];
   for (const entry of sheetEntries) {
     if (seenTitles.has(entry.name)) {
       throw new OpenXmlSchemaError(`loadWorkbook: duplicate sheet name "${entry.name}"`);
@@ -482,8 +484,15 @@ function loadWorkbookFromArchive(archive: ZipArchive): Workbook {
       ...(loadDrawing ? { loadDrawing } : {}),
     });
     if (sheetRels) {
-      const extras = captureSheetRelsExtras(sheetRels);
-      if (extras.length > 0) ws.relsExtras = extras;
+      const extras = captureSheetRelsExtras(sheetRels, ws);
+      if (extras.length > 0) {
+        ws.relsExtras = extras;
+        // The writer re-emits these rels verbatim, so whatever they point at
+        // has to be carried over as passthrough or the output dangles.
+        for (const e of extras) {
+          if (e.targetMode !== 'External') passthroughRoots.push(resolveRelTarget(sheetPath, e.target));
+        }
+      }
     }
     const ref: SheetRef = {
       kind: 'worksheet',
@@ -500,7 +509,7 @@ function loadWorkbookFromArchive(archive: ZipArchive): Workbook {
 
   // Pass-through: capture parts we don't model (VBA / pivot / activeX / OLE /
   // customUI / customXml / etc.) so re-saving doesn't drop them.
-  capturePassthrough(archive, manifest, wb);
+  capturePassthrough(archive, manifest, wb, passthroughRoots);
   return wb;
 }
 
@@ -518,14 +527,19 @@ const SHEET_MODELED_REL_TYPES: ReadonlySet<string> = new Set([
  * captured passthrough parts (pivotTable / queryTable / slicer /
  * printerSettings / oleObject / customProperty / threadedComment) remain
  * reachable from the worksheet after a round-trip.
+ *
+ * `vmlDrawing` is a modeled type only for the comments VML (regenerated from
+ * `ws.legacyComments`). The header/footer VML behind `<legacyDrawingHF>` is
+ * re-emitted by its original r:id, so that one rel rides along as an extra.
  */
 function captureSheetRelsExtras(
   sheetRels: import('../packaging/relationships').Relationships,
-): Array<{ id: string; type: string; target: string }> {
-  const extras: Array<{ id: string; type: string; target: string }> = [];
+  ws: Worksheet,
+): Relationship[] {
+  const extras: Relationship[] = [];
   for (const rel of sheetRels.rels) {
-    if (SHEET_MODELED_REL_TYPES.has(rel.type)) continue;
-    extras.push({ id: rel.id, type: rel.type, target: rel.target });
+    if (SHEET_MODELED_REL_TYPES.has(rel.type) && rel.id !== ws.legacyDrawingHFRId) continue;
+    extras.push(rel);
   }
   return extras;
 }
@@ -1140,17 +1154,49 @@ const isPassthroughPath = (path: string, bytes?: Uint8Array): boolean => {
  * Walk the archive after the modeled parts are loaded and capture any remaining
  * content into `wb.passthrough`. The dedicated VBA project binaries land on
  * their own slots so the writer can promote the workbook content type to xlsm.
+ *
+ * `roots` are parts the worksheet writer will reference by their original
+ * r:id (see `captureSheetRelsExtras`). Each root is captured together with
+ * its own `.rels` file and, transitively, every internal target of those rels
+ * — that is what keeps a header/footer VML's image (`vmlDrawingN.vml.rels` →
+ * `xl/media/imageN.jpeg`) attached. Passthrough VML parts get the same
+ * treatment because form-control VML references images the same way.
  */
 function capturePassthrough(
   archive: ZipArchive,
   manifest: import('../packaging/manifest').Manifest,
   wb: Workbook,
+  roots: ReadonlyArray<string>,
 ): void {
   const overrides = new Map<string, string>();
   for (const o of manifest.overrides) {
     // Manifest paths are package-absolute (`/xl/...`); strip the leading slash.
     overrides.set(o.partName.replace(/^\//, ''), o.contentType);
   }
+  const defaults = new Map<string, string>();
+  for (const d of manifest.defaults) defaults.set(d.ext.toLowerCase(), d.contentType);
+
+  const capture = (path: string, bytes: Uint8Array): void => {
+    if (!wb.passthrough) wb.passthrough = new Map();
+    wb.passthrough.set(path, bytes);
+    const ct = overrides.get(path);
+    if (ct !== undefined) {
+      if (!wb.passthroughContentTypes) wb.passthroughContentTypes = new Map();
+      wb.passthroughContentTypes.set(path, ct);
+      return;
+    }
+    // No Override → the part is typed by its extension's Default. Remember it
+    // so the writer can re-emit that Default; it only knows the extensions of
+    // parts it produces itself.
+    const ext = path.slice(path.lastIndexOf('.') + 1).toLowerCase();
+    const dct = defaults.get(ext);
+    if (dct !== undefined) {
+      if (!wb.passthroughDefaults) wb.passthroughDefaults = new Map();
+      wb.passthroughDefaults.set(ext, dct);
+    }
+  };
+
+  const closureRoots: string[] = [...roots];
   for (const path of archive.list()) {
     if (path === 'xl/vbaProject.bin') {
       wb.vbaProject = archive.read(path);
@@ -1166,12 +1212,26 @@ function capturePassthrough(
     let cached: Uint8Array | undefined;
     if (isVmlDrawing(path)) cached = archive.read(path);
     if (!isPassthroughPath(path, cached)) continue;
-    if (!wb.passthrough) wb.passthrough = new Map();
-    wb.passthrough.set(path, cached ?? archive.read(path));
-    const ct = overrides.get(path);
-    if (ct !== undefined) {
-      if (!wb.passthroughContentTypes) wb.passthroughContentTypes = new Map();
-      wb.passthroughContentTypes.set(path, ct);
+    capture(path, cached ?? archive.read(path));
+    if (cached !== undefined) closureRoots.push(path);
+  }
+
+  // Breadth-first over rels so a chain like sheet → VML → image is captured
+  // whole. `visited` (not `wb.passthrough`) gates the walk because roots
+  // captured by the prefix scan above still need their rels followed.
+  const visited = new Set<string>();
+  // for…of re-reads the array length each step, so targets pushed mid-walk
+  // are visited too.
+  for (const path of closureRoots) {
+    if (visited.has(path) || !archive.has(path)) continue;
+    visited.add(path);
+    if (!wb.passthrough?.has(path)) capture(path, archive.read(path));
+    const relsPath = relsPathFor(path);
+    if (!archive.has(relsPath)) continue;
+    const relsBytes = archive.read(relsPath);
+    capture(relsPath, relsBytes);
+    for (const r of relsFromBytes(relsBytes).rels) {
+      if (r.targetMode !== 'External') closureRoots.push(resolveRelTarget(path, r.target));
     }
   }
 }
