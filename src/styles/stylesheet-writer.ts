@@ -104,8 +104,11 @@ function buildStylesheetTree(ss: Stylesheet): XmlNode {
   }
 
   // dxfs — differential styles referenced by conditional formatting and tables.
+  // Emitted even when empty: Excel writes `<dxfs count="0"/>` into every
+  // workbook, and a `dxfId` is an index into this list, so the element is the
+  // anchor conditional-formatting rules count from.
   const dxfs = getDxfs(ss as StylesheetWithDxfs);
-  if (dxfs.length > 0) {
+  {
     const dxfsEl = el(DXFS_TAG, { count: String(dxfs.length) });
     for (const dxf of dxfs) {
       const dxfEl = el(DXF_TAG);
@@ -120,6 +123,12 @@ function buildStylesheetTree(ss: Stylesheet): XmlNode {
       dxfsEl.children.push(dxfEl);
     }
     root.children.push(dxfsEl);
+  }
+
+  // tableStyles / colors / extLst, carried over verbatim from the loaded file.
+  // CT_Stylesheet (ECMA-376 §18.8.39) puts all three after <dxfs>.
+  if (ss.stylesXmlTail) {
+    for (const node of ss.stylesXmlTail) root.children.push(node);
   }
 
   return root;
