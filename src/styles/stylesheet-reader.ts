@@ -40,6 +40,18 @@ const CELLSTYLE_TAG = qname(SHEET_MAIN_NS, 'cellStyle');
 const DXFS_TAG = qname(SHEET_MAIN_NS, 'dxfs');
 const DXF_TAG = qname(SHEET_MAIN_NS, 'dxf');
 const XF_TAG = qname(SHEET_MAIN_NS, 'xf');
+// Every `<styleSheet>` child this reader turns into typed model state. Anything
+// else — `<tableStyles>`, `<colors>`, `<extLst>` — is kept verbatim instead.
+const MODELED_SECTION_TAGS: ReadonlySet<string> = new Set([
+  NUMFMTS_TAG,
+  FONTS_TAG,
+  FILLS_TAG,
+  BORDERS_TAG,
+  CELLSTYLEXFS_TAG,
+  CELLXFS_TAG,
+  CELLSTYLES_TAG,
+  DXFS_TAG,
+]);
 const FONT_TAG = qname(SHEET_MAIN_NS, 'font');
 const FILL_TAG = qname(SHEET_MAIN_NS, 'fill');
 const BORDER_TAG = qname(SHEET_MAIN_NS, 'border');
@@ -139,6 +151,9 @@ export function parseStylesheetXml(bytes: Uint8Array | string): Stylesheet {
       w._dxfIdByKey = new Map(dxfs.map((d, i) => [stableStringify(d), i]));
     }
   }
+
+  const tail = root.children.filter((child) => !MODELED_SECTION_TAGS.has(child.name));
+  if (tail.length > 0) ss.stylesXmlTail = tail;
 
   rebuildIndexes(ss);
   return ss;

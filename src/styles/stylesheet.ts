@@ -55,6 +55,14 @@ export interface Stylesheet {
   cellStyleXfs: CellXf[];
   /** Named styles (Excel's "Cell Styles" gallery; populated by addNamedStyle). */
   namedStyles?: Array<import('./named-styles').StylesheetNamedStyle>;
+  /**
+   * The tail of `<styleSheet>` this model doesn't cover — `<tableStyles>`,
+   * `<colors>` and `<extLst>` (which is where Excel keeps its x14/x15 slicer
+   * and timeline styles). Captured verbatim in document order so re-saving a
+   * loaded workbook keeps them; CT_Stylesheet puts all three after `<dxfs>`,
+   * so the writer appends them there.
+   */
+  stylesXmlTail?: Array<import('../xml/tree').XmlNode>;
 
   // Internal dedup maps. Underscore-prefixed so JSON / structuredClone
   // serialisation can choose to skip them; never part of the public API.
