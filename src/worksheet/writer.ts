@@ -15,7 +15,7 @@ import { dateToExcel, durationToExcel } from '../utils/datetime';
 import { escapeCellString, escapeXmlAttr as escapeXmlAttrShared, escapeXmlText as escapeXmlTextShared } from '../utils/escape';
 import { OpenXmlSchemaError } from '../utils/exceptions';
 import type { SharedStringsTable } from '../workbook/shared-strings';
-import { addSharedString, serializeRichTextRuns } from '../workbook/shared-strings';
+import { addSharedRichText, addSharedString } from '../workbook/shared-strings';
 import { MARKUP_COMPAT_NS, SHEET_MAIN_NS, X14_NS } from '../xml/namespaces';
 import { serializeXml } from '../xml/serializer';
 import type { XmlNode } from '../xml/tree';
@@ -310,13 +310,13 @@ export const serializeCell = (cell: Cell, ctx: WorksheetWriteContext): string =>
     return `<c r="${ref}"${styleAttr} t="e"><v>${code}</v></c>`;
   }
   if (typeof value === 'object' && value !== null && (value as { kind?: string }).kind === 'rich-text') {
-    // Emit rich text inline (t="inlineStr") rather than via the shared-strings
-    // table. Excel only honours per-run formatting for inline strings;
-    // rich-text entries inside `xl/sharedStrings.xml` get collapsed back to
-    // plain text on render. This mirrors openpyxl's writer (`cell.write` →
-    // `t="inlineStr"` for CellRichText values).
+    // Rich text goes into the shared-strings table as `<si><r>…</r></si>`,
+    // which is where Excel itself stores it — per-run formatting is honoured
+    // from there, and a formatted string repeated across cells costs one slot
+    // instead of one copy per cell.
     const runs = (value as { kind: 'rich-text'; runs: import('../cell/rich-text').RichText }).runs;
-    return `<c r="${ref}"${styleAttr} t="inlineStr"><is>${serializeRichTextRuns(runs)}</is></c>`;
+    const id = addSharedRichText(ctx.sharedStrings, runs);
+    return `<c r="${ref}"${styleAttr} t="s"><v>${id}</v></c>`;
   }
 
   if (typeof value === 'number') {

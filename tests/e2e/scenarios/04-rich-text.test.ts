@@ -2,12 +2,10 @@
 // Output: 04-rich-text.xlsx
 //
 // What to verify in Excel:
-// - A1 currently shows the runs concatenated as a plain string
-//   (current stage-1 behaviour). Real rich-text fidelity would show
-//   the per-run fonts (bold / italic / colored) — that's a known
-//   residual.
-// - A2 shows the same plain-string result via a non-rich `<t>` cell
-//   for comparison.
+// - A1 shows the per-run fonts (plain / bold / italic / red / 14pt),
+//   stored as an `<si><r>…</r></si>` entry in xl/sharedStrings.xml.
+// - A2 shows the same text unformatted via a plain `<t>` entry for
+//   comparison.
 
 import { describe, expect, it } from 'vitest';
 import { makeRichText, makeTextRun } from '../../../src/cell/index';

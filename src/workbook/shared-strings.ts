@@ -7,14 +7,15 @@
 //
 // Rich-text entries are kept as their full `RichText` runs so per-run fonts
 // (bold / italic / colour / size / …) survive the round-trip. Plain strings
-// still dedup against literal text; rich text is kept distinct per-cell
-// (Excel's writer doesn't dedupe rich-text either — formatting equality is
-// rarely worth comparing).
+// dedup against literal text; rich text dedups against the structural shape of
+// its runs, so a string that is bold in one cell and plain in another still
+// gets two slots.
 
 import type { RichText } from '../cell/rich-text';
 import { type Color, colorToHex } from '../styles/colors';
 import { escapeCellString, escapeXmlAttr, escapeXmlText, unescapeCellString } from '../utils/escape';
 import { OpenXmlSchemaError } from '../utils/exceptions';
+import { stableStringify } from '../utils/stable-stringify';
 import { qname, SHEET_MAIN_NS } from '../xml/namespaces';
 import { parseXml } from '../xml/parser';
 import { findChild, findChildren, type XmlNode } from '../xml/tree';
@@ -37,10 +38,12 @@ export interface SharedStringsTable {
   entries: SharedStringEntry[];
   /** Reverse lookup keyed by literal text — rich-text entries skip this map. */
   index: Map<string, number>;
+  /** Reverse lookup for rich-text entries, keyed by the structure of their runs. */
+  richIndex: Map<string, number>;
 }
 
 export function makeSharedStrings(): SharedStringsTable {
-  return { entries: [], index: new Map() };
+  return { entries: [], index: new Map(), richIndex: new Map() };
 }
 
 /**
@@ -54,6 +57,21 @@ export function addSharedString(table: SharedStringsTable, value: string): numbe
   const id = table.entries.length;
   table.entries.push(value);
   table.index.set(value, id);
+  return id;
+}
+
+/**
+ * Insert a rich-text entry and return its index. Deduped on the structure of
+ * the runs, so the same formatted string used in 100 cells lands in one slot —
+ * which is how Excel stores it.
+ */
+export function addSharedRichText(table: SharedStringsTable, runs: RichText): number {
+  const key = stableStringify(runs);
+  const cached = table.richIndex.get(key);
+  if (cached !== undefined) return cached;
+  const id = table.entries.length;
+  table.entries.push({ kind: 'rich-text', runs });
+  table.richIndex.set(key, id);
   return id;
 }
 
@@ -116,17 +134,27 @@ export function parseSharedStringsXml(bytes: Uint8Array | string): SharedStrings
   }
   const table = makeSharedStrings();
   for (const si of findChildren(root, SI_TAG)) {
-    const entry = parseSi(si);
+    const entry = parseRichString(si);
     // Don't dedup — Excel preserves duplicate `<si>` entries by index, and the
     // worksheet `t="s"` references depend on slot, not on text equality.
     const id = table.entries.length;
     table.entries.push(entry);
-    if (typeof entry === 'string' && !table.index.has(entry)) table.index.set(entry, id);
+    if (typeof entry === 'string') {
+      if (!table.index.has(entry)) table.index.set(entry, id);
+    } else {
+      const key = stableStringify(entry.runs);
+      if (!table.richIndex.has(key)) table.richIndex.set(key, id);
+    }
   }
   return table;
 }
 
-const parseSi = (si: XmlNode): SharedStringEntry => {
+/**
+ * Parse a `CT_Rst` body — the shape shared by `<si>` in sharedStrings.xml and
+ * `<is>` in an inline-string cell. Returns rich text when the body is built
+ * from `<r>` runs, and the plain concatenated text otherwise.
+ */
+export const parseRichString = (si: XmlNode): SharedStringEntry => {
   // Rich-text si has one or more <r> children. Plain si has a single <t>.
   const runEls = findChildren(si, R_TAG);
   if (runEls.length > 0) {
@@ -235,11 +263,8 @@ const serializeSi = (value: SharedStringEntry): string => {
   return `<si>${serializeRichTextRuns(value.runs)}</si>`;
 };
 
-/**
- * Serialise a sequence of `<r>...<r>` runs — shared by the SST `<si>` writer
- * and the worksheet's inline-string (`t="inlineStr"`) cell writer.
- */
-export function serializeRichTextRuns(runs: import('../cell/rich-text').RichText): string {
+/** Serialise a sequence of `<r>…</r>` runs into an `<si>` / `<is>` body. */
+function serializeRichTextRuns(runs: import('../cell/rich-text').RichText): string {
   const parts: string[] = [];
   for (const run of runs) {
     parts.push('<r>');
