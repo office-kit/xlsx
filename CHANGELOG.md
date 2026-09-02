@@ -1,5 +1,147 @@
 # @office-kit/xlsx
 
+## 0.10.0
+
+### Minor Changes
+
+- [#124](https://github.com/office-kit/xlsx/pull/124) [`3a8db65`](https://github.com/office-kit/xlsx/commit/3a8db654fb9b218d68c6ab9683e9d95b13a11995) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: an invalid hyperlink target is now rejected instead of producing a file Excel refuses ([#117](https://github.com/office-kit/xlsx/issues/117))
+
+  `setHyperlink` accepted any string as `target` and the writer emitted it
+  verbatim into the worksheet rels, so `{ target: 'https:// www.example.com' }`
+  saved without complaint and Excel then reported "We found a problem with some
+  content in …" and dropped content on repair. One bad row poisoned an entire
+  export.
+
+  The rels `Target` attribute is `xsd:anyURI`. Authoring a hyperlink now throws
+  an `OpenXmlSchemaError` when the target is empty, contains whitespace or a
+  control character, or has a non-ASCII host (percent-encoding does not rescue
+  that one — the host has to be punycode). The check runs in `makeHyperlink`, so
+  `setHyperlink`, `addUrlHyperlink` and `addMailtoHyperlink` are all covered.
+
+  Reading is deliberately unaffected: a workbook whose rels already carry a
+  broken target still loads, so it can be inspected and repaired.
+
+  **Behaviour change:** `makeHyperlink`, `setHyperlink`, `addUrlHyperlink` and
+  `addMailtoHyperlink` now throw on a target they previously accepted. That is
+  the point of the change — the alternative was a workbook Excel refuses — but
+  it can surface at a call site that used to succeed.
+
+- [#122](https://github.com/office-kit/xlsx/pull/122) [`3bd3940`](https://github.com/office-kit/xlsx/commit/3bd39400e5731178ffd739a6da9bcd37ba76714e) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: rich text was flattened to plain text on save ([#114](https://github.com/office-kit/xlsx/issues/114))
+
+  A shared string built from `<r>` runs came back as a single plain `<t>`: the
+  loader collapsed rich-text `<si>` entries into their concatenated text before
+  the worksheet reader saw them, so a cell with a bold first half round-tripped
+  uniformly unformatted. Inline strings (`<c t="inlineStr"><is>`) lost their runs
+  the same way on read.
+
+  Rich-text `<si>` and `<is>` bodies now go through one CT_Rst parser and become
+  `{ kind: 'rich-text' }` cell values, so per-run fonts survive. Cells holding
+  rich text are written into `xl/sharedStrings.xml` as `<si><r>…</r></si>` —
+  where Excel itself stores them — instead of being inlined per cell, so a
+  formatted string repeated across cells costs one entry rather than one copy
+  each. `<r>` runs with no `<rPr>` stay separate runs, since that is how Excel
+  writes the unformatted half of a rich string.
+
+  **Behaviour change:** a cell whose shared string is rich text now reads back
+  as `{ kind: 'rich-text', runs }` where it used to read back as the concatenated
+  plain string, and rich-text cells serialise into `xl/sharedStrings.xml` rather
+  than as `t="inlineStr"`. Code that assumed `getCell(...).value` was a string
+  for those cells needs to handle the union.
+
+### Patch Changes
+
+- [#125](https://github.com/office-kit/xlsx/pull/125) [`c5d706f`](https://github.com/office-kit/xlsx/commit/c5d706fd81275b1c14fa0997dcc3bd4ec6f93e41) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: drawing shapes were rewritten as chart graphicFrames with an empty r:id ([#110](https://github.com/office-kit/xlsx/issues/110))
+
+  An anchor holding anything the model doesn't cover — a shape, a group, a
+  connector — was written back as a chart `<xdr:graphicFrame>` carrying
+  `<c:chart r:id=""/>`, so a rectangle came back as "Chart 1" with a dangling
+  reference, its geometry gone and no drawing rels part written at all. Anchors
+  sitting inside Excel's `<mc:AlternateContent>` wrapper were dropped outright,
+  leaving an empty `<xdr:wsDr/>`. Together those are what still broke worksheets
+  carrying form controls after [#105](https://github.com/office-kit/xlsx/issues/105): the worksheet side was fixed, but the shapes
+  that draw the controls live in `drawing1.xml`.
+
+  Unmodeled drawing content is now kept as the verbatim source XML and written
+  back untouched — the whole anchor element, so `editAs` and the
+  `<xdr:clientData fLocksWithSheet="0">` flags form controls rely on survive too
+  — and `<mc:AlternateContent>` wrappers keep their place in document order,
+  which is z-order. Relationships those nodes reference keep their original ids
+  and their target parts, and the writer allocates ids for modeled charts and
+  pictures around them.
+
+- [#121](https://github.com/office-kit/xlsx/pull/121) [`2f7e6c4`](https://github.com/office-kit/xlsx/commit/2f7e6c4e2c3a9bb8051d74d83187513331fa1b58) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: an empty cached formula value and its `t="str"` were dropped on save ([#115](https://github.com/office-kit/xlsx/issues/115))
+
+  `<c r="A1" t="str"><f>[1]Extern!$A$1</f><v/></c>` came back as
+  `<c r="A1"><f>[1]Extern!$A$1</f></c>`: the reader collapsed an empty `<v/>`
+  and an absent `<v>` into the same "no cached value" state, so the writer had
+  nothing left to emit the type from.
+
+  It matters for formulas that reference another workbook — Excel cannot
+  recalculate those without opening the other file, so the cached value is the
+  only thing it has to display. An empty `<v/>` is now read as a cached empty
+  string and written back with its `t="str"`; a genuinely absent `<v>` still
+  means "no cached value", and an empty `<v/>` on a numeric cell still carries
+  no number.
+
+- [#123](https://github.com/office-kit/xlsx/pull/123) [`b3dd9c0`](https://github.com/office-kit/xlsx/commit/b3dd9c0650d7399d07b919444cf4e30290753e94) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: cells without a value were dropped on save, leaving defined names dangling ([#111](https://github.com/office-kit/xlsx/issues/111))
+
+  `<c r="B1"/>` and `<c r="C1" s="0"/>` disappeared from the saved sheet: the
+  writer skipped any cell whose value was `null` unless it also carried a
+  non-default style. Dropping a genuinely unreferenced empty cell is harmless,
+  but an empty cell can still be the target of a `definedName`, a form control's
+  `fmlaLink`, or a drawing or comment anchor — and those were left pointing at
+  nothing.
+
+  A valueless cell now always emits. `deleteCell` — not `setCell(…, null)` — is
+  how a caller says the cell is gone; cells that were never in the model are
+  still not written.
+
+- [#119](https://github.com/office-kit/xlsx/pull/119) [`48b0d4d`](https://github.com/office-kit/xlsx/commit/48b0d4d7b91d90954b21488edeed97867fe36a23) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: styles.xml lost dxfs, tableStyles, colors and extLst on save ([#113](https://github.com/office-kit/xlsx/issues/113))
+
+  Everything after `<cellStyles>` in `xl/styles.xml` was dropped when a loaded
+  workbook was saved again. `<dxfs>` was only written when the pool held
+  entries, and `<tableStyles>`, `<colors>` and `<extLst>` — where Excel keeps
+  custom table styles, the MRU colour palette and the x14/x15 slicer and
+  timeline styles — were never read in the first place. Every workbook Excel
+  writes carries at least `<dxfs>` and `<tableStyles>`, so this hit essentially
+  any real file.
+
+  `Stylesheet` now carries the unmodeled tail (`stylesXmlTail`) verbatim and the
+  writer re-emits it after `<dxfs>`, where `CT_Stylesheet` (ECMA-376 §18.8.39)
+  puts it. `<dxfs count="0"/>` is now always written, matching Excel — a
+  conditional-formatting rule's `dxfId` is an index into that list.
+
+- [#118](https://github.com/office-kit/xlsx/pull/118) [`c97258e`](https://github.com/office-kit/xlsx/commit/c97258e8aef0eea93ebd11877663f26cdd4408d1) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: workbook.xml was written out of CT_Workbook order ([#112](https://github.com/office-kit/xlsx/issues/112))
+
+  `CT_Workbook` (ECMA-376 §18.2.27) is an `xsd:sequence`, so the children of
+  `<workbook>` have a normative order. Saving a workbook wrote `<definedNames>`
+  straight after `<sheets>` — ahead of `<functionGroups>` and
+  `<externalReferences>` — and `<pivotCaches>` ahead of `<calcPr>`. A workbook
+  carrying both an external reference and a defined name therefore came back as
+  a package Excel refuses to open.
+
+  `workbook.xml` is now emitted in schema order: `functionGroups`,
+  `externalReferences`, `definedNames`, `calcPr`, `oleSize`,
+  `customWorkbookViews`, `pivotCaches`, `smartTagPr`, `smartTagTypes`,
+  `fileRecoveryPr`, then any unmodeled tail (`webPublishing`,
+  `webPublishObjects`, `extLst`) that was carried over from the loaded file.
+
+- [#126](https://github.com/office-kit/xlsx/pull/126) [`21c4a26`](https://github.com/office-kit/xlsx/commit/21c4a260c6be6ea82378742b25967ed449f13249) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: workbook.xml lost mc:Ignorable and its namespace declarations on save ([#116](https://github.com/office-kit/xlsx/issues/116))
+
+  Saving a workbook whose `xl/workbook.xml` carries the markup-compatibility
+  block Excel writes into essentially every file stripped `mc:Ignorable` and the
+  namespace declarations it names off the root, renamed the child prefixes
+  (`x15ac:` → a generated `ns0:`, `xr:` → `x16:`), dropped the `xr2:uid` on
+  `<workbookView>`, and moved `<workbookPr>` behind the `mc:AlternateContent`
+  block. Excel reported the result as corrupt. This is the workbook-level sibling
+  of [#105](https://github.com/office-kit/xlsx/issues/105), which fixed the same rewrite on the worksheet.
+
+  The root's namespace declarations and `mc:Ignorable` are now carried through
+  verbatim, and every captured child is written with the prefixes the root
+  declares — `mc:Ignorable` names them by prefix, so the two have to agree.
+  `<workbookView>` keeps namespaced attributes it doesn't model (`xr2:uid`),
+  and the unmodeled head is emitted after `<workbookPr>`, where Excel puts it.
+
 ## 0.9.2
 
 ### Patch Changes
