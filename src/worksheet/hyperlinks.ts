@@ -22,10 +22,57 @@ export interface Hyperlink {
   rId?: string;
 }
 
+/**
+ * Anything the OPC `Target` attribute (`xsd:anyURI`) cannot carry: whitespace,
+ * C0/C1 controls, and DEL. Excel does not ignore the one bad link — it refuses
+ * the whole package and drops content on repair.
+ */
+const ILLEGAL_TARGET_CHAR = /[\u0000-\u0020\u007f-\u009f]/;
+
+/** The authority of a `scheme://authority/…` target, if the target has one. */
+const AUTHORITY = /^[A-Za-z][A-Za-z0-9+.-]*:\/\/([^/?#]*)/;
+
+const describeChar = (ch: string): string =>
+  ch === ' ' ? 'a space' : `U+${ch.codePointAt(0)?.toString(16).toUpperCase().padStart(4, '0')}`;
+
+/**
+ * Reject a target the writer would emit verbatim into the rels and Excel would
+ * then refuse. Applied when the hyperlink is authored, not when one is read
+ * back off disk — a file that already carries a broken target still loads, so
+ * it can be inspected and repaired.
+ */
+function assertValidTarget(target: string): void {
+  if (target.length === 0) {
+    throw new OpenXmlSchemaError(
+      'Hyperlink: target is empty — pass a URI, or use `location` for an in-workbook jump',
+    );
+  }
+  const illegal = ILLEGAL_TARGET_CHAR.exec(target);
+  if (illegal?.[0] !== undefined) {
+    throw new OpenXmlSchemaError(
+      `Hyperlink: target "${target}" contains ${describeChar(illegal[0])} at index ${illegal.index}. ` +
+        'The rels Target attribute is xsd:anyURI and Excel refuses the file; percent-encode it or drop it.',
+    );
+  }
+  const authority = AUTHORITY.exec(target)?.[1];
+  if (authority !== undefined && /[^\u0021-\u007e]/.test(authority)) {
+    throw new OpenXmlSchemaError(
+      `Hyperlink: target "${target}" has a non-ASCII host. Percent-encoding does not rescue it — ` +
+        'convert the host to punycode (xn--…).',
+    );
+  }
+}
+
+/**
+ * Build a validated {@link Hyperlink}. `target` is checked against what the
+ * OPC `Target` attribute accepts, so a bad URL fails here rather than as an
+ * Excel repair prompt on a package that has already been written.
+ */
 export function makeHyperlink(opts: Partial<Hyperlink> & { ref: string }): Hyperlink {
   if (opts.ref === undefined || opts.ref.length === 0) {
     throw new OpenXmlSchemaError('Hyperlink: ref is required');
   }
+  if (opts.target !== undefined) assertValidTarget(opts.target);
   return {
     ref: opts.ref,
     ...(opts.target !== undefined ? { target: opts.target } : {}),

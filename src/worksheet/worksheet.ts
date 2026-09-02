@@ -1919,6 +1919,10 @@ export function unhideRows(ws: Worksheet, fromRow: number, toRow: number): void 
  * Replace any prior hyperlink on the same `ref` with the given options. Pass `{
  * target }` for an external URL, `{ location }` for an internal jump, or both.
  * Returns the resulting Hyperlink record.
+ *
+ * `target` is validated against what the rels `Target` attribute (`xsd:anyURI`)
+ * accepts — whitespace, control characters and a non-ASCII host throw an
+ * {@link OpenXmlSchemaError} here rather than producing a package Excel refuses.
  */
 export function setHyperlink(
   ws: Worksheet,
