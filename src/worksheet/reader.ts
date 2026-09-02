@@ -1407,7 +1407,11 @@ const readCell = (
   // ---- formula path ------------------------------------------------------
   if (fNode) {
     const cell = setCell(ws, coord.row, coord.col, null, styleId);
-    const cachedRaw = vNode?.text;
+    // `<v/>` and a missing `<v>` are different states: Excel writes the former
+    // for a formula whose cached result is the empty string (common for links
+    // into a workbook it cannot reach), and that cached value is the only
+    // thing it has to display until the link resolves.
+    const cachedRaw = vNode === undefined ? undefined : (vNode.text ?? '');
     const cached = decodeCachedValue(cachedRaw, t);
     handleFormula(cell, fNode, coord, cached, sharedFormulas);
     return;
@@ -1482,12 +1486,13 @@ const readInlineString = (isNode: XmlNode | undefined): string => {
 };
 
 const decodeCachedValue = (raw: string | undefined, t: string): number | string | boolean | undefined => {
-  if (raw === undefined || raw === '') return undefined;
+  if (raw === undefined) return undefined;
   switch (t) {
     case 'n':
-      return Number.parseFloat(raw);
+      // An empty `<v/>` under the (default) numeric type carries no number.
+      return raw === '' ? undefined : Number.parseFloat(raw);
     case 'b':
-      return raw === '1';
+      return raw === '' ? undefined : raw === '1';
     case 'str':
       return raw;
     case 'e':
