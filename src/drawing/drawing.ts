@@ -2,9 +2,8 @@
 //
 // A `Drawing` is the per-worksheet `xl/drawings/drawingN.xml` part — a list of
 // anchor entries, each carrying a content variant (chart, picture, shape,
-// connector, group). Stage-1 implements the chart variant as a "rels-only"
-// reference (the full ChartML model lands in later iterations); picture / shape
-// / connector / group are reserved for later.
+// connector, group). Charts and pictures are modeled; everything else is kept
+// as the verbatim source XML so it survives a round-trip untouched.
 
 import type { ChartSpace } from '../chart/chart';
 import type { CxChartSpace } from '../chart/cx/chartex';
@@ -59,10 +58,32 @@ export interface DrawingItem {
     | { kind: 'chart'; chart: ChartReference }
     | { kind: 'picture'; picture: PictureReference }
     | { kind: 'unsupported'; rawTag: string };
+  /**
+   * The whole source anchor element, captured verbatim. Set by the reader for
+   * `unsupported` content — a plain shape, a group, a connector — because the
+   * model has no slot for its geometry, text or `<xdr:clientData>` attributes.
+   * When present the writer emits it as-is instead of rebuilding the anchor
+   * from {@link anchor} + {@link content}.
+   */
+  raw?: import('../xml/tree').XmlNode;
 }
 
 export interface Drawing {
   items: DrawingItem[];
+  /**
+   * `<xdr:wsDr>` children that aren't anchors — in practice Excel's
+   * `<mc:AlternateContent>` wrapper around an anchor that needs a newer
+   * feature. Kept verbatim together with the `items` index they sat before, so
+   * document order (which is z-order) survives a round-trip.
+   */
+  rawChildren?: Array<{ beforeItem: number; node: import('../xml/tree').XmlNode }>;
+  /**
+   * Drawing-rels entries the verbatim nodes above reference (`r:embed` on a
+   * picture inside a group, `r:id` on a shape's hyperlink, …). Carried over
+   * from the source part under their original ids so those references still
+   * resolve after a re-save; the writer allocates its own ids around them.
+   */
+  rawRels?: import('../packaging/relationships').Relationships;
 }
 
 export function makeDrawing(items: DrawingItem[] = []): Drawing {
