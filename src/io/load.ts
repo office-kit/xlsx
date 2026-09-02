@@ -14,14 +14,14 @@ import { findUserShapesRId, parseChartXml } from '../chart/chart-xml';
 import { isChartExBytes, parseChartExXml } from '../chart/cx/chartex-xml';
 import { parseUserShapesXml } from '../chart/user-shapes-xml';
 import { parseChartsheetXml } from '../chartsheet/chartsheet-xml';
-import { parseDrawingXml } from '../drawing/drawing-xml';
+import { collectRawRelIds, parseDrawingXml } from '../drawing/drawing-xml';
 import { loadImage } from '../drawing/image';
 import type { XlsxSource } from '../io/source';
 import { corePropsFromBytes } from '../packaging/core';
 import { customPropsFromBytes } from '../packaging/custom';
 import { extendedPropsFromBytes } from '../packaging/extended';
 import { manifestFromBytes } from '../packaging/manifest';
-import { findById, indexRelsById, type Relationship, relsFromBytes } from '../packaging/relationships';
+import { findById, indexRelsById, makeRelationships, type Relationship, relsFromBytes } from '../packaging/relationships';
 import { parseStylesheetXml } from '../styles/stylesheet-reader';
 import { OpenXmlSchemaError } from '../utils/exceptions';
 import type { DefinedName } from '../workbook/defined-names';
@@ -447,6 +447,23 @@ function loadWorkbookFromArchive(archive: ZipArchive): Workbook {
                   }
                 }
               }
+            }
+            // Anything kept verbatim (shapes, groups, mc:AlternateContent
+            // wrappers) may still reference the drawing's rels. Carry those
+            // entries under their original ids and hand their targets to the
+            // passthrough sweep so the references still resolve on re-save.
+            const rawRelIds = collectRawRelIds(drawing);
+            if (rawRelIds.size > 0) {
+              const carried = makeRelationships();
+              for (const id of rawRelIds) {
+                const rawRel = dRelsById.get(id);
+                if (!rawRel) continue;
+                carried.rels.push(rawRel);
+                if (rawRel.targetMode !== 'External') {
+                  passthroughRoots.push(resolveRelTarget(dPath, rawRel.target));
+                }
+              }
+              if (carried.rels.length > 0) drawing.rawRels = carried;
             }
           }
           return drawing;

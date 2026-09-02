@@ -26,6 +26,13 @@ export interface SerializeOptions {
   xmlDeclaration?: boolean;
   /** `standalone` attribute on the declaration. Defaults to 'yes'. */
   standalone?: 'yes' | 'no' | 'omit';
+  /**
+   * Namespace URI → prefix already declared by an ancestor, for a fragment
+   * being spliced into a larger document. Those prefixes are reused and not
+   * redeclared on the fragment's own root. Prefixes must be non-empty; the
+   * default namespace is not inheritable this way.
+   */
+  inScopePrefixes?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -35,9 +42,9 @@ export interface SerializeOptions {
  * (which both directions preserve on Node 18+ / V8).
  */
 export function serializeXml(root: XmlNode, opts: SerializeOptions = {}): Uint8Array {
-  const { xmlDeclaration = true, standalone = 'yes' } = opts;
+  const { xmlDeclaration = true, standalone = 'yes', inScopePrefixes } = opts;
 
-  const allocation = allocatePrefixes(root);
+  const allocation = allocatePrefixes(root, inScopePrefixes);
   const out: string[] = [];
 
   if (xmlDeclaration) {
@@ -60,7 +67,7 @@ interface Allocation {
   declarations: Array<{ prefix: string; ns: string }>;
 }
 
-const allocatePrefixes = (root: XmlNode): Allocation => {
+const allocatePrefixes = (root: XmlNode, inScope?: Readonly<Record<string, string>>): Allocation => {
   const used = new Set<string>();
   collectNamespaces(root, used, /* attrsToo */ true);
   used.delete(''); // empty NS = unprefixed names; not emitted as xmlns
@@ -76,6 +83,14 @@ const allocatePrefixes = (root: XmlNode): Allocation => {
 
   const prefixOf = new Map<string, string>();
   if (defaultNs !== '') prefixOf.set(defaultNs, '');
+  // Prefixes an ancestor already declared: reuse them, and leave them out of
+  // this fragment's own declarations.
+  const inherited = new Set<string>();
+  for (const [ns, prefix] of Object.entries(inScope ?? {})) {
+    if (prefix === '' || prefixOf.has(ns)) continue;
+    prefixOf.set(ns, prefix);
+    inherited.add(ns);
+  }
   // `xml` and `xmlns` are reserved by the XMLNS spec; xml ↔ XML_NS is
   // predefined and must NOT be redeclared via xmlns:xml="…".
   prefixOf.set(XML_NS, 'xml');
@@ -83,7 +98,7 @@ const allocatePrefixes = (root: XmlNode): Allocation => {
   // Pass 1: respect DEFAULT_PREFIXES for namespaces that have a
   // canonical short prefix.
   let auto = 0;
-  const usedPrefixes = new Set<string>(['', 'xml', 'xmlns']);
+  const usedPrefixes = new Set<string>(['', 'xml', 'xmlns', ...prefixOf.values()]);
   const ordered = Array.from(used).sort();
   for (const ns of ordered) {
     if (prefixOf.has(ns)) continue;
@@ -109,6 +124,7 @@ const allocatePrefixes = (root: XmlNode): Allocation => {
   for (const ns of ordered) {
     if (ns === defaultNs) continue;
     if (ns === XML_NS) continue;
+    if (inherited.has(ns)) continue;
     const prefix = prefixOf.get(ns);
     if (prefix === undefined) continue;
     declarations.push({ prefix, ns });

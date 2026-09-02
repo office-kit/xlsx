@@ -364,11 +364,26 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
       // workbook-global chartN id and a per-drawing rId. Emit the chart part +
       // collect a drawing-rels entry so drawing.xml's <c:chart r:id> resolves.
       const drawingRels = makeRelationships();
+      // Rels the drawing's verbatim nodes reference keep their original ids —
+      // those ids are baked into XML we re-emit untouched — so the allocator
+      // below has to step over them.
+      const usedDrawingRIds = new Set<string>();
+      for (const rel of drawing.rawRels?.rels ?? []) {
+        drawingRels.rels.push(rel);
+        usedDrawingRIds.add(rel.id);
+      }
+      let nextDrawingRId = 1;
+      const allocateDrawingRId = (): string => {
+        let candidate = `rId${nextDrawingRId++}`;
+        while (usedDrawingRIds.has(candidate)) candidate = `rId${nextDrawingRId++}`;
+        usedDrawingRIds.add(candidate);
+        return candidate;
+      };
       const itemsForXml: DrawingItem[] = [];
       for (const item of drawing.items) {
         if (item.content.kind === 'chart' && (item.content.chart.space || item.content.chart.cxSpace)) {
           const chartId = nextChartId++;
-          const chartRId = `rId${drawingRels.rels.length + 1}`;
+          const chartRId = allocateDrawingRId();
           // chartex parts use a different relationship Type than the legacy
           // ECMA-376 charts. Excel rejects the workbook when the drawing rels
           // claim a `relationships/chart` target that actually contains a
@@ -428,7 +443,7 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
           const img = item.content.picture.image;
           const ext = IMAGE_FORMAT_EXTENSION[img.format];
           const imageId = nextImageId++;
-          const picRId = `rId${drawingRels.rels.length + 1}`;
+          const picRId = allocateDrawingRId();
           drawingRels.rels.push({
             id: picRId,
             type: IMAGE_REL,
@@ -453,7 +468,13 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
           itemsForXml.push(item);
         }
       }
-      const emit: DrawingEmit = { id, bytes: drawingToBytes({ items: itemsForXml }) };
+      const emit: DrawingEmit = {
+        id,
+        bytes: drawingToBytes({
+          items: itemsForXml,
+          ...(drawing.rawChildren ? { rawChildren: drawing.rawChildren } : {}),
+        }),
+      };
       if (drawingRels.rels.length > 0) emit.rels = drawingRels;
       drawingEmits.push(emit);
       return { rId };

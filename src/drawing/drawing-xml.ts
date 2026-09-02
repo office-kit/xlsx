@@ -1,11 +1,13 @@
-// `xl/drawings/drawingN.xml` reader/writer. Stage-1 supports anchor
-// envelope round-trip for the chart variant; picture / shape / connector /
-// group remain unsupported placeholders for later iterations.
+// `xl/drawings/drawingN.xml` reader/writer. Charts and pictures are modeled;
+// shapes, connectors and groups — and Excel's `<mc:AlternateContent>` wrappers
+// around an anchor — are kept as the verbatim source XML and written back
+// untouched, because the model has no slot for their geometry or text.
 
 import { escapeXmlAttr } from '../utils/escape';
 import { OpenXmlSchemaError } from '../utils/exceptions';
 import { DRAWING_NS, REL_NS, SHEET_DRAWING_NS } from '../xml/namespaces';
 import { parseXml } from '../xml/parser';
+import { serializeXml } from '../xml/serializer';
 import { findChild, type XmlNode } from '../xml/tree';
 import type { AnchorMarker, DrawingAnchor, Point2D, PositiveSize2D } from './anchor';
 import { parseShapeProperties, serializeShapeProperties } from './dml/dml-xml';
@@ -167,14 +169,17 @@ const parseAnchor = (node: XmlNode): DrawingItem | undefined => {
   if (picture) {
     return { anchor, content: { kind: 'picture', picture } };
   }
-  // Find the first child that isn't a marker/pos/ext/clientData.
+  // Find the first child that isn't a marker/pos/ext/clientData. Anything we
+  // don't model keeps the whole anchor element verbatim — rebuilding it would
+  // drop the shape body along with the anchor's own `editAs` and the
+  // `<xdr:clientData fLocksWithSheet="0">` flags form controls rely on.
   const skip = new Set([FROM_TAG, TO_TAG, POS_TAG, EXT_TAG, CLIENT_DATA_TAG]);
   for (const child of node.children) {
     if (skip.has(child.name)) continue;
-    return { anchor, content: { kind: 'unsupported', rawTag: child.name } };
+    return { anchor, content: { kind: 'unsupported', rawTag: child.name }, raw: node };
   }
   // Bare anchor with no content — record as unsupported with empty tag.
-  return { anchor, content: { kind: 'unsupported', rawTag: '' } };
+  return { anchor, content: { kind: 'unsupported', rawTag: '' }, raw: node };
 };
 
 /** Parse a `xl/drawings/drawingN.xml` payload into a Drawing object. */
@@ -184,15 +189,55 @@ export function parseDrawingXml(bytes: Uint8Array | string): Drawing {
     throw new OpenXmlSchemaError(`parseDrawingXml: root is "${root.name}", expected wsDr`);
   }
   const items: DrawingItem[] = [];
+  const rawChildren: Array<{ beforeItem: number; node: XmlNode }> = [];
   // Document order matters — anchors must round-trip in their source
-  // sequence regardless of their kind.
+  // sequence regardless of their kind, and that order is the z-order.
   for (const child of root.children) {
-    if (child.name !== ABSOLUTE_ANCHOR_TAG && child.name !== ONE_CELL_ANCHOR_TAG && child.name !== TWO_CELL_ANCHOR_TAG)
+    if (child.name === ABSOLUTE_ANCHOR_TAG || child.name === ONE_CELL_ANCHOR_TAG || child.name === TWO_CELL_ANCHOR_TAG) {
+      const item = parseAnchor(child);
+      if (item) items.push(item);
       continue;
-    const item = parseAnchor(child);
-    if (item) items.push(item);
+    }
+    // Not an anchor: Excel's `<mc:AlternateContent>` wrapper around one, or
+    // anything else a future schema puts here. Keep it verbatim at its place
+    // in the sequence.
+    rawChildren.push({ beforeItem: items.length, node: child });
   }
-  return makeDrawing(items);
+  const drawing = makeDrawing(items);
+  if (rawChildren.length > 0) drawing.rawChildren = rawChildren;
+  return drawing;
+}
+
+// Declared on the `<xdr:wsDr>` root the fragments below are spliced into, so
+// captured nodes reuse these prefixes instead of redeclaring them per anchor.
+const WS_DR_PREFIXES: Readonly<Record<string, string>> = {
+  [SHEET_DRAWING_NS]: 'xdr',
+  [DRAWING_NS]: 'a',
+};
+
+/** Re-emit a captured node inline, verbatim. */
+const serializeRawNode = (node: XmlNode): string =>
+  new TextDecoder().decode(serializeXml(node, { xmlDeclaration: false, inScopePrefixes: WS_DR_PREFIXES }));
+
+/**
+ * Every relationship id referenced inside the drawing's verbatim nodes —
+ * `r:embed` on a picture nested in a group, `r:id` on a shape's hyperlink, and
+ * whatever else sits under an `<mc:AlternateContent>` wrapper. The loader uses
+ * this to carry the matching rels (and their target parts) across a re-save.
+ */
+export function collectRawRelIds(drawing: Drawing): Set<string> {
+  const ids = new Set<string>();
+  const walk = (node: XmlNode): void => {
+    for (const [name, value] of Object.entries(node.attrs)) {
+      if (name.startsWith(`{${REL_NS}}`) && value.length > 0) ids.add(value);
+    }
+    for (const child of node.children) walk(child);
+  };
+  for (const item of drawing.items) {
+    if (item.raw) walk(item.raw);
+  }
+  for (const rc of drawing.rawChildren ?? []) walk(rc.node);
+  return ids;
 }
 
 const serializeMarker = (tag: string, m: AnchorMarker): string =>
@@ -254,6 +299,7 @@ const serializeChartGraphicFrame = (
 };
 
 const serializeAnchor = (item: DrawingItem, idx: number): string => {
+  if (item.raw) return serializeRawNode(item.raw);
   const a = item.anchor;
   let body = '';
   // Default size for twoCellAnchor where the from→to delta is unknown at this
@@ -275,10 +321,9 @@ const serializeAnchor = (item: DrawingItem, idx: number): string => {
   } else if (item.content.kind === 'picture') {
     content = serializePictureFrame(item.content.picture, idx);
   } else {
-    // Unsupported content: emit a graphicFrame with an empty chart ref so
-    // Excel doesn't choke. Re-emitting unknown content verbatim is the
-    // job of a later iteration (we don't carry the original XmlNode tree
-    // through the data model in stage-1).
+    // Unsupported content with no captured source — only reachable for an item
+    // built in code, since the reader always records `raw`. An empty chart
+    // frame keeps the anchor well-formed.
     content = serializeChartGraphicFrame({}, idx, chartExt);
   }
   const editAs = a.kind === 'twoCell' && a.editAs ? ` editAs="${a.editAs}"` : '';
@@ -296,10 +341,18 @@ function serializeDrawing(drawing: Drawing): string {
     XML_HEADER,
     `<xdr:wsDr xmlns:xdr="${SHEET_DRAWING_NS}" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">`,
   ];
+  const rawChildren = drawing.rawChildren ?? [];
+  const emitRawBefore = (index: number): void => {
+    for (const rc of rawChildren) {
+      if (rc.beforeItem === index) parts.push(serializeRawNode(rc.node));
+    }
+  };
   for (let i = 0; i < drawing.items.length; i++) {
+    emitRawBefore(i);
     const item = drawing.items[i];
     if (item) parts.push(serializeAnchor(item, i));
   }
+  emitRawBefore(drawing.items.length);
   parts.push('</xdr:wsDr>');
   return parts.join('');
 }
