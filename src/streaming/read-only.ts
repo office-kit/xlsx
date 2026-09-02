@@ -17,12 +17,12 @@ import type { CellValue, ExcelErrorCode } from '../cell/cell';
 import { ERROR_CODES } from '../utils/inference';
 import { iterParse, type SaxEvent, type SaxInput } from '../xml/iterparse';
 import { parseXml } from '../xml/parser';
-import { findChild, findChildren } from '../xml/tree';
+import { findChild, findChildren, type XmlNode } from '../xml/tree';
 import type { XlsxSource } from '../io/source';
 import { coordinateToTuple } from '../utils/coordinate';
 import { type Stylesheet, makeStylesheet } from '../styles/stylesheet';
 import { parseStylesheetXml } from '../styles/stylesheet-reader';
-import { resolveRelTarget } from '../io/load';
+import { parseDate1904, resolveRelTarget } from '../io/load';
 
 const SHEET_TAG = `{${SHEET_MAIN_NS}}sheet`;
 const SHEETS_TAG = `{${SHEET_MAIN_NS}}sheets`;
@@ -50,6 +50,8 @@ export interface ReadOnlyWorksheet {
 export interface ReadOnlyWorkbook {
   sheetNames: string[];
   styles: Stylesheet;
+  /** Date1904 mode toggles between Excel's two epoch systems. */
+  date1904: boolean;
   openWorksheet(name: string): ReadOnlyWorksheet;
   close(): Promise<void>;
 }
@@ -60,8 +62,7 @@ interface SheetEntry {
   partPath: string;
 }
 
-const parseSheetList = (workbookXml: Uint8Array, workbookPath: string, archive: ZipArchive): SheetEntry[] => {
-  const root = parseXml(workbookXml);
+const parseSheetList = (root: XmlNode, workbookPath: string, archive: ZipArchive): SheetEntry[] => {
   const sheetsEl = findChild(root, SHEETS_TAG);
   if (!sheetsEl) return [];
   const wbRelsPath = relsPathFor(workbookPath);
@@ -441,12 +442,14 @@ const makeStreamingReadOnlyWorksheet = (
 const makeStreamingReadOnlyWorkbook = (
   sheetNames: string[],
   styles: Stylesheet,
+  date1904: boolean,
   archive: ZipArchive,
   entries: ReadonlyMap<string, SheetEntry>,
   sst: ReadonlyArray<string>,
 ): ReadOnlyWorkbook => ({
   sheetNames,
   styles,
+  date1904,
   openWorksheet(name) {
     const entry = entries.get(name);
     if (!entry) {
@@ -497,7 +500,8 @@ export async function loadWorkbookStream(
   if (!archive.has(workbookPath)) {
     throw new OpenXmlSchemaError(`loadWorkbookStream: workbook part "${workbookPath}" missing`);
   }
-  const sheetEntries = parseSheetList(archive.read(workbookPath), workbookPath, archive);
+  const workbookRoot = parseXml(archive.read(workbookPath));
+  const sheetEntries = parseSheetList(workbookRoot, workbookPath, archive);
   const entryMap = new Map<string, SheetEntry>();
   for (const e of sheetEntries) entryMap.set(e.name, e);
 
@@ -513,6 +517,7 @@ export async function loadWorkbookStream(
   return makeStreamingReadOnlyWorkbook(
     sheetEntries.map((e) => e.name),
     styles,
+    parseDate1904(workbookRoot),
     archive,
     entryMap,
     sst.entries.map((e) => (typeof e === 'string' ? e : e.runs.map((r) => r.text).join(''))),

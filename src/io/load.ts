@@ -175,10 +175,10 @@ const FUNCTION_GROUP_TAG = `{${SHEET_MAIN_NS}}functionGroup`;
 /**
  * Parse the `<workbookPr date1904>` flag. Mac-origin workbooks set
  * `date1904="true"`; everything else uses the Windows 1900 epoch. The value
- * drives Date / Duration cell serial conversion in worksheet/writer.ts and
- * reader.ts.
+ * drives Date serialization and lets readers select the epoch when converting
+ * numeric date serials.
  */
-function parseDate1904(workbookRoot: XmlNode): boolean {
+export function parseDate1904(workbookRoot: XmlNode): boolean {
   const pr = findChild(workbookRoot, WORKBOOK_PR_TAG);
   if (!pr) return false;
   const v = pr.attrs['date1904'];

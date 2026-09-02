@@ -4,6 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { fromBuffer } from '../../src/io/node';
 import { workbookToBytes } from '../../src/io/save';
 import { loadWorkbookStream } from '../../src/streaming/read-only';
+import { setCellAsDate } from '../../src/styles/cell-style';
+import { builtinFormatCode, isDateFormat } from '../../src/styles/numbers';
+import { dateToExcel } from '../../src/utils/datetime';
 import { addWorksheet, createWorkbook } from '../../src/workbook/workbook';
 import { setCell } from '../../src/worksheet/worksheet';
 
@@ -82,6 +85,48 @@ describe('loadWorkbookStream — iterRows', () => {
       colsPerRow.push(row.map((c) => c.col));
     }
     expect(colsPerRow).toEqual([[2], [2]]);
+    await wb.close();
+  });
+
+  it('parses a Date cell as a Windows-epoch serial and preserves its date style', async () => {
+    const source = createWorkbook();
+    const sheet = addWorksheet(source, 'Dates');
+    const date = new Date(Date.UTC(2026, 4, 5, 9, 30));
+    const cell = setCell(sheet, 1, 1, date);
+    setCellAsDate(source, cell);
+
+    const wb = await loadWorkbookStream(fromBuffer(await workbookToBytes(source)));
+    const rows = [];
+    for await (const row of wb.openWorksheet('Dates').iterRows()) rows.push(row);
+
+    expect(wb.date1904).toBe(false);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.[0]).toEqual({
+      row: 1,
+      col: 1,
+      value: dateToExcel(date, { epoch: 'windows' }),
+      styleId: cell.styleId,
+    });
+    const numFmtId = wb.styles.cellXfs[cell.styleId]?.numFmtId;
+    expect(numFmtId).toBeDefined();
+    const formatCode =
+      numFmtId === undefined ? undefined : wb.styles.numFmts.get(numFmtId) ?? builtinFormatCode(numFmtId);
+    expect(isDateFormat(formatCode)).toBe(true);
+    await wb.close();
+  });
+
+  it('exposes the Mac epoch when parsing a Date cell from a date1904 workbook', async () => {
+    const source = createWorkbook({ date1904: true });
+    const sheet = addWorksheet(source, 'Dates');
+    const date = new Date(Date.UTC(2026, 4, 5, 9, 30));
+    setCell(sheet, 1, 1, date);
+
+    const wb = await loadWorkbookStream(fromBuffer(await workbookToBytes(source)));
+    const rows = [];
+    for await (const row of wb.openWorksheet('Dates').iterRows()) rows.push(row);
+
+    expect(wb.date1904).toBe(true);
+    expect(rows[0]?.[0]?.value).toBe(dateToExcel(date, { epoch: 'mac' }));
     await wb.close();
   });
 
