@@ -50,6 +50,10 @@ export const CUSTOMUI_NS = 'http://schemas.microsoft.com/office/2006/relationshi
 export const MARKUP_COMPAT_NS = 'http://schemas.openxmlformats.org/markup-compatibility/2006';
 export const X14_NS = 'http://schemas.microsoft.com/office/spreadsheetml/2009/9/main';
 export const X15_NS = 'http://schemas.microsoft.com/office/spreadsheetml/2010/11/main';
+// "Author capabilities" — the namespace of the `<x15ac:absPath>` Excel writes
+// inside workbook.xml's `mc:Choice Requires="x15"`. Only needed for its
+// canonical prefix, so it isn't exported.
+const X15AC_NS = 'http://schemas.microsoft.com/office/spreadsheetml/2010/11/ac';
 export const X16_NS = 'http://schemas.microsoft.com/office/spreadsheetml/2014/revision';
 export const C14_NS = 'http://schemas.microsoft.com/office/drawing/2010/chart';
 export const C15_NS = 'http://schemas.microsoft.com/office/drawing/2012/chart';
@@ -90,6 +94,7 @@ export const DEFAULT_PREFIXES: Readonly<Record<string, string>> = Object.freeze(
   [MARKUP_COMPAT_NS]: 'mc',
   [X14_NS]: 'x14',
   [X15_NS]: 'x15',
+  [X15AC_NS]: 'x15ac',
   [X16_NS]: 'x16',
   [C14_NS]: 'c14',
   [C15_NS]: 'c15',

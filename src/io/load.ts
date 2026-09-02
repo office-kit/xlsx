@@ -41,11 +41,12 @@ import {
   ARC_STYLE,
   ARC_THEME,
   ARC_WORKBOOK,
+  MARKUP_COMPAT_NS,
   parseQName,
   REL_NS,
   SHEET_MAIN_NS,
 } from '../xml/namespaces';
-import { parseXml } from '../xml/parser';
+import { type ParsedDocument, parseXmlDocument } from '../xml/parser';
 import { findChild, findChildren, type XmlNode } from '../xml/tree';
 import type { DecompressionLimits } from '../zip/decompression-guard';
 import { openZip, type ZipArchive } from '../zip/reader';
@@ -254,7 +255,8 @@ function loadWorkbookFromArchive(archive: ZipArchive): Workbook {
   }
 
   // 3. workbook.xml — parse to extract sheet metadata only.
-  const wbRoot = parseXml(archive.read(workbookPath));
+  const wbDoc = parseXmlDocument(archive.read(workbookPath));
+  const wbRoot = wbDoc.root;
   if (parseQName(wbRoot.name).local !== 'workbook') {
     throw new OpenXmlSchemaError(`loadWorkbook: ${workbookPath} root is "${wbRoot.name}", expected workbook`);
   }
@@ -524,6 +526,7 @@ function loadWorkbookFromArchive(archive: ZipArchive): Workbook {
   }
 
   captureWorkbookXmlExtras(wbRoot, wb);
+  captureWorkbookXmlRoot(wbDoc, wb);
   captureWorkbookRelsExtras(wbRels, wb);
 
   // Pass-through: capture parts we don't model (VBA / pivot / activeX / OLE /
@@ -573,6 +576,23 @@ function captureSheetRelsExtras(
  * things like `<fileVersion>`, `<workbookPr>`, `<bookViews>`, `<calcPr>`,
  * `<pivotCaches>`, `<extLst>` round-trip in document order.
  */
+/**
+ * Keep the `<workbook>` root's namespace declarations and `mc:Ignorable`. Excel
+ * writes `mc:Ignorable="x15 xr xr6 xr10 xr2"` naming prefixes declared only
+ * there; dropping either half — or renaming the prefixes — makes Excel report
+ * the file as corrupt. The default namespace and `r` are re-emitted by the
+ * writer itself, so they are not carried here.
+ */
+function captureWorkbookXmlRoot(doc: ParsedDocument, wb: Workbook): void {
+  const namespaces = doc.rootNamespaces.filter((d) => d.prefix !== '' && d.prefix !== 'r');
+  const ignorable = doc.root.attrs[`{${MARKUP_COMPAT_NS}}Ignorable`];
+  if (namespaces.length === 0 && ignorable === undefined) return;
+  wb.workbookXmlRoot = {
+    namespaces,
+    ...(ignorable !== undefined ? { ignorable } : {}),
+  };
+}
+
 function captureWorkbookXmlExtras(wbRoot: XmlNode, wb: Workbook): void {
   const beforeSheets: XmlNode[] = [];
   const afterSheets: XmlNode[] = [];
@@ -1004,6 +1024,13 @@ const parseWorkbookView = (node: XmlNode): import('../workbook/views').WorkbookV
   if (fs !== undefined) out.firstSheet = fs;
   const at = intAttr('activeTab');
   if (at !== undefined) out.activeTab = at;
+  // `xr2:uid` and friends: anything namespaced is outside CT_BookView, so keep
+  // it verbatim rather than dropping it.
+  const extAttrs: Record<string, string> = {};
+  for (const [k, v] of Object.entries(a)) {
+    if (k.startsWith('{')) extAttrs[k] = v;
+  }
+  if (Object.keys(extAttrs).length > 0) out.extAttrs = extAttrs;
   const adg = flag(a['autoFilterDateGrouping']);
   if (adg !== undefined) out.autoFilterDateGrouping = adg;
   return out;

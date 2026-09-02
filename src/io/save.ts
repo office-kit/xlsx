@@ -51,6 +51,7 @@ import {
   ARC_WORKBOOK_RELS,
   CHARTEX_TYPE,
   CPROPS_TYPE,
+  parseQName,
   PKG_REL_NS,
   REL_NS,
   SHARED_STRINGS_TYPE,
@@ -756,9 +757,22 @@ function nextFreeIndex(wb: Workbook, pattern: RegExp): number {
 
 /** Serialise the minimum `<workbook><sheets/></workbook>` Excel needs to load a sheet list. */
 function serializeWorkbookXml(wb: Workbook, sheetRIds: ReadonlyArray<string>): string {
+  // Excel's markup-compatibility header: the extra prefixes it declares on the
+  // root and the `mc:Ignorable` list naming them. Both are re-emitted exactly
+  // as written, and the same prefix map is handed to every captured child so
+  // `xr:revisionPtr` doesn't come back as `x16:revisionPtr`.
+  const rootNs = wb.workbookXmlRoot?.namespaces ?? [];
+  const nsDecls = rootNs.map((d) => ` xmlns:${d.prefix}="${escapeAttr(d.ns)}"`).join('');
+  const ignorable = wb.workbookXmlRoot?.ignorable;
+  const ignorableAttr = ignorable !== undefined ? ` mc:Ignorable="${escapeAttr(ignorable)}"` : '';
+  const inScopePrefixes: Record<string, string> = { [SHEET_MAIN_NS]: '', [REL_NS]: 'r' };
+  for (const d of rootNs) inScopePrefixes[d.ns] ??= d.prefix;
+  const emitExtra = (node: import('../xml/tree').XmlNode): string =>
+    serializeChildNode(node, inScopePrefixes);
+
   const parts: string[] = [
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
-    `<workbook xmlns="${SHEET_MAIN_NS}" xmlns:r="${REL_NS}">`,
+    `<workbook xmlns="${SHEET_MAIN_NS}" xmlns:r="${REL_NS}"${nsDecls}${ignorableAttr}>`,
   ];
   if (wb.fileVersion) {
     const fv = serializeFileVersion(wb.fileVersion);
@@ -767,9 +781,6 @@ function serializeWorkbookXml(wb: Workbook, sheetRIds: ReadonlyArray<string>): s
   if (wb.fileSharing) {
     const fs = serializeFileSharing(wb.fileSharing);
     if (fs) parts.push(fs);
-  }
-  if (wb.workbookXmlExtras?.beforeSheets) {
-    for (const node of wb.workbookXmlExtras.beforeSheets) parts.push(serializeChildNode(node));
   }
   // Emit <workbookPr> from the typed model; fall back to a minimal {date1904:
   // true} synthesis so a fresh workbook (no load history) still round-trips
@@ -783,7 +794,13 @@ function serializeWorkbookXml(wb: Workbook, sheetRIds: ReadonlyArray<string>): s
     const wp = serializeWorkbookProtection(wb.workbookProtection);
     if (wp) parts.push(wp);
   }
-  if (wb.bookViews && wb.bookViews.length > 0) parts.push(serializeBookViews(wb.bookViews));
+  // The unmodeled head — `mc:AlternateContent`, `xr:revisionPtr` — sits after
+  // `<workbookPr>` in what Excel writes, and CT_Workbook has no slot for it,
+  // so it goes here rather than ahead of the modeled elements.
+  if (wb.workbookXmlExtras?.beforeSheets) {
+    for (const node of wb.workbookXmlExtras.beforeSheets) parts.push(emitExtra(node));
+  }
+  if (wb.bookViews && wb.bookViews.length > 0) parts.push(serializeBookViews(wb.bookViews, inScopePrefixes));
   parts.push('<sheets>');
   wb.sheets.forEach((ref, i) => {
     const stateAttr = ref.state === 'visible' ? '' : ` state="${ref.state}"`;
@@ -855,7 +872,7 @@ function serializeWorkbookXml(wb: Workbook, sheetRIds: ReadonlyArray<string>): s
     if (fp) parts.push(fp);
   }
   if (wb.workbookXmlExtras?.afterSheets) {
-    for (const node of wb.workbookXmlExtras.afterSheets) parts.push(serializeChildNode(node));
+    for (const node of wb.workbookXmlExtras.afterSheets) parts.push(emitExtra(node));
   }
   parts.push('</workbook>');
   return parts.join('');
@@ -1047,7 +1064,10 @@ function serializeCustomWorkbookViews(
   return parts.join('');
 }
 
-function serializeBookViews(views: ReadonlyArray<import('../workbook/views').WorkbookView>): string {
+function serializeBookViews(
+  views: ReadonlyArray<import('../workbook/views').WorkbookView>,
+  prefixOf: Readonly<Record<string, string>>,
+): string {
   const parts: string[] = ['<bookViews>'];
   for (const v of views) {
     let attrs = '';
@@ -1067,6 +1087,14 @@ function serializeBookViews(views: ReadonlyArray<import('../workbook/views').Wor
     if (v.activeTab !== undefined) attrs += ` activeTab="${v.activeTab}"`;
     if (v.autoFilterDateGrouping !== undefined)
       attrs += ` autoFilterDateGrouping="${v.autoFilterDateGrouping ? '1' : '0'}"`;
+    // Namespaced extras (`xr2:uid`) only make sense with a prefix the root
+    // declares; without one the attribute would be unreadable, so skip it.
+    for (const [clark, value] of Object.entries(v.extAttrs ?? {})) {
+      const { ns, local } = parseQName(clark);
+      const prefix = prefixOf[ns];
+      if (prefix === undefined) continue;
+      attrs += ` ${prefix}:${local}="${escapeAttr(value)}"`;
+    }
     parts.push(`<workbookView${attrs}/>`);
   }
   parts.push('</bookViews>');
@@ -1112,11 +1140,17 @@ const escapeAttr = escapeXmlAttr;
 /**
  * Serialise an XmlNode child of `<workbook>` for inline injection back into the
  * workbook XML stream. Reuses serializeXml then strips the declaration.
- * Captured nodes carry Clark-notation names so namespace prefixes get
- * reallocated by serializeXml — Excel tolerates the extra `xmlns="…"`
- * declarations on each captured root.
+ * Captured nodes carry Clark-notation names, so `inScopePrefixes` is what keeps
+ * a child on the prefix the root declared for it instead of a freshly
+ * allocated one — which matters when `mc:Ignorable` names those prefixes.
  */
-function serializeChildNode(node: import('../xml/tree').XmlNode): string {
-  const bytes = serializeXmlNode(node, { xmlDeclaration: false });
+function serializeChildNode(
+  node: import('../xml/tree').XmlNode,
+  inScopePrefixes?: Readonly<Record<string, string>>,
+): string {
+  const bytes = serializeXmlNode(node, {
+    xmlDeclaration: false,
+    ...(inScopePrefixes ? { inScopePrefixes } : {}),
+  });
   return new TextDecoder().decode(bytes);
 }

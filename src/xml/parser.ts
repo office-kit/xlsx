@@ -64,12 +64,33 @@ const TEXT_KEY = '#text';
 
 // ---- public API -------------------------------------------------------------
 
+export interface ParsedDocument {
+  root: XmlNode;
+  /**
+   * The root element's own `xmlns` declarations, in source order (`prefix` is
+   * `''` for the default one). Clark notation carries the namespace but not
+   * the prefix, so these are only needed by parts that must be written back
+   * with the prefixes the producer chose — `xl/workbook.xml`, whose
+   * `mc:Ignorable` names them by prefix.
+   */
+  rootNamespaces: Array<{ prefix: string; ns: string }>;
+}
+
 /**
  * Parse a UTF-8 XML payload into an {@link XmlNode} tree. Element and attribute
  * names are returned in Clark notation. Throws {@link OpenXmlSchemaError} on
  * DTD/entity declarations or on multi-root documents.
+ *
+ * Shorthand for {@link parseXmlDocument} when the root's namespace prefixes
+ * don't matter — which is everywhere except the handful of parts that carry an
+ * `mc:Ignorable`.
  */
 export function parseXml(input: Uint8Array | string): XmlNode {
+  return parseXmlDocument(input).root;
+}
+
+/** {@link parseXml} plus the root element's namespace declarations. */
+export function parseXmlDocument(input: Uint8Array | string): ParsedDocument {
   const text = decodeForPrescan(input);
   checkForDoctype(text);
 
@@ -101,8 +122,17 @@ export function parseXml(input: Uint8Array | string): XmlNode {
   if (root === undefined) {
     throw new OpenXmlSchemaError('parseXml: no root element');
   }
-  return convertElement(root, initial);
+  return { root: convertElement(root, initial), rootNamespaces: declarationsOf(root[ATTR_KEY] as FxpAttrs | undefined) };
 }
+
+const declarationsOf = (attrs: FxpAttrs | undefined): Array<{ prefix: string; ns: string }> => {
+  const out: Array<{ prefix: string; ns: string }> = [];
+  for (const [k, v] of Object.entries(attrs ?? {})) {
+    if (k === 'xmlns') out.push({ prefix: '', ns: v });
+    else if (k.startsWith('xmlns:')) out.push({ prefix: k.slice('xmlns:'.length), ns: v });
+  }
+  return out;
+};
 
 // ---- conversion -------------------------------------------------------------
 
