@@ -77,7 +77,6 @@ import type { WebPublishItem, WorksheetCustomProperty } from './web-publish';
 import { makeColor } from '../styles/colors';
 import { makeColumnDimension, makeRowDimension } from './dimensions';
 import type { Hyperlink } from './hyperlinks';
-import { makeHyperlink } from './hyperlinks';
 import type { TableDefinition } from './table';
 import type { Pane, PaneState, PaneType, Selection, SheetView, SheetViewMode } from './views';
 import { makeSheetView } from './views';
@@ -1813,7 +1812,10 @@ const parseHyperlink = (node: XmlNode, rels: Relationships | undefined): Hyperli
   if (node.attrs['location']) opts.location = node.attrs['location'];
   if (node.attrs['tooltip']) opts.tooltip = node.attrs['tooltip'];
   if (node.attrs['display']) opts.display = node.attrs['display'];
-  return makeHyperlink(opts as Hyperlink);
+  // Deliberately not `makeHyperlink`: that validates the target, and a file
+  // whose rels already carry a broken one still has to load so it can be
+  // inspected and repaired. The check belongs where the link is authored.
+  return opts as Hyperlink;
 };
 
 const maybeRecordRowDimension = (ws: Worksheet, node: XmlNode, rowIdx: number): void => {
