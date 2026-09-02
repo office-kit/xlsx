@@ -770,17 +770,13 @@ function serializeWorkbookXml(wb: Workbook, sheetRIds: ReadonlyArray<string>): s
     parts.push(`<sheet name="${escapeAttr(ref.sheet.title)}" sheetId="${ref.sheetId}"${stateAttr} r:id="${rId}"/>`);
   });
   parts.push('</sheets>');
-  if (wb.definedNames.length > 0) {
-    parts.push('<definedNames>');
-    for (const dn of wb.definedNames) {
-      let attrs = ` name="${escapeAttr(dn.name)}"`;
-      if (dn.scope !== undefined) attrs += ` localSheetId="${dn.scope}"`;
-      if (dn.hidden) attrs += ' hidden="1"';
-      if (dn.comment !== undefined) attrs += ` comment="${escapeAttr(dn.comment)}"`;
-      parts.push(`<definedName${attrs}>${escapeText(dn.value)}</definedName>`);
-    }
-    parts.push('</definedNames>');
-  }
+  // ECMA-376 §18.2.27 makes CT_Workbook an xsd:sequence, so the order below is
+  // normative: functionGroups, externalReferences, definedNames, calcPr,
+  // oleSize, customWorkbookViews, pivotCaches, smartTagPr, smartTagTypes,
+  // webPublishing, fileRecoveryPr, webPublishObjects, extLst. Excel rejects a
+  // workbook whose children are out of sequence. `afterSheets` is the
+  // unmodeled tail (webPublishing / webPublishObjects / extLst /
+  // mc:AlternateContent), so it goes last.
   if (wb.functionGroups) {
     const fg = serializeFunctionGroups(wb.functionGroups);
     if (fg) parts.push(fg);
@@ -793,13 +789,16 @@ function serializeWorkbookXml(wb: Workbook, sheetRIds: ReadonlyArray<string>): s
     inner.push('</externalReferences>');
     parts.push(inner.join(''));
   }
-  if (wb.pivotCaches && wb.pivotCaches.length > 0) {
-    const inner: string[] = ['<pivotCaches>'];
-    for (const pc of wb.pivotCaches) {
-      inner.push(`<pivotCache cacheId="${pc.cacheId}" r:id="${escapeAttr(pc.rId)}"/>`);
+  if (wb.definedNames.length > 0) {
+    parts.push('<definedNames>');
+    for (const dn of wb.definedNames) {
+      let attrs = ` name="${escapeAttr(dn.name)}"`;
+      if (dn.scope !== undefined) attrs += ` localSheetId="${dn.scope}"`;
+      if (dn.hidden) attrs += ' hidden="1"';
+      if (dn.comment !== undefined) attrs += ` comment="${escapeAttr(dn.comment)}"`;
+      parts.push(`<definedName${attrs}>${escapeText(dn.value)}</definedName>`);
     }
-    inner.push('</pivotCaches>');
-    parts.push(inner.join(''));
+    parts.push('</definedNames>');
   }
   if (wb.calcProperties) {
     const cp = serializeCalcProperties(wb.calcProperties);
@@ -815,6 +814,14 @@ function serializeWorkbookXml(wb: Workbook, sheetRIds: ReadonlyArray<string>): s
   if (wb.customWorkbookViews && wb.customWorkbookViews.length > 0) {
     parts.push(serializeCustomWorkbookViews(wb.customWorkbookViews));
   }
+  if (wb.pivotCaches && wb.pivotCaches.length > 0) {
+    const inner: string[] = ['<pivotCaches>'];
+    for (const pc of wb.pivotCaches) {
+      inner.push(`<pivotCache cacheId="${pc.cacheId}" r:id="${escapeAttr(pc.rId)}"/>`);
+    }
+    inner.push('</pivotCaches>');
+    parts.push(inner.join(''));
+  }
   if (wb.smartTagPr) {
     const stp = serializeSmartTagPr(wb.smartTagPr);
     if (stp) parts.push(stp);
@@ -822,12 +829,12 @@ function serializeWorkbookXml(wb: Workbook, sheetRIds: ReadonlyArray<string>): s
   if (wb.smartTagTypes && wb.smartTagTypes.length > 0) {
     parts.push(serializeSmartTagTypes(wb.smartTagTypes));
   }
-  if (wb.workbookXmlExtras?.afterSheets) {
-    for (const node of wb.workbookXmlExtras.afterSheets) parts.push(serializeChildNode(node));
-  }
   if (wb.fileRecoveryPr) {
     const fp = serializeFileRecoveryPr(wb.fileRecoveryPr);
     if (fp) parts.push(fp);
+  }
+  if (wb.workbookXmlExtras?.afterSheets) {
+    for (const node of wb.workbookXmlExtras.afterSheets) parts.push(serializeChildNode(node));
   }
   parts.push('</workbook>');
   return parts.join('');
