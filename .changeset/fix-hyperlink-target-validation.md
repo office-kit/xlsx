@@ -1,5 +1,5 @@
 ---
-'@office-kit/xlsx': patch
+'@office-kit/xlsx': minor
 ---
 
 fix: an invalid hyperlink target is now rejected instead of producing a file Excel refuses (#117)
@@ -18,3 +18,8 @@ that one — the host has to be punycode). The check runs in `makeHyperlink`, so
 
 Reading is deliberately unaffected: a workbook whose rels already carry a
 broken target still loads, so it can be inspected and repaired.
+
+**Behaviour change:** `makeHyperlink`, `setHyperlink`, `addUrlHyperlink` and
+`addMailtoHyperlink` now throw on a target they previously accepted. That is
+the point of the change — the alternative was a workbook Excel refuses — but
+it can surface at a call site that used to succeed.

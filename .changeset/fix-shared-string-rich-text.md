@@ -1,5 +1,5 @@
 ---
-'@office-kit/xlsx': patch
+'@office-kit/xlsx': minor
 ---
 
 fix: rich text was flattened to plain text on save (#114)
@@ -17,3 +17,9 @@ where Excel itself stores them — instead of being inlined per cell, so a
 formatted string repeated across cells costs one entry rather than one copy
 each. `<r>` runs with no `<rPr>` stay separate runs, since that is how Excel
 writes the unformatted half of a rich string.
+
+**Behaviour change:** a cell whose shared string is rich text now reads back
+as `{ kind: 'rich-text', runs }` where it used to read back as the concatenated
+plain string, and rich-text cells serialise into `xl/sharedStrings.xml` rather
+than as `t="inlineStr"`. Code that assumed `getCell(...).value` was a string
+for those cells needs to handle the union.
