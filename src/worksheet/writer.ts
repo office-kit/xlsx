@@ -393,9 +393,12 @@ const serializeFormulaCell = (ref: string, styleAttr: string, f: FormulaValue): 
       valueAttr = ' t="b"';
       vEl = `<v>${cached ? '1' : '0'}</v>`;
     } else {
-      // String result of a formula — use t="str", not the sst path.
+      // String result of a formula — use t="str", not the sst path. An empty
+      // result still needs both the type and the `<v/>`: that is what Excel
+      // displays for a formula it cannot recalculate.
       valueAttr = ' t="str"';
-      vEl = `<v>${escapeXmlText(escapeCellString(cached))}</v>`;
+      const text = escapeXmlText(escapeCellString(cached));
+      vEl = text.length > 0 ? `<v>${text}</v>` : '<v/>';
     }
   }
   return `<c r="${ref}"${styleAttr}${valueAttr}>${fEl}${vEl}</c>`;
