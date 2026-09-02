@@ -295,9 +295,9 @@ export const serializeCell = (cell: Cell, ctx: WorksheetWriteContext): string =>
   const value = cell.value;
 
   if (value === null) {
-    // Empty-but-styled cells still need to emit so styleId survives the
-    // round-trip.
-    if (cell.styleId === 0) return '';
+    // A valueless cell still has to emit. Its presence is what a defined name,
+    // a form control's fmlaLink or a drawing anchor points at, and `deleteCell`
+    // — not `setCell(…, null)` — is how a caller says the cell is gone.
     return `<c r="${ref}"${styleAttr}/>`;
   }
 
