@@ -118,6 +118,18 @@ export interface Workbook {
     afterSheets: import('../xml/tree').XmlNode[];
   };
   /**
+   * The `<workbook>` root's markup-compatibility header, as Excel wrote it:
+   * its namespace declarations and the `mc:Ignorable` list. The two only make
+   * sense together — `mc:Ignorable="x15 xr xr6 …"` names prefixes that are
+   * declared nowhere else — and the captured children have to keep the same
+   * prefixes, so the whole header round-trips verbatim rather than being
+   * rebuilt from the namespaces the serializer happens to walk.
+   */
+  workbookXmlRoot?: {
+    namespaces: ReadonlyArray<{ prefix: string; ns: string }>;
+    ignorable?: string;
+  };
+  /**
    * `<workbookProtection>` — locks structure / window / revision tracking with
    * the modern hash quad or the legacy 16-bit hash. Round-tripped verbatim;
    * password hashing helpers come later.

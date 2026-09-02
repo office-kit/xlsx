@@ -27,10 +27,11 @@ export interface SerializeOptions {
   /** `standalone` attribute on the declaration. Defaults to 'yes'. */
   standalone?: 'yes' | 'no' | 'omit';
   /**
-   * Namespace URI → prefix already declared by an ancestor, for a fragment
-   * being spliced into a larger document. Those prefixes are reused and not
-   * redeclared on the fragment's own root. Prefixes must be non-empty; the
-   * default namespace is not inheritable this way.
+   * Namespace URI → prefix already bound by an ancestor, for a fragment being
+   * spliced into a larger document. Those bindings are reused and not
+   * redeclared on the fragment's own root. `''` means the ancestor's default
+   * namespace — attributes never inherit a default binding, so only use it for
+   * a namespace whose attributes are unqualified (every SpreadsheetML part).
    */
   inScopePrefixes?: Readonly<Record<string, string>>;
 }
@@ -72,24 +73,25 @@ const allocatePrefixes = (root: XmlNode, inScope?: Readonly<Record<string, strin
   collectNamespaces(root, used, /* attrsToo */ true);
   used.delete(''); // empty NS = unprefixed names; not emitted as xmlns
 
-  // Decide the default namespace. Prefer the root element's NS if its
-  // canonical prefix in DEFAULT_PREFIXES is empty (i.e. designed to live
-  // as a default), so the bulk of the root subtree stays unprefixed.
-  const rootNs = parseQName(root.name).ns;
-  let defaultNs = '';
-  if (rootNs && DEFAULT_PREFIXES[rootNs] === '') {
-    defaultNs = rootNs;
-  }
-
   const prefixOf = new Map<string, string>();
-  if (defaultNs !== '') prefixOf.set(defaultNs, '');
-  // Prefixes an ancestor already declared: reuse them, and leave them out of
+  // Bindings an ancestor already declared: reuse them, and leave them out of
   // this fragment's own declarations.
   const inherited = new Set<string>();
   for (const [ns, prefix] of Object.entries(inScope ?? {})) {
-    if (prefix === '' || prefixOf.has(ns)) continue;
+    if (ns === '' || prefixOf.has(ns)) continue;
     prefixOf.set(ns, prefix);
     inherited.add(ns);
+  }
+
+  // Decide the default namespace. Prefer the root element's NS if its
+  // canonical prefix in DEFAULT_PREFIXES is empty (i.e. designed to live
+  // as a default), so the bulk of the root subtree stays unprefixed — unless
+  // an ancestor already bound that namespace, in which case its binding wins.
+  const rootNs = parseQName(root.name).ns;
+  let defaultNs = '';
+  if (rootNs && DEFAULT_PREFIXES[rootNs] === '' && !prefixOf.has(rootNs)) {
+    defaultNs = rootNs;
+    prefixOf.set(defaultNs, '');
   }
   // `xml` and `xmlns` are reserved by the XMLNS spec; xml ↔ XML_NS is
   // predefined and must NOT be redeclared via xmlns:xml="…".
@@ -121,8 +123,10 @@ const allocatePrefixes = (root: XmlNode, inScope?: Readonly<Record<string, strin
   // URI for determinism. XML_NS is reserved and never declared.
   const declarations: Array<{ prefix: string; ns: string }> = [];
   if (defaultNs !== '') declarations.push({ prefix: '', ns: defaultNs });
+  const inheritedDefault = [...inherited].find((ns) => prefixOf.get(ns) === '');
   for (const ns of ordered) {
     if (ns === defaultNs) continue;
+    if (ns === inheritedDefault) continue;
     if (ns === XML_NS) continue;
     if (inherited.has(ns)) continue;
     const prefix = prefixOf.get(ns);

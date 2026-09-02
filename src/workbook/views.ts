@@ -26,6 +26,13 @@ export interface WorkbookView {
   /** Index of the currently active sheet tab (0-based). */
   activeTab?: number;
   autoFilterDateGrouping?: boolean;
+  /**
+   * Namespaced attributes outside SpreadsheetML, keyed in Clark notation
+   * (`{ns}local`). Excel writes `xr2:uid="{…}"` here to tie the view to its
+   * revision-tracking record; kept verbatim because the model has no slot for
+   * it and dropping it changes what Excel reads back.
+   */
+  extAttrs?: Readonly<Record<string, string>>;
 }
 
 export const makeWorkbookView = (opts: WorkbookView = {}): WorkbookView => ({ ...opts });
