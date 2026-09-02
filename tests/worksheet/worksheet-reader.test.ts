@@ -44,17 +44,20 @@ describe('parseWorksheetXml — value kinds', () => {
     expect(getCell(ws, 1, 1)?.value).toBe('Hello');
   });
 
-  it('reads inline rich strings by concatenating <r>/<t> runs', () => {
+  it('reads inline rich strings as rich text, one value per <r> run', () => {
     const xml = wrap(`<sheetData>
       <row r="1"><c r="A1" t="inlineStr">
         <is>
-          <r><t>foo</t></r>
+          <r><rPr><b/></rPr><t>foo</t></r>
           <r><t>bar</t></r>
         </is>
       </c></row>
     </sheetData>`);
     const ws = parseWorksheetXml(xml, 'S', { sharedStrings: [] });
-    expect(getCell(ws, 1, 1)?.value).toBe('foobar');
+    expect(getCell(ws, 1, 1)?.value).toEqual({
+      kind: 'rich-text',
+      runs: [{ text: 'foo', font: { b: true } }, { text: 'bar' }],
+    });
   });
 
   it('reads shared-string cells (t="s") via the sst lookup', () => {

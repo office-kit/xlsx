@@ -6,7 +6,7 @@
 // `iterParse`. The iterator streams rows without materialising the full sheet
 // in memory.
 
-import { type SharedStringsTable, parseSharedStringsXml } from '../workbook/shared-strings';
+import { makeSharedStrings, parseSharedStringsXml, type SharedStringsTable } from '../workbook/shared-strings';
 import { ARC_CONTENT_TYPES, ARC_ROOT_RELS, ARC_SHARED_STRINGS, ARC_STYLE, REL_NS, SHEET_MAIN_NS } from '../xml/namespaces';
 import { findById, relsFromBytes } from '../packaging/relationships';
 import { manifestFromBytes } from '../packaging/manifest';
@@ -501,7 +501,7 @@ export async function loadWorkbookStream(
   const entryMap = new Map<string, SheetEntry>();
   for (const e of sheetEntries) entryMap.set(e.name, e);
 
-  let sst: SharedStringsTable = { entries: [], index: new Map() };
+  let sst: SharedStringsTable = makeSharedStrings();
   if (archive.has(ARC_SHARED_STRINGS)) {
     sst = parseSharedStringsXml(archive.read(ARC_SHARED_STRINGS));
   }

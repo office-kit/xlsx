@@ -8,6 +8,7 @@
 
 import {
   type Cell,
+  type CellValue,
   type ExcelErrorCode,
   type FormulaKind,
   setArrayFormula,
@@ -26,6 +27,7 @@ import { MARKUP_COMPAT_NS, REL_NS, SHEET_MAIN_NS } from '../xml/namespaces';
 import { parseXml } from '../xml/parser';
 import { serializeXml } from '../xml/serializer';
 import { findChild, findChildren, type XmlNode } from '../xml/tree';
+import { parseRichString, type SharedStringEntry } from '../workbook/shared-strings';
 import type { AutoFilter, FilterColumn } from './auto-filter';
 import { parseMultiCellRange, parseRange } from './cell-range';
 import type { LegacyComment } from './comments';
@@ -90,7 +92,6 @@ const C_TAG = `{${SHEET_MAIN_NS}}c`;
 const V_TAG = `{${SHEET_MAIN_NS}}v`;
 const F_TAG = `{${SHEET_MAIN_NS}}f`;
 const IS_TAG = `{${SHEET_MAIN_NS}}is`;
-const T_TAG = `{${SHEET_MAIN_NS}}t`;
 const MERGE_CELLS_TAG = `{${SHEET_MAIN_NS}}mergeCells`;
 const MERGE_CELL_TAG = `{${SHEET_MAIN_NS}}mergeCell`;
 const SHEET_VIEWS_TAG = `{${SHEET_MAIN_NS}}sheetViews`;
@@ -173,8 +174,12 @@ const FIRST_FOOTER_TAG = `{${SHEET_MAIN_NS}}firstFooter`;
 
 /** Inputs the worksheet reader needs from the surrounding workbook context. */
 export interface WorksheetReadContext {
-  /** Resolved shared-strings table. Pass `[]` when no sst is present. */
-  sharedStrings: ReadonlyArray<string>;
+  /**
+   * Resolved shared-strings table. Pass `[]` when no sst is present. Entries
+   * may be rich text — those become `{ kind: 'rich-text' }` cell values so the
+   * per-run formatting Excel stored survives.
+   */
+  sharedStrings: ReadonlyArray<SharedStringEntry>;
   /** This worksheet's `_rels/sheetN.xml.rels`. Used to resolve external hyperlink targets and table parts. */
   rels?: Relationships;
   /** Resolves a worksheet-rels rId pointing at xl/tables/tableN.xml into a parsed TableDefinition. */
@@ -1418,7 +1423,7 @@ const readCell = (
   }
 
   // ---- non-formula values ------------------------------------------------
-  let value: number | string | boolean | { kind: 'error'; code: ExcelErrorCode } | null = null;
+  let value: CellValue = null;
   switch (t) {
     case 'n':
       value = vNode?.text !== undefined && vNode.text !== '' ? Number.parseFloat(vNode.text) : null;
@@ -1437,7 +1442,7 @@ const readCell = (
           `worksheet: shared-string index ${idx} out of range [0, ${ctx.sharedStrings.length})`,
         );
       }
-      value = sst;
+      value = typeof sst === 'string' ? sst : { kind: 'rich-text', runs: sst.runs };
       break;
     }
     case 'b':
@@ -1471,18 +1476,16 @@ const parseStyleId = (raw: string): number => {
   return n;
 };
 
-/** Inline-string body — concatenates `<is>/<t>` text runs. Rich runs lose formatting in stage-1. */
-const readInlineString = (isNode: XmlNode | undefined): string => {
+/**
+ * Inline-string body (`<c t="inlineStr"><is>…</is></c>`). `<is>` is a CT_Rst —
+ * the same shape as an `<si>` in sharedStrings.xml — so it goes through the
+ * same parser, and a body built from `<r>` runs keeps its per-run formatting
+ * instead of collapsing to the concatenated text.
+ */
+const readInlineString = (isNode: XmlNode | undefined): CellValue => {
   if (!isNode) return '';
-  const direct = findChild(isNode, T_TAG);
-  if (direct) return direct.text ?? '';
-  // Rich inline string — concatenate every <r>/<t>.
-  let out = '';
-  for (const child of isNode.children) {
-    const t = findChild(child, T_TAG);
-    if (t?.text) out += t.text;
-  }
-  return out;
+  const entry = parseRichString(isNode);
+  return typeof entry === 'string' ? entry : { kind: 'rich-text', runs: entry.runs };
 };
 
 const decodeCachedValue = (raw: string | undefined, t: string): number | string | boolean | undefined => {
