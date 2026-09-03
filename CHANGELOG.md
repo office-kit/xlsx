@@ -1,5 +1,11 @@
 # @office-kit/xlsx
 
+## 0.11.0
+
+### Minor Changes
+
+- [#129](https://github.com/office-kit/xlsx/pull/129) [`7c2e3f9`](https://github.com/office-kit/xlsx/commit/7c2e3f98cad33a00fb2b7c7b4fe891affbcbbdd5) Thanks [@matt-felicity](https://github.com/matt-felicity)! - Expose the workbook `date1904` flag from `loadWorkbookStream` so streamed Excel date serials can be converted with the correct epoch.
+
 ## 0.10.0
 
 ### Minor Changes
