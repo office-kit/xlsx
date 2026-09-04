@@ -46,12 +46,49 @@ const parser = new XMLParser({
   trimValues: false,
   parseTagValue: false,
   parseAttributeValue: false,
-  // OOXML needs the standard XML entities (&amp; / &lt; / &gt; / &quot; /
-  // &apos;) expanded; HTML / numeric entities outside that set are not used in
-  // SpreadsheetML payloads.
-  processEntities: true,
+  // Decode entities ourselves below. fast-xml-parser expands the five named
+  // XML entities but leaves numeric character references untouched. Keeping
+  // its processing disabled also lets us preserve XML's single-pass semantics
+  // (`&amp;#65;` is the literal text "&#65;", not "A").
+  processEntities: false,
   htmlEntities: false,
 });
+
+const XML_ENTITY_RE = /&(amp|lt|gt|quot|apos|#(?:[0-9]+|x[0-9A-Fa-f]+));/g;
+
+/** Decode the five predefined XML entities and decimal/hex character refs once. */
+const decodeXmlEntities = (value: string): string =>
+  value.replace(XML_ENTITY_RE, (reference, body: string) => {
+    switch (body) {
+      case 'amp':
+        return '&';
+      case 'lt':
+        return '<';
+      case 'gt':
+        return '>';
+      case 'quot':
+        return '"';
+      case 'apos':
+        return "'";
+      default: {
+        const radix = body[1] === 'x' ? 16 : 10;
+        const digits = radix === 16 ? body.slice(2) : body.slice(1);
+        const codePoint = Number.parseInt(digits, radix);
+        if (!isXmlCodePoint(codePoint)) {
+          throw new OpenXmlSchemaError(`parseXml: invalid XML character reference "${reference}"`);
+        }
+        return String.fromCodePoint(codePoint);
+      }
+    }
+  });
+
+const isXmlCodePoint = (codePoint: number): boolean =>
+  codePoint === 0x09 ||
+  codePoint === 0x0a ||
+  codePoint === 0x0d ||
+  (codePoint >= 0x20 && codePoint <= 0xd7ff) ||
+  (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
+  (codePoint >= 0x10000 && codePoint <= 0x10ffff);
 
 // ---- preserveOrder shape ----------------------------------------------------
 
@@ -128,8 +165,8 @@ export function parseXmlDocument(input: Uint8Array | string): ParsedDocument {
 const declarationsOf = (attrs: FxpAttrs | undefined): Array<{ prefix: string; ns: string }> => {
   const out: Array<{ prefix: string; ns: string }> = [];
   for (const [k, v] of Object.entries(attrs ?? {})) {
-    if (k === 'xmlns') out.push({ prefix: '', ns: v });
-    else if (k.startsWith('xmlns:')) out.push({ prefix: k.slice('xmlns:'.length), ns: v });
+    if (k === 'xmlns') out.push({ prefix: '', ns: decodeXmlEntities(v) });
+    else if (k.startsWith('xmlns:')) out.push({ prefix: k.slice('xmlns:'.length), ns: decodeXmlEntities(v) });
   }
   return out;
 };
@@ -165,13 +202,13 @@ const extendStack = (parent: NamespaceStack, attrs: FxpAttrs | undefined): Names
   let nextByPrefix: Record<string, string> | undefined;
   for (const [k, v] of Object.entries(attrs)) {
     if (k === 'xmlns') {
-      nextDefault = v;
+      nextDefault = decodeXmlEntities(v);
       continue;
     }
     if (k.startsWith('xmlns:')) {
       const prefix = k.slice('xmlns:'.length);
       nextByPrefix ??= { ...parent.byPrefix };
-      nextByPrefix[prefix] = v;
+      nextByPrefix[prefix] = decodeXmlEntities(v);
     }
   }
   if (nextDefault === parent.default && nextByPrefix === undefined) return parent;
@@ -211,7 +248,7 @@ const filterAttrs = (rawAttrs: FxpAttrs | undefined, stack: NamespaceStack): { r
     // The serializer rebuilds them from the Clark-notation namespaces it walks,
     // so round-tripping does not require preserving the declarations.
     if (k === 'xmlns' || k.startsWith('xmlns:')) continue;
-    resolved[resolveAttrName(k, stack)] = v;
+    resolved[resolveAttrName(k, stack)] = decodeXmlEntities(v);
   }
   return { resolved };
 };
@@ -240,7 +277,7 @@ const convertElement = (entry: FxpEntry, parentStack: NamespaceStack): XmlNode =
   for (const child of childEntries) {
     if (Object.hasOwn(child, TEXT_KEY)) {
       const t = child[TEXT_KEY];
-      if (typeof t === 'string') textParts.push(t);
+      if (typeof t === 'string') textParts.push(decodeXmlEntities(t));
       continue;
     }
     if (textParts.length > 0 && node.children.length === 0) {
