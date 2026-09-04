@@ -45,6 +45,18 @@ describe('parseXml — minimal cases', () => {
     expect(root.text).toBe('& < > \' "');
   });
 
+  it('expands decimal and hexadecimal character references in text and attributes', () => {
+    const root = parseXml('<t label="&#65; &#x1F600;">&#20219;&#x52A1;</t>');
+    expect(root.attrs['label']).toBe('A 😀');
+    expect(root.text).toBe('任务');
+  });
+
+  it('decodes entities once rather than recursively', () => {
+    const root = parseXml('<t label="&amp;#65;">&amp;#x41;</t>');
+    expect(root.attrs['label']).toBe('&#65;');
+    expect(root.text).toBe('&#x41;');
+  });
+
   it('skips the XML declaration', () => {
     const root = parseXml('<?xml version="1.0" encoding="UTF-8"?><r/>');
     expect(root.name).toBe('r');

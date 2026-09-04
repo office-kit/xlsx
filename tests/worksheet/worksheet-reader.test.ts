@@ -44,6 +44,14 @@ describe('parseWorksheetXml — value kinds', () => {
     expect(getCell(ws, 1, 1)?.value).toBe('Hello');
   });
 
+  it('reads numeric XML character references in inline strings', () => {
+    const xml = wrap(`<sheetData>
+      <row r="1"><c r="A1" t="inlineStr"><is><t>&#20219;&#x52A1;</t></is></c></row>
+    </sheetData>`);
+    const ws = parseWorksheetXml(xml, 'S', { sharedStrings: [] });
+    expect(getCell(ws, 1, 1)?.value).toBe('任务');
+  });
+
   it('reads inline rich strings as rich text, one value per <r> run', () => {
     const xml = wrap(`<sheetData>
       <row r="1"><c r="A1" t="inlineStr">
