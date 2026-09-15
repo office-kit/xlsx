@@ -71,11 +71,9 @@ export function escapeXmlText(s: string): string {
  *
  * Note: this deliberately does NOT escape `\r` / `\n` / `\t` to numeric
  * character references. XML 1.0 attribute-value normalisation would
- * collapse them to spaces in theory, but the parser used on the read side
- * (fast-xml-parser) does not decode numeric character references, so a
- * write-then-read round-trip would surface the literal `&#9;` instead of
- * recovering the original tab. Leaving the whitespace bytes literal keeps
- * the round-trip stable and matches what Excel itself emits.
+ * collapses them to spaces, but the DOM read path (fast-xml-parser) does not
+ * apply that normalisation, so the literal bytes round-trip through
+ * `loadWorkbook`. Leaving them literal also matches what Excel itself emits.
  */
 export function escapeXmlAttr(s: string): string {
   return s

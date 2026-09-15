@@ -2,4 +2,4 @@
 "@office-kit/xlsx": patch
 ---
 
-Decode decimal and hexadecimal XML character references when loading workbooks, including inline and shared strings written by openpyxl.
+fix: `loadWorkbook` returned numeric character references such as `&#20219;` as literal text instead of decoding them (#131). Decimal and hexadecimal references are now decoded in text and attributes, including the inline and shared strings openpyxl writes. A reference to a character XML does not allow (for example `&#0;`) now fails the load with `OpenXmlSchemaError` instead of being kept as literal text.

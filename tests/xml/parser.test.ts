@@ -57,6 +57,12 @@ describe('parseXml — minimal cases', () => {
     expect(root.text).toBe('&#x41;');
   });
 
+  it('keeps CDATA content literal, without entity decoding', () => {
+    expect(parseXml('<t><![CDATA[&amp; &#65; <x>]]></t>').text).toBe('&amp; &#65; <x>');
+    expect(parseXml('<t>&#65;<![CDATA[&lt;]]>&amp;</t>').text).toBe('A&lt;&');
+    expect(parseXml('<t><![CDATA[]]></t>').text).toBe('');
+  });
+
   it('skips the XML declaration', () => {
     const root = parseXml('<?xml version="1.0" encoding="UTF-8"?><r/>');
     expect(root.name).toBe('r');

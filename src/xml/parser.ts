@@ -38,6 +38,9 @@ const checkForDoctype = (text: string): void => {
 
 // ---- fast-xml-parser configuration ------------------------------------------
 
+const TEXT_KEY = '#text';
+const CDATA_KEY = '#cdata';
+
 const parser = new XMLParser({
   preserveOrder: true,
   ignoreAttributes: false,
@@ -52,6 +55,9 @@ const parser = new XMLParser({
   // (`&amp;#65;` is the literal text "&#65;", not "A").
   processEntities: false,
   htmlEntities: false,
+  // Without this, CDATA content is merged into `#text` and would go through
+  // entity decoding, but CDATA is literal: `<![CDATA[&amp;]]>` is "&amp;".
+  cdataPropName: CDATA_KEY,
 });
 
 const XML_ENTITY_RE = /&(amp|lt|gt|quot|apos|#(?:[0-9]+|x[0-9A-Fa-f]+));/g;
@@ -97,7 +103,6 @@ type FxpEntry = { ':@'?: FxpAttrs } & { [tagOrText: string]: FxpEntry[] | string
 type FxpTree = FxpEntry[];
 
 const ATTR_KEY = ':@';
-const TEXT_KEY = '#text';
 
 // ---- public API -------------------------------------------------------------
 
@@ -278,6 +283,14 @@ const convertElement = (entry: FxpEntry, parentStack: NamespaceStack): XmlNode =
     if (Object.hasOwn(child, TEXT_KEY)) {
       const t = child[TEXT_KEY];
       if (typeof t === 'string') textParts.push(decodeXmlEntities(t));
+      continue;
+    }
+    if (Object.hasOwn(child, CDATA_KEY)) {
+      const section = child[CDATA_KEY] as FxpEntry[];
+      for (const part of section) {
+        const t = part[TEXT_KEY];
+        if (typeof t === 'string') textParts.push(t);
+      }
       continue;
     }
     if (textParts.length > 0 && node.children.length === 0) {
