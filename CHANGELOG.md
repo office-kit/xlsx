@@ -1,5 +1,27 @@
 # @office-kit/xlsx
 
+## 0.11.1
+
+### Patch Changes
+
+- [#132](https://github.com/office-kit/xlsx/pull/132) [`6244117`](https://github.com/office-kit/xlsx/commit/6244117e0c142c3c65ab1be80624e3f6be070dd6) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: `loadWorkbook` returned numeric character references such as `&[#20219](https://github.com/office-kit/xlsx/issues/20219);` as literal text instead of decoding them ([#131](https://github.com/office-kit/xlsx/issues/131)). Decimal and hexadecimal references are now decoded in text and attributes, including the inline and shared strings openpyxl writes. A reference to a character XML does not allow (for example `&#0;`) now fails the load with `OpenXmlSchemaError` instead of being kept as literal text.
+
+- [#133](https://github.com/office-kit/xlsx/pull/133) [`dcbc31a`](https://github.com/office-kit/xlsx/commit/dcbc31a5f7a9408301c4726617eab43cadf3e340) Thanks [@kibertoad](https://github.com/kibertoad)! - fix: types were silently lost on `moduleResolution: node16` / `nodenext`
+
+  Relative imports inside the shipped `.d.ts` files had no file extension
+  (`from './load'`), which Node's ESM rules reject. Consumers on
+  `moduleResolution: node16` or `nodenext` got TS2834 inside `node_modules`,
+  where the usual `skipLibCheck: true` discarded it, so every symbol imported
+  from `@office-kit/xlsx/*` degraded to an error type: no autocomplete, and no
+  type errors reported against the library's API.
+
+  The declarations now carry `.js` extensions, so all of `node16`, `nodenext` and
+  `bundler` resolve the full type graph with `skipLibCheck: false`. No runtime
+  behaviour, export name or type signature changed.
+
+  `moduleResolution: node10` remains unsupported, since the subpaths are declared
+  only through `exports`.
+
 ## 0.11.0
 
 ### Minor Changes
