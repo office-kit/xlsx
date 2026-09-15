@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- [#132](https://github.com/office-kit/xlsx/pull/132) [`6244117`](https://github.com/office-kit/xlsx/commit/6244117e0c142c3c65ab1be80624e3f6be070dd6) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: `loadWorkbook` returned numeric character references such as `&[#20219](https://github.com/office-kit/xlsx/issues/20219);` as literal text instead of decoding them ([#131](https://github.com/office-kit/xlsx/issues/131)). Decimal and hexadecimal references are now decoded in text and attributes, including the inline and shared strings openpyxl writes. A reference to a character XML does not allow (for example `&#0;`) now fails the load with `OpenXmlSchemaError` instead of being kept as literal text.
+- [#132](https://github.com/office-kit/xlsx/pull/132) [`6244117`](https://github.com/office-kit/xlsx/commit/6244117e0c142c3c65ab1be80624e3f6be070dd6) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: `loadWorkbook` returned numeric character references such as `&#20219;` as literal text instead of decoding them ([#131](https://github.com/office-kit/xlsx/issues/131)). Decimal and hexadecimal references are now decoded in text and attributes, including the inline and shared strings openpyxl writes. A reference to a character XML does not allow (for example `&#0;`) now fails the load with `OpenXmlSchemaError` instead of being kept as literal text.
 
 - [#133](https://github.com/office-kit/xlsx/pull/133) [`dcbc31a`](https://github.com/office-kit/xlsx/commit/dcbc31a5f7a9408301c4726617eab43cadf3e340) Thanks [@kibertoad](https://github.com/kibertoad)! - fix: types were silently lost on `moduleResolution: node16` / `nodenext`
 
