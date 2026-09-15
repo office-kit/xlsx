@@ -4,8 +4,8 @@
 
 import { zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
-import { loadWorkbook } from '../../src/io/load';
-import { fromBuffer } from '../../src/io/node';
+import { loadWorkbook } from '../../src/io/load.js';
+import { fromBuffer } from '../../src/io/node.js';
 
 const enc = new TextEncoder();
 const MAIN_NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
