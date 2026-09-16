@@ -113,6 +113,22 @@ describe('<f> never carries a leading =', () => {
     expect(xml).not.toContain('<f>=');
   });
 
+  it.each(['normal', 'array'] as const)('rejects empty hand-built %s formulas on save', (t) => {
+    for (const formula of ['', '  ', '=', ' = ']) {
+      const ws = makeWorksheet('Sheet1');
+      setCell(ws, 1, 1, { kind: 'formula', t, formula, ...(t === 'array' ? { ref: 'A1:A2' } : {}) });
+      expect(() => sheetText(ws)).toThrow(OpenXmlSchemaError);
+    }
+  });
+
+  it('preserves empty shared references and data-table formulas on save', () => {
+    const ws = makeWorksheet('Sheet1');
+    setCell(ws, 1, 1, makeSharedFormula(0));
+    setCell(ws, 2, 1, makeDataTableFormula('', { ref: 'A2:A3' }));
+    expect(sheetText(ws)).toContain('<f t="shared" si="0"/>');
+    expect(sheetText(ws)).toContain('<f t="dataTable" ref="A2:A3"/>');
+  });
+
   it('drops it on the way back out of a file that had one', () => {
     const ws = parseWorksheetXml(sheetXml('<row r="1"><c r="A1"><f>=SUM(B1:B2)</f></c></row>'), 'Sheet1', {
       sharedStrings: [],

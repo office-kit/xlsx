@@ -383,7 +383,11 @@ const serializeFormulaCell = (ref: string, styleAttr: string, f: FormulaValue): 
   // dynamic array. We never synthesise a prefix here — we only echo what the
   // source contained — so we can't emit a form Excel didn't itself author.
   const fAttrStr = fAttrs.length > 0 ? ` ${fAttrs.join(' ')}` : '';
-  const formulaText = escapeXmlText(escapeCellString(normalizeFormulaText(f.formula)));
+  const normalized = normalizeFormulaText(f.formula);
+  if ((f.t === 'normal' || f.t === 'array') && normalized.length === 0) {
+    throw new OpenXmlSchemaError(`worksheet: ${f.t} formula must not be empty at ${ref}`);
+  }
+  const formulaText = escapeXmlText(escapeCellString(normalized));
   const fEl = formulaText.length > 0 ? `<f${fAttrStr}>${formulaText}</f>` : `<f${fAttrStr}/>`;
 
   let valueAttr = '';
