@@ -43,6 +43,7 @@ for every export see <a href="{base}/api">API reference</a>.
 | Build a small workbook → `Buffer` (Node) | `createWorkbook` + `addWorksheet` + `setCell` + `workbookToBuffer` |
 | Edit one cell of an existing file (Node) | `loadWorkbook` + `fromFile` + `setCell` + `saveWorkbook` + `toFile` |
 | Append rows to a worksheet | `appendRow` (or `appendRows`) |
+| Assert on a workbook you just generated | `loadWorkbook` + `fromArrayBuffer` + `getSheet` |
 
 ### Stream-write (huge sheets)
 
@@ -57,7 +58,8 @@ for every export see <a href="{base}/api">API reference</a>.
 | Bold + font size + fill on a header cell | `setBold` + `setFontSize` + `setCellBackgroundColor` |
 | Number format: currency / percent | `setCellAsCurrency` + `setCellAsPercent` |
 | Number format: date | `setCellNumberFormat` + `FORMAT_DATE_DATETIME` |
-| Add a formula (with cached value) | `setCell` + `setFormula` |
+| Add a formula (with cached value) | `setCell` + `makeFormula` |
+| Make every formula fill in on open | `setFullCalcOnLoad` |
 | Make a cell clickable | `setHyperlink` |
 | Merge cells + freeze the header row | `mergeCells` + `makeFreezePane` + `makeSheetView` |
 
@@ -280,11 +282,34 @@ setCellNumberFormat(wb, setCell(ws, 1, 1, new Date()), FORMAT_DATE_DATETIME);
 ### Add a formula (with cached value)
 
 ```ts
-import { setFormula } from '@office-kit/xlsx/cell';
+import { makeFormula } from '@office-kit/xlsx/cell';
 import { setCell } from '@office-kit/xlsx/worksheet';
 
-const c = setCell(ws, 3, 1, null);
-setFormula(c, 'SUM(A1:A2)', { cachedValue: 42 });
+setCell(ws, 3, 1, makeFormula('SUM(A1:A2)', { cachedValue: 42 }));
+```
+
+### Make every formula fill in on open
+
+```ts
+import { setFullCalcOnLoad } from '@office-kit/xlsx/workbook';
+
+// Excel, LibreOffice and Sheets compute an uncached formula on open anyway.
+// Viewers that never calculate (Quick Look, Outlook and SharePoint previews,
+// thumbnailers) render it blank, so cache what you can and set this.
+setFullCalcOnLoad(wb, true);
+```
+
+### Assert on a workbook you just generated
+
+```ts
+import { fromArrayBuffer, loadWorkbook } from '@office-kit/xlsx/io';
+import { getSheet } from '@office-kit/xlsx/workbook';
+import { getRangeValues } from '@office-kit/xlsx/worksheet';
+
+// fromArrayBuffer takes a Uint8Array directly, so no Buffer and no temp file.
+const wb = await loadWorkbook(fromArrayBuffer(bytes));
+const sheet = getSheet(wb, 'Leverage'); // already narrowed to Worksheet
+if (sheet) console.log(getRangeValues(sheet, 'A1:B3'));
 ```
 
 ### Make a cell clickable

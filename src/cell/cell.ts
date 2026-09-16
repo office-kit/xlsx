@@ -109,8 +109,8 @@ export function setCellValue(c: Cell, value: CellValue): void {
  */
 export function bindValue(c: Cell, value: number | string | boolean | Date | null): void {
   if (typeof value === 'string') {
-    if (value.length > 0 && value.charCodeAt(0) === 61 /* '=' */) {
-      setFormula(c, value.slice(1));
+    if (value.charCodeAt(0) === 61 /* '=' */) {
+      setFormula(c, value);
       return;
     }
     if (ERROR_CODES.has(value)) {
@@ -125,18 +125,45 @@ export function bindValue(c: Cell, value: number | string | boolean | Date | nul
 
 // ---- formula setters -------------------------------------------------------
 
-/** Plain `=A1+B1` style formula. Cached value is optional but recommended for round-trip. */
-export function setFormula(c: Cell, formula: string, opts?: { cachedValue?: FormulaValue['cachedValue'] }): void {
-  const v: FormulaValue = {
+// OOXML stores formula text without the leading `=` (ECMA-376 §18.3.1.40), so
+// every entry point normalises it. Otherwise a natural-looking
+// `setFormula(c, '=SUM(A1:A3)')` emits `<f>=SUM(A1:A3)</f>` and Excel reports
+// the file as damaged.
+const stripLeadingEquals = (formula: string): string =>
+  formula.charCodeAt(0) === 61 ? formula.slice(1) : formula;
+
+/**
+ * Build a formula cell value. Hand it to `setCell` when the write already
+ * carries a style id, so placing a formatted formula stays a single call;
+ * {@link setFormula} is the same thing applied to a cell you already hold.
+ *
+ * A cached value is optional. Without one, Excel, LibreOffice and Google
+ * Sheets compute the result on open, but viewers that never calculate (Quick
+ * Look, Outlook and SharePoint previews, most thumbnailers) render the cell
+ * empty. Supply one whenever the producer can compute it.
+ */
+export function makeFormula(
+  formula: string,
+  opts?: { cachedValue?: FormulaValue['cachedValue'] },
+): FormulaValue {
+  return {
     kind: 'formula',
     t: 'normal',
-    formula,
+    formula: stripLeadingEquals(formula),
     ...(opts?.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : {}),
   };
-  c.value = v;
 }
 
-/** Array (CSE) formula spanning a `ref` range. */
+/**
+ * Plain `A1+B1` style formula, applied in place. A leading `=` is stripped, so
+ * `'=A1+B1'` and `'A1+B1'` are interchangeable. Cached value is optional but
+ * recommended for round-trip.
+ */
+export function setFormula(c: Cell, formula: string, opts?: { cachedValue?: FormulaValue['cachedValue'] }): void {
+  c.value = makeFormula(formula, opts);
+}
+
+/** Array (CSE) formula spanning a `ref` range. A leading `=` is stripped. */
 export function setArrayFormula(
   c: Cell,
   ref: string,
@@ -146,7 +173,7 @@ export function setArrayFormula(
   const v: FormulaValue = {
     kind: 'formula',
     t: 'array',
-    formula,
+    formula: stripLeadingEquals(formula),
     ref,
     ...(opts?.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : {}),
   };
@@ -171,7 +198,7 @@ export function setSharedFormula(
   const v: FormulaValue = {
     kind: 'formula',
     t: 'shared',
-    formula: formula ?? '',
+    formula: formula === undefined ? '' : stripLeadingEquals(formula),
     si,
     ...(ref !== undefined ? { ref } : {}),
     ...(opts?.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : {}),
@@ -216,7 +243,7 @@ export function setDataTableFormula(c: Cell, formula: string, opts: DataTableFor
   const v: FormulaValue = {
     kind: 'formula',
     t: 'dataTable',
-    formula,
+    formula: stripLeadingEquals(formula),
     ref: opts.ref,
     ...(opts.r1 !== undefined ? { r1: opts.r1 } : {}),
     ...(opts.r2 !== undefined ? { r2: opts.r2 } : {}),

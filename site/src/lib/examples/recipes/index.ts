@@ -17,6 +17,7 @@ import hyperlinks from './hyperlinks.ts?raw';
 import mergeAndFreeze from './merge-and-freeze.ts?raw';
 import multiSheet from './multi-sheet.ts?raw';
 import browserFileInput from './browser-file-input.ts?raw';
+import assertGeneratedWorkbook from './assert-generated-workbook.ts?raw';
 
 import basicReadWrite from '../basic-read-write.ts?raw';
 import nodeFs from '../node-fs.ts?raw';
@@ -82,7 +83,7 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
           'Add several worksheets, define names that span them, and reference them in a formula.',
         path: 'site/src/lib/examples/recipes/multi-sheet.ts',
         source: multiSheet,
-        relatedApi: ['addWorksheet', 'addDefinedName', 'setCellFormula'],
+        relatedApi: ['addWorksheet', 'addDefinedName', 'makeFormula'],
       },
       {
         slug: 'node-fs-helpers',
@@ -134,16 +135,25 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
       },
       {
         slug: 'formulas',
-        title: 'Add a formula (with cached value)',
+        title: 'Formulas in a generated workbook',
         teaser:
-          'Pass `cachedValue` so Excel renders the result before forcing a full recalc on open.',
+          'Cache the values you can compute, and set `fullCalcOnLoad` for the ones you cannot.',
         path: 'site/src/lib/examples/recipes/formulas.ts',
         source: formulas,
         notes: [
+          'Viewers fall into three camps. Excel, LibreOffice and Google Sheets compute a formula with no cached `<v>` on open. Quick Look, Outlook and SharePoint previews, and most thumbnailers never calculate and render the cell empty. Tools that read the XML directly see whatever you wrote. Supply `cachedValue` wherever the producer can compute it, and call `setFullCalcOnLoad(wb, true)` on any generated workbook with formulas so the ones you left uncached get filled in on first open.',
+          '`makeFormula` builds the value for a `setCell` write, so placing a formula is one call. `setFormula` is the same thing applied to a cell you already hold.',
+          'A leading `=` is stripped, so `\'=SUM(A1:A3)\'` and `\'SUM(A1:A3)\'` are interchangeable. OOXML stores `<f>` without it.',
           'Cached values are optional — Excel will recalc anyway when the file opens, but cached values keep the file viewable in tools that don\'t recalc.',
           'For shared and array formulas, use `setSharedFormula` / `setArrayFormula` from `@office-kit/xlsx/cell` on the Cell returned by `setCell`.',
         ],
-        relatedApi: ['setCell', 'setFormula', 'setArrayFormula', 'setSharedFormula'],
+        relatedApi: [
+          'makeFormula',
+          'setFormula',
+          'setFullCalcOnLoad',
+          'setArrayFormula',
+          'setSharedFormula',
+        ],
       },
       {
         slug: 'merge-and-freeze',
@@ -233,6 +243,25 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
         path: 'site/src/lib/examples/recipes/insert-image.ts',
         source: insertImage,
         relatedApi: ['loadImage', 'addImageAt', 'makeOneCellAnchor'],
+      },
+    ],
+  },
+  {
+    title: 'Generating files you have to trust',
+    recipes: [
+      {
+        slug: 'assert-generated-workbook',
+        title: 'Assert on a workbook you just generated',
+        teaser:
+          'Load the bytes back and read them with the same API you wrote them with.',
+        path: 'site/src/lib/examples/recipes/assert-generated-workbook.ts',
+        source: assertGeneratedWorkbook,
+        notes: [
+          '`fromArrayBuffer` accepts a `Uint8Array` as well as an `ArrayBuffer`, so a renderer\'s output goes straight into `loadWorkbook` with no copy and no temp file.',
+          '`getSheet(wb, title)` narrows past the worksheet / chartsheet union, so there is no `kind === "worksheet"` check to write.',
+          '`addWorksheet` already validates the title (31-character limit, `[]:*?/\\` and the reserved name `History`), so a test of your own for those is testing this library.',
+        ],
+        relatedApi: ['loadWorkbook', 'fromArrayBuffer', 'getSheet', 'getRangeValues', 'iterCells'],
       },
     ],
   },

@@ -60,7 +60,7 @@ hides a real bug elsewhere). Just call `addWorksheet` directly.
 | `ws.cell(row=1, column=1, value=42)`    | `setCell(ws, 1, 1, 42)`             |
 | `ws['A1'].value`                        | `ws.rows.get(1)?.get(1)?.value`     |
 | `ws.iter_rows()`                        | `iterRows(ws)`                      |
-| `Cell(formula='=A1+B1')`                | `setFormula(cell, 'A1+B1')`         |
+| `Cell(formula='=A1+B1')`                | `setCell(ws, 1, 1, makeFormula('A1+B1'))` |
 
 Coordinates are 1-based on both sides. Cell values cover the same shapes
 openpyxl does:
@@ -68,7 +68,8 @@ openpyxl does:
 - numbers (`number`)
 - strings (`string`, automatically deduped via the shared-strings table)
 - booleans (`boolean`)
-- formulas (`{ kind: 'formula', formula, t, ... }` via `setFormula`)
+- formulas (`{ kind: 'formula', formula, t, ... }` via `makeFormula` for a
+  `setCell` write, or `setFormula` to apply one to a cell you hold)
 - errors (`{ kind: 'error', code: '#REF!' }` etc., via `makeErrorValue`)
 - rich text (`{ kind: 'rich-text', runs }` via `makeRichText` / `makeTextRun`)
 - dates (`Date`)
