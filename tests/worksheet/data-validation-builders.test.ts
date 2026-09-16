@@ -32,11 +32,11 @@ describe('addListValidation', () => {
     expect(ws.dataValidations.length).toBe(1);
   });
 
-  it('reference-string formula passes through verbatim', () => {
+  it('normalises a reference-string formula to the stored form', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'V');
     const dv = addListValidation(ws, 'A1:A10', '=Sheet2!$A$1:$A$10');
-    expect(dv.formula1).toBe('=Sheet2!$A$1:$A$10');
+    expect(dv.formula1).toBe('Sheet2!$A$1:$A$10');
   });
 
   it('passes through prompt + error metadata', () => {
@@ -93,12 +93,12 @@ describe('addDateValidation + addCustomValidation', () => {
     expect(dv.formula2).toBe('45100');
   });
 
-  it('addCustomValidation pastes the formula verbatim', () => {
+  it('addCustomValidation normalises the formula to the stored form', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'V');
     const dv = addCustomValidation(ws, 'A1:A100', '=ISNUMBER(A1)');
     expect(dv.type).toBe('custom');
-    expect(dv.formula1).toBe('=ISNUMBER(A1)');
+    expect(dv.formula1).toBe('ISNUMBER(A1)');
   });
 });
 
@@ -120,6 +120,6 @@ describe('builders survive a save → load round-trip', () => {
     expect(ws2.dataValidations[1]?.type).toBe('whole');
     expect(ws2.dataValidations[1]?.errorStyle).toBe('warning');
     expect(ws2.dataValidations[2]?.type).toBe('custom');
-    expect(ws2.dataValidations[2]?.formula1).toBe('=ISNUMBER(C1)');
+    expect(ws2.dataValidations[2]?.formula1).toBe('ISNUMBER(C1)');
   });
 });

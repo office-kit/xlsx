@@ -9,6 +9,7 @@
 
 import { escapeXmlAttr } from '../utils/escape.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
+import { normalizeFormulaText } from '../utils/formula-text.js';
 import { type MultiCellRange, parseMultiCellRange } from './cell-range.js';
 
 export type ConditionalFormattingRuleType =
@@ -119,7 +120,7 @@ export function makeCfRule(
   return {
     type: opts.type,
     priority: opts.priority,
-    formulas: opts.formulas ?? [],
+    formulas: (opts.formulas ?? []).map((f) => normalizeFormulaText(f)),
     ...(opts.dxfId !== undefined ? { dxfId: opts.dxfId } : {}),
     ...(opts.stopIfTrue !== undefined ? { stopIfTrue: opts.stopIfTrue } : {}),
     ...(opts.operator !== undefined ? { operator: opts.operator } : {}),

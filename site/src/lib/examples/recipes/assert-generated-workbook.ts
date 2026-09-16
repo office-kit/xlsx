@@ -3,7 +3,7 @@
 // `fromArrayBuffer` takes the Uint8Array directly, so there is no Buffer or
 // temp file between the renderer and the assertions.
 
-import { getFormulaText, makeFormula } from '@office-kit/xlsx/cell';
+import { getCoordinate, getFormulaText, makeFormula } from '@office-kit/xlsx/cell';
 import { fromArrayBuffer, loadWorkbook, workbookToBytes } from '@office-kit/xlsx/io';
 import { addWorksheet, createWorkbook, getSheet, sheetNames } from '@office-kit/xlsx/workbook';
 import {
@@ -42,6 +42,6 @@ console.log(getAutoFilter(ws)?.ref); // 'A1:B3'
 const formulas = new Map<string, string>();
 for (const cell of iterCells(ws)) {
   const text = getFormulaText(cell);
-  if (text !== undefined) formulas.set(`${cell.row},${cell.col}`, text);
+  if (text !== undefined) formulas.set(getCoordinate(cell), text);
 }
-console.log(formulas); // Map { '4,2' => 'SUM(B2:B3)' }
+console.log(formulas); // Map { 'B4' => 'SUM(B2:B3)' }

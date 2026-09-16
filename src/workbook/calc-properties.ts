@@ -72,7 +72,14 @@ export const setCalcOnSave = (wb: Workbook, on: boolean): void => {
   ensureCalcProperties(wb).calcOnSave = on;
 };
 
-/** Toggle "Recalculate workbook on load" — forces a full recalc on open. */
+/**
+ * Toggle "Recalculate workbook on load". A calculating app (Excel,
+ * LibreOffice, Google Sheets) then recomputes every formula on open instead of
+ * trusting the cached values in the file, which is what a generated workbook
+ * wants when the producer could not compute a cached value for every formula,
+ * or is not certain the ones it wrote are current. Viewers that never
+ * calculate ignore the flag and keep showing only what is cached.
+ */
 export const setFullCalcOnLoad = (wb: Workbook, on: boolean): void => {
   ensureCalcProperties(wb).fullCalcOnLoad = on;
 };

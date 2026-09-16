@@ -8,6 +8,7 @@
 
 import { columnLetterFromIndex, MAX_COL, MAX_ROW } from '../utils/coordinate.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
+import { normalizeFormulaText, startsWithEquals } from '../utils/formula-text.js';
 import { ERROR_CODES } from '../utils/inference.js';
 import { type RichText, richTextToString } from './rich-text.js';
 
@@ -109,7 +110,7 @@ export function setCellValue(c: Cell, value: CellValue): void {
  */
 export function bindValue(c: Cell, value: number | string | boolean | Date | null): void {
   if (typeof value === 'string') {
-    if (value.charCodeAt(0) === 61 /* '=' */) {
+    if (startsWithEquals(value)) {
       setFormula(c, value);
       return;
     }
@@ -123,19 +124,26 @@ export function bindValue(c: Cell, value: number | string | boolean | Date | nul
   c.value = value;
 }
 
-// ---- formula setters -------------------------------------------------------
+// ---- formula values --------------------------------------------------------
 
-// OOXML stores formula text without the leading `=` (ECMA-376 §18.3.1.40), so
-// every entry point normalises it. Otherwise a natural-looking
-// `setFormula(c, '=SUM(A1:A3)')` emits `<f>=SUM(A1:A3)</f>` and Excel reports
-// the file as damaged.
-const stripLeadingEquals = (formula: string): string =>
-  formula.charCodeAt(0) === 61 ? formula.slice(1) : formula;
+// A `<f>` with no text is the shape Excel reports as damaged, and `'='` on its
+// own normalises to exactly that, so the kinds whose text is required reject it
+// here rather than at save time.
+const requireFormulaText = (fn: string, formula: string): string => {
+  const text = normalizeFormulaText(formula);
+  if (text.length === 0) {
+    throw new OpenXmlSchemaError(`${fn}: formula text must not be empty (got ${JSON.stringify(formula)})`);
+  }
+  return text;
+};
 
 /**
  * Build a formula cell value. Hand it to `setCell` when the write already
  * carries a style id, so placing a formatted formula stays a single call;
  * {@link setFormula} is the same thing applied to a cell you already hold.
+ *
+ * A leading `=` is stripped, so `'=SUM(A1:A3)'` and `'SUM(A1:A3)'` are
+ * interchangeable.
  *
  * A cached value is optional. Without one, Excel, LibreOffice and Google
  * Sheets compute the result on open, but viewers that never calculate (Quick
@@ -146,45 +154,77 @@ export function makeFormula(
   formula: string,
   opts?: { cachedValue?: FormulaValue['cachedValue'] },
 ): FormulaValue {
-  return {
+  return Object.freeze({
     kind: 'formula',
     t: 'normal',
-    formula: stripLeadingEquals(formula),
+    formula: requireFormulaText('makeFormula', formula),
     ...(opts?.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : {}),
-  };
+  });
 }
 
 /**
- * Plain `A1+B1` style formula, applied in place. A leading `=` is stripped, so
- * `'=A1+B1'` and `'A1+B1'` are interchangeable. Cached value is optional but
- * recommended for round-trip.
+ * Build an array (CSE) formula value spanning `ref`. Belongs on the top-left
+ * cell of the range, since Excel reads `ref` to know how far the result
+ * spreads.
+ */
+export function makeArrayFormula(
+  ref: string,
+  formula: string,
+  opts?: { cachedValue?: FormulaValue['cachedValue'] },
+): FormulaValue {
+  return Object.freeze({
+    kind: 'formula',
+    t: 'array',
+    formula: requireFormulaText('makeArrayFormula', formula),
+    ref,
+    ...(opts?.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : {}),
+  });
+}
+
+/**
+ * Build a shared-formula value. The first cell in the group carries the
+ * formula text + `ref`; subsequent cells with the same `si` carry only the
+ * index, and Excel reconstructs their text by shifting the references, so
+ * their `formula` is legitimately empty.
+ */
+export function makeSharedFormula(
+  si: number,
+  formula?: string,
+  ref?: string,
+  opts?: { cachedValue?: FormulaValue['cachedValue'] },
+): FormulaValue {
+  if (!Number.isInteger(si) || si < 0) {
+    throw new OpenXmlSchemaError(`makeSharedFormula: si must be a non-negative integer; got ${si}`);
+  }
+  return Object.freeze({
+    kind: 'formula',
+    t: 'shared',
+    formula: formula === undefined ? '' : normalizeFormulaText(formula),
+    si,
+    ...(ref !== undefined ? { ref } : {}),
+    ...(opts?.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : {}),
+  });
+}
+
+/**
+ * Plain `A1+B1` style formula, applied in place. Same value as
+ * {@link makeFormula}, for a cell you already hold.
  */
 export function setFormula(c: Cell, formula: string, opts?: { cachedValue?: FormulaValue['cachedValue'] }): void {
   c.value = makeFormula(formula, opts);
 }
 
-/** Array (CSE) formula spanning a `ref` range. A leading `=` is stripped. */
+/** Array (CSE) formula spanning a `ref` range, applied in place. */
 export function setArrayFormula(
   c: Cell,
   ref: string,
   formula: string,
   opts?: { cachedValue?: FormulaValue['cachedValue'] },
 ): void {
-  const v: FormulaValue = {
-    kind: 'formula',
-    t: 'array',
-    formula: stripLeadingEquals(formula),
-    ref,
-    ...(opts?.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : {}),
-  };
-  c.value = v;
+  c.value = makeArrayFormula(ref, formula, opts);
 }
 
-/**
- * Shared formula. The first cell in the group carries the formula text + ref;
- * subsequent cells with the same `si` carry only the index and Excel
- * reconstructs the formula via reference shifting.
- */
+/** Shared formula, applied in place. See {@link makeSharedFormula}. */
 export function setSharedFormula(
   c: Cell,
   si: number,
@@ -192,18 +232,7 @@ export function setSharedFormula(
   ref?: string,
   opts?: { cachedValue?: FormulaValue['cachedValue'] },
 ): void {
-  if (!Number.isInteger(si) || si < 0) {
-    throw new OpenXmlSchemaError(`setSharedFormula: si must be a non-negative integer; got ${si}`);
-  }
-  const v: FormulaValue = {
-    kind: 'formula',
-    t: 'shared',
-    formula: formula === undefined ? '' : stripLeadingEquals(formula),
-    si,
-    ...(ref !== undefined ? { ref } : {}),
-    ...(opts?.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : {}),
-  };
-  c.value = v;
+  c.value = makeSharedFormula(si, formula, ref, opts);
 }
 
 /**
@@ -235,15 +264,16 @@ export interface DataTableFormulaOpts {
 }
 
 /**
- * Set a data-table formula on a cell. Preserves all the dt-specific attributes
+ * Build a data-table formula value. Preserves all the dt-specific attributes
  * so the writer can re-emit `<f t="dataTable" r1="..." />` verbatim and Excel
- * keeps treating the cell as a Data Table cell.
+ * keeps treating the cell as a Data Table cell. Excel writes these with no
+ * formula text at all, so `formula` may be empty.
  */
-export function setDataTableFormula(c: Cell, formula: string, opts: DataTableFormulaOpts): void {
-  const v: FormulaValue = {
+export function makeDataTableFormula(formula: string, opts: DataTableFormulaOpts): FormulaValue {
+  return Object.freeze({
     kind: 'formula',
     t: 'dataTable',
-    formula: stripLeadingEquals(formula),
+    formula: normalizeFormulaText(formula),
     ref: opts.ref,
     ...(opts.r1 !== undefined ? { r1: opts.r1 } : {}),
     ...(opts.r2 !== undefined ? { r2: opts.r2 } : {}),
@@ -254,8 +284,12 @@ export function setDataTableFormula(c: Cell, formula: string, opts: DataTableFor
     ...(opts.aca !== undefined ? { aca: opts.aca } : {}),
     ...(opts.ca !== undefined ? { ca: opts.ca } : {}),
     ...(opts.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : {}),
-  };
-  c.value = v;
+  });
+}
+
+/** Data-table formula, applied in place. See {@link makeDataTableFormula}. */
+export function setDataTableFormula(c: Cell, formula: string, opts: DataTableFormulaOpts): void {
+  c.value = makeDataTableFormula(formula, opts);
 }
 
 // ---- value-shape helpers ---------------------------------------------------

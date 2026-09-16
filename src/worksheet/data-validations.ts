@@ -5,6 +5,7 @@
 // Stage-1 maps every OOXML attribute we have a use for; imeMode + numeric/value
 // clamps land later when phase 7's Asian-locale support catches up.
 
+import { normalizeFormulaText } from '../utils/formula-text.js';
 import { type MultiCellRange, parseMultiCellRange } from './cell-range.js';
 
 export type DataValidationType = 'whole' | 'decimal' | 'list' | 'date' | 'time' | 'textLength' | 'custom';
@@ -55,8 +56,8 @@ export function makeDataValidation(
     type: opts.type,
     sqref: typeof opts.sqref === 'string' ? parseMultiCellRange(opts.sqref) : opts.sqref,
     ...(opts.operator !== undefined ? { operator: opts.operator } : {}),
-    ...(opts.formula1 !== undefined ? { formula1: opts.formula1 } : {}),
-    ...(opts.formula2 !== undefined ? { formula2: opts.formula2 } : {}),
+    ...(opts.formula1 !== undefined ? { formula1: normalizeFormulaText(opts.formula1) } : {}),
+    ...(opts.formula2 !== undefined ? { formula2: normalizeFormulaText(opts.formula2) } : {}),
     ...(opts.allowBlank !== undefined ? { allowBlank: opts.allowBlank } : {}),
     ...(opts.showInputMessage !== undefined ? { showInputMessage: opts.showInputMessage } : {}),
     ...(opts.showErrorMessage !== undefined ? { showErrorMessage: opts.showErrorMessage } : {}),
@@ -90,7 +91,7 @@ export interface ValidationCommon {
 /**
  * Add a list-type dropdown validation to a range. `values` may be an inline
  * list (`['Red', 'Green', 'Blue']`) or a sheet reference
- * (`'=Sheet1!$A$1:$A$10'`).
+ * (`'Sheet1!$A$1:$A$10'`, with or without a leading `=`).
  */
 export const addListValidation = (
   ws: Worksheet,

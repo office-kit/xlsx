@@ -2,18 +2,23 @@
 '@office-kit/xlsx': minor
 ---
 
-feat: `makeFormula` builds a formula as a cell value, and `setFullCalcOnLoad` is exported
+feat: formula value constructors, and the `<calcPr>` setters are now exported
 
 Placing a formula took two steps: reach or create a cell, then mutate it with
 `setFormula`. `makeFormula(text, { cachedValue })` returns the `CellValue`, so
-`setCell(ws, row, col, makeFormula('SUM(B5:I5)'))` is the whole write, and it
-composes with the `styleId` argument `setCell` already accepted. `setFormula`
-remains the mutate-a-cell-you-hold form.
+`setCell(ws, row, col, makeFormula('SUM(B5:I5)'), styleId)` is the whole write.
+`makeArrayFormula`, `makeSharedFormula` and `makeDataTableFormula` do the same
+for the other `<f>` kinds, and `setFormula` / `setArrayFormula` /
+`setSharedFormula` / `setDataTableFormula` stay as the form that applies the same
+value to a cell you already hold.
 
-`setFullCalcOnLoad` existed but was never exported from `@office-kit/xlsx/workbook`,
-which left the advice "cache the value or ask Excel to recalculate" unactionable. It
-is now public. Excel, LibreOffice and Google Sheets compute an uncached formula on
-open, but viewers that never calculate (Quick Look, Outlook and SharePoint previews,
-most thumbnailers) render those cells empty, so a generated workbook with formulas
-wants both a cached value where the producer can compute one and
-`setFullCalcOnLoad(wb, true)` for the rest.
+Five helpers over the workbook's `<calcPr>` existed but none of them was
+reachable. `setCalcMode`, `setIterativeCalc`, `setCalcOnSave`, `setFullCalcOnLoad`
+and `setFullPrecision` are now exported from `@office-kit/xlsx/workbook`.
+
+`setFullCalcOnLoad(wb, true)` asks a calculating app to recompute the workbook on
+open instead of trusting the cached values in the file: reach for it when you
+wrote formulas this library cannot evaluate for you, or when the values you did
+cache may be stale. It does nothing for viewers that never calculate (Quick Look,
+Outlook and SharePoint previews, most thumbnailers), which show a `cachedValue`
+or an empty cell, so keep supplying one wherever the producer can compute it.

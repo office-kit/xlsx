@@ -66,7 +66,8 @@ The library exposes a layered model split across subpaths:
 | Function | Purpose |
 |----------|---------|
 | `setCell(sheet, row, col, value)` | Set a cell value; coercion handled (string / number / boolean). |
-| `setFormula(cell, formula)` | Apply a formula to a Cell returned by `setCell`. Use `setSharedFormula` / `setArrayFormula` from `@office-kit/xlsx/cell` for the array / shared variants. |
+| `makeFormula(formula, opts?)` | Build a formula as a cell value, for a one-call `setCell(ws, row, col, makeFormula('SUM(A1:A3)'), styleId)`. `makeArrayFormula` / `makeSharedFormula` / `makeDataTableFormula` do the same for the other `<f>` kinds. |
+| `setFormula(cell, formula)` | Apply the same formula value to a Cell you already hold. `setArrayFormula` / `setSharedFormula` / `setDataTableFormula` match the constructors above. |
 | `getCell(sheet, row, col)` | Read a cell. Returns `undefined` if empty. |
 | `setCellStyle(wb, cell, opts)` | Apply per-aspect style (font / fill / border / alignment / numberFormat) to a cell. |
 

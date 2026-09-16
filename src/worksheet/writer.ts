@@ -14,6 +14,7 @@ import type { Relationships } from '../packaging/relationships.js';
 import { dateToExcel, durationToExcel } from '../utils/datetime.js';
 import { escapeCellString, escapeXmlAttr as escapeXmlAttrShared, escapeXmlText as escapeXmlTextShared } from '../utils/escape.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
+import { normalizeFormulaText } from '../utils/formula-text.js';
 import type { SharedStringsTable } from '../workbook/shared-strings.js';
 import { addSharedRichText, addSharedString } from '../workbook/shared-strings.js';
 import { MARKUP_COMPAT_NS, SHEET_MAIN_NS, X14_NS } from '../xml/namespaces.js';
@@ -369,7 +370,9 @@ const serializeFormulaCell = (ref: string, styleAttr: string, f: FormulaValue): 
   if (f.del2) fAttrs.push('del2="1"');
   if (f.aca) fAttrs.push('aca="1"');
   if (f.ca) fAttrs.push('ca="1"');
-  // Pass the formula text through verbatim, including any `_xlfn.` /
+  // A leading `=` never belongs in `<f>`: the `make*` constructors strip it,
+  // and a hand-built `FormulaValue` literal reaches the writer without passing
+  // one. Everything else goes through verbatim, including any `_xlfn.` /
   // `_xlfn._xlws.` future-function prefix the reader preserved. The prefix is
   // part of the stored function name (`_xlfn.XLOOKUP`, `_xlfn.LET`, …) and
   // Excel accepts it in an ordinary cell with no metadata — it is *not*
@@ -380,7 +383,7 @@ const serializeFormulaCell = (ref: string, styleAttr: string, f: FormulaValue): 
   // dynamic array. We never synthesise a prefix here — we only echo what the
   // source contained — so we can't emit a form Excel didn't itself author.
   const fAttrStr = fAttrs.length > 0 ? ` ${fAttrs.join(' ')}` : '';
-  const formulaText = escapeXmlText(escapeCellString(f.formula));
+  const formulaText = escapeXmlText(escapeCellString(normalizeFormulaText(f.formula)));
   const fEl = formulaText.length > 0 ? `<f${fAttrStr}>${formulaText}</f>` : `<f${fAttrStr}/>`;
 
   let valueAttr = '';
@@ -571,7 +574,7 @@ const serializeCfRule = (rule: ConditionalFormattingRule): string => {
   if (rule.timePeriod !== undefined) attrs += ` timePeriod="${rule.timePeriod}"`;
 
   const inner: string[] = [];
-  for (const f of rule.formulas) inner.push(`<formula>${escapeXmlText(f)}</formula>`);
+  for (const f of rule.formulas) inner.push(`<formula>${escapeXmlText(normalizeFormulaText(f))}</formula>`);
   if (rule.innerXml) inner.push(rule.innerXml);
   if (inner.length === 0) return `<cfRule${attrs}/>`;
   return `<cfRule${attrs}>${inner.join('')}</cfRule>`;
@@ -599,8 +602,8 @@ const serializeDataValidation = (dv: DataValidation): string => {
   attrs += ` sqref="${escapeXmlAttr(multiCellRangeToString(dv.sqref))}"`;
 
   const formulas: string[] = [];
-  if (dv.formula1 !== undefined) formulas.push(`<formula1>${escapeXmlText(dv.formula1)}</formula1>`);
-  if (dv.formula2 !== undefined) formulas.push(`<formula2>${escapeXmlText(dv.formula2)}</formula2>`);
+  if (dv.formula1 !== undefined) formulas.push(`<formula1>${escapeXmlText(normalizeFormulaText(dv.formula1))}</formula1>`);
+  if (dv.formula2 !== undefined) formulas.push(`<formula2>${escapeXmlText(normalizeFormulaText(dv.formula2))}</formula2>`);
   if (formulas.length === 0) return `<dataValidation${attrs}/>`;
   return `<dataValidation${attrs}>${formulas.join('')}</dataValidation>`;
 };

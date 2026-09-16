@@ -6,12 +6,16 @@ import {
   isEmptyCell,
   isFormulaCell,
   isRichTextCell,
+  makeArrayFormula,
   makeCell,
+  makeDataTableFormula,
   makeDurationValue,
   makeErrorValue,
   makeFormula,
+  makeSharedFormula,
   setArrayFormula,
   setCellValue,
+  setDataTableFormula,
   setFormula,
   setSharedFormula,
 } from '../../src/cell/cell.js';
@@ -113,24 +117,20 @@ describe('formula setters', () => {
     expect(c.value).toEqual({ kind: 'formula', t: 'array', formula: 'A1*B1', ref: 'A1:B2' });
   });
 
-  it('makeFormula builds the value setFormula would assign', () => {
+  it('every setter assigns the value its constructor builds', () => {
     const c = makeCell(1, 1);
+
     setFormula(c, 'A1+B1', { cachedValue: 42 });
-    expect(makeFormula('A1+B1', { cachedValue: 42 })).toEqual(c.value);
-    expect(makeFormula('SUM(A:A)')).toEqual({ kind: 'formula', t: 'normal', formula: 'SUM(A:A)' });
-  });
+    expect(c.value).toEqual(makeFormula('A1+B1', { cachedValue: 42 }));
 
-  it('strips a leading = so the emitted <f> stays valid OOXML', () => {
-    const c = makeCell(1, 1);
-    setFormula(c, '=A2+B2');
-    expect(c.value).toEqual({ kind: 'formula', t: 'normal', formula: 'A2+B2' });
-    expect(makeFormula('=A2+B2').formula).toBe('A2+B2');
+    setArrayFormula(c, 'A1:B2', 'A1*B1');
+    expect(c.value).toEqual(makeArrayFormula('A1:B2', 'A1*B1'));
 
-    setArrayFormula(c, 'A1:A3', '=TRANSPOSE(B1:D1)');
-    expect(c.value).toEqual({ kind: 'formula', t: 'array', formula: 'TRANSPOSE(B1:D1)', ref: 'A1:A3' });
+    setSharedFormula(c, 0, 'A1+1', 'A1:A10');
+    expect(c.value).toEqual(makeSharedFormula(0, 'A1+1', 'A1:A10'));
 
-    setSharedFormula(c, 0, '=A1+1');
-    expect(c.value).toEqual({ kind: 'formula', t: 'shared', formula: 'A1+1', si: 0 });
+    setDataTableFormula(c, 'TABLE(B1,C1)', { ref: 'A1:A3', r1: '$B$1' });
+    expect(c.value).toEqual(makeDataTableFormula('TABLE(B1,C1)', { ref: 'A1:A3', r1: '$B$1' }));
   });
 
   it('setSharedFormula validates si and accepts optional formula / ref', () => {

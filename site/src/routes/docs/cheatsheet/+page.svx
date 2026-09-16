@@ -59,7 +59,7 @@ for every export see <a href="{base}/api">API reference</a>.
 | Number format: currency / percent | `setCellAsCurrency` + `setCellAsPercent` |
 | Number format: date | `setCellNumberFormat` + `FORMAT_DATE_DATETIME` |
 | Add a formula (with cached value) | `setCell` + `makeFormula` |
-| Make every formula fill in on open | `setFullCalcOnLoad` |
+| Recalculate the workbook on open | `setFullCalcOnLoad` |
 | Make a cell clickable | `setHyperlink` |
 | Merge cells + freeze the header row | `mergeCells` + `makeFreezePane` + `makeSheetView` |
 
@@ -282,20 +282,25 @@ setCellNumberFormat(wb, setCell(ws, 1, 1, new Date()), FORMAT_DATE_DATETIME);
 ### Add a formula (with cached value)
 
 ```ts
-import { makeFormula } from '@office-kit/xlsx/cell';
+import { makeArrayFormula, makeFormula } from '@office-kit/xlsx/cell';
 import { setCell } from '@office-kit/xlsx/worksheet';
 
 setCell(ws, 3, 1, makeFormula('SUM(A1:A2)', { cachedValue: 42 }));
+
+// Same shape for the other <f> kinds: makeArrayFormula, makeSharedFormula,
+// makeDataTableFormula. A leading `=` is stripped from all of them.
+setCell(ws, 1, 3, makeArrayFormula('C1:C3', 'TRANSPOSE(A1:A3)'));
 ```
 
-### Make every formula fill in on open
+### Recalculate the workbook on open
 
 ```ts
 import { setFullCalcOnLoad } from '@office-kit/xlsx/workbook';
 
-// Excel, LibreOffice and Sheets compute an uncached formula on open anyway.
-// Viewers that never calculate (Quick Look, Outlook and SharePoint previews,
-// thumbnailers) render it blank, so cache what you can and set this.
+// Excel, LibreOffice and Sheets otherwise trust the cached values in the file.
+// Set this when you wrote formulas with no cached value, or cached ones that
+// may be stale. Viewers that never calculate ignore it and show the cache, so
+// supply a cachedValue where you can as well.
 setFullCalcOnLoad(wb, true);
 ```
 

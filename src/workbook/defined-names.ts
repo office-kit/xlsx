@@ -8,6 +8,7 @@
 // the value semantics are the same.
 
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
+import { normalizeFormulaText } from '../utils/formula-text.js';
 
 export interface DefinedName {
   /** Identifier — `_xlnm.Print_Area` for built-ins, otherwise user-chosen. */
@@ -25,7 +26,7 @@ export interface DefinedName {
 export function makeDefinedName(opts: Partial<DefinedName> & { name: string; value: string }): DefinedName {
   return {
     name: opts.name,
-    value: opts.value,
+    value: normalizeFormulaText(opts.value),
     ...(opts.scope !== undefined ? { scope: opts.scope } : {}),
     ...(opts.hidden !== undefined ? { hidden: opts.hidden } : {}),
     ...(opts.comment !== undefined ? { comment: opts.comment } : {}),

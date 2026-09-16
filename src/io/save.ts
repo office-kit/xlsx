@@ -24,6 +24,7 @@ import { drawingToBytes } from '../drawing/drawing-xml.js';
 import { IMAGE_FORMAT_EXTENSION, IMAGE_FORMAT_MIME, type XlsxImageFormat } from '../drawing/image.js';
 import type { XlsxSink } from '../io/sink.js';
 import { OpenXmlIoError, OpenXmlSchemaError } from '../utils/exceptions.js';
+import { normalizeFormulaText } from '../utils/formula-text.js';
 import { corePropsToBytes } from '../packaging/core.js';
 import { customPropsToBytes } from '../packaging/custom.js';
 import { extendedPropsToBytes } from '../packaging/extended.js';
@@ -834,7 +835,7 @@ function serializeWorkbookXml(wb: Workbook, sheetRIds: ReadonlyArray<string>): s
       if (dn.scope !== undefined) attrs += ` localSheetId="${dn.scope}"`;
       if (dn.hidden) attrs += ' hidden="1"';
       if (dn.comment !== undefined) attrs += ` comment="${escapeAttr(dn.comment)}"`;
-      parts.push(`<definedName${attrs}>${escapeText(dn.value)}</definedName>`);
+      parts.push(`<definedName${attrs}>${escapeText(normalizeFormulaText(dn.value))}</definedName>`);
     }
     parts.push('</definedNames>');
   }

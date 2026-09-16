@@ -2,6 +2,8 @@
 // `t` attribute value. Mirrors openpyxl's `Cell._bind_value` /
 // `_TYPES` / error-code path in openpyxl/openpyxl/cell/cell.py.
 
+import { startsWithEquals } from './formula-text.js';
+
 /**
  * OOXML `t` attribute values. Note that 'inlineStr' is treated
  * separately — the writer chooses between 's' (shared string) and
@@ -41,7 +43,7 @@ export function inferCellType(value: unknown): CellDataType {
   if (typeof value === 'number') return 'n';
   if (value instanceof Date) return 'd';
   if (typeof value === 'string') {
-    if (value.length > 0 && value.charCodeAt(0) === 61 /* '=' */) return 'f';
+    if (startsWithEquals(value)) return 'f';
     if (ERROR_CODES.has(value)) return 'e';
     return 's';
   }

@@ -22,6 +22,7 @@ import type { Relationships } from '../packaging/relationships.js';
 import { findById } from '../packaging/relationships.js';
 import { coordinateToTuple, tupleToCoordinate } from '../utils/coordinate.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
+import { normalizeFormulaText } from '../utils/formula-text.js';
 import { ERROR_CODES } from '../utils/inference.js';
 import { MARKUP_COMPAT_NS, REL_NS, SHEET_MAIN_NS } from '../xml/namespaces.js';
 import { parseXml } from '../xml/parser.js';
@@ -1516,16 +1517,25 @@ const handleFormula = (
   sharedFormulas: Map<number, SharedFormulaCache>,
 ): void => {
   const tAttr = fNode.attrs['t'] ?? 'normal';
-  // Keep the formula text verbatim, including the `_xlfn.` / `_xlfn._xlws.`
+  // Keep the formula text as stored, including the `_xlfn.` / `_xlfn._xlws.`
   // prefixes Excel writes for future-functions (SCAN, LAMBDA, XLOOKUP, …).
   // The prefix is part of the stored grammar — a bare `SCAN(...)` is an
   // unknown name that Excel renders as #NAME?. Stripping it here and then
   // writing the model back verbatim corrupted every dynamic-array formula on
   // a load → save round-trip. openpyxl surfaces the prefix verbatim too.
-  const formula = fNode.text ?? '';
+  //
+  // The leading `=` is the exception: `<f>` text must not carry one, and the
+  // shared-formula cache below has to hold the same text as the cell it came
+  // from.
+  const formula = normalizeFormulaText(fNode.text ?? '');
   const opts = cached !== undefined ? { cachedValue: cached } : undefined;
   switch (tAttr as FormulaKind) {
     case 'normal':
+      // Only a shared reference cell and a data table get their text from
+      // elsewhere; an empty `<f/>` here has no expression at all.
+      if (formula.length === 0) {
+        throw new OpenXmlSchemaError(`worksheet: <f> at ${tupleToCoordinate(coord.col, coord.row)} has no formula text`);
+      }
       setFormula(cell, formula, opts);
       return;
     case 'array': {
@@ -1559,12 +1569,11 @@ const handleFormula = (
         throw new OpenXmlSchemaError(`worksheet: <f t="shared" si="${si}"/> with no preceding origin formula`);
       }
       const dest = tupleToCoordinate(coord.col, coord.row);
-      // OOXML shared-formula text omits the leading '='; the translator treats
-      // unprefixed input as a LITERAL and skips ref shifting, so we re-prefix
-      // before translating and strip again on the way out.
+      // The translator treats unprefixed input as a LITERAL and skips ref
+      // shifting, so re-prefix before translating; `setSharedFormula` takes
+      // the `=` off again.
       const translated = translateFormula(`=${cache.formula}`, cache.origin, { dest });
-      const stripped = translated.startsWith('=') ? translated.slice(1) : translated;
-      setSharedFormula(cell, si, stripped, undefined, opts);
+      setSharedFormula(cell, si, translated, undefined, opts);
       return;
     }
     case 'dataTable': {

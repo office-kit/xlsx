@@ -101,12 +101,12 @@ describe('addDuplicateValuesRule + addFormulaRule + addTextRule', () => {
     expect(uniq.type).toBe('uniqueValues');
   });
 
-  it('formula rule pastes verbatim', () => {
+  it('formula rule normalises the formula to the stored form', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'F');
     const r = addFormulaRule(ws, 'A1:A100', { formula: '=ISNUMBER(A1)*A1>0' });
     expect(r.type).toBe('expression');
-    expect(r.formulas).toEqual(['=ISNUMBER(A1)*A1>0']);
+    expect(r.formulas).toEqual(['ISNUMBER(A1)*A1>0']);
   });
 
   it('text rule maps the operator to the correct ECMA type token', () => {
@@ -134,6 +134,6 @@ describe('builders survive a save → load round-trip', () => {
     expect(ws2.conditionalFormatting.length).toBe(3);
     expect(ws2.conditionalFormatting[0]?.rules[0]?.operator).toBe('greaterThan');
     expect(ws2.conditionalFormatting[1]?.rules[0]?.rank).toBe(3);
-    expect(ws2.conditionalFormatting[2]?.rules[0]?.formulas?.[0]).toBe('=ISNUMBER(C1)');
+    expect(ws2.conditionalFormatting[2]?.rules[0]?.formulas?.[0]).toBe('ISNUMBER(C1)');
   });
 });

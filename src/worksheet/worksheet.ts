@@ -6,8 +6,7 @@
 // workbook's `jsonReplacer`. Worksheets are mutable for hot-path performance.
 
 import type { CellValue } from '../cell/cell.js';
-import { type Cell, cellValueAsString, makeCell, setArrayFormula, setFormula } from '../cell/cell.js';
-import { type InlineFont, makeRichText, type TextRun } from '../cell/rich-text.js';
+import { type Cell, cellValueAsString, makeCell } from '../cell/cell.js';
 import type { Drawing } from '../drawing/drawing.js';
 import { type Color, makeColor } from '../styles/colors.js';
 import {
@@ -820,60 +819,6 @@ export function* getCellsInRange(ws: Worksheet, range: string): IterableIterator
       if (cell !== undefined) yield cell;
     }
   }
-}
-
-/**
- * Set a cell's value to a rich-text run array. Accepts either a pre-built
- * `RichText` (frozen array of TextRun) or a fresh `Array<{ text, font? }>`
- * shape — `makeRichText` normalises and freezes the runs in either case.
- * Returns the cell.
- */
-export function setCellRichText(
-  ws: Worksheet,
-  row: number,
-  col: number,
-  runs: ReadonlyArray<TextRun | { text: string; font?: InlineFont }>,
-  styleId?: number,
-): Cell {
-  return setCell(ws, row, col, { kind: 'rich-text', runs: makeRichText(runs) }, styleId);
-}
-
-/**
- * Set a cell's value to a normal Excel formula. Combines `setCell` with
- * `setFormula`. The leading `=` is stripped if present so callers can pass
- * `'=A1+1'` or `'A1+1'` interchangeably.
- */
-export function setCellFormula(
-  ws: Worksheet,
-  row: number,
-  col: number,
-  formula: string,
-  opts?: { cachedValue?: number | string | boolean; styleId?: number },
-): Cell {
-  const expr = formula.startsWith('=') ? formula.slice(1) : formula;
-  const cell = setCell(ws, row, col, undefined, opts?.styleId);
-  setFormula(cell, expr, opts?.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : undefined);
-  return cell;
-}
-
-/**
- * Set a cell's value to an array (CSE) formula spanning `ref`. Lands the
- * formula on the top-left cell of the range — Excel reads the `ref` attribute
- * to know how far the result spreads. Equivalent to `setCell` +
- * `setArrayFormula`. Leading `=` is stripped.
- */
-export function setCellArrayFormula(
-  ws: Worksheet,
-  row: number,
-  col: number,
-  ref: string,
-  formula: string,
-  opts?: { cachedValue?: number | string | boolean; styleId?: number },
-): Cell {
-  const expr = formula.startsWith('=') ? formula.slice(1) : formula;
-  const cell = setCell(ws, row, col, undefined, opts?.styleId);
-  setArrayFormula(cell, ref, expr, opts?.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : undefined);
-  return cell;
 }
 
 /** Resolve an "A1" coordinate to a numeric (col, row) pair on the sheet. */
