@@ -5,6 +5,7 @@ import { setFormula } from '../../src/cell/cell.js';
 import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
 import {
   countCellsByKind,
+  ensureCell,
   setCell,
 } from '../../src/worksheet/worksheet.js';
 
@@ -37,7 +38,7 @@ describe('countCellsByKind', () => {
     setCell(ws, 5, 1, { kind: 'duration', ms: 1000 });
     setCell(ws, 6, 1, { kind: 'error', code: '#REF!' });
     setCell(ws, 7, 1, { kind: 'rich-text', runs: [] });
-    const f = setCell(ws, 8, 1);
+    const f = ensureCell(ws, 8, 1);
     setFormula(f, 'A1+1');
     setCell(ws, 9, 1, null);
     expect(countCellsByKind(ws)).toEqual({

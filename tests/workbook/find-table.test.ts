@@ -7,15 +7,15 @@ import {
   findTable,
 } from '../../src/workbook/workbook.js';
 import { addExcelTable } from '../../src/worksheet/table.js';
-import { setCell } from '../../src/worksheet/worksheet.js';
+import { writeRange } from '../../src/worksheet/worksheet.js';
 
 describe('findTable', () => {
   it('locates a table by displayName across multiple sheets', () => {
     const wb = createWorkbook();
     const a = addWorksheet(wb, 'A');
     const b = addWorksheet(wb, 'B');
-    setCell(a, 1, 1, 'h');
-    setCell(b, 1, 1, 'h');
+    writeRange(a, 'A1', [['c1', 'c2']]);
+    writeRange(b, 'A1', [['c1', 'c2']]);
     addExcelTable(wb, a, { name: 'TblA', ref: 'A1:B2', columns: ['c1', 'c2'] });
     addExcelTable(wb, b, { name: 'TblB', ref: 'A1:B2', columns: ['c1', 'c2'] });
     const hit = findTable(wb, 'TblB');
@@ -26,7 +26,7 @@ describe('findTable', () => {
   it('returns undefined when the table is not registered', () => {
     const wb = createWorkbook();
     const a = addWorksheet(wb, 'A');
-    setCell(a, 1, 1, 'h');
+    writeRange(a, 'A1', [['c1', 'c2']]);
     addExcelTable(wb, a, { name: 'Tbl', ref: 'A1:B2', columns: ['c1', 'c2'] });
     expect(findTable(wb, 'Missing')).toBeUndefined();
   });

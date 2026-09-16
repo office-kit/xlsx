@@ -262,7 +262,10 @@ common surprise for direct ports:
   that hides a real bug elsewhere).
 - **`setCell(ws, row, col, value)`** is the @office-kit/xlsx equivalent of
   openpyxl's `ws.cell(row=r, column=c, value=v)`. Coordinates are
-  1-based on both sides.
+  1-based on both sides. `value` is mandatory: openpyxl's no-value
+  `ws.cell(row=r, column=c)` returns the cell without touching it, whereas
+  `setCell` writes whatever you pass. Use `ensureCell(ws, row, col)` for the
+  get-or-create behaviour.
 - **`makeBorder({ left: makeSide({ style: 'thin' }) })`** is the
   @office-kit/xlsx equivalent of openpyxl's
   `Border(left=Side(style='thin'))`. Same with `makeFill`, `makeFont`,

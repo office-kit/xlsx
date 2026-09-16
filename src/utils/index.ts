@@ -1,7 +1,13 @@
 // Utility surfaces — coordinate / datetime / units / inference / escape /
 // css / exception types.
 
-export type { CellCoordinate, CellCoordinateNumeric, CellRangeBoundaries } from './coordinate.js';
+export type {
+  AbsoluteRefOptions,
+  CellCoordinate,
+  CellCoordinateNumeric,
+  CellRangeBoundaries,
+  RangeRef,
+} from './coordinate.js';
 export {
   boundariesToRangeString,
   columnIndexFromLetter,

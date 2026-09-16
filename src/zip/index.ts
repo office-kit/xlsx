@@ -8,5 +8,5 @@ export type {
 export { DEFAULT_DECOMPRESSION_LIMITS } from './decompression-guard.js';
 export type { OpenZipOptions, ZipArchive } from './reader.js';
 export { openZip } from './reader.js';
-export type { StreamingEntryWriter, ZipWriter } from './writer.js';
+export type { CompressionLevel, StreamingEntryWriter, ZipWriter, ZipWriterOptions } from './writer.js';
 export { createZipWriter } from './writer.js';

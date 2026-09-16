@@ -15,6 +15,7 @@ import {
   listHyperlinks,
   listTables,
   setCell,
+  writeRange,
 } from '../../src/worksheet/worksheet.js';
 
 describe('listHyperlinks', () => {
@@ -40,6 +41,7 @@ describe('listTables', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
     setCell(ws, 1, 1, 'h');
+    writeRange(ws, 'A1', [['col1', 'col2']]);
     addExcelTable(wb, ws, {
       name: 'Tbl',
       ref: 'A1:B2',

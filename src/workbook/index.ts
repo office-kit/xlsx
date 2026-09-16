@@ -62,7 +62,7 @@ export type {
 } from './views.js';
 export { makeCustomWorkbookView, makeWorkbookView } from './views.js';
 export type { CalcMode, CalcProperties, RefMode } from './calc-properties.js';
-export { makeCalcProperties } from './calc-properties.js';
+export { makeCalcProperties, setFullCalcOnLoad } from './calc-properties.js';
 export type {
   ShowObjectsMode,
   UpdateLinksMode,

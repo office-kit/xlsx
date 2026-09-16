@@ -12,7 +12,7 @@ import { setFormula } from '../../src/cell/cell.js';
 import { makeSharedStrings } from '../../src/workbook/shared-strings.js';
 import { parseWorksheetXml } from '../../src/worksheet/reader.js';
 import { worksheetToBytes } from '../../src/worksheet/writer.js';
-import { getCell, makeWorksheet, setCell } from '../../src/worksheet/worksheet.js';
+import { ensureCell, getCell, makeWorksheet } from '../../src/worksheet/worksheet.js';
 
 const MAIN_NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 const REL_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
@@ -53,7 +53,7 @@ describe('issue #115 — an empty cached formula value survives a round-trip', (
 
   it('round-trips a non-empty cached string unchanged', () => {
     const ws = makeWorksheet('Tabelle1');
-    setFormula(setCell(ws, 1, 1), 'A2&""', { cachedValue: 'Text' });
+    setFormula(ensureCell(ws, 1, 1), 'A2&""', { cachedValue: 'Text' });
     const out = new TextDecoder().decode(worksheetToBytes(ws, { sharedStrings: makeSharedStrings() }));
     expect(out).toContain('<c r="A1" t="str"><f>A2&amp;""</f><v>Text</v></c>');
   });

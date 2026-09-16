@@ -61,7 +61,7 @@ import {
   WORKSHEET_TYPE,
   XLSX_TYPE,
 } from '../xml/namespaces.js';
-import { createZipWriter } from '../zip/writer.js';
+import { type CompressionLevel, createZipWriter } from '../zip/writer.js';
 
 const CORE_PROPS_TYPE = 'application/vnd.openxmlformats-package.core-properties+xml';
 const EXT_PROPS_TYPE = 'application/vnd.openxmlformats-officedocument.extended-properties+xml';
@@ -86,8 +86,16 @@ const CHARTSHEET_TYPE = 'application/vnd.openxmlformats-officedocument.spreadshe
 const CHART_USER_SHAPES_REL = `${REL_NS}/chartUserShapes`;
 
 export interface SaveOptions {
-  /** Reserved — passes through to the underlying ZIP writer when implemented. */
-  compressionLevel?: number;
+  /**
+   * Last-modified timestamp for every ZIP entry. Left unset, fflate stamps the
+   * wall clock into each local header and central-directory record, so saving
+   * the same workbook twice produces different bytes. Pin it and the output is
+   * byte-identical for identical input, which is what golden-file tests and
+   * content-addressed caches need.
+   */
+  mtime?: Date;
+  /** Deflate level, 0 (store) to 9 (smallest). Defaults to fflate's own 6. */
+  compressionLevel?: CompressionLevel;
 }
 
 /** Convenience: serialise a Workbook to an in-memory `Uint8Array` xlsx.
@@ -179,9 +187,9 @@ const validateSheetTitles = (wb: Workbook): void => {
 };
 
 /** Save a workbook through the given sink. Returns once `finalize()` resolves. */
-export async function saveWorkbook(wb: Workbook, sink: XlsxSink, _opts: SaveOptions = {}): Promise<void> {
+export async function saveWorkbook(wb: Workbook, sink: XlsxSink, opts: SaveOptions = {}): Promise<void> {
   validateSheetTitles(wb);
-  const writer = createZipWriter(sink);
+  const writer = createZipWriter(sink, opts);
   try {
     await saveWorkbookImpl(wb, writer);
   } catch (err) {

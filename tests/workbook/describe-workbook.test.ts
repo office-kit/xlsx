@@ -9,7 +9,7 @@ import {
   describeWorkbook,
   hideSheet,
 } from '../../src/workbook/workbook.js';
-import { setCell, mergeCells, addTable, setHyperlink, setComment } from '../../src/worksheet/worksheet.js';
+import { ensureCell, setCell, mergeCells, addTable, setHyperlink, setComment } from '../../src/worksheet/worksheet.js';
 
 describe('describeWorkbook', () => {
   it('returns all-zero counts + empty sheets list for an empty workbook', () => {
@@ -28,7 +28,7 @@ describe('describeWorkbook', () => {
     const ws = addWorksheet(wb, 'A');
     setCell(ws, 1, 1, 'a');
     setCell(ws, 2, 1, 1);
-    const f = setCell(ws, 3, 1);
+    const f = ensureCell(ws, 3, 1);
     setFormula(f, 'A1+1');
     mergeCells(ws, 'A1:B1');
     addTable(ws, { id: 1, displayName: 'T', ref: 'A1:A2', columns: [{ id: 1, name: 'a' }] });

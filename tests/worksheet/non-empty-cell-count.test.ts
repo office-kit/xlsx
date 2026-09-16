@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { setFormula } from '../../src/cell/cell.js';
 import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
-import { getNonEmptyCellCount, setCell } from '../../src/worksheet/worksheet.js';
+import { ensureCell, getNonEmptyCellCount, setCell } from '../../src/worksheet/worksheet.js';
 
 describe('getNonEmptyCellCount', () => {
   it('counts every cell whose value is non-null', () => {
@@ -36,7 +36,7 @@ describe('getNonEmptyCellCount', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
     setCell(ws, 1, 1, 'plain');
-    const c = setCell(ws, 1, 2);
+    const c = ensureCell(ws, 1, 2);
     setFormula(c, 'A1');
     expect(getNonEmptyCellCount(ws)).toBe(2);
     expect(getNonEmptyCellCount(ws, { includeFormulas: false })).toBe(1);

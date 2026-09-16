@@ -1,4 +1,4 @@
-// Tests for freezeRows / freezeColumns / freezePanes / unfreezePanes
+// Tests for freezeRows / freezeColumns / setFreezePanes / unfreezePanes
 // and addAutoFilter / addAutoFilterColumn helpers.
 
 import { describe, expect, it } from 'vitest';
@@ -14,10 +14,10 @@ import {
 import { OpenXmlSchemaError } from '../../src/utils/exceptions.js';
 import {
   freezeColumns,
-  freezePanes,
   freezeRows,
   getFreezePanes,
   setCell,
+  setFreezePanes,
   unfreezePanes,
   type Worksheet,
 } from '../../src/worksheet/worksheet.js';
@@ -30,7 +30,7 @@ const expectSheet = (
   return ws;
 };
 
-describe('freezeRows / freezeColumns / freezePanes', () => {
+describe('freezeRows / freezeColumns / setFreezePanes', () => {
   it('freezeRows(1) freezes the first row, ref="A2"', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
@@ -45,11 +45,23 @@ describe('freezeRows / freezeColumns / freezePanes', () => {
     expect(getFreezePanes(ws)).toBe('C1');
   });
 
-  it('freezePanes(2, 3) freezes top 2 rows and left 3 cols, ref="D3"', () => {
+  it('setFreezePanes({ rows: 2, cols: 3 }) freezes top 2 rows and left 3 cols, ref="D3"', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
-    freezePanes(ws, 2, 3);
+    setFreezePanes(ws, { rows: 2, cols: 3 });
     expect(getFreezePanes(ws)).toBe('D3');
+  });
+
+  it('setFreezePanes accepts a zero on either axis; A1 and negatives throw', () => {
+    const wb = createWorkbook();
+    const ws = addWorksheet(wb, 'A');
+    setFreezePanes(ws, { rows: 2, cols: 0 });
+    expect(getFreezePanes(ws)).toBe('A3');
+    setFreezePanes(ws, { rows: 0, cols: 2 });
+    expect(getFreezePanes(ws)).toBe('C1');
+    expect(() => setFreezePanes(ws, { rows: 0, cols: 0 })).toThrow(OpenXmlSchemaError);
+    expect(() => setFreezePanes(ws, { rows: -1, cols: 1 })).toThrow(OpenXmlSchemaError);
+    expect(() => setFreezePanes(ws, { rows: 1, cols: 1.5 })).toThrow(OpenXmlSchemaError);
   });
 
   it('unfreezePanes drops the freeze', () => {
@@ -66,14 +78,13 @@ describe('freezeRows / freezeColumns / freezePanes', () => {
     const ws = addWorksheet(wb, 'A');
     expect(() => freezeRows(ws, 0)).toThrow();
     expect(() => freezeColumns(ws, -1)).toThrow();
-    expect(() => freezePanes(ws, 0, 1)).toThrow();
   });
 
   it('full save → load round-trip preserves the freeze ref', async () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
     setCell(ws, 1, 1, 1);
-    freezePanes(ws, 1, 1);
+    setFreezePanes(ws, { rows: 1, cols: 1 });
     const bytes = await workbookToBytes(wb);
     const wb2 = await loadWorkbook(fromBuffer(bytes));
     const ws2 = expectSheet(wb2.sheets[0]?.sheet);

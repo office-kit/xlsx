@@ -12,7 +12,7 @@ import { workbookToBytes } from '../../src/io/save.js';
 import { setCellFont } from '../../src/styles/cell-style.js';
 import { makeFont } from '../../src/styles/fonts.js';
 import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
-import { mergeCells, setCell, type Worksheet } from '../../src/worksheet/worksheet.js';
+import { ensureCell, mergeCells, setCell, type Worksheet } from '../../src/worksheet/worksheet.js';
 import { validateXlsx } from './validate.js';
 
 const dump = (issues: { tier: string; part: string; message: string }[]): string =>
@@ -34,7 +34,7 @@ describe('conformance: @office-kit/xlsx output validates against ECMA-376', () =
     setCell(a, 1, 2, 'hello');
     setCell(a, 1, 3, true);
     setCell(a, 2, 1, 'with " < > & symbols');
-    const f = setCell(a, 2, 2);
+    const f = ensureCell(a, 2, 2);
     setFormula(f, 'A1+1', { cachedValue: 43 });
     addWorksheet(wb, 'Beta');
     const c = addWorksheet(wb, 'Gamma');

@@ -18,7 +18,7 @@ import { makeFont } from '../../src/styles/fonts.js';
 import { addDefinedName } from '../../src/workbook/defined-names.js';
 import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
 import {
-  freezePanes,
+  setFreezePanes,
   hideColumn,
   hideRow,
   mergeCells,
@@ -210,7 +210,8 @@ const buildWorkbook = (spec: WorkbookSpec) => {
     for (const m of dedupeMerges(sheet.merges)) {
       mergeCells(ws, `${col(m.c1)}${m.r1}:${col(m.c2)}${m.r2}`);
     }
-    if (sheet.freezeRows && sheet.freezeCols) freezePanes(ws, sheet.freezeRows, sheet.freezeCols);
+    if (sheet.freezeRows && sheet.freezeCols)
+      setFreezePanes(ws, { rows: sheet.freezeRows, cols: sheet.freezeCols });
     if (sheet.hiddenRow) hideRow(ws, sheet.hiddenRow);
     if (sheet.hiddenCol) hideColumn(ws, sheet.hiddenCol);
     if (sheet.rowHeight) setRowHeight(ws, sheet.rowHeight.row, sheet.rowHeight.h);

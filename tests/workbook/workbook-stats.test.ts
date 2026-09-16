@@ -7,7 +7,7 @@ import { addChartsheet, addWorksheet, createWorkbook, getWorkbookStats } from '.
 import { setCustomStringProperty } from '../../src/packaging/custom.js';
 import { addUrlHyperlink } from '../../src/worksheet/hyperlinks.js';
 import { addExcelTable } from '../../src/worksheet/table.js';
-import { mergeCells, setCell, setComment } from '../../src/worksheet/worksheet.js';
+import { ensureCell, mergeCells, setCell, setComment, writeRange } from '../../src/worksheet/worksheet.js';
 
 describe('getWorkbookStats', () => {
   it('empty workbook → zero everything', () => {
@@ -30,7 +30,7 @@ describe('getWorkbookStats', () => {
     const wb = createWorkbook();
     const a = addWorksheet(wb, 'A');
     setCell(a, 1, 1, 'plain');
-    const fc = setCell(a, 1, 2);
+    const fc = ensureCell(a, 1, 2);
     setFormula(fc, 'A1+1');
     setCell(a, 2, 1, 42);
     setComment(a, { ref: 'A1', author: 'Alice', text: 'note' });
@@ -62,6 +62,7 @@ describe('getWorkbookStats', () => {
     const wb = createWorkbook();
     const a = addWorksheet(wb, 'A');
     setCell(a, 1, 1, 'h');
+    writeRange(a, 'A1', [['c1', 'c2']]);
     addExcelTable(wb, a, { name: 'Tbl', ref: 'A1:B2', columns: ['c1', 'c2'] });
     addDefinedName(wb, { name: 'Wb', value: '$A$1' });
     addDefinedName(wb, { name: 'Sheet', value: '$A$1', scope: 0 });

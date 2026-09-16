@@ -9,13 +9,13 @@ import {
   setSharedFormula,
 } from '../../src/cell/cell.js';
 import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
-import { setCell } from '../../src/worksheet/worksheet.js';
+import { ensureCell, setCell } from '../../src/worksheet/worksheet.js';
 
 describe('getFormulaText', () => {
   it('returns the formula string for a normal formula cell', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
-    const c = setCell(ws, 1, 1);
+    const c = ensureCell(ws, 1, 1);
     setFormula(c, 'A2+B2');
     expect(getFormulaText(c)).toBe('A2+B2');
   });
@@ -23,7 +23,7 @@ describe('getFormulaText', () => {
   it('returns the formula for an array formula', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
-    const c = setCell(ws, 1, 1);
+    const c = ensureCell(ws, 1, 1);
     setArrayFormula(c, 'A1:A3', 'TRANSPOSE(B1:D1)');
     expect(getFormulaText(c)).toBe('TRANSPOSE(B1:D1)');
   });
@@ -31,7 +31,7 @@ describe('getFormulaText', () => {
   it('returns the empty string for a shared follower (no formula text)', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
-    const c = setCell(ws, 2, 1);
+    const c = ensureCell(ws, 2, 1);
     setSharedFormula(c, 0); // follower — no formula text, just si index
     expect(getFormulaText(c)).toBe('');
   });
@@ -52,7 +52,7 @@ describe('getCachedFormulaValue', () => {
   it('returns the cachedValue when set on a formula', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
-    const c = setCell(ws, 1, 1);
+    const c = ensureCell(ws, 1, 1);
     setFormula(c, 'A2+B2', { cachedValue: 7 });
     expect(getCachedFormulaValue(c)).toBe(7);
   });
@@ -60,9 +60,9 @@ describe('getCachedFormulaValue', () => {
   it('returns string + boolean cached values verbatim', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
-    const sCell = setCell(ws, 1, 1);
+    const sCell = ensureCell(ws, 1, 1);
     setFormula(sCell, '"ok"', { cachedValue: 'ok' });
-    const bCell = setCell(ws, 2, 1);
+    const bCell = ensureCell(ws, 2, 1);
     setFormula(bCell, 'TRUE()', { cachedValue: true });
     expect(getCachedFormulaValue(sCell)).toBe('ok');
     expect(getCachedFormulaValue(bCell)).toBe(true);
@@ -71,7 +71,7 @@ describe('getCachedFormulaValue', () => {
   it('returns undefined when cachedValue is omitted', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
-    const c = setCell(ws, 1, 1);
+    const c = ensureCell(ws, 1, 1);
     setFormula(c, 'A2+B2');
     expect(getCachedFormulaValue(c)).toBeUndefined();
   });

@@ -33,6 +33,7 @@ export {
   makeCell,
   makeDurationValue,
   makeErrorValue,
+  makeFormula,
   setArrayFormula,
   setCellValue,
   setDataTableFormula,

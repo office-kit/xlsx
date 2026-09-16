@@ -6,8 +6,8 @@ import {
   freezeFirstColumn,
   freezeFirstRow,
   freezeFirstRowAndColumn,
-  freezePanes,
   getFreezePanes,
+  setFreezePanes,
 } from '../../src/worksheet/worksheet.js';
 
 describe('freeze shortcuts', () => {
@@ -35,7 +35,7 @@ describe('freeze shortcuts', () => {
   it('overrides a pre-existing freeze without composing on top', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
-    freezePanes(ws, 5, 3); // freeze 5 rows + 3 cols → top-left D6
+    setFreezePanes(ws, { rows: 5, cols: 3 }); // freeze 5 rows + 3 cols → top-left D6
     expect(getFreezePanes(ws)).toBe('D6');
     freezeFirstRow(ws);
     expect(getFreezePanes(ws)).toBe('A2');

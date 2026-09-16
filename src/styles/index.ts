@@ -7,6 +7,7 @@ export type { Alignment, HorizontalAlignment, VerticalAlignment } from './alignm
 export { alignmentToCss, makeAlignment } from './alignment.js';
 export type { Border, Side, SideStyle } from './borders.js';
 export { borderToCss, makeBorder, makeSide } from './borders.js';
+export type { CellStyleSpec } from './cell-style.js';
 export {
   alignCellHorizontal,
   alignCellVertical,
@@ -21,6 +22,8 @@ export {
   copyCellStyle,
   formatAsHeader,
   indentCell,
+  patchCellFont,
+  registerCellStyle,
   rotateCellText,
   setBold,
   setCellBackgroundColor,

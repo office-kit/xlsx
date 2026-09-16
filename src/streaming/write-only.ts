@@ -51,13 +51,19 @@ import {
   WORKSHEET_TYPE,
   XLSX_TYPE,
 } from '../xml/namespaces.js';
-import { createZipWriter } from '../zip/writer.js';
+import { type CompressionLevel, createZipWriter, type ZipWriterOptions } from '../zip/writer.js';
 
 const escapeAttr = escapeXmlAttr;
 
 export interface WriteOnlyOptions {
-  /** Reserved — currently ignored (the buffered backend doesn't honour it). */
-  estimatedMaxRow?: number;
+  /**
+   * Last-modified timestamp for every ZIP entry. Same reproducibility story as
+   * `SaveOptions.mtime`: unset, fflate stamps the wall clock per entry and two
+   * runs over identical rows differ in bytes.
+   */
+  mtime?: Date;
+  /** Deflate level, 0 (store) to 9 (smallest). Defaults to fflate's own 6. */
+  compressionLevel?: CompressionLevel;
 }
 
 export interface WriteOnlyStyle {
@@ -273,7 +279,7 @@ const makeWriteOnlyWorksheet = (state: WorkbookState, title: string, sheetId: nu
  * closure rather than on a class instance per the project-wide "no classes"
  * rule (CLAUDE.md).
  */
-const makeWriteOnlyWorkbook = (sink: XlsxSink): WriteOnlyWorkbook => {
+const makeWriteOnlyWorkbook = (sink: XlsxSink, zipOpts: ZipWriterOptions): WriteOnlyWorkbook => {
   const styles = makeStylesheet();
   // Reserve cellXfs[0] for the default (no apply* flags). Unstyled cells point
   // at this slot via styleId=0; user-styled cells start at index 1 so the
@@ -289,7 +295,7 @@ const makeWriteOnlyWorkbook = (sink: XlsxSink): WriteOnlyWorkbook => {
     sheets: [],
     finalised: false,
     hasOpenWorksheet: false,
-    writer: createZipWriter(sink),
+    writer: createZipWriter(sink, zipOpts),
   };
 
   const addWorksheet = async (title: string): Promise<WriteOnlyWorksheet> => {
@@ -425,12 +431,12 @@ const serializeWorkbookXml = (
 /** Open a workbook for streaming write-only output. */
 export async function createWriteOnlyWorkbook(
   sink: XlsxSink,
-  _opts: WriteOnlyOptions = {},
+  opts: WriteOnlyOptions = {},
 ): Promise<WriteOnlyWorkbook> {
   // The streaming-deflate ZIP writer is constructed eagerly here: each
   // addWorksheet opens an entry on it and flushes row chunks through fflate's
   // `Zip` + `ZipDeflate` immediately, so peak memory stays at one pending row
   // buffer plus deflate scratch (no all-sheets accumulation).
-  return makeWriteOnlyWorkbook(sink);
+  return makeWriteOnlyWorkbook(sink, opts);
 }
 

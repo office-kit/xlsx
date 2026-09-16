@@ -91,6 +91,14 @@ export interface CellRangeBoundaries {
   maxRow: number;
 }
 
+/**
+ * What every range-taking helper accepts: an A1 expression (`"A4:H20"`,
+ * `"A:A"`, `"1:1"`) or already-computed 1-based bounds. Code that walks rows
+ * and columns as integers passes the bounds directly instead of formatting a
+ * string for the callee to parse straight back.
+ */
+export type RangeRef = string | CellRangeBoundaries;
+
 const COORD_RE = /^[$]?([A-Za-z]{1,3})[$]?([1-9][0-9]*)$/;
 const COL_RANGE_RE = /^[$]?([A-Za-z]{1,3}):[$]?([A-Za-z]{1,3})$/;
 const ROW_RANGE_RE = /^[$]?([1-9][0-9]*):[$]?([1-9][0-9]*)$/;
@@ -124,12 +132,27 @@ export function coordinateToTuple(coord: string): CellCoordinateNumeric {
   return { col: columnIndexFromLetter(c.column), row: c.row };
 }
 
-/** Compose `"A1"` from a 1-based (col, row). */
-export function tupleToCoordinate(col: number, row: number): string {
+/** `$` placement for a composed A1 reference. */
+export interface AbsoluteRefOptions {
+  /** Prefix the column letter with `$` so it survives a fill-across. */
+  absoluteCol?: boolean;
+  /** Prefix the row number with `$` so it survives a fill-down. */
+  absoluteRow?: boolean;
+}
+
+/**
+ * Compose `"A1"` from a 1-based (col, row). Set `absoluteCol` / `absoluteRow`
+ * to get the `$` forms formula text needs (`"$B$5"`, `"B$5"`), so callers
+ * tracking integer coordinates never have to concatenate a column letter
+ * themselves.
+ */
+export function tupleToCoordinate(col: number, row: number, opts: AbsoluteRefOptions = {}): string {
   if (!Number.isInteger(row) || row < 1 || row > MAX_ROW) {
     throw new OpenXmlSchemaError(`tupleToCoordinate: row ${row} out of range`);
   }
-  return `${columnLetterFromIndex(col)}${row}`;
+  const colMarker = opts.absoluteCol === true ? '$' : '';
+  const rowMarker = opts.absoluteRow === true ? '$' : '';
+  return `${colMarker}${columnLetterFromIndex(col)}${rowMarker}${row}`;
 }
 
 /**
@@ -290,11 +313,15 @@ export function rangeBoundaries(range: string): CellRangeBoundaries {
   };
 }
 
-/** Inverse of {@link rangeBoundaries} for the rectangular case. */
-export function boundariesToRangeString(b: CellRangeBoundaries): string {
-  const tl = tupleToCoordinate(b.minCol, b.minRow);
+/**
+ * Inverse of {@link rangeBoundaries} for the rectangular case. `opts` forwards
+ * to {@link tupleToCoordinate}, so `{ absoluteCol: true, absoluteRow: true }`
+ * yields the `"$A$4:$H$20"` form a formula or defined name wants.
+ */
+export function boundariesToRangeString(b: CellRangeBoundaries, opts: AbsoluteRefOptions = {}): string {
+  const tl = tupleToCoordinate(b.minCol, b.minRow, opts);
   if (b.minCol === b.maxCol && b.minRow === b.maxRow) return tl;
-  const br = tupleToCoordinate(b.maxCol, b.maxRow);
+  const br = tupleToCoordinate(b.maxCol, b.maxRow, opts);
   return `${tl}:${br}`;
 }
 

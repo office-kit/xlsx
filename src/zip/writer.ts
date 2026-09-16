@@ -26,6 +26,22 @@ import { applyZip64EntryCountPatch } from './zip64-patch.js';
 
 const ZIP32_MAX_ENTRIES = 0xffff;
 
+/** Deflate effort: 0 stores the bytes uncompressed, 9 is slowest and smallest. */
+export type CompressionLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
+export interface ZipWriterOptions {
+  /**
+   * Last-modified timestamp stamped into every entry's local header and
+   * central-directory record. ZIP has no "no timestamp" encoding, so fflate
+   * defaults each entry to the wall clock and two archives built from
+   * identical input differ in bytes. Pin this to get reproducible output for
+   * golden-file tests or content-addressed caching.
+   */
+  mtime?: Date;
+  /** Deflate level handed to fflate. Defaults to fflate's own 6. */
+  compressionLevel?: CompressionLevel;
+}
+
 export interface ZipWriter {
   /**
    * Stage an entry. Bytes are pushed through fflate's `ZipDeflate` /
@@ -90,8 +106,16 @@ export interface StreamingEntryWriter {
  * (`toFile`, `toWritable`) forward each chunk to disk / the wrapped writable
  * without ever holding the full archive resident. Either kind plugs in here.
  */
-export function createZipWriter(sink: XlsxSink): ZipWriter {
+export function createZipWriter(sink: XlsxSink, opts: ZipWriterOptions = {}): ZipWriter {
   const writer = sink.toBytes();
+  const deflateOpts = opts.compressionLevel === undefined ? undefined : { level: opts.compressionLevel };
+  // ZipDeflate's constructor only accepts compression options, so mtime is set
+  // on the entry afterwards; fflate reads the field when it emits the headers.
+  const newEntry = (path: string, compress: boolean): ZipDeflate | ZipPassThrough => {
+    const file = compress ? new ZipDeflate(path, deflateOpts) : new ZipPassThrough(path);
+    if (opts.mtime !== undefined) file.mtime = opts.mtime;
+    return file;
+  };
   let finalised: Promise<Uint8Array> | undefined;
   let endCalled = false;
   const seen = new Set<string>();
@@ -142,7 +166,7 @@ export function createZipWriter(sink: XlsxSink): ZipWriter {
   };
 
   return {
-    async addEntry(path, bytes, opts) {
+    async addEntry(path, bytes, entryOpts) {
       if (!(bytes instanceof Uint8Array)) {
         throw new OpenXmlIoError(
           'createZipWriter: ReadableStream entries are not yet supported (deferred to streaming writer)',
@@ -150,8 +174,7 @@ export function createZipWriter(sink: XlsxSink): ZipWriter {
       }
       guardAdd(path);
       seen.add(path);
-      const compress = opts?.compress ?? true;
-      const file = compress ? new ZipDeflate(path) : new ZipPassThrough(path);
+      const file = newEntry(path, entryOpts?.compress ?? true);
       try {
         zip.add(file);
         file.push(bytes, /* final */ true);
@@ -163,12 +186,11 @@ export function createZipWriter(sink: XlsxSink): ZipWriter {
       }
     },
 
-    addStreamingEntry(path, opts) {
+    addStreamingEntry(path, entryOpts) {
       guardAdd(path);
       seen.add(path);
       streamingOpen = true;
-      const compress = opts?.compress ?? true;
-      const file = compress ? new ZipDeflate(path) : new ZipPassThrough(path);
+      const file = newEntry(path, entryOpts?.compress ?? true);
       try {
         zip.add(file);
       } catch (cause) {

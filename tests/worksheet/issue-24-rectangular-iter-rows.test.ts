@@ -101,7 +101,7 @@ describe('iterValues — rectangular (#24)', () => {
       if (!row) continue;
       for (let c = 0; c < row.length; c++) {
         const v = row[c];
-        if (v !== null) setCell(ws2, r + 1, c + 1, v);
+        if (v !== null && v !== undefined) setCell(ws2, r + 1, c + 1, v);
       }
     }
     const after = [...iterValues(ws2)];

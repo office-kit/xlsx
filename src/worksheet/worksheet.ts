@@ -6,17 +6,19 @@
 // workbook's `jsonReplacer`. Worksheets are mutable for hot-path performance.
 
 import type { CellValue } from '../cell/cell.js';
-import { type Cell, cellValueAsString, makeCell, setArrayFormula, setFormula } from '../cell/cell.js';
-import { type InlineFont, makeRichText, type TextRun } from '../cell/rich-text.js';
+import { type Cell, cellValueAsString, makeCell } from '../cell/cell.js';
 import type { Drawing } from '../drawing/drawing.js';
 import { type Color, makeColor } from '../styles/colors.js';
 import {
+  boundariesToRangeString,
+  type CellCoordinateNumeric,
   columnIndexFromLetter,
   columnLetterFromIndex,
   coordinateToTuple,
   formatSheetQualifiedRef,
   MAX_COL,
   MAX_ROW,
+  type RangeRef,
   tupleToCoordinate,
 } from '../utils/coordinate.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
@@ -290,10 +292,16 @@ export function getCell(ws: Worksheet, row: number, col: number): Cell | undefin
 }
 
 /**
- * Create or update a Cell at (row, col). Existing cells keep their styleId /
- * hyperlinkId / commentId unless explicitly overridden.
+ * Write a Cell at (row, col). `value` always lands on the cell, so an existing
+ * value is replaced; pass `null` to blank it deliberately. Existing cells keep
+ * their styleId / hyperlinkId / commentId unless explicitly overridden.
+ *
+ * `value` is mandatory on purpose. A three-argument form reads like "reach the
+ * cell at (row, col)" and silently wipes what is there, which is how a styling
+ * pass over already-populated rows erases the formulas it walks over. Use
+ * {@link ensureCell} for the reach-a-cell case.
  */
-export function setCell(ws: Worksheet, row: number, col: number, value: CellValue = null, styleId?: number): Cell {
+export function setCell(ws: Worksheet, row: number, col: number, value: CellValue, styleId?: number): Cell {
   let rowMap = ws.rows.get(row);
   let cell = rowMap?.get(col);
   if (cell === undefined) {
@@ -313,6 +321,18 @@ export function setCell(ws: Worksheet, row: number, col: number, value: CellValu
   return cell;
 }
 
+/**
+ * Get the Cell at (row, col), allocating an empty one when the coordinate is
+ * not populated yet. An existing cell is returned untouched, value and all,
+ * which makes this the safe way to reach a cell you are about to style or
+ * attach a formula to.
+ */
+export function ensureCell(ws: Worksheet, row: number, col: number): Cell {
+  const existing = ws.rows.get(row)?.get(col);
+  if (existing !== undefined) return existing;
+  return setCell(ws, row, col, null);
+}
+
 /** Delete a single cell from the sheet. Empty rows are pruned. */
 export function deleteCell(ws: Worksheet, row: number, col: number): void {
   const rowMap = ws.rows.get(row);
@@ -326,7 +346,7 @@ export function deleteCell(ws: Worksheet, row: number, col: number): void {
  * removed. Row maps that go empty are pruned. Column / row dimensions, merges,
  * comments etc. are left untouched.
  */
-export function clearRange(ws: Worksheet, range: string): number {
+export function clearRange(ws: Worksheet, range: RangeRef): number {
   const { minRow, maxRow, minCol, maxCol } = parseRange(range);
   let n = 0;
   for (let r = minRow; r <= maxRow; r++) {
@@ -353,17 +373,36 @@ export function clearAllCells(ws: Worksheet): number {
   return n;
 }
 
+export interface AppendRowOptions {
+  /**
+   * Style ids to apply per column, positionally aligned with `values`. A
+   * column carrying a style id is written even when its value is empty, so a
+   * bordered-but-blank input column survives the append. Build the ids once
+   * with `registerCellStyle` from `@office-kit/xlsx/styles` and reuse them for
+   * every row.
+   */
+  styleIds?: ReadonlyArray<number | undefined>;
+}
+
 /**
  * Append a row of values starting at the next empty row. Returns the row index
  * (1-based). Mirrors openpyxl's `Worksheet.append`. `null` / `undefined`
- * entries leave the cell empty.
+ * entries leave the cell empty unless `opts.styleIds` names a style for that
+ * column.
  */
-export function appendRow(ws: Worksheet, values: ReadonlyArray<CellValue | undefined>): number {
+export function appendRow(
+  ws: Worksheet,
+  values: ReadonlyArray<CellValue | undefined>,
+  opts: AppendRowOptions = {},
+): number {
   const row = ws._appendRowCursor + 1;
-  for (let i = 0; i < values.length; i++) {
+  const styleIds = opts.styleIds;
+  const width = styleIds === undefined ? values.length : Math.max(values.length, styleIds.length);
+  for (let i = 0; i < width; i++) {
     const value = values[i];
-    if (value === undefined || value === null) continue;
-    setCell(ws, row, i + 1, value);
+    const styleId = styleIds?.[i];
+    if ((value === undefined || value === null) && styleId === undefined) continue;
+    setCell(ws, row, i + 1, value ?? null, styleId);
   }
   // Even if every value is empty, advance the cursor so the next call doesn't
   // overwrite this row's would-be position.
@@ -382,6 +421,7 @@ export function appendRow(ws: Worksheet, values: ReadonlyArray<CellValue | undef
 export function appendRows(
   ws: Worksheet,
   rows: ReadonlyArray<ReadonlyArray<CellValue | undefined>>,
+  opts: AppendRowOptions = {},
 ): { firstRow: number; lastRow: number } {
   const firstRow = ws._appendRowCursor + 1;
   if (rows.length === 0) {
@@ -389,7 +429,7 @@ export function appendRows(
   }
   let lastRow = firstRow - 1;
   for (const row of rows) {
-    lastRow = appendRow(ws, row);
+    lastRow = appendRow(ws, row, opts);
   }
   return { firstRow, lastRow };
 }
@@ -410,11 +450,12 @@ export function appendRows(
  */
 export function writeRange(
   ws: Worksheet,
-  startRef: string,
+  startRef: string | CellCoordinateNumeric,
   values: ReadonlyArray<ReadonlyArray<CellValue | undefined>>,
 ): { minRow: number; maxRow: number; minCol: number; maxCol: number } | undefined {
   if (values.length === 0) return undefined;
-  const { col: startCol, row: startRow } = coordinateToTuple(startRef);
+  const { col: startCol, row: startRow } =
+    typeof startRef === 'string' ? coordinateToTuple(startRef) : startRef;
   let maxRow = startRow;
   let maxCol = startCol;
   for (let i = 0; i < values.length; i++) {
@@ -622,11 +663,13 @@ export function getCellAddress(ws: Worksheet, c: Cell): string {
  * Sheet-qualified A1 range address — `'Sheet1!A1:B5'` for plain titles,
  * `'\'Quarter 1\'!A1:B5'` for titles needing quoting. Pass any A1-style range
  * string (single cell `'A1'`, rectangle `'A1:B5'`, row span `'1:5'`, column
- * span `'A:E'`); the helper does no validation on `range` itself — that's the
- * caller's responsibility.
+ * span `'A:E'`), and numeric bounds are formatted as a rectangle; the helper
+ * does no validation on an A1 `range` itself; that is the caller's
+ * responsibility.
  */
-export function getRangeAddress(ws: Worksheet, range: string): string {
-  return formatSheetQualifiedRef(ws.title, range);
+export function getRangeAddress(ws: Worksheet, range: RangeRef): string {
+  const ref = typeof range === 'string' ? range : boundariesToRangeString(range);
+  return formatSheetQualifiedRef(ws.title, ref);
 }
 
 /**
@@ -786,7 +829,7 @@ export function replaceCellValues(
  */
 export function replaceInRange(
   ws: Worksheet,
-  range: string,
+  range: RangeRef,
   search: string | ((value: CellValue, cell: Cell) => boolean),
   replacement: CellValue,
 ): number {
@@ -810,7 +853,7 @@ export function replaceInRange(
  * applyToRange} when you need every coordinate visited regardless of
  * population.
  */
-export function* getCellsInRange(ws: Worksheet, range: string): IterableIterator<Cell> {
+export function* getCellsInRange(ws: Worksheet, range: RangeRef): IterableIterator<Cell> {
   const { minRow, maxRow, minCol, maxCol } = parseRange(range);
   for (let r = minRow; r <= maxRow; r++) {
     const rowMap = ws.rows.get(r);
@@ -823,61 +866,10 @@ export function* getCellsInRange(ws: Worksheet, range: string): IterableIterator
 }
 
 /**
- * Set a cell's value to a rich-text run array. Accepts either a pre-built
- * `RichText` (frozen array of TextRun) or a fresh `Array<{ text, font? }>`
- * shape — `makeRichText` normalises and freezes the runs in either case.
- * Returns the cell.
+ * A1-addressed {@link setCell}. `value` is mandatory for the same reason it is
+ * there: the no-value form silently blanks whatever the cell held.
  */
-export function setCellRichText(
-  ws: Worksheet,
-  row: number,
-  col: number,
-  runs: ReadonlyArray<TextRun | { text: string; font?: InlineFont }>,
-  styleId?: number,
-): Cell {
-  return setCell(ws, row, col, { kind: 'rich-text', runs: makeRichText(runs) }, styleId);
-}
-
-/**
- * Set a cell's value to a normal Excel formula. Combines `setCell` with
- * `setFormula`. The leading `=` is stripped if present so callers can pass
- * `'=A1+1'` or `'A1+1'` interchangeably.
- */
-export function setCellFormula(
-  ws: Worksheet,
-  row: number,
-  col: number,
-  formula: string,
-  opts?: { cachedValue?: number | string | boolean; styleId?: number },
-): Cell {
-  const expr = formula.startsWith('=') ? formula.slice(1) : formula;
-  const cell = setCell(ws, row, col, undefined, opts?.styleId);
-  setFormula(cell, expr, opts?.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : undefined);
-  return cell;
-}
-
-/**
- * Set a cell's value to an array (CSE) formula spanning `ref`. Lands the
- * formula on the top-left cell of the range — Excel reads the `ref` attribute
- * to know how far the result spreads. Equivalent to `setCell` +
- * `setArrayFormula`. Leading `=` is stripped.
- */
-export function setCellArrayFormula(
-  ws: Worksheet,
-  row: number,
-  col: number,
-  ref: string,
-  formula: string,
-  opts?: { cachedValue?: number | string | boolean; styleId?: number },
-): Cell {
-  const expr = formula.startsWith('=') ? formula.slice(1) : formula;
-  const cell = setCell(ws, row, col, undefined, opts?.styleId);
-  setArrayFormula(cell, ref, expr, opts?.cachedValue !== undefined ? { cachedValue: opts.cachedValue } : undefined);
-  return cell;
-}
-
-/** Resolve an "A1" coordinate to a numeric (col, row) pair on the sheet. */
-export function setCellByCoord(ws: Worksheet, coord: string, value?: CellValue, styleId?: number): Cell {
+export function setCellByCoord(ws: Worksheet, coord: string, value: CellValue, styleId?: number): Cell {
   const m = /^([A-Za-z]{1,3})([1-9][0-9]*)$/.exec(coord);
   if (m === null || m[1] === undefined || m[2] === undefined) {
     throw new OpenXmlSchemaError(`setCellByCoord: invalid coordinate "${coord}"`);
@@ -1005,18 +997,38 @@ const ensurePrimaryView = (ws: Worksheet): SheetView => {
 };
 
 /**
- * Freeze rows / columns above + left of `topLeftRef` ("B2" → 1 row + 1 col).
+ * Freeze rows / columns above + left of the given top-left cell. Takes either
+ * the A1 ref of the first unfrozen cell (`"B2"` freezes 1 row + 1 column) or
+ * the counts directly (`{ rows: 1, cols: 0 }` freezes the header row alone).
  * Pass `undefined` to clear any existing freeze. Targets the workbook's primary
  * SheetView (`ws.views[0]`); creates one if absent.
  */
-export function setFreezePanes(ws: Worksheet, topLeftRef: string | undefined): void {
-  if (topLeftRef === undefined) {
+export function setFreezePanes(
+  ws: Worksheet,
+  topLeft: string | { rows: number; cols: number } | undefined,
+): void {
+  if (topLeft === undefined) {
     if (ws.views[0]) delete ws.views[0].pane;
     return;
   }
+  const ref = typeof topLeft === 'string' ? topLeft : freezeCountsToRef(topLeft);
   const view = ensurePrimaryView(ws);
-  view.pane = makeFreezePane(topLeftRef);
+  view.pane = makeFreezePane(ref);
 }
+
+/** Translate freeze counts to the A1 ref of the first unfrozen cell. */
+const freezeCountsToRef = ({ rows, cols }: { rows: number; cols: number }): string => {
+  if (!Number.isInteger(rows) || rows < 0) {
+    throw new OpenXmlSchemaError(`setFreezePanes: rows must be a non-negative integer; got ${rows}`);
+  }
+  if (!Number.isInteger(cols) || cols < 0) {
+    throw new OpenXmlSchemaError(`setFreezePanes: cols must be a non-negative integer; got ${cols}`);
+  }
+  if (rows === 0 && cols === 0) {
+    throw new OpenXmlSchemaError('setFreezePanes: rows and cols cannot both be 0; pass undefined to unfreeze');
+  }
+  return `${columnLetterFromIndex(cols + 1)}${rows + 1}`;
+};
 
 /** Inverse of {@link setFreezePanes}; returns the top-left ref or undefined when no freeze is active. */
 export function getFreezePanes(ws: Worksheet): string | undefined {
@@ -1048,17 +1060,6 @@ export function freezeColumns(ws: Worksheet, count: number): void {
   setFreezePanes(ws, `${columnLetterFromIndex(count + 1)}1`);
 }
 
-/** Freeze both top `rows` rows AND left `cols` columns. */
-export function freezePanes(ws: Worksheet, rows: number, cols: number): void {
-  if (!Number.isInteger(rows) || rows < 1) {
-    throw new OpenXmlSchemaError(`freezePanes: rows must be a positive integer; got ${rows}`);
-  }
-  if (!Number.isInteger(cols) || cols < 1) {
-    throw new OpenXmlSchemaError(`freezePanes: cols must be a positive integer; got ${cols}`);
-  }
-  setFreezePanes(ws, `${columnLetterFromIndex(cols + 1)}${rows + 1}`);
-}
-
 /** Drop the freeze pane on the primary view. */
 export const unfreezePanes = (ws: Worksheet): void => {
   setFreezePanes(ws, undefined);
@@ -1080,9 +1081,9 @@ export const freezeFirstColumn = (ws: Worksheet): void => freezeColumns(ws, 1);
 /**
  * Freeze both row 1 and column A so the header row + label column stay visible.
  * Equivalent to selecting B2 and "View → Freeze Panes". Shortcut for
- * `freezePanes(ws, 1, 1)`.
+ * `setFreezePanes(ws, { rows: 1, cols: 1 })`.
  */
-export const freezeFirstRowAndColumn = (ws: Worksheet): void => freezePanes(ws, 1, 1);
+export const freezeFirstRowAndColumn = (ws: Worksheet): void => setFreezePanes(ws, { rows: 1, cols: 1 });
 
 // ---- sheet view display helpers -------------------------------------------
 
@@ -1196,7 +1197,7 @@ export function setSelectedRange(ws: Worksheet, sqref: string): void {
  */
 export function setRangeValues(
   ws: Worksheet,
-  range: string,
+  range: RangeRef,
   rows: ReadonlyArray<ReadonlyArray<CellValue | null | undefined>>,
 ): void {
   const { minRow, minCol } = parseRange(range);
@@ -1217,15 +1218,13 @@ export function setRangeValues(
  */
 export function applyToRange(
   ws: Worksheet,
-  range: string,
+  range: RangeRef,
   visit: (cell: Cell, row: number, col: number) => void,
 ): void {
   const { minRow, maxRow, minCol, maxCol } = parseRange(range);
   for (let r = minRow; r <= maxRow; r++) {
     for (let c = minCol; c <= maxCol; c++) {
-      let cell = ws.rows.get(r)?.get(c);
-      if (!cell) cell = setCell(ws, r, c);
-      visit(cell, r, c);
+      visit(ensureCell(ws, r, c), r, c);
     }
   }
 }
@@ -1235,7 +1234,7 @@ export function applyToRange(
  * `null`. The shape is `[maxRow - minRow + 1] × [maxCol - minCol + 1]`. Inverse
  * of {@link setRangeValues}.
  */
-export function getRangeValues(ws: Worksheet, range: string): (CellValue | null)[][] {
+export function getRangeValues(ws: Worksheet, range: RangeRef): (CellValue | null)[][] {
   const { minRow, maxRow, minCol, maxCol } = parseRange(range);
   const rowsOut: (CellValue | null)[][] = [];
   for (let r = minRow; r <= maxRow; r++) {
@@ -1266,8 +1265,8 @@ export function getRangeValues(ws: Worksheet, range: string): (CellValue | null)
  */
 export function copyRange(
   ws: Worksheet,
-  source: string,
-  target: string,
+  source: RangeRef,
+  target: RangeRef,
   opts: { targetWs?: Worksheet } = {},
 ): number {
   const dest = opts.targetWs ?? ws;
@@ -1314,8 +1313,8 @@ export function copyRange(
  */
 export function moveRange(
   ws: Worksheet,
-  source: string,
-  target: string,
+  source: RangeRef,
+  target: RangeRef,
   opts: { targetWs?: Worksheet } = {},
 ): number {
   const dest = opts.targetWs ?? ws;

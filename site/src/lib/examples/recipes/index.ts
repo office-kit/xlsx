@@ -6,17 +6,21 @@
 import openAndIterate from './open-and-iterate.ts?raw';
 import buildFromScratch from './build-from-scratch.ts?raw';
 import styleCells from './style-cells.ts?raw';
+import reportStyles from './report-styles.ts?raw';
 import numberFormats from './number-formats.ts?raw';
 import formulas from './formulas.ts?raw';
 import addBarChart from './add-bar-chart.ts?raw';
 import insertImage from './insert-image.ts?raw';
 import tablesWithFilter from './tables-with-filter.ts?raw';
+import inputColumn from './input-column.ts?raw';
 import dropdownValidation from './dropdown-validation.ts?raw';
 import conditionalColorScale from './conditional-color-scale.ts?raw';
 import hyperlinks from './hyperlinks.ts?raw';
 import mergeAndFreeze from './merge-and-freeze.ts?raw';
 import multiSheet from './multi-sheet.ts?raw';
 import browserFileInput from './browser-file-input.ts?raw';
+import assertGeneratedWorkbook from './assert-generated-workbook.ts?raw';
+import deterministicBytes from './deterministic-bytes.ts?raw';
 
 import basicReadWrite from '../basic-read-write.ts?raw';
 import nodeFs from '../node-fs.ts?raw';
@@ -82,7 +86,7 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
           'Add several worksheets, define names that span them, and reference them in a formula.',
         path: 'site/src/lib/examples/recipes/multi-sheet.ts',
         source: multiSheet,
-        relatedApi: ['addWorksheet', 'addDefinedName', 'setCellFormula'],
+        relatedApi: ['addWorksheet', 'addDefinedName', 'makeFormula'],
       },
       {
         slug: 'node-fs-helpers',
@@ -108,6 +112,8 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
         notes: [
           'These helpers are *cell-level* shortcuts. For range-wide changes, look at `setRangeFont`, `setRangeAlignment`, `setRangeBorderBox`, etc.',
           'Background colors are hex `AARRGGBB` strings — leading `FF` is opaque alpha.',
+          '`setBold` and friends merge into the existing font. `setCellFont` replaces it whole, which drops the workbook default (Calibri 11) unless the `Font` you pass is complete. Use `patchCellFont` to change several fields at once.',
+          'Styling a whole report cell by cell adds up. `registerCellStyle` (next recipe) builds each look once and hands you an id the write itself carries.',
         ],
         relatedApi: [
           'setBold',
@@ -116,6 +122,20 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
           'centerCell',
           'setCellBorderAll',
         ],
+      },
+      {
+        slug: 'report-styles',
+        title: 'Style a whole report by style id',
+        teaser:
+          '`registerCellStyle` returns a `styleId`; `setCell` and `appendRow` take it, so formatting arrives with the value instead of in a second pass.',
+        path: 'site/src/lib/examples/recipes/report-styles.ts',
+        source: reportStyles,
+        notes: [
+          'A `styleId` is a complete style, not a patch: an axis you leave out of the spec renders as the workbook default even if the target cell had something there.',
+          'Equal specs dedup to one xf, so reusing three ids across a thousand rows costs three records.',
+          '`appendRow`\'s `styleIds` are positional. A column with an id is written even when its value is empty, which is how a bordered-but-blank input column survives the append.',
+        ],
+        relatedApi: ['registerCellStyle', 'setCell', 'appendRow', 'patchCellFont'],
       },
       {
         slug: 'number-formats',
@@ -134,16 +154,24 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
       },
       {
         slug: 'formulas',
-        title: 'Add a formula (with cached value)',
+        title: 'Formulas in a generated workbook',
         teaser:
-          'Pass `cachedValue` so Excel renders the result before forcing a full recalc on open.',
+          'Cache the values you can compute, and set `fullCalcOnLoad` for the ones you cannot.',
         path: 'site/src/lib/examples/recipes/formulas.ts',
         source: formulas,
         notes: [
-          'Cached values are optional — Excel will recalc anyway when the file opens, but cached values keep the file viewable in tools that don\'t recalc.',
-          'For shared and array formulas, use `setSharedFormula` / `setArrayFormula` from `@office-kit/xlsx/cell` on the Cell returned by `setCell`.',
+          'Viewers fall into three camps. Excel, LibreOffice and Google Sheets compute a formula with no cached `<v>` on open. Quick Look, Outlook and SharePoint previews, and most thumbnailers never calculate and render the cell empty. Tools that read the XML directly see whatever you wrote. Supply `cachedValue` wherever the producer can compute it, and call `setFullCalcOnLoad(wb, true)` on any generated workbook with formulas so the ones you left uncached get filled in on first open.',
+          '`makeFormula` builds the value for a `setCell` write, so a formula plus its number format is one call when the style comes from `registerCellStyle`. `setFormula` is the same thing applied to a cell you already hold.',
+          'A leading `=` is stripped, so `\'=SUM(A1:A3)\'` and `\'SUM(A1:A3)\'` are interchangeable. OOXML stores `<f>` without it.',
+          'For shared and array formulas, use `setSharedFormula` / `setArrayFormula` on a Cell from `ensureCell`.',
         ],
-        relatedApi: ['setCell', 'setFormula', 'setArrayFormula', 'setSharedFormula'],
+        relatedApi: [
+          'makeFormula',
+          'setFormula',
+          'setFullCalcOnLoad',
+          'setArrayFormula',
+          'setSharedFormula',
+        ],
       },
       {
         slug: 'merge-and-freeze',
@@ -176,9 +204,10 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
         source: tablesWithFilter,
         notes: [
           'Pass `style` for one-arg style selection or `styleInfo` for full control over banded rows / columns.',
-          'For just a filter without table styling, use `addAutoFilter(ws, "A1:C4")`.',
+          'Write the header row first: `addExcelTable` checks that each header cell already holds its column name, and that the column count matches the range width. Excel repairs a file where they disagree by dropping the table. Pass `headerRowCount: 0` for a genuinely header-less table.',
+          'For just a filter without table styling, use `setAutoFilter(ws, makeAutoFilter({ ref: "A1:C4" }))`. A Table also gives you banded rows, structured references and a stable name for pivots, with no per-cell border work.',
         ],
-        relatedApi: ['addExcelTable', 'addAutoFilter'],
+        relatedApi: ['addExcelTable', 'setAutoFilter', 'makeAutoFilter'],
       },
       {
         slug: 'dropdown-validation',
@@ -191,6 +220,19 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
           'Pass a sheet-relative formula (`=Sheet1!$A$1:$A$10`) instead of a literal array if the choices come from another range.',
         ],
         relatedApi: ['makeDataValidation', 'addDataValidation'],
+      },
+      {
+        slug: 'input-column',
+        title: 'A column the recipient fills in',
+        teaser:
+          'Excel\'s built-in "Input" style marks a column as editable; a decimal validation keeps what they type usable.',
+        path: 'site/src/lib/examples/recipes/input-column.ts',
+        source: inputColumn,
+        notes: [
+          '`ensureCell` reaches a blank cell without writing over it, so the style lands on an empty cell rather than one you just cleared.',
+          'Pair this with `setRangeProtection(wb, ws, "C2:C3", { locked: false })` and a sheet protection if the rest of the sheet should be read-only.',
+        ],
+        relatedApi: ['applyBuiltinStyle', 'ensureCell', 'makeDataValidation', 'addDataValidation'],
       },
       {
         slug: 'color-scale',
@@ -233,6 +275,39 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
         path: 'site/src/lib/examples/recipes/insert-image.ts',
         source: insertImage,
         relatedApi: ['loadImage', 'addImageAt', 'makeOneCellAnchor'],
+      },
+    ],
+  },
+  {
+    title: 'Generating files you have to trust',
+    recipes: [
+      {
+        slug: 'assert-generated-workbook',
+        title: 'Assert on a workbook you just generated',
+        teaser:
+          'Load the bytes back and read them with the same API you wrote them with.',
+        path: 'site/src/lib/examples/recipes/assert-generated-workbook.ts',
+        source: assertGeneratedWorkbook,
+        notes: [
+          '`fromArrayBuffer` accepts a `Uint8Array` as well as an `ArrayBuffer`, so a renderer\'s output goes straight into `loadWorkbook` with no copy and no temp file.',
+          '`getSheet(wb, title)` narrows past the worksheet / chartsheet union, so there is no `kind === "worksheet"` check to write.',
+          '`addWorksheet` already validates the title (31-character limit, `[]:*?/\\` and the reserved name `History`), so a test of your own for those is testing this library.',
+        ],
+        relatedApi: ['loadWorkbook', 'fromArrayBuffer', 'getSheet', 'getRangeValues', 'iterCells'],
+      },
+      {
+        slug: 'deterministic-bytes',
+        title: 'Byte-identical output for identical input',
+        teaser:
+          'Pin `mtime` and the core properties, and the same payload always renders the same bytes.',
+        path: 'site/src/lib/examples/recipes/deterministic-bytes.ts',
+        source: deterministicBytes,
+        notes: [
+          'ZIP has no "no timestamp" encoding: each entry carries a DOS mtime, and without `mtime` it comes from the wall clock. That alone makes two renders of the same payload differ.',
+          '`createWriteOnlyWorkbook` takes the same option, as does `compressionLevel` (0 stores, 9 is smallest) on both paths.',
+          'Core properties are the other moving part. Set `created` / `modified` from your payload, not from `new Date()`.',
+        ],
+        relatedApi: ['workbookToBytes', 'saveWorkbook', 'createWriteOnlyWorkbook'],
       },
     ],
   },

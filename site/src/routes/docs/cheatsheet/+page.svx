@@ -43,6 +43,9 @@ for every export see <a href="{base}/api">API reference</a>.
 | Build a small workbook → `Buffer` (Node) | `createWorkbook` + `addWorksheet` + `setCell` + `workbookToBuffer` |
 | Edit one cell of an existing file (Node) | `loadWorkbook` + `fromFile` + `setCell` + `saveWorkbook` + `toFile` |
 | Append rows to a worksheet | `appendRow` (or `appendRows`) |
+| Reach a cell without overwriting its value | `ensureCell` |
+| Same bytes every time for the same input | `workbookToBytes({ mtime })` |
+| Assert on a workbook you just generated | `loadWorkbook` + `fromArrayBuffer` + `getSheet` |
 
 ### Stream-write (huge sheets)
 
@@ -55,11 +58,17 @@ for every export see <a href="{base}/api">API reference</a>.
 | Task | Functions |
 |------|-----------|
 | Bold + font size + fill on a header cell | `setBold` + `setFontSize` + `setCellBackgroundColor` |
+| Change several font fields, keeping the rest | `patchCellFont` |
+| A muted note (small, italic, grey) | `patchCellFont` |
+| Build a style once, apply it on every write | `registerCellStyle` + `setCell` (or `appendRow`) |
 | Number format: currency / percent | `setCellAsCurrency` + `setCellAsPercent` |
+| Number format: thousands-separated integer | `setCellAsNumber` |
 | Number format: date | `setCellNumberFormat` + `FORMAT_DATE_DATETIME` |
-| Add a formula (with cached value) | `setCell` + `setFormula` |
+| Add a formula (with cached value) | `setCell` + `makeFormula` |
+| Make every formula fill in on open | `setFullCalcOnLoad` |
+| Build `$B$5` / `$A$4:$H$20` from numbers | `tupleToCoordinate` + `boundariesToRangeString` |
 | Make a cell clickable | `setHyperlink` |
-| Merge cells + freeze the header row | `mergeCells` + `makeFreezePane` + `makeSheetView` |
+| Merge cells + freeze the header row | `mergeCells` + `setFreezePanes` |
 
 ### Worksheet structure
 
@@ -67,8 +76,12 @@ for every export see <a href="{base}/api">API reference</a>.
 |------|-----------|
 | Multiple sheets + a defined name | `addWorksheet` + `addDefinedName` |
 | Promote a range to an Excel Table | `addExcelTable` |
-| AutoFilter on a header row (no table styling) | `addAutoFilter` |
+| AutoFilter on a header row (no table styling) | `makeAutoFilter` + `setAutoFilter` |
+| Freeze the header row | `setFreezePanes` |
+| Fixed column widths | `setColumnWidths` |
+| Size columns to their contents | `autofitColumns` |
 | Dropdown data validation | `makeDataValidation` + `addDataValidation` |
+| A column the recipient fills in | `applyBuiltinStyle` + `addDataValidation` |
 | Heat-map (3-color scale) | `makeCfRule` + `addConditionalFormatting` |
 
 ### Drawings
@@ -229,6 +242,41 @@ appendRows(ws, [
 ]);
 ```
 
+### Reach a cell without overwriting its value
+
+```ts
+import { setFormula } from '@office-kit/xlsx/cell';
+import { ensureCell } from '@office-kit/xlsx/worksheet';
+
+// setCell always writes its value argument, so `setCell(ws, 4, 1, null)` over a
+// populated cell blanks it. ensureCell allocates only when the cell is missing.
+setFormula(ensureCell(ws, 4, 1), 'SUM(A1:A3)');
+```
+
+### Same bytes every time for the same input
+
+```ts
+import { workbookToBytes } from '@office-kit/xlsx/io';
+
+// Without `mtime`, every ZIP entry carries the wall clock and two renders of
+// the same payload differ. Set the core properties from your payload too.
+wb.properties = { created: payload.generatedAt, modified: payload.generatedAt };
+const bytes = await workbookToBytes(wb, { mtime: new Date(payload.generatedAt) });
+```
+
+### Assert on a workbook you just generated
+
+```ts
+import { fromArrayBuffer, loadWorkbook } from '@office-kit/xlsx/io';
+import { getSheet } from '@office-kit/xlsx/workbook';
+import { getRangeValues } from '@office-kit/xlsx/worksheet';
+
+// fromArrayBuffer takes a Uint8Array directly, so no Buffer and no temp file.
+const wb = await loadWorkbook(fromArrayBuffer(bytes));
+const sheet = getSheet(wb, 'Leverage'); // already narrowed to Worksheet
+if (sheet) console.log(getRangeValues(sheet, 'A1:B3'));
+```
+
 ### Stream-write millions of rows to a file
 
 ```ts
@@ -258,6 +306,44 @@ setFontSize(wb, c, 14);
 setCellBackgroundColor(wb, c, 'FFEFEFEF');
 ```
 
+### Change several font fields, keeping the rest
+
+```ts
+import { patchCellFont } from '@office-kit/xlsx/styles';
+import { setCell } from '@office-kit/xlsx/worksheet';
+
+// setCellFont(wb, c, makeFont({ bold: true })) would drop the workbook default
+// (Calibri 11); patchCellFont merges over whatever the cell already had.
+patchCellFont(wb, setCell(ws, 1, 1, 'Title'), { bold: true, size: 13 });
+```
+
+### A muted note (small, italic, grey)
+
+```ts
+import { makeColor, patchCellFont } from '@office-kit/xlsx/styles';
+import { setCell } from '@office-kit/xlsx/worksheet';
+
+patchCellFont(wb, setCell(ws, 2, 1, 'Counts exclude locked segments.'), {
+  italic: true,
+  size: 9,
+  color: makeColor({ rgb: 'FF767676' }),
+});
+```
+
+### Build a style once, apply it on every write
+
+```ts
+import { makeBorder, makeSide, registerCellStyle } from '@office-kit/xlsx/styles';
+import { appendRow } from '@office-kit/xlsx/worksheet';
+
+const thin = makeSide({ style: 'thin' });
+const box = makeBorder({ left: thin, right: thin, top: thin, bottom: thin });
+const TEXT = registerCellStyle(wb, { border: box });
+const INT = registerCellStyle(wb, { border: box, numberFormat: '#,##0' });
+
+appendRow(ws, ['de', 71_579], { styleIds: [TEXT, INT] });
+```
+
 ### Number format: currency / percent
 
 ```ts
@@ -266,6 +352,15 @@ import { setCell } from '@office-kit/xlsx/worksheet';
 
 setCellAsCurrency(wb, setCell(ws, 1, 1, 1234.5));
 setCellAsPercent(wb, setCell(ws, 1, 2, 0.125));
+```
+
+### Number format: thousands-separated integer
+
+```ts
+import { setCellAsNumber } from '@office-kit/xlsx/styles';
+import { setCell } from '@office-kit/xlsx/worksheet';
+
+setCellAsNumber(wb, setCell(ws, 1, 1, 71_579)); // #,##0
 ```
 
 ### Number format: date
@@ -280,11 +375,42 @@ setCellNumberFormat(wb, setCell(ws, 1, 1, new Date()), FORMAT_DATE_DATETIME);
 ### Add a formula (with cached value)
 
 ```ts
-import { setFormula } from '@office-kit/xlsx/cell';
+import { makeFormula } from '@office-kit/xlsx/cell';
+import { registerCellStyle } from '@office-kit/xlsx/styles';
 import { setCell } from '@office-kit/xlsx/worksheet';
 
-const c = setCell(ws, 3, 1, null);
-setFormula(c, 'SUM(A1:A2)', { cachedValue: 42 });
+const intStyle = registerCellStyle(wb, { numberFormat: '#,##0' });
+setCell(ws, 3, 1, makeFormula('SUM(A1:A2)', { cachedValue: 42 }), intStyle);
+```
+
+### Make every formula fill in on open
+
+```ts
+import { setFullCalcOnLoad } from '@office-kit/xlsx/workbook';
+
+// Excel, LibreOffice and Sheets compute an uncached formula on open anyway.
+// Viewers that never calculate (Quick Look, Outlook and SharePoint previews,
+// thumbnailers) render it blank, so cache what you can and set this.
+setFullCalcOnLoad(wb, true);
+```
+
+### Build `$B$5` / `$A$4:$H$20` from numbers
+
+```ts
+import { boundariesToRangeString, tupleToCoordinate } from '@office-kit/xlsx/utils';
+
+const rate = tupleToCoordinate(2, 5, { absoluteCol: true, absoluteRow: true }); // '$B$5'
+const data = boundariesToRangeString({ minRow: 4, minCol: 1, maxRow: 20, maxCol: 8 }); // 'A4:H20'
+setFormula(ensureCell(ws, 21, 2), `SUMIFS(${data}, ${data}, ${rate})`);
+```
+
+Range-taking helpers also accept those bounds directly, so there is no need to
+format a string the callee parses straight back:
+
+```ts
+import { setRangeStyle } from '@office-kit/xlsx/styles';
+
+setRangeStyle(wb, ws, { minRow: 4, minCol: 1, maxRow: 20, maxCol: 8 }, { border: box });
 ```
 
 ### Make a cell clickable
@@ -298,10 +424,10 @@ setHyperlink(ws, 'A1', { target: 'https://example.com', display: 'Open' });
 ### Merge cells + freeze the header row
 
 ```ts
-import { makeFreezePane, makeSheetView, mergeCells } from '@office-kit/xlsx/worksheet';
+import { mergeCells, setFreezePanes } from '@office-kit/xlsx/worksheet';
 
 mergeCells(ws, 'A1:C1');
-ws.views.push(makeSheetView({ pane: makeFreezePane('A2') }));
+setFreezePanes(ws, { rows: 1, cols: 0 });
 ```
 
 ### Multiple sheets + a defined name
@@ -318,8 +444,12 @@ addDefinedName(wb, { name: 'Totals', value: 'Q1!$A$1:$A$10,Q2!$A$1:$A$10' });
 ### Promote a range to an Excel Table
 
 ```ts
-import { addExcelTable } from '@office-kit/xlsx/worksheet';
+import { addExcelTable, writeRange } from '@office-kit/xlsx/worksheet';
 
+// Write the header row first: addExcelTable checks that each header cell holds
+// its column name and that the counts match, because Excel repairs the file
+// (dropping the table) when they disagree.
+writeRange(ws, 'A1', [['SKU', 'Name', 'Price']]);
 addExcelTable(wb, ws, {
   name: 'Items',
   ref: 'A1:C4',
@@ -331,9 +461,33 @@ addExcelTable(wb, ws, {
 ### AutoFilter on a header row (no table styling)
 
 ```ts
-import { addAutoFilter } from '@office-kit/xlsx/worksheet';
+import { makeAutoFilter, setAutoFilter } from '@office-kit/xlsx/worksheet';
 
-addAutoFilter(ws, 'A1:C1');
+setAutoFilter(ws, makeAutoFilter({ ref: 'A1:C20' }));
+```
+
+### Freeze the header row
+
+```ts
+import { setFreezePanes } from '@office-kit/xlsx/worksheet';
+
+setFreezePanes(ws, { rows: 1, cols: 0 }); // or setFreezePanes(ws, 'A2')
+```
+
+### Fixed column widths
+
+```ts
+import { setColumnWidths } from '@office-kit/xlsx/worksheet';
+
+setColumnWidths(ws, [18, 14, 14, 14]); // starting at column A
+```
+
+### Size columns to their contents
+
+```ts
+import { autofitColumns } from '@office-kit/xlsx/worksheet';
+
+autofitColumns(ws, { workbook: wb }); // measured from the cells already written
 ```
 
 ### Dropdown data validation
@@ -348,6 +502,21 @@ addDataValidation(
     sqref: 'B2:B100',
     formula1: '"red,green,blue"',
   }),
+);
+```
+
+### A column the recipient fills in
+
+```ts
+import { applyBuiltinStyle } from '@office-kit/xlsx/styles';
+import { addDataValidation, ensureCell, makeDataValidation } from '@office-kit/xlsx/worksheet';
+
+for (let row = 2; row <= 20; row++) {
+  applyBuiltinStyle(wb, ensureCell(ws, row, 3), 'Input');
+}
+addDataValidation(
+  ws,
+  makeDataValidation({ type: 'decimal', operator: 'between', sqref: 'C2:C20', formula1: '0', formula2: '10' }),
 );
 ```
 

@@ -46,7 +46,7 @@ const buildDateBook = (date1904: boolean) => {
     new Date(Date.UTC(2026, 4, 5, 9, 0)),
   ];
   for (let i = 0; i < dates.length; i++) {
-    setCell(ws, i + 1, 1, labels[i]);
+    setCell(ws, i + 1, 1, labels[i] ?? null);
     setCell(ws, i + 1, 2, dates[i] as Date, dateXfId);
   }
 

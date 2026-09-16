@@ -38,7 +38,7 @@ import {
   addDataValidation,
   appendRow,
   appendRows,
-  freezePanes,
+  setFreezePanes,
   freezeRows,
   groupColumns,
   groupRows,
@@ -46,6 +46,7 @@ import {
   hideRow,
   mergeCells,
   setAutoFilter,
+  ensureCell,
   setCell,
   setColumnWidth,
   setComment,
@@ -87,9 +88,9 @@ describe('conformance: writer feature survey', () => {
       const w = ws(addWorksheet(wb, 'F'));
       setCell(w, 1, 1, 10);
       setCell(w, 1, 2, 20);
-      const f = setCell(w, 1, 3);
+      const f = ensureCell(w, 1, 3);
       setFormula(f, 'A1+B1', { cachedValue: 30 });
-      const f2 = setCell(w, 2, 3);
+      const f2 = ensureCell(w, 2, 3);
       setFormula(f2, 'SUM(A1:B1)', { cachedValue: 30 });
       await expectClean(wb);
     });
@@ -137,11 +138,11 @@ describe('conformance: writer feature survey', () => {
       await expectClean(wb);
     });
 
-    it('freezePanes both axes', async () => {
+    it('setFreezePanes both axes', async () => {
       const wb = createWorkbook();
       const w = ws(addWorksheet(wb, 'F'));
       setCell(w, 1, 1, 'tl');
-      freezePanes(w, 1, 1);
+      setFreezePanes(w, { rows: 1, cols: 1 });
       await expectClean(wb);
     });
   });
@@ -292,7 +293,7 @@ describe('conformance: writer feature survey', () => {
 
       const b = ws(addWorksheet(wb, 'Calc'));
       setCell(b, 1, 1, 'total');
-      const tot = setCell(b, 1, 2);
+      const tot = ensureCell(b, 1, 2);
       setFormula(tot, 'SUM(Data!B2:B4)', { cachedValue: 525 });
 
       const c = ws(addWorksheet(wb, 'Report'));

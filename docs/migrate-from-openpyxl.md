@@ -58,17 +58,23 @@ hides a real bug elsewhere). Just call `addWorksheet` directly.
 | --------------------------------------- | ----------------------------------- |
 | `ws['A1'] = 42`                         | `setCellByCoord(ws, 'A1', 42)`      |
 | `ws.cell(row=1, column=1, value=42)`    | `setCell(ws, 1, 1, 42)`             |
+| `ws.cell(row=1, column=1)`              | `ensureCell(ws, 1, 1)`              |
 | `ws['A1'].value`                        | `ws.rows.get(1)?.get(1)?.value`     |
 | `ws.iter_rows()`                        | `iterRows(ws)`                      |
-| `Cell(formula='=A1+B1')`                | `setFormula(cell, 'A1+B1')`         |
+| `Cell(formula='=A1+B1')`                | `setCell(ws, 1, 1, makeFormula('A1+B1'))` |
 
-Coordinates are 1-based on both sides. Cell values cover the same shapes
+Coordinates are 1-based on both sides. Watch the no-value row: openpyxl's
+`ws.cell(row=r, column=c)` hands back the cell as it stands, while `setCell`
+always writes its `value` argument (which is why the argument is mandatory).
+`ensureCell` is the get-or-create form, and it is what a styling or formula
+pass over already-populated rows should use. Cell values cover the same shapes
 openpyxl does:
 
 - numbers (`number`)
 - strings (`string`, automatically deduped via the shared-strings table)
 - booleans (`boolean`)
-- formulas (`{ kind: 'formula', formula, t, ... }` via `setFormula`)
+- formulas (`{ kind: 'formula', formula, t, ... }` via `makeFormula` for a
+  `setCell` write, or `setFormula` to apply one to a cell you hold)
 - errors (`{ kind: 'error', code: '#REF!' }` etc., via `makeErrorValue`)
 - rich text (`{ kind: 'rich-text', runs }` via `makeRichText` / `makeTextRun`)
 - dates (`Date`)
@@ -101,6 +107,16 @@ setCellFill(wb, cell, makePatternFill({
 setCellBorder(wb, cell, makeBorder({ left: makeSide({ style: 'thin' }) }));
 setCellNumberFormat(wb, cell, '#,##0.00');
 ```
+
+`setCellFont` replaces the whole font, the way assigning `cell.font` does in
+openpyxl, so the `Font` you pass has to be complete. `patchCellFont(wb, cell,
+{ bold: true, size: 13 })` merges instead, keeping the workbook default for
+everything it does not mention.
+
+To format a whole report, register each look once and let the write carry it:
+`registerCellStyle(wb, spec)` returns a `styleId` that `setCell` and
+`appendRow` accept, which replaces the per-cell styling loop openpyxl
+encourages.
 
 The pool dedups; assigning the same `Font` twice yields the same fontId.
 Every style primitive has a `make*` constructor — `makeFont`,

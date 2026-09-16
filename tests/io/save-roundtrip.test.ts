@@ -7,7 +7,7 @@ import { saveWorkbook, workbookToBytes } from '../../src/io/save.js';
 import { setCellFont } from '../../src/styles/cell-style.js';
 import { makeFont } from '../../src/styles/fonts.js';
 import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
-import { getCell, setCell, type Worksheet } from '../../src/worksheet/worksheet.js';
+import { ensureCell, getCell, setCell, type Worksheet } from '../../src/worksheet/worksheet.js';
 
 const expectSheet = (ws: Worksheet | import('../../src/chartsheet/chartsheet.js').Chartsheet | undefined): Worksheet => {
   if (!ws) throw new Error('expected worksheet');
@@ -33,7 +33,7 @@ describe('saveWorkbook → loadWorkbook round-trip', () => {
     setCell(ws, 1, 2, 'hello');
     setCell(ws, 1, 3, true);
     setCell(ws, 2, 1, 'with " < > & symbols');
-    const cF = setCell(ws, 2, 2);
+    const cF = ensureCell(ws, 2, 2);
     setFormula(cF, 'A1+1', { cachedValue: 43 });
 
     const bytes = await workbookToBytes(wb);

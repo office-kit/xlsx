@@ -8,7 +8,7 @@ import {
   createWorkbook,
   getWorkbookCellsByKind,
 } from '../../src/workbook/workbook.js';
-import { setCell } from '../../src/worksheet/worksheet.js';
+import { ensureCell, setCell } from '../../src/worksheet/worksheet.js';
 
 const zeros = {
   null: 0,
@@ -43,7 +43,7 @@ describe('getWorkbookCellsByKind', () => {
     const b = addWorksheet(wb, 'B');
     setCell(a, 1, 1, 'x');
     setCell(a, 2, 1, 'y');
-    const f = setCell(b, 1, 1);
+    const f = ensureCell(b, 1, 1);
     setFormula(f, 'A1+1');
     setCell(b, 2, 1, 42);
     expect(getWorkbookCellsByKind(wb)).toEqual({ ...zeros, string: 2, number: 1, formula: 1 });

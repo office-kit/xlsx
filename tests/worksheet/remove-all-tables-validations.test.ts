@@ -9,14 +9,15 @@ import {
   listTables,
   removeAllDataValidations,
   removeAllTables,
-  setCell,
+  writeRange,
 } from '../../src/worksheet/worksheet.js';
 
 describe('removeAllTables', () => {
   it('drops every table and returns the count', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'A');
-    setCell(ws, 1, 1, 'h');
+    writeRange(ws, 'A1', [['c1', 'c2']]);
+    writeRange(ws, 'D1', [['c1', 'c2']]);
     addExcelTable(wb, ws, { name: 'T1', ref: 'A1:B2', columns: ['c1', 'c2'] });
     addExcelTable(wb, ws, { name: 'T2', ref: 'D1:E2', columns: ['c1', 'c2'] });
     expect(removeAllTables(ws)).toBe(2);
