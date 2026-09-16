@@ -1,5 +1,209 @@
 # @office-kit/xlsx
 
+## 0.12.0
+
+### Minor Changes
+
+- [#139](https://github.com/office-kit/xlsx/pull/139) [`9b3c46c`](https://github.com/office-kit/xlsx/commit/9b3c46cb654369b340deec6682f91a53840fc6e1) Thanks [@kibertoad](https://github.com/kibertoad)! - feat!: `ensureCell` for get-or-create, and `setCell`'s `value` is now mandatory
+
+  `setCell(ws, row, col)` read like "reach the cell at (row, col)" and wrote `null`. A
+  styling pass that walked already-populated rows therefore erased the values and
+  formulas it touched, and nothing in the signature or the docstring said so. The
+  cheatsheet and the formula recipe both taught the no-value form as the way to reach a
+  cell, so the trap was the documented path.
+
+  `value` is now required on `setCell` and `setCellByCoord`, which turns the mistake
+  into a compile error rather than a wrong file. `ensureCell(ws, row, col)` returns the
+  cell at a coordinate and allocates a blank one only when it does not exist, leaving
+  an existing value untouched; `ensureCellByCoord(ws, 'B5')` is the A1-addressed form.
+  That pattern already existed inside `applyToRange`, `setRangeStyle`,
+  `setRangeWrapText`, `setRangeAlignment` and `setRangeBorderBox`; those now call
+  `ensureCell` instead of open-coding it.
+
+  Migration is mechanical, and the compiler points at every site:
+
+  - `setCell(ws, r, c)` becomes `ensureCell(ws, r, c)`, and `setCellByCoord(ws, 'B5')`
+    becomes `ensureCellByCoord(ws, 'B5')`
+  - emptying a cell stays available and is now explicit. `null` is a `CellValue`,
+    so `setCell(ws, r, c, null)` clears the value and leaves the cell in the sheet
+    with its fill, border and number format, the way Excel's Delete key does.
+    `deleteCell` drops the cell outright and `clearRange` does the same across a
+    rectangle.
+
+  `mergeCells` drops the cells underneath a merge, and reaching one of those
+  coordinates with `ensureCell` allocates it again, so the written `<sheetData>` carries
+  a blank `<c>` under the merge. Address the top-left coordinate when the merged block
+  is what you mean.
+
+  Also removed: `setCellFormula`, `setCellArrayFormula` and `setCellRichText` in
+  `src/worksheet/worksheet.ts`. They were dropped from the public subpaths in an earlier
+  "one way per task" trim and have been unreachable since. `ensureCell` plus
+  `setFormula` / `setArrayFormula` covers the two formula wrappers. Rich text is
+  `setCell(ws, r, c, { kind: 'rich-text', runs: makeRichText(runs) })`: `makeRichText`
+  builds the runs and the `kind` wrapper is spelled out at the call site, where
+  `makeErrorValue` / `makeDurationValue` hand back a `CellValue` outright.
+
+- [#136](https://github.com/office-kit/xlsx/pull/136) [`ef50829`](https://github.com/office-kit/xlsx/commit/ef50829e8d21a379d1fb8cc062d718349c74a6b0) Thanks [@kibertoad](https://github.com/kibertoad)! - fix: formula text starting with `=` produced a workbook Excel calls damaged
+
+  OOXML stores formula text without the leading `=` (ECMA-376 §18.3.1.40), but no
+  setter stripped it. `setFormula(cell, '=SUM(A1:A3)')` emitted
+  `<f>=SUM(A1:A3)</f>`, which Excel reports as an unreadable-content error on open.
+  The natural spelling was the broken one, and nothing in the types or the docs said
+  so.
+
+  Formula text is now normalised (leading `=`, plus the whitespace around it) both
+  where it enters the model and where it is serialised, so a hand-built
+  `FormulaValue` passed straight to `setCell` cannot produce a damaged file either.
+  The other elements that carry OOXML formula text get the same treatment:
+  `<formula1>` / `<formula2>` on a data validation, `<formula>` on a
+  conditional-formatting rule, and a defined name's value.
+
+  Two behaviour changes to watch for on upgrade:
+
+  - Loading a workbook whose `<f>` carried a leading `=` (including any file this
+    library wrote before this release) now gives `getFormulaText(cell)` as
+    `'SUM(A1:A3)'` where it returned `'=SUM(A1:A3)'`, and re-saving writes the
+    normalised text.
+  - `makeDataValidation`, `makeCfRule`, `addDefinedName` and the builders over them
+    (`addListValidation`, `addCustomValidation`, `addFormulaRule`, …) store the
+    normalised text, so reading `dv.formula1` back returns it without the `=`.
+
+  `makeFormula` and `makeArrayFormula` now throw `OpenXmlSchemaError` when the text
+  normalises to nothing (`''` or `'='`). That case used to emit an empty `<f/>`,
+  which Excel rejects as well, and loading a file that already contains one now
+  throws rather than carrying a formula cell with no expression.
+
+- [#136](https://github.com/office-kit/xlsx/pull/136) [`ef50829`](https://github.com/office-kit/xlsx/commit/ef50829e8d21a379d1fb8cc062d718349c74a6b0) Thanks [@kibertoad](https://github.com/kibertoad)! - feat: formula value constructors, and the `<calcPr>` setters are now exported
+
+  Placing a formula took two steps: reach or create a cell, then mutate it with
+  `setFormula`. `makeFormula(text, { cachedValue })` returns the `CellValue`, so
+  `setCell(ws, row, col, makeFormula('SUM(B5:I5)'), styleId)` is the whole write.
+  `makeArrayFormula`, `makeSharedFormula` and `makeDataTableFormula` do the same
+  for the other `<f>` kinds, and `setFormula` / `setArrayFormula` /
+  `setSharedFormula` / `setDataTableFormula` stay as the form that applies the same
+  value to a cell you already hold.
+
+  Five helpers over the workbook's `<calcPr>` existed but none of them was
+  reachable. `setCalcMode`, `setIterativeCalc`, `setCalcOnSave`, `setFullCalcOnLoad`
+  and `setFullPrecision` are now exported from `@office-kit/xlsx/workbook`.
+
+  `setFullCalcOnLoad(wb, true)` asks a calculating app to recompute the workbook on
+  open instead of trusting the cached values in the file: reach for it when you
+  wrote formulas this library cannot evaluate for you, or when the values you did
+  cache may be stale. It does nothing for viewers that never calculate (Quick Look,
+  Outlook and SharePoint previews, most thumbnailers), which show a `cachedValue`
+  or an empty cell, so keep supplying one wherever the producer can compute it.
+
+- [#141](https://github.com/office-kit/xlsx/pull/141) [`d26cd23`](https://github.com/office-kit/xlsx/commit/d26cd23d231cbf2e1523f77d52ea553debadc2c7) Thanks [@kibertoad](https://github.com/kibertoad)! - feat!: numeric coordinates wherever an A1 string was required, and one way to freeze panes
+
+  Every range-taking helper insisted on an A1 string, so code that tracks rows and
+  columns as integers had to format `"A4:H20"` for the callee to parse straight back
+  into the numbers it started with. These now take `string | { minRow, minCol, maxRow,
+maxCol }`, a union named `RangeRef` in `@office-kit/xlsx/utils`:
+
+  - `@office-kit/xlsx/styles`: `setRangeStyle`, `setRangeFont`, `setRangeBackgroundColor`,
+    `setRangeNumberFormat`, `setRangeAlignment`, `setRangeWrapText`, `setRangeProtection`,
+    `setRangeBorderBox`, `formatAsHeader`, `clearRangeStyle`
+  - `@office-kit/xlsx/worksheet`: `setRangeValues`, `getRangeValues`, `applyToRange`,
+    `clearRange`, `getCellsInRange`, `replaceInRange`, `getRangeAddress`, `copyRange`,
+    `moveRange`, `mergeCells`, `unmergeCells`
+
+  `writeRange` takes a `{ row, col }` anchor alongside the A1 form. Bounds are validated
+  against the sheet grid and inverted bounds are normalised, so `{ minRow: 5, maxRow: 1 }`
+  covers the same cells as `"A5:A1"` instead of iterating nothing, and a fractional or
+  off-grid bound throws before any cell is touched. `mergeCells` stores a normalised copy,
+  so mutating a bounds object after the call no longer rewrites a merge that is already on
+  the sheet.
+
+  `setSelectedRange` keeps its string parameter, because an `sqref` can hold several
+  ranges, and the `*Str` helpers (`shiftRangeStr`, `rangeAreaStr`, `expandRangeStr` and
+  friends) stay string-in / string-out by definition.
+
+  This widens one parameter rather than adding a second function, so each capability still
+  has a single canonical helper that reads either spelling, the way `setFreezePanes` now
+  reads either.
+
+  **Breaking:** `setRangeValues` clips to the range it was given. Values past the bottom or
+  right edge of `range` are dropped instead of written outside it, which is what
+  `copyRange` already does against a smaller target, and it makes `getRangeValues` a true
+  inverse. `setRangeValues(ws, 'A1', rows)` used to lay down a whole block from a one-cell
+  range; `writeRange(ws, 'A1', rows)` is that behaviour, and it returns the bounding box it
+  wrote.
+
+  Formula text had the same string-concatenation problem. `tupleToCoordinate` and
+  `boundariesToRangeString` gained `absoluteCol` / `absoluteRow`, so `$B$5` and
+  `$A$4:$H$20` come out of the helpers.
+
+  **Breaking:** `freezePanes(ws, rows, cols)` is removed. `setFreezePanes` now accepts
+  `'B2' | { rows, cols } | undefined`, which covers both spellings through one function.
+  The numeric form is also strictly more capable: `freezePanes` required both counts to be
+  at least 1, so "freeze two rows and no columns" could not be expressed. Replace
+  `freezePanes(ws, 1, 1)` with `setFreezePanes(ws, { rows: 1, cols: 1 })`.
+
+- [#140](https://github.com/office-kit/xlsx/pull/140) [`3af5f73`](https://github.com/office-kit/xlsx/commit/3af5f735172c8cafaadc3ab42d473e9de5af24a9) Thanks [@kibertoad](https://github.com/kibertoad)! - feat: `registerCellStyle` and `patchCellFont`, so styling a report is not a second pass
+
+  Two gaps made formatting a generated sheet cost far more calls than it should.
+
+  `setCell` already accepted a `styleId` and the stylesheet already deduped xf records,
+  but there was no way to obtain a `styleId` from a style spec without first having a
+  cell to hang it on. `registerCellStyle(wb, spec)` returns one:
+
+  ```ts
+  const INT = registerCellStyle(wb, { numberFormat: "#,##0", border: THIN });
+  setCell(ws, row, col, value, INT);
+  ```
+
+  The id names a complete style rather than a patch over the target cell: an axis
+  missing from `spec` renders as the workbook default even where the target cell had
+  something there. `setCellStyle` and `setRangeStyle` remain the patch-an-existing-cell
+  paths, so reach for those when the cells already carry formatting you want to keep.
+
+  `appendRow` and `appendRows` take matching `{ styleIds }`, positionally aligned with
+  the values and reused for every row of an `appendRows` call:
+
+  ```ts
+  appendRows(ws, rows, { styleIds: [TEXT, INT, INT] });
+  ```
+
+  A column with a style id is written even when its value is empty, so a
+  bordered-but-blank input column survives the append. Ids past a row's last value
+  therefore add styled blank cells and widen the sheet; trim the array per row
+  (`styleIds: columnStyles.slice(0, values.length)`) when the input is ragged.
+
+  Saving now throws `OpenXmlSchemaError` when a cell's `styleId` names no entry in its
+  workbook's `cellXfs` pool, naming the sheet and cell. Excel drops such a sheet behind
+  the repair dialog, and an id reused across two workbooks is the easy way to get there.
+
+  `patchCellFont(wb, cell, patch)` merges a partial font over the cell's current one.
+  `setCellFont(wb, c, makeFont({ bold: true }))` is a legal call that registers a font
+  with no `<name>` and no `<sz>`, after which Excel, LibreOffice and Sheets each
+  substitute a different default and nothing warns. A field set to `undefined` is
+  removed rather than kept, so `setBold`, `setItalic`, `setStrikethrough`,
+  `setUnderline`, `setFontSize`, `setFontName` and `setFontColor` are all now this
+  function with one field filled in, rather than seven hand-rolled merges.
+
+- [#138](https://github.com/office-kit/xlsx/pull/138) [`502d305`](https://github.com/office-kit/xlsx/commit/502d3050f077c0d5107b742ebb23ddb564bfa27d) Thanks [@kibertoad](https://github.com/kibertoad)! - feat!: `addTable` / `addExcelTable` now reject a table that disagrees with the sheet under it
+
+  A table whose `columns` count did not match the width of its `ref`, whose `ref` could not contain its
+  header and totals rows, whose column names were empty or duplicated, or whose header
+  cells did not hold the column names it declared, produced a workbook Excel treats as
+  damaged. Excel "repairs" it by dropping the table, so the mistake surfaced as missing
+  filters and a broken structured reference in the delivered file, a long way from the call
+  that caused it.
+
+  All of those now throw `OpenXmlSchemaError` at the call, naming the table and the offending
+  header cell. A header cell has to hold text (a string, rich text, or a formula caching a
+  string), since that is what Excel keeps in `tableColumn/@name`: write a numeric or date
+  header as a string. Write the header row before adding the table, or pass
+  `headerRowCount: 0` for a genuinely header-less table. Header-only tables with no
+  data rows remain valid. Header and totals row counts must be unsigned 32-bit integers.
+
+  `loadWorkbook` and `saveWorkbook` are unchanged: a mismatched table read from an input file
+  still loads, and still saves, so read-modify-write of someone else's file keeps working.
+
+  This can newly throw for code that previously appeared to work. Those are exactly the files
+  Excel was already repairing.
+
 ## 0.11.1
 
 ### Patch Changes
