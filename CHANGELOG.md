@@ -1,5 +1,35 @@
 # @office-kit/xlsx
 
+## 0.15.0
+
+### Minor Changes
+
+- [#146](https://github.com/office-kit/xlsx/pull/146) [`9f947ed`](https://github.com/office-kit/xlsx/commit/9f947ed90d4951ed315629ade81a6f9cfc6b88c8) Thanks [@kibertoad](https://github.com/kibertoad)! - feat: setHyperlinks and setComments, for sheets that carry one per row
+
+  `setHyperlink` and `setComment` each scan the sheet's list to find the ref they
+  replace, so putting a link or a note on every row costs time quadratic in the
+  number of rows: 16 000 hyperlinks one at a time takes about 380 ms, and 16 000
+  comments about 270 ms.
+
+  The new `setHyperlinks(ws, entries)` and `setComments(ws, entries)` take the
+  whole batch and resolve it against one index, built and dropped inside the call.
+  The same 16 000 hyperlinks take about 7 ms and the comments about 3 ms. Each
+  batch leaves the sheet exactly as the matching run of single calls would, down
+  to the order entries end up in.
+
+  The single-entry functions are unchanged, and no index outlives a call, so
+  `ws.hyperlinks` and `ws.legacyComments` stay ordinary arrays that can be read
+  and edited directly.
+
+### Patch Changes
+
+- [#146](https://github.com/office-kit/xlsx/pull/146) [`9f947ed`](https://github.com/office-kit/xlsx/commit/9f947ed90d4951ed315629ade81a6f9cfc6b88c8) Thanks [@kibertoad](https://github.com/kibertoad)! - fix: XML containing literal `<!DOCTYPE` or `<!ENTITY` in comments, processing instructions, or CDATA no longer fails to load
+
+  The declaration check now respects XML lexical context and stops at the root
+  start tag, even within a chunk. Valid content loads consistently from strings,
+  bytes, and streams regardless of chunk boundaries. Actual DTD and entity
+  declarations remain forbidden.
+
 ## 0.14.0
 
 ### Minor Changes
