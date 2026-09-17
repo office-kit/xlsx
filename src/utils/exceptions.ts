@@ -48,3 +48,15 @@ export class OpenXmlNotImplementedError extends OpenXmlError {
 export class OpenXmlDecompressionBombError extends OpenXmlIoError {
   override readonly name = 'OpenXmlDecompressionBombError';
 }
+
+/**
+ * Thrown when a read exceeds the cell or row cap configured through
+ * `contentLimits` on {@link loadWorkbook} / {@link loadWorkbookStream}. The
+ * workbook is valid; it is larger than the caller allowed. Extends
+ * {@link OpenXmlError} directly rather than {@link OpenXmlIoError}, since
+ * nothing failed at the I/O layer and a caller wants to tell "too big" apart
+ * from "corrupt" to answer an upload with the right status.
+ */
+export class OpenXmlContentLimitError extends OpenXmlError {
+  override readonly name = 'OpenXmlContentLimitError';
+}

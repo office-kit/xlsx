@@ -37,6 +37,7 @@ import { makeDefinedName } from '../workbook/defined-names.js';
 import { parseSharedStringsXml, type SharedStringsTable } from '../workbook/shared-strings.js';
 import { createWorkbook, type SheetRef, type SheetState, type Workbook } from '../workbook/workbook.js';
 import { parseCommentsXml } from '../worksheet/comments-xml.js';
+import { type ContentLimits, makeContentBudget } from '../worksheet/content-budget.js';
 import { parseWorksheetXml } from '../worksheet/reader.js';
 import { parseTableXml } from '../worksheet/table-xml.js';
 import {
@@ -73,6 +74,36 @@ export interface LoadOptions {
    * {@link DecompressionLimits} for the individual knobs.
    */
   decompressionLimits?: DecompressionLimits | false;
+  /**
+   * Caps on how much content the load will model. `decompressionLimits` bounds
+   * the bytes an archive inflates to; this bounds the quantity that decides how
+   * long a load takes and how much heap it holds, which is the number of cells.
+   * A small upload can inflate to a `<sheetData>` of a few hundred MB without
+   * tripping any byte limit, and the model is built for every cell of it before
+   * the caller gets a chance to look at anything.
+   *
+   * Unlimited by default. Both counts cover one pass over the content: every
+   * worksheet of the workbook here, and one row-iteration in
+   * `loadWorkbookStream`, which materialises a row at a time and can be
+   * iterated more than once.
+   *
+   * A service that accepts spreadsheets from strangers wants a ceiling here as
+   * well as on `decompressionLimits`. Cost is close to linear in cells, so size
+   * the cap from the heap the process can spare and halve it to halve the worst
+   * case. As a starting profile for ordinary business workbooks:
+   *
+   * ```ts
+   * const wb = await loadWorkbook(source, {
+   *   decompressionLimits: { maxTotalUncompressedBytes: 256 * 1024 * 1024 },
+   *   contentLimits: { maxCells: 1_000_000, maxRows: 100_000 },
+   * });
+   * ```
+   *
+   * Exceeding either cap throws an `OpenXmlContentLimitError`, which names the
+   * cap and the cell or row that reached it. See `SECURITY.md` for the threat
+   * model both options belong to.
+   */
+  contentLimits?: ContentLimits;
 }
 
 /** Office Document relationship type: the package-root pointer to `xl/workbook.xml`. */
@@ -309,14 +340,17 @@ export async function loadWorkbook(source: XlsxSource, opts: LoadOptions = {}): 
     opts.decompressionLimits === undefined ? {} : { decompressionLimits: opts.decompressionLimits },
   );
   try {
-    return loadWorkbookFromArchive(archive);
+    return loadWorkbookFromArchive(archive, opts.contentLimits);
   } finally {
     archive.close();
   }
 }
 
 /** Internal: same as {@link loadWorkbook} but operating on an already-opened archive. */
-function loadWorkbookFromArchive(archive: ZipArchive): Workbook {
+function loadWorkbookFromArchive(archive: ZipArchive, contentLimits: ContentLimits | undefined): Workbook {
+  // One budget for the whole load: a per-sheet cap would let a workbook of a
+  // thousand small sheets through a ceiling meant to bound the whole read.
+  const contentBudget = makeContentBudget(contentLimits);
   // 1. Manifest — resolves which override entries the package declares.
   if (!archive.has(ARC_CONTENT_TYPES)) {
     throw new OpenXmlSchemaError(`loadWorkbook: missing "${ARC_CONTENT_TYPES}"`);
@@ -551,6 +585,7 @@ function loadWorkbookFromArchive(archive: ZipArchive): Workbook {
     }
     const ws = parseWorksheetXml(archive.read(sheetPath), entry.name, {
       sharedStrings: sst,
+      contentBudget,
       ...(sheetRels ? { rels: sheetRels } : {}),
       ...(loadTable ? { loadTable } : {}),
       ...(loadComments ? { loadComments } : {}),

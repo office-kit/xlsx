@@ -74,9 +74,9 @@ Out of scope:
 - Excel correctness bugs that aren't security-relevant (wrong cell value,
   styling mismatch). Use the public issue tracker for those.
 - Denial-of-service via legitimate-but-large inputs that stay within
-  `decompressionLimits`. The library is designed to read large workbooks
-  efficiently; if you can demonstrate a pathological case (e.g. O(n²)
-  behaviour) we'll fix it, but it's a performance issue rather than a
+  `decompressionLimits` and `contentLimits`. The library is designed to read
+  large workbooks efficiently; if you can demonstrate a pathological case (e.g.
+  O(n²) behaviour) we'll fix it, but it's a performance issue rather than a
   security issue.
 
 ## Hardening recommendations for consumers
@@ -85,6 +85,21 @@ If you process xlsx files from untrusted sources:
 
 - Keep `decompressionLimits` at the defaults, or tighten them based on the
   largest file you expect from your users.
+- Set `contentLimits` as well. `decompressionLimits` bounds inflated bytes;
+  `contentLimits` bounds cells and rows, which is what decides how long a read
+  takes and how much heap it holds. A small upload can inflate to a
+  `<sheetData>` of a few hundred MB while staying inside every byte limit. It
+  is unlimited by default, so this one you have to ask for:
+
+  ```ts
+  const wb = await loadWorkbook(source, {
+    contentLimits: { maxCells: 1_000_000, maxRows: 100_000 },
+  });
+  ```
+
+  Exceeding either cap throws an `OpenXmlContentLimitError`, which you can
+  catch separately from a corrupt-file error to answer an upload with the
+  right status.
 - Apply a hard timeout around `loadWorkbook` / `loadWorkbookStream` in
   addition to the size limits.
 - Run the library in a process / worker isolated from sensitive state.
@@ -93,4 +108,5 @@ If you process xlsx files from untrusted sources:
 
 The defaults in `DEFAULT_DECOMPRESSION_LIMITS` reject pathological archives
 without breaking legitimate xlsx files; review them against your threat
-model.
+model. `contentLimits` has no default, because there is no cell count that is
+wrong for every caller: pick one from the heap your process can spare.

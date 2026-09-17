@@ -41,6 +41,7 @@ export { cssRecordToInlineStyle } from './css.js';
 export { escapeCellString, unescapeCellString } from './escape.js';
 export type { OpenXmlErrorOptions } from './exceptions.js';
 export {
+  OpenXmlContentLimitError,
   OpenXmlDecompressionBombError,
   OpenXmlError,
   OpenXmlInvalidWorkbookError,

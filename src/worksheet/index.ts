@@ -4,6 +4,7 @@
 // ole-objects / sort-state / scenarios / data-consolidate / web-publish /
 // phonetic / protected-ranges / properties / custom-sheet-views.
 
+export type { ContentLimits } from './content-budget.js';
 export type {
   AppendRowOptions,
   CellsByKindCounts,

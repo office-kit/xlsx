@@ -1,11 +1,11 @@
 // Worksheet XML reader.
 //
-// **Stage 1**: DOM-based reader for `<sheetData>/<row>/<c>` covering the common
-// cell-value shapes — number / shared-string / boolean / error / inline string
-// / formula. SAX iterparse + dimension / sheetView / mergeCells / hyperlinks
-// etc. land in later iterations of the loop. The function signature is stable
-// so the SAX swap won't break downstream callers.
+// Everything except `<sheetData>` is read from an XmlNode tree. `<sheetData>`
+// holds every cell of the sheet, so a node per `<c>` and per `<v>` is where the
+// time and the peak heap of a load go; it is cut out of the text and walked
+// with a synchronous SAX pass instead. See `cutSheetData` / `readSheetData`.
 
+import { SaxesParser } from 'saxes';
 import {
   type Cell,
   type CellValue,
@@ -27,13 +27,14 @@ import { OpenXmlSchemaError } from '../utils/exceptions.js';
 import { normalizeFormulaText } from '../utils/formula-text.js';
 import { ERROR_CODES } from '../utils/inference.js';
 import { parseXsdBoolean } from '../utils/xsd-boolean.js';
-import { MARKUP_COMPAT_NS, REL_NS, SHEET_MAIN_NS } from '../xml/namespaces.js';
+import { MARKUP_COMPAT_NS, qname, REL_NS, SHEET_MAIN_NS } from '../xml/namespaces.js';
 import { parseXml } from '../xml/parser.js';
 import { serializeXml } from '../xml/serializer.js';
-import { findChild, findChildren, type XmlNode } from '../xml/tree.js';
+import { el, findChild, findChildren, type XmlNode } from '../xml/tree.js';
 import { parseRichString, type SharedStringEntry } from '../workbook/shared-strings.js';
 import type { AutoFilter, FilterColumn } from './auto-filter.js';
 import { parseMultiCellRange, parseRange } from './cell-range.js';
+import { chargeCell, chargeRow, type ContentBudget, makeContentBudget } from './content-budget.js';
 import type { LegacyComment } from './comments.js';
 import type {
   ConditionalFormatting,
@@ -90,11 +91,6 @@ import { makeWorksheet, setCell, type Worksheet } from './worksheet.js';
 
 const WORKSHEET_TAG = `{${SHEET_MAIN_NS}}worksheet`;
 const SHEETDATA_TAG = `{${SHEET_MAIN_NS}}sheetData`;
-const ROW_TAG = `{${SHEET_MAIN_NS}}row`;
-const C_TAG = `{${SHEET_MAIN_NS}}c`;
-const V_TAG = `{${SHEET_MAIN_NS}}v`;
-const F_TAG = `{${SHEET_MAIN_NS}}f`;
-const IS_TAG = `{${SHEET_MAIN_NS}}is`;
 const MERGE_CELLS_TAG = `{${SHEET_MAIN_NS}}mergeCells`;
 const MERGE_CELL_TAG = `{${SHEET_MAIN_NS}}mergeCell`;
 const SHEET_VIEWS_TAG = `{${SHEET_MAIN_NS}}sheetViews`;
@@ -198,6 +194,12 @@ export interface WorksheetReadContext {
    * inline carries `<drawing r:id="...">`.
    */
   loadDrawing?: (relId: string) => Drawing | undefined;
+  /**
+   * Running cell / row totals for the whole read. Shared across worksheets so
+   * a cap covers the workbook rather than each sheet separately. Absent means
+   * unlimited.
+   */
+  contentBudget?: ContentBudget;
 }
 
 /** Per-worksheet state for shared-formula expansion. */
@@ -212,7 +214,9 @@ interface SharedFormulaCache {
  * doesn't carry the sheet name (it lives in `workbook.xml`).
  */
 export function parseWorksheetXml(bytes: Uint8Array | string, title: string, ctx: WorksheetReadContext): Worksheet {
-  const root = parseXml(bytes);
+  const text = typeof bytes === 'string' ? bytes : XML_DECODER.decode(bytes);
+  const sheetDataBody = cutSheetData(text);
+  const root = parseXml(sheetDataBody === undefined ? text : sheetDataBody.elided);
   if (root.name !== WORKSHEET_TAG) {
     throw new OpenXmlSchemaError(`parseWorksheetXml: root is "${root.name}", expected worksheet`);
   }
@@ -259,24 +263,7 @@ export function parseWorksheetXml(bytes: Uint8Array | string, title: string, ctx
     }
   }
 
-  const sheetData = findChild(root, SHEETDATA_TAG);
-  if (sheetData) {
-    const sharedFormulas = new Map<number, SharedFormulaCache>();
-    // High-water mark, not the previous row: an `@r` that jumps backwards must
-    // not send a later row without `@r` onto a row already read.
-    let nextRow = 1;
-    for (const rowNode of findChildren(sheetData, ROW_TAG)) {
-      const rowIdx = parseRowIndex(rowNode, nextRow);
-      nextRow = Math.max(nextRow, rowIdx + 1);
-      maybeRecordRowDimension(ws, rowNode, rowIdx);
-      let nextCol = 1;
-      for (const cNode of findChildren(rowNode, C_TAG)) {
-        const coord = parseCellCoord(cNode, rowIdx, nextCol);
-        readCell(ws, cNode, coord, ctx, sharedFormulas);
-        nextCol = coord.col + 1;
-      }
-    }
-  }
+  if (sheetDataBody !== undefined) readSheetData(ws, sheetDataBody.body, ctx);
 
   // <sheetProtection> sits between sheetData and mergeCells per ECMA-376
   // §18.3.1.85. Parse all 16 boolean lock flags + optional password hash
@@ -1369,68 +1356,271 @@ const parseSelection = (node: XmlNode): Selection => {
   return sel;
 };
 
-/** Row named by the first cell that carries an `@r`, if the row holds one. */
-const firstLocatedCellRow = (rowNode: XmlNode): number | undefined => {
-  // Walks children rather than collecting them: the ref is almost always on the
-  // first cell, and this runs per row on a sheet that omits every row's `@r`.
-  for (const cNode of rowNode.children) {
-    if (cNode.name !== C_TAG) continue;
-    const ref = cNode.attrs['r'];
-    if (ref) return coordinateToTuple(ref).row;
+// ---- <sheetData> -----------------------------------------------------------
+
+/** Attributes of one element, keyed by the name as written. */
+type RawAttrs = Readonly<Record<string, string>>;
+
+/**
+ * One `<c>` reduced to the parts the cell model needs. `value` is the `<v>`
+ * text, `undefined` when the element is absent: an empty `<v/>` and no `<v>`
+ * at all mean different things to a formula cell.
+ */
+interface RawCell {
+  ref: string | undefined;
+  style: string | undefined;
+  t: string;
+  value: string | undefined;
+  formulaAttrs: RawAttrs | undefined;
+  formula: string | undefined;
+  /** `<is>` subtree, built as nodes so the CT_Rst reader can be reused. */
+  inline: XmlNode | undefined;
+}
+
+const XML_DECODER = new TextDecoder('utf-8', { fatal: false });
+
+/**
+ * The `<sheetData>` element, with no attributes of its own on CT_SheetData, so
+ * nothing between the name and the `>` can hold a quoted `>`.
+ */
+const SHEETDATA_OPEN_RE = /<((?:[^\s:<>/]+:)?sheetData)([^>]*)>/;
+
+interface SheetDataCut {
+  /** Raw XML between the open and the close tag. */
+  body: string;
+  /** The part with that span removed, leaving an empty `<sheetData>`. */
+  elided: string;
+}
+
+/**
+ * Split the `<sheetData>` span out of the worksheet text so the rows can be
+ * walked without building a node per cell.
+ *
+ * Located by searching the text rather than by parsing it, which is the point:
+ * a parse is the cost being avoided. The search can be fooled by a comment or
+ * a CDATA section holding the literal text `<sheetData` or `</sheetData>`, and
+ * neither half of the split hides that. A wrong open tag leaves the comment it
+ * sits inside unterminated, and a wrong close tag leaves an unmatched end tag,
+ * so `parseXml` rejects the elided part; anything it accepts and the SAX walk
+ * accepts is a correct split. Returns `undefined` when the sheet has no rows
+ * to walk, and the caller then parses the text unchanged.
+ */
+const cutSheetData = (text: string): SheetDataCut | undefined => {
+  const open = SHEETDATA_OPEN_RE.exec(text);
+  const tag = open?.[1];
+  if (open === null || tag === undefined) return undefined;
+  // `<sheetData/>`: an empty sheet, and there is nothing to cut.
+  if ((open[2] ?? '').endsWith('/')) return undefined;
+  const bodyStart = open.index + open[0].length;
+  const closeStart = text.indexOf(`</${tag}`, bodyStart);
+  if (closeStart < 0) {
+    throw new OpenXmlSchemaError(`worksheet: <${tag}> is never closed`);
   }
-  return undefined;
+  return { body: text.slice(bodyStart, closeStart), elided: text.slice(0, bodyStart) + text.slice(closeStart) };
+};
+
+const localName = (name: string): string => {
+  const colon = name.indexOf(':');
+  return colon < 0 ? name : name.slice(colon + 1);
 };
 
 /**
- * Row number for a `<row>`. `@r` is optional on CT_Row (ECMA-376 §18.3.1.73);
- * without it the row is the one its first located cell names, which is the only
- * record a generator that omits `@r` leaves of a gap, and is how openpyxl's
- * reader places such a row too. With neither, the row takes `fallbackRow`.
+ * Walk `<sheetData>` and place every cell. Matching is on local names, the way
+ * `loadWorkbookStream` matches, so saxes runs with namespace processing off:
+ * resolving a namespace per element more than doubles the walk, and inside
+ * `<sheetData>` the schema admits nothing that local names could confuse.
  */
-const parseRowIndex = (rowNode: XmlNode, fallbackRow: number): number => {
-  const rAttr = rowNode.attrs['r'];
-  if (rAttr !== undefined) return rowNumberFromAttr(rAttr, 'worksheet');
-  return firstLocatedCellRow(rowNode) ?? derivedRowNumber(fallbackRow, 'worksheet');
+const readSheetData = (ws: Worksheet, body: string, ctx: WorksheetReadContext): void => {
+  const budget = ctx.contentBudget ?? makeContentBudget(undefined);
+  const sharedFormulas = new Map<number, SharedFormulaCache>();
+  // High-water mark, not the previous row: an `@r` that jumps backwards must
+  // not send a later row without `@r` onto a row already read.
+  let nextRow = 1;
+  // -1 outside a `<row>`. 0 inside one that carried no `@r`, whose number the
+  // first located cell settles, or failing that the row's end.
+  let rowIdx = -1;
+  let rowAttrs: RawAttrs = {};
+  let nextCol = 1;
+  // Cells of an `@r`-less row, held until the row number is known: their
+  // coordinates, their shared-formula origins and their row dimension all
+  // depend on it.
+  let held: RawCell[] = [];
+
+  let depth = 0;
+  let cell: RawCell | undefined;
+  let text: string | undefined;
+  // Node stack while inside `<is>`; empty when outside one.
+  const inlineStack: XmlNode[] = [];
+
+  const settleRow = (row: number): void => {
+    rowIdx = row;
+    nextRow = Math.max(nextRow, row + 1);
+    chargeRow(budget, ws.title, row);
+    maybeRecordRowDimension(ws, rowAttrs, row);
+    for (const heldCell of held) {
+      const coord = parseCellCoord(heldCell.ref, row, nextCol);
+      chargeCell(budget, ws.title, coord.col, coord.row);
+      readCell(ws, heldCell, coord, ctx, sharedFormulas);
+      nextCol = coord.col + 1;
+    }
+    held = [];
+  };
+
+  // `xmlns: false` is the default, but naming it narrows the parser's tag type
+  // to the plain one, whose `attributes` is a flat name -> value record.
+  const parser = new SaxesParser({ fragment: true, xmlns: false });
+  parser.on('error', (err: Error) => {
+    throw new OpenXmlSchemaError(`worksheet: malformed <sheetData>: ${err.message}`, { cause: err });
+  });
+  parser.on('doctype', () => {
+    throw new OpenXmlSchemaError('DTD declarations are not permitted in OOXML payloads');
+  });
+
+  parser.on('opentag', (node) => {
+    depth++;
+    if (inlineStack.length > 0) {
+      // `<is>` is a CT_Rst, always in the spreadsheetml namespace, so the
+      // subtree can carry the Clark names the CT_Rst reader matches on without
+      // asking saxes to resolve anything.
+      const child = el(qname(SHEET_MAIN_NS, localName(node.name)), node.attributes);
+      inlineStack[inlineStack.length - 1]?.children.push(child);
+      inlineStack.push(child);
+      return;
+    }
+    const local = localName(node.name);
+    if (depth === 1) {
+      if (local !== 'row') return;
+      rowAttrs = node.attributes;
+      nextCol = 1;
+      held = [];
+      const rAttr = rowAttrs['r'];
+      // `@r` is optional on CT_Row (ECMA-376 §18.3.1.73); such a row waits for
+      // its first located cell to name it.
+      if (rAttr === undefined) {
+        rowIdx = 0;
+      } else {
+        settleRow(rowNumberFromAttr(rAttr, 'worksheet'));
+      }
+      return;
+    }
+    if (rowIdx < 0) return;
+    if (depth === 2) {
+      if (local !== 'c') return;
+      const attrs = node.attributes;
+      cell = {
+        ref: attrs['r'],
+        style: attrs['s'],
+        t: attrs['t'] ?? 'n',
+        value: undefined,
+        formulaAttrs: undefined,
+        formula: undefined,
+        inline: undefined,
+      };
+      return;
+    }
+    if (depth === 3 && cell !== undefined) {
+      // Only a direct child of `<c>` is the cell's own value; a `<v>` nested
+      // inside an `<extLst>` belongs to whatever extension put it there.
+      if (local === 'v') {
+        text = '';
+      } else if (local === 'f') {
+        cell.formulaAttrs = node.attributes as RawAttrs;
+        text = '';
+      } else if (local === 'is') {
+        const root = el(qname(SHEET_MAIN_NS, 'is'));
+        cell.inline = root;
+        inlineStack.push(root);
+      }
+    }
+  });
+
+  const addText = (chunk: string): void => {
+    if (inlineStack.length > 0) {
+      const top = inlineStack[inlineStack.length - 1];
+      if (top !== undefined) top.text = (top.text ?? '') + chunk;
+      return;
+    }
+    if (text !== undefined) text += chunk;
+  };
+  parser.on('text', addText);
+  // saxes reports a CDATA section separately from text. Its content is literal,
+  // which is already true of what arrives here: saxes has resolved the entity
+  // references in the text events, and a CDATA section has none to resolve.
+  parser.on('cdata', addText);
+
+  parser.on('closetag', (node) => {
+    depth--;
+    if (inlineStack.length > 0) {
+      inlineStack.pop();
+      return;
+    }
+    const local = localName(node.name);
+    if (depth === 2 && cell !== undefined) {
+      if (local === 'v') cell.value = text ?? '';
+      else if (local === 'f') cell.formula = text ?? '';
+      text = undefined;
+      return;
+    }
+    if (depth === 1 && cell !== undefined && local === 'c') {
+      if (rowIdx === 0) {
+        if (cell.ref !== undefined) settleRow(coordinateToTuple(cell.ref).row);
+        else held.push(cell);
+      }
+      if (rowIdx > 0) {
+        const coord = parseCellCoord(cell.ref, rowIdx, nextCol);
+        chargeCell(budget, ws.title, coord.col, coord.row);
+        readCell(ws, cell, coord, ctx, sharedFormulas);
+        nextCol = coord.col + 1;
+      }
+      cell = undefined;
+      return;
+    }
+    if (depth === 0 && local === 'row') {
+      // A row that held no located cell still consumes a slot.
+      if (rowIdx === 0) settleRow(derivedRowNumber(nextRow, 'worksheet'));
+      rowIdx = -1;
+      rowAttrs = {};
+    }
+  });
+
+  // One `write()` for the whole span. saxes runs its handlers synchronously
+  // inside `write()`, so nothing queues up between the parser and the cells,
+  // and chunking would only add per-boundary bookkeeping.
+  parser.write(body);
+  parser.close();
 };
 
-const parseCellCoord = (cNode: XmlNode, rowIdx: number, fallbackCol: number): { row: number; col: number } => {
-  const rAttr = cNode.attrs['r'];
-  if (rAttr === undefined) {
+const parseCellCoord = (ref: string | undefined, rowIdx: number, fallbackCol: number): { row: number; col: number } => {
+  if (ref === undefined) {
     // Cells without @r take the next column slot in the current row.
     return { row: rowIdx, col: fallbackCol };
   }
-  const t = coordinateToTuple(rAttr);
+  const t = coordinateToTuple(ref);
   if (t.row !== rowIdx) {
-    throw new OpenXmlSchemaError(`worksheet: <c r="${rAttr}"> row ${t.row} disagrees with row ${rowIdx}`);
+    throw new OpenXmlSchemaError(`worksheet: <c r="${ref}"> row ${t.row} disagrees with row ${rowIdx}`);
   }
   return { row: t.row, col: t.col };
 };
 
 const readCell = (
   ws: Worksheet,
-  cNode: XmlNode,
+  raw: RawCell,
   coord: { row: number; col: number },
   ctx: WorksheetReadContext,
   sharedFormulas: Map<number, SharedFormulaCache>,
 ): void => {
-  const t = cNode.attrs['t'] ?? 'n';
-  const styleAttr = cNode.attrs['s'];
-  const styleId = styleAttr === undefined ? 0 : parseStyleId(styleAttr);
-
-  const fNode = findChild(cNode, F_TAG);
-  const vNode = findChild(cNode, V_TAG);
-  const isNode = findChild(cNode, IS_TAG);
+  const t = raw.t;
+  const styleId = raw.style === undefined ? 0 : parseStyleId(raw.style);
 
   // ---- formula path ------------------------------------------------------
-  if (fNode) {
+  if (raw.formulaAttrs !== undefined) {
     const cell = setCell(ws, coord.row, coord.col, null, styleId);
     // `<v/>` and a missing `<v>` are different states: Excel writes the former
     // for a formula whose cached result is the empty string (common for links
     // into a workbook it cannot reach), and that cached value is the only
     // thing it has to display until the link resolves.
-    const cachedRaw = vNode === undefined ? undefined : (vNode.text ?? '');
-    const cached = decodeCachedValue(cachedRaw, t, ctx, ws.title, coord);
-    handleFormula(cell, fNode, coord, cached, sharedFormulas, t);
+    const cached = decodeCachedValue(raw.value, t, ctx, ws.title, coord);
+    handleFormula(cell, raw.formulaAttrs, raw.formula, coord, cached, sharedFormulas, t);
     return;
   }
 
@@ -1438,13 +1628,13 @@ const readCell = (
   let value: CellValue = null;
   switch (t) {
     case 'n':
-      value = parseCellNumber(vNode?.text, ws.title, coord.col, coord.row);
+      value = parseCellNumber(raw.value, ws.title, coord.col, coord.row);
       break;
     case 's': {
-      if (vNode?.text === undefined) {
+      if (raw.value === undefined || raw.value === '') {
         throw new OpenXmlSchemaError('worksheet: <c t="s"> missing <v>');
       }
-      const sst = resolveSharedString(vNode.text, ctx);
+      const sst = resolveSharedString(raw.value, ctx);
       value = typeof sst === 'string' ? sst : { kind: 'rich-text', runs: sst.runs };
       break;
     }
@@ -1453,22 +1643,22 @@ const readCell = (
       // empty cell the way a missing `<v>` is under `t="n"`. The cell keeps no
       // type of its own once its value is null, so `<c t="b"/>` is written
       // back as `<c/>`, which is what Excel emits for an empty cell.
-      const raw = vNode?.text?.trim();
-      if (raw === undefined || raw === '') {
+      const text = raw.value?.trim();
+      if (text === undefined || text === '') {
         value = null;
         break;
       }
-      const parsed = parseXsdBoolean(raw);
+      const parsed = parseXsdBoolean(text);
       if (parsed === undefined) {
         throw new OpenXmlSchemaError(
-          `worksheet: <c r="${tupleToCoordinate(coord.col, coord.row)}" t="b"><v>${clipCellText(raw)}</v></c> is not a boolean`,
+          `worksheet: <c r="${tupleToCoordinate(coord.col, coord.row)}" t="b"><v>${clipCellText(text)}</v></c> is not a boolean`,
         );
       }
       value = parsed;
       break;
     }
     case 'e': {
-      const code = vNode?.text;
+      const code = raw.value;
       if (code === undefined || !ERROR_CODES.has(code)) {
         throw new OpenXmlSchemaError(`worksheet: unknown error code "${code}" in <c t="e">`);
       }
@@ -1476,10 +1666,10 @@ const readCell = (
       break;
     }
     case 'str':
-      value = vNode?.text ?? '';
+      value = raw.value ?? '';
       break;
     case 'inlineStr':
-      value = readInlineString(isNode);
+      value = readInlineString(raw.inline);
       break;
     default:
       throw new OpenXmlSchemaError(`worksheet: unknown cell type t="${t}"`);
@@ -1576,13 +1766,14 @@ const decodeCachedValue = (
 
 const handleFormula = (
   cell: Cell,
-  fNode: XmlNode,
+  fAttrs: RawAttrs,
+  fText: string | undefined,
   coord: { row: number; col: number },
   cached: number | string | boolean | undefined,
   sharedFormulas: Map<number, SharedFormulaCache>,
   cachedType: string,
 ): void => {
-  const tAttr = fNode.attrs['t'] ?? 'normal';
+  const tAttr = fAttrs['t'] ?? 'normal';
   // Keep the formula text as stored, including the `_xlfn.` / `_xlfn._xlws.`
   // prefixes Excel writes for future-functions (SCAN, LAMBDA, XLOOKUP, …).
   // The prefix is part of the stored grammar — a bare `SCAN(...)` is an
@@ -1593,7 +1784,7 @@ const handleFormula = (
   // The leading `=` is the exception: `<f>` text must not carry one, and the
   // shared-formula cache below has to hold the same text as the cell it came
   // from.
-  const formula = normalizeFormulaText(fNode.text ?? '');
+  const formula = normalizeFormulaText(fText ?? '');
   const opts = cached !== undefined ? {
     cachedValue: cached,
     ...(cachedType === 'e' ? { cachedValueType: 'error' as const } : {}),
@@ -1608,7 +1799,7 @@ const handleFormula = (
       setFormula(cell, formula, opts);
       return;
     case 'array': {
-      const ref = fNode.attrs['ref'];
+      const ref = fAttrs['ref'];
       if (!ref) {
         throw new OpenXmlSchemaError('worksheet: <f t="array"> missing @ref');
       }
@@ -1616,7 +1807,7 @@ const handleFormula = (
       return;
     }
     case 'shared': {
-      const siRaw = fNode.attrs['si'];
+      const siRaw = fAttrs['si'];
       if (siRaw === undefined) {
         throw new OpenXmlSchemaError('worksheet: <f t="shared"> missing @si');
       }
@@ -1624,7 +1815,7 @@ const handleFormula = (
       if (!Number.isInteger(si) || si < 0) {
         throw new OpenXmlSchemaError(`worksheet: <f t="shared" si="${siRaw}"> is not a valid index`);
       }
-      const ref = fNode.attrs['ref'];
+      const ref = fAttrs['ref'];
       if (formula.length > 0) {
         // Origin / first occurrence of the shared formula. The ref is required
         // by Excel but we accept its absence for resilience.
@@ -1650,21 +1841,21 @@ const handleFormula = (
       // dt-specific attribute so the writer re-emits the exact same <f
       // t="dataTable" r1="…" /> shape and Excel keeps treating the cell as a
       // Data Table cell.
-      const ref = fNode.attrs['ref'];
+      const ref = fAttrs['ref'];
       if (!ref) {
         throw new OpenXmlSchemaError('worksheet: <f t="dataTable"> missing @ref');
       }
       const dtOpts: import('../cell/cell.js').DataTableFormulaOpts = {
         ref,
         ...opts,
-        ...(fNode.attrs['r1'] !== undefined ? { r1: fNode.attrs['r1'] } : {}),
-        ...(fNode.attrs['r2'] !== undefined ? { r2: fNode.attrs['r2'] } : {}),
-        ...(parseXsdBoolean(fNode.attrs['dt2D']) ? { dt2D: true } : {}),
-        ...(parseXsdBoolean(fNode.attrs['dtr']) ? { dtr: true } : {}),
-        ...(parseXsdBoolean(fNode.attrs['del1']) ? { del1: true } : {}),
-        ...(parseXsdBoolean(fNode.attrs['del2']) ? { del2: true } : {}),
-        ...(parseXsdBoolean(fNode.attrs['aca']) ? { aca: true } : {}),
-        ...(parseXsdBoolean(fNode.attrs['ca']) ? { ca: true } : {}),
+        ...(fAttrs['r1'] !== undefined ? { r1: fAttrs['r1'] } : {}),
+        ...(fAttrs['r2'] !== undefined ? { r2: fAttrs['r2'] } : {}),
+        ...(parseXsdBoolean(fAttrs['dt2D']) ? { dt2D: true } : {}),
+        ...(parseXsdBoolean(fAttrs['dtr']) ? { dtr: true } : {}),
+        ...(parseXsdBoolean(fAttrs['del1']) ? { del1: true } : {}),
+        ...(parseXsdBoolean(fAttrs['del2']) ? { del2: true } : {}),
+        ...(parseXsdBoolean(fAttrs['aca']) ? { aca: true } : {}),
+        ...(parseXsdBoolean(fAttrs['ca']) ? { ca: true } : {}),
       };
       setDataTableFormula(cell, formula, dtOpts);
       return;
@@ -1893,19 +2084,19 @@ const parseHyperlink = (node: XmlNode, rels: Relationships | undefined): Hyperli
   return opts as Hyperlink;
 };
 
-const maybeRecordRowDimension = (ws: Worksheet, node: XmlNode, rowIdx: number): void => {
+const maybeRecordRowDimension = (ws: Worksheet, attrs: RawAttrs, rowIdx: number): void => {
   const opts: Partial<RowDimension> = {};
-  const ht = parseFloatAttr(node.attrs['ht']);
+  const ht = parseFloatAttr(attrs['ht']);
   if (ht !== undefined) opts.height = ht;
-  const customHeight = parseXsdBoolean(node.attrs['customHeight']);
+  const customHeight = parseXsdBoolean(attrs['customHeight']);
   if (customHeight !== undefined) opts.customHeight = customHeight;
-  const hidden = parseXsdBoolean(node.attrs['hidden']);
+  const hidden = parseXsdBoolean(attrs['hidden']);
   if (hidden !== undefined) opts.hidden = hidden;
-  const outlineLevel = parseIntegerAttr(node.attrs['outlineLevel']);
+  const outlineLevel = parseIntegerAttr(attrs['outlineLevel']);
   if (outlineLevel !== undefined) opts.outlineLevel = outlineLevel;
-  const collapsed = parseXsdBoolean(node.attrs['collapsed']);
+  const collapsed = parseXsdBoolean(attrs['collapsed']);
   if (collapsed !== undefined) opts.collapsed = collapsed;
-  const style = parseIntegerAttr(node.attrs['s']);
+  const style = parseIntegerAttr(attrs['s']);
   if (style !== undefined) opts.style = style;
   if (Object.keys(opts).length === 0) return;
   ws.rowDimensions.set(rowIdx, makeRowDimension(opts));
