@@ -1,5 +1,93 @@
 # @office-kit/xlsx
 
+## 0.14.0
+
+### Minor Changes
+
+- [#147](https://github.com/office-kit/xlsx/pull/147) [`5074ac5`](https://github.com/office-kit/xlsx/commit/5074ac582024ee339e83a44c5bbf7f0594c9c3c2) Thanks [@kibertoad](https://github.com/kibertoad)! - fix: reading an entry twice no longer counts it twice against the decompression budget
+
+  `readStream()` followed by `read()` on the same archive entry charged its payload
+  to `maxTotalUncompressedBytes` twice, so a legitimate workbook could be rejected
+  as a decompression bomb. Each entry is now charged the largest amount any single
+  inflate of it produced, so reading one again costs nothing however the reads
+  overlap. The per-entry size and ratio caps are unchanged, and an archive whose
+  distinct entries genuinely exceed the total is still rejected.
+
+  An entry rejected for exceeding the archive total remains rejected on repeated
+  sync or streaming reads, including archives with understated directory sizes.
+
+  perf!: loading a workbook no longer holds every part it has read
+
+  Inflated entries were cached for the lifetime of the archive, which put the whole
+  uncompressed package in memory. The cache now takes entries of 64 KB or less, 4 MB
+  of them in total, and drops the least recently used first, which still covers the
+  `.rels` parts a load re-reads. Loading a 10-sheet, 8.3 MB workbook holds about
+  21 MB of inflated bytes instead of about 65 MB.
+
+  `openZip().read(path)` returns a fresh array on every call as part of this. It
+  previously handed back the same array once an entry had been read, so mutating one
+  read's result changed what later reads of that path returned. Code that relied on
+  that aliasing, or on two reads yielding the identical object, has to keep its own
+  reference now.
+
+  Repeated row-band queries retain their worksheet bytes and row index without
+  re-inflating the part. Closing the workbook releases these caches and prevents
+  subsequent band queries from using stale bytes.
+
+- [#145](https://github.com/office-kit/xlsx/pull/145) [`45d6ad1`](https://github.com/office-kit/xlsx/commit/45d6ad1e03fd775e133a8ca6e4e1ac06b0e1ee7e) Thanks [@kibertoad](https://github.com/kibertoad)! - perf: saveWorkbook no longer holds whole worksheets in memory
+
+  Worksheets are serialised straight into their ZIP entry instead of being built
+  as a string, encoded, and held until every sheet is done. Saving a single
+  500k-cell sheet now completes under an 88 MB heap cap where it previously needed
+  192 MB; an eight-sheet, 2M-cell workbook needs 320 MB instead of 384 MB.
+
+  **Saved bytes change.** `xl/_rels/workbook.xml.rels` is now written after the
+  worksheet parts rather than before them, because its contents depend on whether
+  serialising the sheets produced any shared strings. Code that reads the package
+  through `loadWorkbook`, a zip library, or Excel is unaffected, since OPC resolves
+  parts by name and archive position carries no meaning. Byte-for-byte consumers
+  are: if you pinned `mtime` for reproducible output (added in 0.13.0) and store
+  golden files or content hashes of saved workbooks, every one of them changes
+  with this release and has to be regenerated.
+
+- [#144](https://github.com/office-kit/xlsx/pull/144) [`ec45506`](https://github.com/office-kit/xlsx/commit/ec455065629df01aa84efd830c3f2b19657d4747) Thanks [@kibertoad](https://github.com/kibertoad)! - perf: streamed sheet reads no longer buffer a whole chunk's parse events
+
+  Walking a worksheet queued every SAX event a single parser write produced
+  before yielding the first row, so peak heap tracked whatever the parser was
+  handed rather than staying flat. How much that was depended on the shape of
+  the input: a materialised 40 MB sheet body went in whole, a streamed one at
+  the zip reader's inflate granularity of roughly 450 KB. Both are now decoded
+  and fed in 64 KB slices, whatever the producer hands over, and the event queue
+  drains between writes.
+
+  On a 200k-row, 5-column sheet, peak heap for `iterRows({ minRow: 2 })` drops
+  from about 1240 MB to about 70 MB, and for a full-sheet walk from about
+  200 MB to about 60 MB.
+
+  Three changes in behavior come with it:
+
+  - `iterRows({ minRow })` above row 1 no longer fails on sheets written by
+    Excel. The band was replayed inside a rebuilt `<sheetData>` envelope that
+    declared only the default namespace, so the `x14ac:dyDescent` Excel puts on
+    nearly every `<row>` raised an unbound-prefix error. The replay now carries
+    the worksheet's and sheetData's own namespace declarations.
+  - Malformed XML throws `OpenXmlSchemaError` with the parser's own error as
+    `cause`, instead of surfacing the raw `saxes` `Error`.
+  - Streamed input is scanned for DTD and entity declarations across the whole
+    document instead of only its first 256 characters. A `<!DOCTYPE` or
+    `<!ENTITY` token further into the payload, inside a comment or a CDATA
+    section for instance, is now rejected where it previously parsed.
+
+### Patch Changes
+
+- [#145](https://github.com/office-kit/xlsx/pull/145) [`45d6ad1`](https://github.com/office-kit/xlsx/commit/45d6ad1e03fd775e133a8ca6e4e1ac06b0e1ee7e) Thanks [@kibertoad](https://github.com/kibertoad)! - fix: a failed `saveWorkbook` to a file path no longer leaves the partial file behind
+
+  `toFile` deletes the half-written file when a save fails, but the delete raced
+  the write stream's own file-handle close and lost on Windows, so a truncated
+  `.xlsx` stayed at the destination. The cleanup now waits for the handle to
+  close, and `saveWorkbook` (and the write-only `finalize()`) wait for the cleanup
+  before rejecting, so the path is clear by the time the error reaches the caller.
+
 ## 0.13.0
 
 ### Minor Changes
