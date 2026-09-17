@@ -287,12 +287,18 @@ band queries reuse the cached index. A sheet whose `<row>` elements omit their
 optional `r` attribute cannot be indexed by row number, so its band queries
 keep streaming the sheet and retain nothing.
 
-The two readers differ on damaged input, deliberately. Handed a cell it cannot
-interpret (`<c t="b"><v>yes</v></c>`, an unknown error code, a shared-string
-index past the end of the table) `loadWorkbook` throws an `OpenXmlSchemaError`,
-on the grounds that a wrong value is worse than a failed load.
-`loadWorkbookStream` reads that cell as empty and keeps going, because an
-iterator that throws on row 900,000 leaves you no way to finish the pass.
+A cell whose declared type says nothing usable about its value throws an
+`OpenXmlSchemaError` from both readers, on the grounds that a wrong value is
+worse than a failed load: a numeric `<v>` that is not a finite number, a
+`t="e"` holding something that is not an error token, a `t="d"` holding
+something that is not an ISO 8601 value, and any `t` outside `ST_CellType`. An
+error token the library does not list is not damage, so it is kept verbatim and
+written back unchanged.
+
+Two shapes stay lenient in `loadWorkbookStream` alone, because an iterator that
+throws on row 900,000 leaves you no way to finish the pass: an unparseable
+boolean (`<c t="b"><v>yes</v></c>`) and a shared-string index past the end of
+the table both read as an empty cell there, where `loadWorkbook` refuses them.
 Structural problems (a missing part, no `officeDocument` relationship, an
 unknown sheet name) throw in both.
 

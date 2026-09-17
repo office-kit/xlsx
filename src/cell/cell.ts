@@ -12,8 +12,14 @@ import { normalizeFormulaText, startsWithEquals } from '../utils/formula-text.js
 import { ERROR_CODES } from '../utils/inference.js';
 import { type RichText, richTextToString } from './rich-text.js';
 
-/** Excel error tokens. */
-export type ExcelErrorCode = '#NULL!' | '#DIV/0!' | '#VALUE!' | '#REF!' | '#NAME?' | '#NUM!' | '#N/A' | '#GETTING_DATA';
+/**
+ * An Excel error token: the `#` sigil then the code, as the file stores it.
+ * `ERROR_CODES` lists the ones this library knows by name and is what
+ * {@link makeErrorValue} accepts; the type stays open because Excel has added
+ * nine tokens since 2018 and a reader that refused an unlisted one would fail
+ * a whole workbook over a single cell.
+ */
+export type ExcelErrorCode = `#${string}`;
 
 /** Formula sub-kind — drives the OOXML `<f t="…">` attribute. */
 export type FormulaKind = 'normal' | 'array' | 'shared' | 'dataTable';

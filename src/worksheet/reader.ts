@@ -9,7 +9,6 @@
 import {
   type Cell,
   type CellValue,
-  type ExcelErrorCode,
   type FormulaKind,
   setArrayFormula,
   setDataTableFormula,
@@ -21,11 +20,13 @@ import type { Drawing } from '../drawing/drawing.js';
 import { translateFormula } from '../formula/translate.js';
 import type { Relationships } from '../packaging/relationships.js';
 import { findById } from '../packaging/relationships.js';
+import { parseCellDate } from '../utils/cell-date.js';
+import { parseCellErrorCode } from '../utils/cell-error.js';
 import { parseCellNumber } from '../utils/cell-number.js';
+import { unknownCellType } from '../utils/cell-text.js';
 import { coordinateToTuple, derivedRowNumber, rowNumberFromAttr, tupleToCoordinate } from '../utils/coordinate.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
 import { normalizeFormulaText } from '../utils/formula-text.js';
-import { ERROR_CODES } from '../utils/inference.js';
 import { parseXsdBoolean } from '../utils/xsd-boolean.js';
 import { MARKUP_COMPAT_NS, REL_NS, SHEET_MAIN_NS } from '../xml/namespaces.js';
 import { parseXml } from '../xml/parser.js';
@@ -1467,14 +1468,15 @@ const readCell = (
       value = parsed;
       break;
     }
-    case 'e': {
-      const code = vNode?.text;
-      if (code === undefined || !ERROR_CODES.has(code)) {
-        throw new OpenXmlSchemaError(`worksheet: unknown error code "${code}" in <c t="e">`);
-      }
-      value = { kind: 'error', code: code as ExcelErrorCode };
+    case 'e':
+      value = { kind: 'error', code: parseCellErrorCode(vNode?.text, ws.title, coord.col, coord.row) };
       break;
-    }
+    case 'd':
+      // ISO 29500 strict stores a date as ISO 8601 text rather than a serial.
+      // The transitional XSD vendored under tests/conformance/ omits `d`, so
+      // conformance passing does not imply this branch is unreachable.
+      value = parseCellDate(vNode?.text, ws.title, coord.col, coord.row);
+      break;
     case 'str':
       value = vNode?.text ?? '';
       break;
@@ -1482,7 +1484,7 @@ const readCell = (
       value = readInlineString(isNode);
       break;
     default:
-      throw new OpenXmlSchemaError(`worksheet: unknown cell type t="${t}"`);
+      throw unknownCellType(t, ws.title, coord.col, coord.row);
   }
   setCell(ws, coord.row, coord.col, value, styleId);
 };

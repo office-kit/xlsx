@@ -2,11 +2,8 @@
 // value is answered the same way whether the caller loads a workbook or
 // streams it.
 
-import { formatSheetQualifiedRef, tupleToCoordinate } from './coordinate.js';
+import { cellLabel, quoteCellText } from './cell-text.js';
 import { OpenXmlSchemaError } from './exceptions.js';
-
-/** How much of an offending value the error echoes. Cell text is untrusted and unbounded. */
-const MAX_QUOTED_LENGTH = 40;
 
 /**
  * Value of a numeric cell's `<v>`: a finite number, or `null` when the element
@@ -25,8 +22,7 @@ export function parseCellNumber(raw: string | undefined, sheet: string, col: num
   // cell rather than a corrupt one. Both readers keep element text verbatim, so
   // `<v>` in a pretty-printed part arrives with its indentation attached.
   if (raw.trim() === '') return null;
-  const quoted =
-    raw.length <= MAX_QUOTED_LENGTH ? raw : `${raw.slice(0, MAX_QUOTED_LENGTH)}... (${raw.length} chars)`;
-  const at = formatSheetQualifiedRef(sheet, tupleToCoordinate(col, row));
-  throw new OpenXmlSchemaError(`worksheet: <v>${quoted}</v> at ${at} is not a finite number`);
+  throw new OpenXmlSchemaError(
+    `worksheet: <v>${quoteCellText(raw)}</v> at ${cellLabel(sheet, col, row)} is not a finite number`,
+  );
 }

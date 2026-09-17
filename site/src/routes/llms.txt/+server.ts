@@ -88,7 +88,7 @@ Bundle budgets, min + brotli:
     | boolean
     | Date
     | { kind: 'duration'; ms: number }
-    | { kind: 'error'; code: ExcelErrorCode }   // '#DIV/0!' | '#N/A' | '#NAME?' | '#NULL!' | '#NUM!' | '#REF!' | '#VALUE!' | '#GETTING_DATA' | '#SPILL!' | '#CALC!'
+    | { kind: 'error'; code: ExcelErrorCode }   // \`#\${string}\`; ERROR_CODES lists the 17 tokens known by name ('#REF!', '#SPILL!', '#PYTHON!', ...)
     | { kind: 'rich-text'; runs: RichText }
     | FormulaValue                              // { kind: 'formula'; formula: string; cachedValue?: number | string | boolean; ... }
     | null;                                     // empty cell
