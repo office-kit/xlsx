@@ -1,5 +1,165 @@
 # @office-kit/xlsx
 
+## 0.17.0
+
+### Minor Changes
+
+- [#153](https://github.com/office-kit/xlsx/pull/153) [`784a14b`](https://github.com/office-kit/xlsx/commit/784a14ba0d39d3b04204e5c4a0de8551511d6954) Thanks [@kibertoad](https://github.com/kibertoad)! - Fix emoji and other astral-plane characters being written as `_xD83D__xDE00_`.
+  Cell strings, rich-text runs, formula text and cached formula results all
+  escaped the two halves of a surrogate pair separately, so Excel, LibreOffice
+  and Google Sheets displayed the escape sequence instead of the character.
+  Reading such a file back through this library hid the problem, because the
+  unescape step rebuilt the character.
+
+  U+FFFE and U+FFFF are now escaped too. XML 1.0 leaves both out of its `Char`
+  production, so a cell carrying either one produced a part that strict parsers
+  and Excel reject.
+
+  Unpaired surrogates, which have no UTF-8 encoding, are still escaped. A file
+  already written with the split form reads back correctly wherever the reader
+  inverts the `_xHHHH_` convention, which covers cell text and rich-text runs.
+  Formula text and a cached string result are handed back as written, so an emoji
+  split there stays split.
+
+  This changes the output of `escapeCellString` (exported from
+  `@office-kit/xlsx/utils`) for the inputs above. Code that diffs writer output
+  against a stored file containing `_xD83D_` will see it change.
+
+- [#157](https://github.com/office-kit/xlsx/pull/157) [`6878a13`](https://github.com/office-kit/xlsx/commit/6878a13c614ebd0a9621c90d25c0c0ba37dd82bf) Thanks [@kibertoad](https://github.com/kibertoad)! - Read `<c t="b"><v>true</v></c>` as TRUE. Both loaders compared the value against
+  `"1"`, so a workbook written with the long xsd:boolean spelling (legal, and what
+  some non-Excel producers emit) had every TRUE cell come back as FALSE with
+  nothing raised to say so. All four lexical forms now read correctly in cell
+  values and in cached formula results, in `loadWorkbook` and
+  `loadWorkbookStream` alike, and the padding a pretty-printer leaves around a
+  value no longer changes how it reads. Boolean attributes across the worksheet,
+  chart and style parts go through the same parser, so they accept the same
+  spellings.
+
+  Three input shapes are read differently than before:
+
+  - `<v>true</v>` / `<v>false</v>` give TRUE / FALSE instead of both FALSE.
+  - `<c t="b"/>` reads as an empty cell rather than FALSE, and saves as an untyped
+    `<c/>`: with no value there is no boolean for `t="b"` to describe, and an
+    empty cell is what Excel writes.
+  - A value outside the lexical space (`<v>yes</v>`) makes `loadWorkbook` throw
+    `OpenXmlSchemaError` naming the cell, instead of returning FALSE.
+    `loadWorkbookStream` reads it as an empty cell, staying lenient the way it is
+    for every other unreadable value.
+
+- [#154](https://github.com/office-kit/xlsx/pull/154) [`a49df8e`](https://github.com/office-kit/xlsx/commit/a49df8eb6d02b9465df436b4b32e537728b9497c) Thanks [@kibertoad](https://github.com/kibertoad)! - **Behaviour change:** formula text and cached formula results are written
+  differently than in earlier versions.
+
+  Formula text (`<f>`, plus `<formula>` / `<formula1>` / `<formula2>` on
+  conditional formats and data validations) and a `t="str"` cached result used to
+  go through the cell-string escaper, which turns a literal `_x0041_` into
+  `_x005F_x0041_`. Nothing decodes those nodes on read, so `CONCAT("_x0041_")`
+  was already wrong in the first saved file and grew another `_x005F_` on every
+  load-and-save cycle after that. They now take plain XML escaping and survive
+  any number of cycles unchanged.
+
+  Along the same paths:
+
+  - A carriage return is written as `&[#13](https://github.com/office-kit/xlsx/issues/13);`, so it comes back as a CR instead of
+    being normalised to a line feed.
+  - A codepoint XML 1.0 cannot represent (a C0 control character other than tab /
+    LF / CR, an unpaired surrogate, or U+FFFE / U+FFFF) now throws `OpenXmlSchemaError` naming the
+    cell, rather than being encoded as an `_xHHHH_` sequence nothing reverses.
+  - A cached error result keeps `t="e"` instead of being downgraded to `t="str"`,
+    so `ISERROR` / `IFERROR` and error-keyed conditional formats still match it
+    before Excel recalculates. To create one, pass `cachedValueType: 'error'`
+    alongside a cached error token to the formula constructor. Plain cached
+    strings, including `"#N/A"`, stay strings; loaded errors retain their type.
+  - A cached result stored in the shared-strings table (`t="s"`, which non-Excel
+    producers write) resolves to its text. It used to load as the raw sst index
+    and save back as that number.
+
+  Formulas in files written by earlier versions keep whatever `_x005F_` prefixes
+  they accumulated, since a stored `_x005F_x0041_` is indistinguishable from one
+  Excel wrote on purpose. They no longer grow.
+
+- [#159](https://github.com/office-kit/xlsx/pull/159) [`ee4dea4`](https://github.com/office-kit/xlsx/commit/ee4dea4be9a7d38d10b409167d2757c2cf807472) Thanks [@kibertoad](https://github.com/kibertoad)! - Reject a corrupt numeric cell at load instead of at save. `<c t="n"><v>oops</v></c>`
+  parsed to `NaN`, and an exponent past the double range to `Infinity`. Both were
+  stored on the cell, so the load succeeded and the failure surfaced much later as
+  `cannot serialise non-finite number` from the writer, naming a cell the caller
+  never wrote.
+
+  `loadWorkbook` and `loadWorkbookStream` both throw an `OpenXmlSchemaError` that
+  names the sheet, the cell and the offending text. **This changes behavior**: a
+  file that used to load, carrying `NaN` or `Infinity` on a cell, is now refused.
+  That file was already unsaveable. Ordinary numbers, an empty or whitespace-only
+  `<v>`, and a `<c/>` with no value are unaffected.
+
+  `saveWorkbook` also refuses a non-finite cached formula value, which it used to
+  write out as `<v>NaN</v>`, a part Excel cannot open.
+
+### Patch Changes
+
+- [#155](https://github.com/office-kit/xlsx/pull/155) [`0a9569e`](https://github.com/office-kit/xlsx/commit/0a9569ef2c385d4755f6eea7898b01da4c377464) Thanks [@kibertoad](https://github.com/kibertoad)! - Fix a hang when loading a corrupt archive. A zip entry that declared DEFLATE
+  but carried no compressed bytes sent `loadWorkbookStream` into a busy loop that
+  could not be cancelled, and a crafted file was enough to trigger it. Both read
+  paths now reject that entry with an `OpenXmlIoError`; the buffered `read` path
+  previously returned an empty part.
+
+  `loadWorkbook` and `loadWorkbookStream` also reject an entry whose declared
+  compressed size runs past the end of the archive, instead of reading whatever
+  bytes were left. That case previously loaded, with binary parts such as
+  `vbaProject.bin` or images silently truncated and written back out on save.
+
+  Both rejections fail the whole load, so an archive carrying one corrupt part
+  that earlier releases read past now throws.
+
+- [#158](https://github.com/office-kit/xlsx/pull/158) [`edbe1a3`](https://github.com/office-kit/xlsx/commit/edbe1a3ccae2c15230174f4ed41932ed5b019a60) Thanks [@kibertoad](https://github.com/kibertoad)! - Accept worksheets whose `<row>` elements omit the optional `r` attribute, which
+  ECMA-376 allows. `loadWorkbook` rejected such a file with "missing required @r",
+  and `loadWorkbookStream` numbered every affected row 0, filtered it out for
+  sitting below the first row, and reported an empty sheet with no error at all.
+
+  Both readers now place such a row where its first located cell says, or, with no
+  cell to go by, on the row after the highest one read so far. A streaming band
+  query (`minRow` / `maxRow`) covers those rows: a sheet that omits `r` cannot be
+  seeked into by row number, so band queries stream it instead of jumping to a
+  byte offset.
+
+  `<row r="…">` values that are not a row number in `[1, 1048576]` now throw an
+  `OpenXmlSchemaError` from both readers; `loadWorkbookStream` used to drop such a
+  row silently, and `loadWorkbook` used to accept a value past the last row.
+
+  A located cell can appear after unlocated cells in the same row. Both readers
+  assign all of them to the derived row before applying a row band. Unlocated
+  column numbering also stays independent of column filters. Row attributes
+  continue to accept the optional plus sign allowed by `xsd:unsignedInt`.
+
+- [#156](https://github.com/office-kit/xlsx/pull/156) [`1717840`](https://github.com/office-kit/xlsx/commit/1717840f246e5e49bfc69c8939c72b9a66634a21) Thanks [@kibertoad](https://github.com/kibertoad)! - Resolve `sharedStrings`, `styles` and the theme through the workbook
+  relationships in both loaders. `loadWorkbookStream` looked only at
+  `xl/sharedStrings.xml` and `xl/styles.xml`, so a workbook that keeps either
+  part elsewhere (legal, and what some producers emit) streamed back `null` for
+  every shared-string cell and resolved every style against an empty pool, with
+  no error to signal it. `loadWorkbook` did consult the rels, but only after the
+  conventional path, so an unrelated `xl/sharedStrings.xml` left in the package
+  shadowed the part the rels name.
+
+  A relationship that resolves to nothing is now a malformed package rather than
+  an absent part: both loaders throw an `OpenXmlSchemaError` when a
+  workbook-level relationship targets a part the package does not contain or
+  carries `TargetMode="External"`. Percent-encoded targets
+  (`Target="shared%20strings.xml"` for the entry `xl/shared strings.xml`) resolve
+  to the entry they name instead of reading as missing. Exact ZIP entry names
+  take precedence; decoding is a fallback for workbook-level optional parts,
+  so existing percent-encoded entry names continue to load.
+
+  `loadWorkbookStream` also rejects the malformed packages `loadWorkbook`
+  rejects, rather than quietly returning less than the file declares:
+
+  - a sheet whose `r:id` has no matching relationship, which used to be dropped
+    from `sheetNames`
+  - a duplicate sheet name, where the last part won and the first became
+    unreachable
+  - a workbook that declares sheets with no `xl/_rels/workbook.xml.rels`, which
+    used to open with an empty sheet list
+
+  It reads the workbook rels whatever the sheet count now, as `loadWorkbook`
+  does, so a package with no sheets and an unparseable rels part fails to open
+  instead of opening empty.
+
 ## 0.16.0
 
 ### Minor Changes
