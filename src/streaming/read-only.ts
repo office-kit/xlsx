@@ -14,6 +14,7 @@ import { OpenXmlSchemaError } from '../utils/exceptions.js';
 import type { DecompressionLimits } from '../zip/decompression-guard.js';
 import { type ZipArchive, openZip } from '../zip/reader.js';
 import type { CellValue, ExcelErrorCode } from '../cell/cell.js';
+import { unescapeCellString } from '../utils/escape.js';
 import { ERROR_CODES } from '../utils/inference.js';
 import { iterParse, type SaxEvent, type SaxInput } from '../xml/iterparse.js';
 import { parseXml } from '../xml/parser.js';
@@ -152,6 +153,7 @@ async function* iterSheetRows(
   let inIs = false;
   let inIsT = false;
   let isText = '';
+  let isRunText = '';
 
   for await (const ev of iterParse(sheetInput)) {
     const e = ev as SaxEvent;
@@ -199,7 +201,10 @@ async function* iterSheetRows(
           if (cellOpen) inIs = true;
           break;
         case 't':
-          if (inIs) inIsT = true;
+          if (inIs) {
+            inIsT = true;
+            isRunText = '';
+          }
           break;
         default:
           break;
@@ -208,7 +213,7 @@ async function* iterSheetRows(
     }
     if (e.kind === 'text') {
       if (inV) vText += e.text;
-      else if (inIsT) isText += e.text;
+      else if (inIsT) isRunText += e.text;
       continue;
     }
     // end
@@ -249,7 +254,12 @@ async function* iterSheetRows(
         inIs = false;
         break;
       case 't':
-        if (inIs) inIsT = false;
+        if (inIsT) {
+          // Decode each complete <t>, so SAX chunks can split an escape but
+          // adjacent rich-text runs cannot accidentally create one.
+          isText += unescapeCellString(isRunText);
+          inIsT = false;
+        }
         break;
       default:
         break;

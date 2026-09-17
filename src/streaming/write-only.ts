@@ -1,13 +1,6 @@
-// Streaming write-only workbook.
-//
-// `createWriteOnlyWorkbook` lets callers append rows one at a time without
-// holding a full Workbook in memory. Each `appendRow` serialises the row
-// directly into a string buffer (no `Cell` objects, no Worksheet rows Map) —
-// when `close()` runs we glue the rows under a `<sheetData>` envelope and hand
-// the bytes to the streaming-deflate ZIP writer. The buffer keeps ~30 bytes per
-// cell of XML text instead of the ~200-byte V8 footprint a Cell + Map entry
-// costs, so the heap budget at 3M cells drops roughly an order of magnitude vs.
-// the previous setCell-based path.
+// Rows are flushed through a bounded text buffer into the ZIP stream. The
+// workbook-wide string table has entry and payload limits; new strings beyond
+// those limits are written inline. Styles and sheet metadata remain resident.
 
 import type { Cell, CellValue } from '../cell/cell.js';
 import type { XlsxSink } from '../io/sink.js';
@@ -25,7 +18,7 @@ import { stylesheetToBytes } from '../styles/stylesheet-writer.js';
 import { escapeXmlAttr } from '../utils/escape.js';
 import { OpenXmlIoError } from '../utils/exceptions.js';
 import { utf8ByteLength } from '../utils/utf8.js';
-import { makeSharedStrings, sharedStringsToBytes } from '../workbook/shared-strings.js';
+import { makeSharedStrings } from '../workbook/shared-strings.js';
 import { validateSheetTitle } from '../workbook/workbook.js';
 import { serializeCell } from '../worksheet/writer.js';
 import {
@@ -44,6 +37,8 @@ import {
   XLSX_TYPE,
 } from '../xml/namespaces.js';
 import { type CompressionLevel, createZipWriter, type ZipWriterOptions } from '../zip/writer.js';
+
+import { createWriteOnlyStringTable } from './string-table.js';
 
 const escapeAttr = escapeXmlAttr;
 
@@ -114,7 +109,7 @@ const allocateXfId = (ss: Stylesheet, style: WriteOnlyStyle): number =>
 
 interface WorkbookState {
   styles: Stylesheet;
-  sst: ReturnType<typeof makeSharedStrings>;
+  strings: ReturnType<typeof createWriteOnlyStringTable>;
   /** Sheet emit metadata, in addWorksheet order. */
   sheets: Array<{
     title: string;
@@ -143,10 +138,10 @@ const FLUSH_THRESHOLD_BYTES = 64 * 1024;
  * closure state.
  *
  * The worksheet streams its `<sheetData>` body chunk-by-chunk through the ZIP
- * writer's `addStreamingEntry` API, so the heap footprint stays at one ~64 KB
- * pending text buffer plus deflate scratch — no Cell objects, no all-rows
- * accumulation. The XML envelope (decl / worksheet open / cols / sheetData
- * open) flushes on the first `appendRow` (or `close()` if the sheet is empty);
+ * writer's `addStreamingEntry` API. Row buffering stays at ~64 KB plus the
+ * current row and deflate scratch; strings have a separate workbook-wide cap.
+ * The XML envelope (decl / worksheet open / cols / sheetData open) flushes on
+ * the first `appendRow` (or `close()` if the sheet is empty);
  * column widths staged via `setColumnWidth` *must* land before the first row.
  */
 const makeWriteOnlyWorksheet = (state: WorkbookState, title: string, sheetId: number): WriteOnlyWorksheet => {
@@ -154,7 +149,9 @@ const makeWriteOnlyWorksheet = (state: WorkbookState, title: string, sheetId: nu
   let closed = false;
   let headerFlushed = false;
   const columnWidths = new Map<number, number>();
-  const dummyCtx = { sharedStrings: state.sst, styles: state.styles, rels: makeRelationships() };
+  // Strings use the bounded workbook-wide writer; other cells still need
+  // the regular serialization context (notably the shared style pool).
+  const dummyCtx = { sharedStrings: makeSharedStrings(), styles: state.styles };
   const encoder = new TextEncoder();
   const stream = state.writer.addStreamingEntry(`xl/worksheets/sheet${sheetId}.xml`);
   let pendingText = '';
@@ -214,7 +211,7 @@ const makeWriteOnlyWorksheet = (state: WorkbookState, title: string, sheetId: nu
       // returns its `<c .../>` string. Keeps the heap footprint at the size of
       // the pending text buffer instead of a full Worksheet model.
       const cell: Cell = { row: r, col, value, styleId };
-      xml += serializeCell(cell, dummyCtx);
+      xml += serializeCell(cell, dummyCtx, state.strings.serialize);
     }
     xml += '</row>';
     writeText(xml);
@@ -265,7 +262,7 @@ const makeWriteOnlyWorkbook = (sink: XlsxSink, zipOpts: ZipWriterOptions): Write
   // so the writer can serialise them in order.
   const state: WorkbookState = {
     styles,
-    sst: makeSharedStrings(),
+    strings: createWriteOnlyStringTable(),
     sheets: [],
     finalised: false,
     hasOpenWorksheet: false,
@@ -328,8 +325,8 @@ async function finalizeImpl(state: WorkbookState, writer: WorkbookState['writer'
   await writer.addEntry(ARC_STYLE, stylesheetToBytes(state.styles));
 
   // 3. SharedStrings (only when non-empty).
-  if (state.sst.entries.length > 0) {
-    await writer.addEntry(ARC_SHARED_STRINGS, sharedStringsToBytes(state.sst));
+  if (state.strings.size > 0) {
+    await state.strings.write(writer.addStreamingEntry(ARC_SHARED_STRINGS));
   }
 
   // 4. workbook.xml.
@@ -345,7 +342,7 @@ async function finalizeImpl(state: WorkbookState, writer: WorkbookState['writer'
       target: `worksheets/sheet${s.sheetId}.xml`,
     });
   });
-  if (state.sst.entries.length > 0) {
+  if (state.strings.size > 0) {
     wbRels.rels.push({
       id: `rId${wbRels.rels.length + 1}`,
       type: `${REL_NS}/sharedStrings`,
@@ -381,7 +378,7 @@ async function finalizeImpl(state: WorkbookState, writer: WorkbookState['writer'
     addOverride(manifest, `/xl/worksheets/sheet${s.sheetId}.xml`, WORKSHEET_TYPE);
   }
   addOverride(manifest, `/${ARC_STYLE}`, STYLES_TYPE);
-  if (state.sst.entries.length > 0) {
+  if (state.strings.size > 0) {
     addOverride(manifest, `/${ARC_SHARED_STRINGS}`, SHARED_STRINGS_TYPE);
   }
   await writer.addEntry(ARC_CONTENT_TYPES, manifestToBytes(manifest));
@@ -414,7 +411,6 @@ export async function createWriteOnlyWorkbook(
   // The streaming-deflate ZIP writer is constructed eagerly here: each
   // addWorksheet opens an entry on it and flushes row chunks through fflate's
   // `Zip` + `ZipDeflate` immediately, so peak memory stays at one pending row
-  // buffer plus deflate scratch (no all-sheets accumulation).
+  // buffer plus deflate scratch, with bounded workbook-wide string retention.
   return makeWriteOnlyWorkbook(sink, opts);
 }
-

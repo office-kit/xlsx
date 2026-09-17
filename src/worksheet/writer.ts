@@ -14,7 +14,7 @@ import { dateToExcel, durationToExcel } from '../utils/datetime.js';
 import { escapeCellString, escapeXmlAttr as escapeXmlAttrShared, escapeXmlText as escapeXmlTextShared } from '../utils/escape.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
 import { normalizeFormulaText } from '../utils/formula-text.js';
-import type { SharedStringsTable } from '../workbook/shared-strings.js';
+import type { SharedStringEntry, SharedStringsTable } from '../workbook/shared-strings.js';
 import { addSharedRichText, addSharedString } from '../workbook/shared-strings.js';
 import { MARKUP_COMPAT_NS, SHEET_MAIN_NS, X14_NS } from '../xml/namespaces.js';
 import { serializeXml } from '../xml/serializer.js';
@@ -330,16 +330,18 @@ const colLetters = (n: number): string => {
   return out;
 };
 
+/** Internal hook used by the write-only writer to bound string retention. */
+export type CellStringWriter = (value: SharedStringEntry) => { type: 's' | 'inlineStr'; xml: string };
+
 /**
  * Serialise a single cell into its `<c .../>` element. Exported so the
  * streaming write-only path can emit cells row-by-row without going through the
  * full Worksheet model — see src/streaming/write-only.ts.
  *
- * Only `ctx.sharedStrings` is consulted for plain-string cells; the other
- * context fields are used by the worksheet-level serializer that wraps this
- * helper.
+ * String cells use the optional writer or the model's shared-string table.
+ * Date cells also consult the shared style pool.
  */
-export const serializeCell = (cell: Cell, ctx: WorksheetWriteContext): string => {
+export const serializeCell = (cell: Cell, ctx: WorksheetWriteContext, stringWriter?: CellStringWriter): string => {
   const ref = getCoordinate(cell);
   const styleAttr = cell.styleId === 0 ? '' : ` s="${cell.styleId}"`;
   const value = cell.value;
@@ -365,6 +367,10 @@ export const serializeCell = (cell: Cell, ctx: WorksheetWriteContext): string =>
     // from there, and a formatted string repeated across cells costs one slot
     // instead of one copy per cell.
     const runs = (value as { kind: 'rich-text'; runs: import('../cell/rich-text.js').RichText }).runs;
+    if (stringWriter) {
+      const text = stringWriter({ kind: 'rich-text', runs });
+      return `<c r="${ref}"${styleAttr} t="${text.type}">${text.xml}</c>`;
+    }
     const id = addSharedRichText(ctx.sharedStrings, runs);
     return `<c r="${ref}"${styleAttr} t="s"><v>${id}</v></c>`;
   }
@@ -379,6 +385,10 @@ export const serializeCell = (cell: Cell, ctx: WorksheetWriteContext): string =>
     return `<c r="${ref}"${styleAttr} t="b"><v>${value ? '1' : '0'}</v></c>`;
   }
   if (typeof value === 'string') {
+    if (stringWriter) {
+      const text = stringWriter(value);
+      return `<c r="${ref}"${styleAttr} t="${text.type}">${text.xml}</c>`;
+    }
     const id = addSharedString(ctx.sharedStrings, value);
     return `<c r="${ref}"${styleAttr} t="s"><v>${id}</v></c>`;
   }

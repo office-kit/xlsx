@@ -36,7 +36,7 @@ paywall.
 |------------------------|----------------------------------------------------------------------------------|-----------------------------------------------------------------------|
 | TypeScript types       | hand-written `.d.ts` retrofitted (SheetJS) or community typings (xlsx-populate, excel4node) | first-party, written in TS under `exactOptionalPropertyTypes` + `noUncheckedIndexedAccess` |
 | Bundle size            | ExcelJS unpacks to 21.8 MB; xlsx ~7.5 MB                                         | full lib ≤120 KB min+brotli (currently ~85 KB); streaming entry ~49 KB |
-| Streaming              | SheetJS docs explicitly note the zip central-directory layout prevents true streaming; ExcelJS supports both directions but the lib is heavy | both read iter and write append, with fixed-memory budget for tens of millions of rows |
+| Streaming              | SheetJS docs explicitly note the zip central-directory layout prevents true streaming; ExcelJS supports both directions but the lib is heavy | both read iter and write append, with bounded row buffering and string retention |
 | Charts (write)         | none in ExcelJS, xlsx-js-style, SheetJS CE; gated behind SheetJS Pro             | 16 legacy `c:` + 8 modern `cx:` chart kinds (Sunburst, Treemap, Waterfall, Histogram, Pareto, Funnel, BoxWhisker, RegionMap) |
 | Pivots / VBA / OLE     | ExcelJS drops pivot tables on read ([#261][exceljs-pivot]); others vary           | byte-identical passthrough so Excel 365 still renders parts we don't model |
 | Maintenance            | ExcelJS stalled since 2023; excel4node archived 2022; xlsx-js-style frozen 2022; SheetJS npm artifact frozen 2022 (still distributed via private CDN) | active                                                                |
@@ -227,7 +227,7 @@ replacing a comment keeps its position. Hyperlink entries must supply `target`
 or `location`; the entire batch is validated before the sheet is changed.
 Both APIs preserve the public arrays and allow direct edits between calls.
 
-### Streaming write — millions of rows in a fixed memory budget
+### Streaming write — bounded row buffering and string retention
 
 ```ts
 import { createWriteOnlyWorkbook } from '@office-kit/xlsx/streaming';
@@ -237,7 +237,7 @@ const sink = toFile('big.xlsx');
 const wb = await createWriteOnlyWorkbook(sink);
 const ws = await wb.addWorksheet('Data');
 ws.setColumnWidth(1, 24); // must precede the first appendRow
-for (let r = 0; r < 10_000_000; r++) {
+for (let r = 0; r < 1_000_000; r++) {
   await ws.appendRow([r, `row-${r}`, r * Math.PI]);
 }
 await ws.close();
@@ -246,10 +246,20 @@ await wb.finalize();
 
 The streaming writer pushes each row through deflate as it arrives, and
 `toFile` forwards each deflated chunk to disk (honouring write-stream
-backpressure) — peak memory stays at one pending-row buffer plus deflate
-scratch, regardless of total archive size. The same is true of `toWritable`;
-buffered sinks (`toBuffer` / `toBlob` / `toArrayBuffer`) instead keep the
-full archive resident so `result()` can hand it back in one piece.
+backpressure). Row buffering stays at approximately 64 KiB plus the current
+row and deflate scratch. Plain and rich-text strings share a workbook-wide
+table capped at 100,000 entries and an 8 MiB accounting budget for retained
+keys and serialized XML (two bytes per UTF-16 code unit). This is a payload
+budget, not a total JavaScript heap limit. Once a new value cannot fit, all
+subsequent new values are written as inline strings; previously registered
+values still reuse their shared-string IDs, including on later sheets.
+
+Styles and sheet metadata remain resident, so keep their counts bounded when
+exporting large datasets. `toWritable` also streams output; buffered sinks
+(`toBuffer` / `toBlob` / `toArrayBuffer`) keep the full archive resident for
+`result()`. Excel allows at most 1,048,576 rows per sheet; split larger datasets
+across sheets. See [write-only string storage](docs/write-only-strings.md) for
+the storage policy and compatibility details.
 
 ### Streaming read — iterate row-by-row without materialising the sheet
 

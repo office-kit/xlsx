@@ -246,21 +246,22 @@ export function serializeSharedStrings(table: SharedStringsTable): string {
   const total = table.entries.length;
   const parts: string[] = [XML_HEADER, `<sst xmlns="${SHEET_MAIN_NS}" count="${total}" uniqueCount="${total}">`];
   for (const value of table.entries) {
-    parts.push(serializeSi(value));
+    parts.push(`<si>${serializeRichString(value)}</si>`);
   }
   parts.push('</sst>');
   return parts.join('');
 }
 
-const serializeSi = (value: SharedStringEntry): string => {
+/** The common body of a shared `<si>` or inline `<is>` string. */
+export const serializeRichString = (value: SharedStringEntry): string => {
   if (typeof value === 'string') {
     // Whitespace at either end needs xml:space="preserve" so Excel doesn't
     // collapse it. Mirrors openpyxl's emitter.
     const preserve = value.length > 0 && (value[0] === ' ' || value[value.length - 1] === ' ' || /[\t\n]/.test(value));
     const tAttr = preserve ? ' xml:space="preserve"' : '';
-    return `<si><t${tAttr}>${escapeXmlText(escapeCellString(value))}</t></si>`;
+    return `<t${tAttr}>${escapeXmlText(escapeCellString(value))}</t>`;
   }
-  return `<si>${serializeRichTextRuns(value.runs)}</si>`;
+  return serializeRichTextRuns(value.runs);
 };
 
 /** Serialise a sequence of `<r>…</r>` runs into an `<si>` / `<is>` body. */
