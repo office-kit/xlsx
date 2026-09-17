@@ -43,23 +43,23 @@
     empty cell is what Excel writes.
   - A value outside the lexical space (`<v>yes</v>`) makes `loadWorkbook` throw
     `OpenXmlSchemaError` naming the cell, instead of returning FALSE.
-    `loadWorkbookStream` reads it as an empty cell, staying lenient the way it is
-    for every other unreadable value.
+    `loadWorkbookStream` retains its existing leniency for invalid boolean values
+    and reads it as an empty cell.
 
 - [#154](https://github.com/office-kit/xlsx/pull/154) [`a49df8e`](https://github.com/office-kit/xlsx/commit/a49df8eb6d02b9465df436b4b32e537728b9497c) Thanks [@kibertoad](https://github.com/kibertoad)! - **Behaviour change:** formula text and cached formula results are written
   differently than in earlier versions.
 
-  Formula text (`<f>`, plus `<formula>` / `<formula1>` / `<formula2>` on
-  conditional formats and data validations) and a `t="str"` cached result used to
-  go through the cell-string escaper, which turns a literal `_x0041_` into
+  Cell formula text (`<f>`) and a `t="str"` cached result used to go through
+  the cell-string escaper, which turns a literal `_x0041_` into
   `_x005F_x0041_`. Nothing decodes those nodes on read, so `CONCAT("_x0041_")`
   was already wrong in the first saved file and grew another `_x005F_` on every
   load-and-save cycle after that. They now take plain XML escaping and survive
   any number of cycles unchanged.
 
-  Along the same paths:
+  These paths, plus `<formula>` / `<formula1>` / `<formula2>` on conditional
+  formats and data validations, also receive consistent XML escaping:
 
-  - A carriage return is written as `&[#13](https://github.com/office-kit/xlsx/issues/13);`, so it comes back as a CR instead of
+  - A carriage return is written as `&#13;`, so it comes back as a CR instead of
     being normalised to a line feed.
   - A codepoint XML 1.0 cannot represent (a C0 control character other than tab /
     LF / CR, an unpaired surrogate, or U+FFFE / U+FFFF) now throws `OpenXmlSchemaError` naming the
@@ -128,8 +128,9 @@
   column numbering also stays independent of column filters. Row attributes
   continue to accept the optional plus sign allowed by `xsd:unsignedInt`.
 
-- [#156](https://github.com/office-kit/xlsx/pull/156) [`1717840`](https://github.com/office-kit/xlsx/commit/1717840f246e5e49bfc69c8939c72b9a66634a21) Thanks [@kibertoad](https://github.com/kibertoad)! - Resolve `sharedStrings`, `styles` and the theme through the workbook
-  relationships in both loaders. `loadWorkbookStream` looked only at
+- [#156](https://github.com/office-kit/xlsx/pull/156) [`1717840`](https://github.com/office-kit/xlsx/commit/1717840f246e5e49bfc69c8939c72b9a66634a21) Thanks [@kibertoad](https://github.com/kibertoad)! - Resolve `sharedStrings` and `styles` through workbook relationships in both
+  loaders, and the theme through workbook relationships in `loadWorkbook`.
+  `loadWorkbookStream` looked only at
   `xl/sharedStrings.xml` and `xl/styles.xml`, so a workbook that keeps either
   part elsewhere (legal, and what some producers emit) streamed back `null` for
   every shared-string cell and resolved every style against an empty pool, with
@@ -138,9 +139,10 @@
   shadowed the part the rels name.
 
   A relationship that resolves to nothing is now a malformed package rather than
-  an absent part: both loaders throw an `OpenXmlSchemaError` when a
-  workbook-level relationship targets a part the package does not contain or
-  carries `TargetMode="External"`. Percent-encoded targets
+  an absent part: both loaders throw an `OpenXmlSchemaError` when a declared
+  shared-string or style relationship targets a missing part or carries
+  `TargetMode="External"`. `loadWorkbook` also applies this check to the theme.
+  Percent-encoded targets
   (`Target="shared%20strings.xml"` for the entry `xl/shared strings.xml`) resolve
   to the entry they name instead of reading as missing. Exact ZIP entry names
   take precedence; decoding is a fallback for workbook-level optional parts,
