@@ -33,8 +33,8 @@
   workbook. Every part inside it uses the ISO 29500 strict namespace family
   (`purl.oclc.org`) rather than the transitional one
   (`schemas.openxmlformats.org`), which the reader is built on, and the load
-  failed with `OpenXmlSchemaError: loadWorkbook: root rels missing officeDocument
-relationship`. `loadWorkbook` and `loadWorkbookStream` now throw
+  failed with `OpenXmlSchemaError: loadWorkbook: root rels missing officeDocument relationship`.
+  `loadWorkbook` and `loadWorkbookStream` now throw
   `OpenXmlNotImplementedError` naming the format and saying to re-save the file
   as "Excel Workbook (.xlsx)". Converter output that mixes the two families is
   caught per part, including the shape that used to load as a workbook with no
@@ -83,10 +83,8 @@ relationship`. `loadWorkbook` and `loadWorkbookStream` now throw
 
 ### Patch Changes
 
-- [#168](https://github.com/office-kit/xlsx/pull/168) [`15ed6c1`](https://github.com/office-kit/xlsx/commit/15ed6c1d19fc007e237b13db8c32f21108d883c6) Thanks [@kibertoad](https://github.com/kibertoad)! - `loadWorkbook` reads a large sheet about twice as fast and with under half the
-  transient heap. On a 50 000-row, six-column sheet (1 282 KiB archive) the load
-  goes from about 1 860 ms to about 850 ms, and peak RSS above the pre-load
-  baseline from about 840 MB to about 340 MB.
+- [#168](https://github.com/office-kit/xlsx/pull/168) [`15ed6c1`](https://github.com/office-kit/xlsx/commit/15ed6c1d19fc007e237b13db8c32f21108d883c6) Thanks [@kibertoad](https://github.com/kibertoad)! - `loadWorkbook` uses a namespace-aware SAX reader for worksheet cells,
+  reducing the allocation cost of loading large sheets.
 
   `<sheetData>` used to be read from a node tree, so every `<c>` and every `<v>`
   became an object that existed only long enough to produce one cell. It is now
