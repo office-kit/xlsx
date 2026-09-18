@@ -1,5 +1,114 @@
 # @office-kit/xlsx
 
+## 0.18.0
+
+### Minor Changes
+
+- [#167](https://github.com/office-kit/xlsx/pull/167) [`4d23dcf`](https://github.com/office-kit/xlsx/commit/4d23dcf9664a0ace0ff0e2f2ee0b36e0d93bc67d) Thanks [@kibertoad](https://github.com/kibertoad)! - feat: read a cell as the text Excel shows, and a date-formatted cell as a `Date`
+
+  `getCellDisplayText(wb, cell)` from `@office-kit/xlsx/styles` puts a cell's
+  value through the number format its style points at, so `0.5` under `0.0%`
+  reads `50.0%`, `1234567.891` under `#,##0.00` reads `1,234,567.89`, and
+  `1.1 + 2.2` under `General` reads `3.3` instead of `3.3000000000000003`. It
+  covers the built-in format catalogue plus the common custom codes: digit
+  placeholders, thousands grouping, percent, currency, scientific and
+  engineering notation, fractions, the positive / negative / zero / text sections
+  of a multi-section code, and date, time and elapsed-time codes. A code outside
+  that set falls back to `cellValueAsString` rather than printing a guess; the
+  docstring lists the boundary.
+
+  `getCellDate(wb, cell)` reads a date-formatted cell as a `Date`. Excel stores a
+  date as a plain day count, so the number format is the only evidence that
+  `45365` means 2024-03-14; this resolves the format, checks that it names a
+  calendar date rather than a time of day (`h:mm`) or an elapsed span
+  (`[h]:mm:ss`), and converts under the workbook epoch.
+
+  New guide at `docs/migrate-from-sheetjs.md`, and a recipe for reading a
+  workbook somebody else produced.
+
+- [#165](https://github.com/office-kit/xlsx/pull/165) [`e1130e5`](https://github.com/office-kit/xlsx/commit/e1130e5d9e633a56d5a6fc610f897cd5d23e9d0d) Thanks [@kibertoad](https://github.com/kibertoad)! - feat: a workbook saved as "Strict Open XML Spreadsheet" is now named as unsupported instead of failing with a missing-relationship error
+
+  Excel's Save As dialog offers that entry and it writes a file with the `.xlsx`
+  extension, so a strict package reaches the readers looking like any other
+  workbook. Every part inside it uses the ISO 29500 strict namespace family
+  (`purl.oclc.org`) rather than the transitional one
+  (`schemas.openxmlformats.org`), which the reader is built on, and the load
+  failed with `OpenXmlSchemaError: loadWorkbook: root rels missing officeDocument
+relationship`. `loadWorkbook` and `loadWorkbookStream` now throw
+  `OpenXmlNotImplementedError` naming the format and saying to re-save the file
+  as "Excel Workbook (.xlsx)". Converter output that mixes the two families is
+  caught per part, including the shape that used to load as a workbook with no
+  sheets and no error.
+
+  **Behavior change, flagged pre-1.0:** a strict package raises
+  `OpenXmlNotImplementedError` where it previously raised `OpenXmlSchemaError`,
+  and those two are siblings rather than one extending the other. Code that
+  branches on `instanceof OpenXmlSchemaError` to turn a bad upload into a
+  4xx stops catching strict files; catch `OpenXmlError`, or add an
+  `OpenXmlNotImplementedError` arm.
+
+  `loadWorkbook` also now requires `xl/workbook.xml` to declare the
+  SpreadsheetML namespace on its root element, not just the local name
+  `workbook`. A package that declared some other namespace previously loaded as
+  a workbook with no sheets; it now throws `OpenXmlSchemaError`.
+
+  Reading strict packages is still unimplemented. Writing is unchanged and stays
+  transitional.
+
+- [#162](https://github.com/office-kit/xlsx/pull/162) [`c7bb941`](https://github.com/office-kit/xlsx/commit/c7bb9416636dfc46b5a04380804f09bf6cb7a7ae) Thanks [@kibertoad](https://github.com/kibertoad)! - feat: `getValueExtent`, so a sheet formatted past its data can be iterated without rows of `null`
+
+  A cell that exists only to carry a style still counts towards the used range,
+  which is the right answer for Excel and the `<dimension>` element but means a
+  sheet with formatting on 200 rows and values in 4 iterates 200 rows, 196 of
+  them entirely `null`. `getValueExtent` returns the bounding box of the cells
+  holding a value (neither `null` nor `''`), and its shape is accepted directly
+  by `iterRows` / `iterValues`:
+
+  ```ts
+  const box = getValueExtent(ws);
+  if (box)
+    for (const row of iterValues(ws, box)) {
+      /* 4 rows */
+    }
+  ```
+
+  **Breaking:** `getDataExtent` is renamed to `getCellExtent`, since "data
+  extent" read like the new value extent while it counts every materialised
+  cell. Behaviour is unchanged; update the import and the call.
+
+  Also newly exported: `getSheetByIndex` from `@office-kit/xlsx/workbook`, which
+  bounds-checks the index and returns `undefined` for a chartsheet tab, and
+  `getCellExtentRef` from `@office-kit/xlsx/worksheet`, the plain `"A1:C5"` form
+  `makeAutoFilter` and `makeTableDefinition` take for their `ref`.
+
+### Patch Changes
+
+- [#168](https://github.com/office-kit/xlsx/pull/168) [`15ed6c1`](https://github.com/office-kit/xlsx/commit/15ed6c1d19fc007e237b13db8c32f21108d883c6) Thanks [@kibertoad](https://github.com/kibertoad)! - `loadWorkbook` reads a large sheet about twice as fast and with under half the
+  transient heap. On a 50 000-row, six-column sheet (1 282 KiB archive) the load
+  goes from about 1 860 ms to about 850 ms, and peak RSS above the pre-load
+  baseline from about 840 MB to about 340 MB.
+
+  `<sheetData>` used to be read from a node tree, so every `<c>` and every `<v>`
+  became an object that existed only long enough to produce one cell. It is now
+  walked with a synchronous SAX pass; the rest of the worksheet keeps the node
+  tree it had.
+
+  Malformed XML inside `<sheetData>` is refused as a result, which brings
+  `loadWorkbook` into line with `loadWorkbookStream`. An unclosed `<row>`, a stray
+  `</c>`, a `<sheetData>` that is never closed, an undefined entity reference such
+  as `&nbsp;`, and the literal `]]>` in cell text used to be accepted, loading
+  whatever cells the tolerant parse happened to recover. They now throw an
+  `OpenXmlSchemaError`, as they already did under `loadWorkbookStream`. The rest
+  of the part is still read leniently, so the same undefined entity reference
+  outside `<sheetData>` keeps loading as the literal text it did before.
+
+  An element inside a cell's `<v>` or `<f>` is refused too, naming the cell it sat
+  in. It used to be dropped, leaving the element's text as the cell's value, which
+  is the wrong-value outcome `loadWorkbook` prefers a failed load to.
+
+  Well-formed parts, including those written with a namespace prefix and those
+  carrying comments or CDATA sections inside `<sheetData>`, are unaffected.
+
 ## 0.17.0
 
 ### Minor Changes
