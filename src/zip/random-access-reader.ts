@@ -61,6 +61,8 @@ const SIG_CD = 0x02014b50;
 const SIG_LFH = 0x04034b50;
 const SIG_ZIP64_EOCD = 0x06064b50;
 const SIG_ZIP64_EOCD_LOCATOR = 0x07064b50;
+/** Size of a zip End-of-Central-Directory record with no trailing comment. */
+const EOCD_MIN_BYTES = 22;
 const ZIP32_MAX_U16 = 0xffff;
 const ZIP32_MAX_U32 = 0xffffffff;
 const ZIP64_LOCATOR_SIZE = 20;
@@ -101,8 +103,8 @@ const u64 = (b: Uint8Array, off: number): number => {
 
 /** Find the End-of-Central-Directory record by scanning backwards from EOF. */
 function findEocd(b: Uint8Array): number {
-  const minStart = Math.max(0, b.length - 22 - 0xffff);
-  for (let i = b.length - 22; i >= minStart; i--) {
+  const minStart = Math.max(0, b.length - EOCD_MIN_BYTES - 0xffff);
+  for (let i = b.length - EOCD_MIN_BYTES; i >= minStart; i--) {
     if (u32(b, i) === SIG_EOCD) return i;
   }
   throw new OpenXmlIoError('openZip: no End-of-Central-Directory signature found');
@@ -281,6 +283,65 @@ function readCompressedBytes(b: Uint8Array, entry: CdEntry): Uint8Array {
   return b.subarray(dataStart, dataStart + entry.compSize);
 }
 
+const PDF_MAGIC = [0x25, 0x50, 0x44, 0x46]; // "%PDF"
+const UTF8_BOM = [0xef, 0xbb, 0xbf];
+const UTF16_LE_BOM = [0xff, 0xfe];
+const UTF16_BE_BOM = [0xfe, 0xff];
+
+/**
+ * How far to read when deciding that bytes with no recognised magic number are
+ * text. Enough for a CSV header row, cheap enough to run on every failure.
+ */
+const TEXT_SNIFF_BYTES = 64;
+
+const startsWith = (b: Uint8Array, magic: ReadonlyArray<number>): boolean => {
+  if (b.length < magic.length) return false;
+  for (let i = 0; i < magic.length; i++) {
+    if (b[i] !== magic[i]) return false;
+  }
+  return true;
+};
+
+const looksLikeText = (b: Uint8Array): boolean => {
+  const end = Math.min(b.length, TEXT_SNIFF_BYTES);
+  if (end === 0) return false;
+  for (let i = 0; i < end; i++) {
+    const c = b[i] ?? 0;
+    const printable = c >= 0x20 && c < 0x7f;
+    const whitespace = c === 0x09 || c === 0x0a || c === 0x0d;
+    if (!printable && !whitespace) return false;
+  }
+  return true;
+};
+
+/**
+ * Name what the leading bytes are, for the error a caller sees when something
+ * that passed an extension check turns out not to be an xlsx. States only what
+ * a magic number actually says and returns `undefined` rather than guessing,
+ * so a wrong guess never displaces the real message.
+ *
+ * The OLE compound-document signature is absent on purpose: `openZip` rejects
+ * that container before any of this runs, with a message that names it.
+ */
+const describeLeadingBytes = (b: Uint8Array): string | undefined => {
+  if (b.length >= 4 && u32(b, 0) === SIG_LFH) {
+    return 'a zip with no readable central directory, the shape of a truncated or partially uploaded file';
+  }
+  if (startsWith(b, PDF_MAGIC)) return 'a PDF';
+  if (startsWith(b, UTF8_BOM)) return 'text with a UTF-8 byte-order mark, such as a CSV saved under an .xlsx name';
+  if (startsWith(b, UTF16_LE_BOM) || startsWith(b, UTF16_BE_BOM)) return 'text with a UTF-16 byte-order mark';
+  if (looksLikeText(b)) return 'plain text, such as a CSV saved under an .xlsx name';
+  return undefined;
+};
+
+const leadingBytesSuffix = (bytes: Uint8Array): string => {
+  const looksLike = describeLeadingBytes(bytes);
+  return looksLike === undefined ? '' : `; the leading bytes look like ${looksLike}`;
+};
+
+const notAZipError = (bytes: Uint8Array, cause: unknown): OpenXmlIoError =>
+  new OpenXmlIoError(`openZip: archive is not a valid zip${leadingBytesSuffix(bytes)}`, { cause });
+
 /**
  * Open a buffered xlsx archive in random-access mode. The archive bytes stay
  * resident; entries inflate on demand inside `read(path)`.
@@ -293,21 +354,28 @@ function readCompressedBytes(b: Uint8Array, entry: CdEntry): Uint8Array {
  * `decompressionLimits` opts the archive into the zip-bomb safeguards
  * documented on {@link DecompressionLimits}; pass `false` to disable. Defaults
  * fit any legitimate xlsx.
+ *
+ * Every failure here is an {@link OpenXmlIoError} and every one of them is
+ * permanent for these bytes: the same input fails the same way, so a caller
+ * validating an upload should reject it rather than retry.
  */
 export function openRandomAccessArchive(
   bytes: Uint8Array,
   decompressionLimits?: DecompressionLimitsInput,
 ): ZipArchive {
   // Quick sanity on min archive size.
-  if (bytes.length < 22) {
-    throw new OpenXmlIoError('openZip: archive is shorter than the minimum EOCD size (22 bytes)');
+  if (bytes.length < EOCD_MIN_BYTES) {
+    throw new OpenXmlIoError(
+      `openZip: archive is ${bytes.length} bytes, shorter than the ${EOCD_MIN_BYTES}-byte minimum` +
+        ` for a zip End-of-Central-Directory (EOCD) record${leadingBytesSuffix(bytes)}`,
+    );
   }
 
   let eocdOff: number;
   try {
     eocdOff = findEocd(bytes);
   } catch (cause) {
-    throw new OpenXmlIoError('openZip: archive is not a valid zip', { cause });
+    throw notAZipError(bytes, cause);
   }
 
   const resolvedLimits = resolveDecompressionLimits(decompressionLimits);
@@ -652,7 +720,7 @@ function openViaUnzipSync(
   try {
     entries = unzipSync(bytes);
   } catch (cause) {
-    throw new OpenXmlIoError('openZip: archive is not a valid zip', { cause });
+    throw notAZipError(bytes, cause);
   }
   // fflate's `unzipSync` returns already-inflated bytes — we can't abort the
   // inflate mid-flight here, but a post-hoc check still rejects a malicious

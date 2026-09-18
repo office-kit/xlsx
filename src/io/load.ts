@@ -302,9 +302,28 @@ export function parseSheetEntries(workbookRoot: XmlNode): SheetEntry[] {
 }
 
 /**
- * Load a workbook from any {@link XlsxSource}. Currently produces a scaffold
- * Workbook: each Worksheet is empty (no cells / styles / shared strings / theme
- * yet). The next phase-3 iterations layer those in atop the same skeleton.
+ * Load a workbook from any {@link XlsxSource}: cells, styles, shared strings,
+ * theme, plus the parts the model does not cover, kept as pass-through bytes
+ * so the writer can put them back.
+ *
+ * What a failure means, for a caller checking a file it did not produce:
+ *
+ * - {@link OpenXmlIoError}: the bytes are not a readable zip. A CSV, a PDF or
+ *   a truncated upload lands here, and the message names what the leading
+ *   bytes look like whenever a magic number identifies them.
+ * - {@link OpenXmlDecompressionBombError}: the archive inflates past the
+ *   {@link LoadOptions.decompressionLimits} caps. A subclass of the above, so
+ *   test for it first when the distinction matters.
+ * - {@link OpenXmlNotImplementedError}: a real Office format this library does
+ *   not read, such as an encrypted xlsx or a legacy `.xls`. The message says
+ *   what the user has to do to the file.
+ * - {@link OpenXmlSchemaError}: the archive opened, and the OOXML inside it is
+ *   unreadable or contradicts the spec.
+ *
+ * All four are permanent for the same bytes: reject the file rather than
+ * retry. The single transient case is documented on {@link OpenXmlIoError}.
+ * Branch on the class and never on the message text, which names parts and
+ * offsets and changes between releases.
  */
 export async function loadWorkbook(source: XlsxSource, opts: LoadOptions = {}): Promise<Workbook> {
   const archive = await openZip(

@@ -248,6 +248,60 @@ const response = await fetch('/sheet.xlsx');
 const wb = await loadWorkbook(fromResponse(response));
 ```
 
+### When a load fails
+
+Every failure is an `OpenXmlError` subclass from `@office-kit/xlsx/utils`, and
+the subclass is the contract. Anything that is not an `OpenXmlError` is a bug
+in this library, not a rejected file.
+
+| Class                            | What happened                                                              |
+| -------------------------------- | -------------------------------------------------------------------------- |
+| `OpenXmlIoError`                 | The bytes are not a readable zip, or the source failed to produce them     |
+| `OpenXmlDecompressionBombError`  | The archive inflates past the `decompressionLimits` caps (subclass of the above) |
+| `OpenXmlNotImplementedError`     | A real Office format this library does not read: encrypted xlsx, legacy `.xls` |
+| `OpenXmlSchemaError`             | The archive opened; the OOXML inside is unreadable or contradicts the spec  |
+
+For a service validating uploads, the question is usually "tell the user, or
+retry and investigate". With the same bytes, every one of these fails the same
+way, so the answer is to reject the file. The single exception is the source
+itself failing to hand over its bytes, which `fromFile` / `fromResponse` can do
+transiently: that arrives as `OpenXmlIoError` with message
+`openZip: failed to read source bytes` and the fs / fetch error as its `cause`.
+With `fromBuffer` the source cannot fail, so every error from that load is
+final.
+
+```ts
+import { loadWorkbook } from '@office-kit/xlsx/io';
+import { fromBuffer } from '@office-kit/xlsx/node';
+import { OpenXmlError } from '@office-kit/xlsx/utils';
+import type { Workbook } from '@office-kit/xlsx/workbook';
+
+type Loaded = { ok: true; workbook: Workbook } | { ok: false; reason: string };
+
+async function readUpload(upload: Uint8Array): Promise<Loaded> {
+  try {
+    return { ok: true, workbook: await loadWorkbook(fromBuffer(upload)) };
+  } catch (err) {
+    // The file was rejected. The message is meant to be shown, and a retry
+    // with the same bytes returns here again.
+    if (err instanceof OpenXmlError) return { ok: false, reason: err.message };
+    // Not a verdict on the file, so let a bug surface as a bug.
+    throw err;
+  }
+}
+```
+
+Files that are not xlsx at all reach `loadWorkbook` routinely, because uploads
+get validated by extension. Where a magic number identifies the input, the
+message says so rather than only "not a valid zip": a CSV or plain text, a
+UTF-8 or UTF-16 byte-order mark, a PDF, a zip with no readable central
+directory (a truncated or partially uploaded file), and an OLE
+compound-document container (encrypted xlsx or legacy `.xls`).
+
+Branch on the class, not on the message. Messages name parts, byte offsets and
+cell references so that a failure is diagnosable, and they change between
+releases.
+
 ### Add hyperlinks and comments in bulk
 
 Use `setHyperlinks` and `setComments` when many cells need links or notes. Each

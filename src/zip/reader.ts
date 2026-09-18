@@ -71,6 +71,11 @@ export interface OpenZipOptions {
  * uncompressed entry resident. The fflate `unzipSync` fallback is preserved
  * internally for ZIP64 / non-standard archives the random-access reader
  * rejects, and it does hold every entry inflated.
+ *
+ * Throws {@link OpenXmlIoError} when the bytes are not a readable zip, and
+ * when the source itself fails to produce them. The two are the only reason a
+ * caller has to look past the class: see the error-handling contract on
+ * {@link OpenXmlIoError}.
  */
 export async function openZip(source: XlsxSource, opts: OpenZipOptions = {}): Promise<ZipArchive> {
   let bytes: Uint8Array;
@@ -80,14 +85,16 @@ export async function openZip(source: XlsxSource, opts: OpenZipOptions = {}): Pr
     throw new OpenXmlIoError('openZip: failed to read source bytes', { cause });
   }
 
-  // Encrypted xlsx files (Excel 2007+ password protection) wrap the real
-  // package inside an OLE Compound File Binary container with the magic
-  // signature `D0 CF 11 E0 A1 B1 1A E1`. Detect that early and surface a clear
-  // "decrypt first" error rather than letting fflate fail with a generic
-  // invalid-zip message.
+  // `D0 CF 11 E0 A1 B1 1A E1` is an OLE Compound File Binary container, not a
+  // zip. Both an encrypted xlsx (Excel 2007+ password protection) and a legacy
+  // .xls workbook arrive in one, and telling them apart means parsing the CFB
+  // directory, so the message names both instead of asserting one. Detected
+  // here so neither fails later with a generic invalid-zip message.
   if (isCfbCompoundDocument(bytes)) {
     throw new OpenXmlNotImplementedError(
-      'Encrypted xlsx is not supported. Decrypt with msoffcrypto-tool first.',
+      'openZip: the input is an OLE compound-document container, not a zip. Encrypted xlsx is' +
+        ' not supported (decrypt with msoffcrypto-tool first); a legacy .xls workbook is not' +
+        ' either (re-save it as .xlsx, or read it with SheetJS).',
     );
   }
 
