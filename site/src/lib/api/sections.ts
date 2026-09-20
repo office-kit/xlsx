@@ -132,7 +132,7 @@ export const SECTIONS: SectionDef[] = [
   {
     id: 'charts',
     title: 'Charts',
-    description: 'Legacy `c:` chart kinds plus the `cx:` chartex family.',
+    description: 'Legacy c: chart kinds plus the cx: chartex family.',
     match: ({ sourceFile }) => startsWith('src/chart/')(sourceFile),
   },
   {

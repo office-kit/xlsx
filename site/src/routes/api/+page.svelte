@@ -3,124 +3,104 @@
   import type { PageProps } from './$types';
 
   const { data }: PageProps = $props();
+
+  const total = $derived(data.sections.reduce((sum, section) => sum + section.itemCount, 0));
 </script>
 
 <svelte:head>
-  <title>API reference — @office-kit/xlsx</title>
+  <title>API reference · @office-kit/xlsx</title>
 </svelte:head>
 
-<div class="content">
-  <p class="eyebrow">Reference</p>
-  <h1>API reference</h1>
-  <p class="lede">
-    Every public export of <code>@office-kit/xlsx</code>, <code>@office-kit/xlsx/streaming</code>, and
-    <code>@office-kit/xlsx/node</code>, organized by section. Generated from the source via typedoc
-    and rendered inline so types stay in lockstep with the package.
-  </p>
+<h1>API reference</h1>
+<p class="lede">
+  The {total} functions, classes, and constants that <code>@office-kit/xlsx</code> exports, in
+  {data.sections.length} sections. It is generated from the source with typedoc on every build, so
+  the signatures cannot drift from the package. Types are left to your editor.
+</p>
+<p class="lede">
+  For the conceptual map see the <a href="{base}/docs/api">API overview</a>. For code you can paste,
+  see the <a href="{base}/docs/cheatsheet">cheatsheet</a> and
+  <a href="{base}/docs/recipes">recipes</a>.
+</p>
 
-  <div class="grid">
-    {#each data.sections as section, i (section.id)}
-      <a href="{base}/api/{section.id}" class="card">
-        <span class="card-num">{String(i + 1).padStart(2, '0')}</span>
-        <div class="card-head">
-          <h3>{section.title}</h3>
-          <span class="count">{section.itemCount}</span>
-        </div>
-        <p>{section.description}</p>
+<ul class="sections">
+  {#each data.sections as section (section.id)}
+    <li>
+      <a href="{base}/api/{section.id}">
+        <span class="title">{section.title}</span>
+        <span class="count">{section.itemCount} export{section.itemCount === 1 ? '' : 's'}</span>
+        <span class="description">{section.description}</span>
       </a>
-    {/each}
-  </div>
-</div>
+    </li>
+  {/each}
+</ul>
 
 <style>
-  .content {
-    max-width: var(--max-wide);
-    padding: 2.25rem 1.5rem 5rem;
-  }
-
-  h1 {
-    margin: 0 0 0.6rem;
-  }
-
   .lede {
-    color: var(--fg-soft);
+    max-width: 68ch;
+    color: var(--ink-2);
     font-size: 1.05rem;
-    margin: 0 0 2.25rem;
-    max-width: 720px;
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
+  .sections {
+    list-style: none;
+    margin: 2.5rem 0 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+    columns: 2;
+    column-gap: 3rem;
   }
 
-  .card {
-    position: relative;
-    display: block;
-    padding: 1.15rem 1.25rem 1.25rem;
-    background: var(--bg-elev);
-    border-bottom: 1px solid var(--border);
-    color: var(--fg);
-    transition: background 140ms ease;
-  }
-
-  .card:hover {
-    text-decoration: none;
-    background: var(--bg-soft);
-  }
-
-  .card:hover h3 {
-    color: var(--accent);
-  }
-
-  .card-num {
-    display: block;
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    color: var(--accent);
-    margin-bottom: 0.5rem;
-  }
-
-  .card-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-bottom: 0.4rem;
-  }
-
-  .card h3 {
+  .sections li {
     margin: 0;
+    border-bottom: 1px solid var(--line);
+    break-inside: avoid;
+  }
+
+  .sections a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.2rem 1rem;
+    align-items: baseline;
+    padding: 1rem 0 1.1rem;
+    color: var(--ink);
+  }
+
+  .sections a:hover {
+    text-decoration: none;
+  }
+
+  .title {
     font-family: var(--display);
     font-size: 1.12rem;
-    font-weight: 540;
-    line-height: 1.2;
-    color: var(--fg);
-    transition: color 140ms ease;
-    font-variation-settings: 'opsz' 32, 'SOFT' 25;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
-  .card p {
-    margin: 0;
-    color: var(--fg-soft);
-    font-size: 0.92rem;
-    line-height: 1.5;
+  .sections a:hover .title {
+    color: var(--accent-ink);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
   }
 
   .count {
+    color: var(--ink-3);
     font-family: var(--mono);
-    font-size: 11px;
-    color: var(--fg-muted);
-    padding: 0.05em 0.4em;
-    background: var(--bg-paper);
-    border: 1px solid var(--border);
-    border-radius: 3px;
+    font-size: 0.78rem;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
+  }
+
+  .description {
+    grid-column: 1 / -1;
+    color: var(--ink-2);
+    font-size: 0.93rem;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 1000px) {
+    .sections {
+      columns: 1;
+    }
   }
 </style>

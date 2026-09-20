@@ -65,25 +65,19 @@
 
   :global(.code-copy-btn) {
     position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    font-family: var(--mono);
-    font-size: 10.5px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--fg-soft);
-    background: color-mix(in oklab, var(--bg-paper) 92%, transparent);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 0.28em 0.7em;
+    top: 0.55rem;
+    right: 0.55rem;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--night-line);
+    border-radius: var(--radius-sm);
+    background: var(--night-2);
+    color: var(--night-ink-2);
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    font-weight: 550;
     cursor: pointer;
     opacity: 0;
-    transition:
-      opacity 120ms ease,
-      color 120ms ease,
-      background 120ms ease,
-      border-color 120ms ease;
+    transition: opacity 120ms ease;
   }
 
   :global(.code-copy-wrap:hover .code-copy-btn),
@@ -93,15 +87,21 @@
     opacity: 1;
   }
 
+  /* No hover on touch screens, so the button has to be there from the start. */
+  @media (hover: none) {
+    :global(.code-copy-btn) {
+      opacity: 1;
+    }
+  }
+
   :global(.code-copy-btn:hover) {
-    color: var(--fg);
-    background: var(--bg-soft);
-    border-color: var(--border-strong);
+    color: #fff;
+    border-color: var(--night-ink-2);
   }
 
   :global(.code-copy-btn.copied) {
-    color: var(--accent);
-    border-color: var(--accent-soft);
-    background: var(--accent-soft);
+    color: #fff;
+    border-color: var(--accent);
+    background: var(--accent);
   }
 </style>

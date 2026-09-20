@@ -3,48 +3,36 @@
   import type { PageProps } from './$types';
 
   const { data }: PageProps = $props();
+
+  const REPO_BLOB = 'https://github.com/office-kit/xlsx/blob/main';
+  const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? '' : 's'}`;
 </script>
 
 <svelte:head>
-  <title>{data.section.title} — API — @office-kit/xlsx</title>
+  <title>{data.section.title} · API · @office-kit/xlsx</title>
 </svelte:head>
 
 <div class="content">
-  <header class="section-head">
-    <p class="eyebrow">API reference</p>
+  <header>
     <h1>{data.section.title}</h1>
     <p class="lede">{data.section.description}</p>
     <p class="meta">
-      {data.section.itemCount} export{data.section.itemCount === 1 ? '' : 's'} ·
-      {data.subgroups.length} source file{data.subgroups.length === 1 ? '' : 's'}
+      {plural(data.section.itemCount, 'export')} from {plural(data.subgroups.length, 'source file')}
     </p>
+    <!-- The full index only fits beside the content; narrower screens get the files. -->
+    <nav class="jump" aria-label="Source files on this page" data-pagefind-ignore>
+      {#each data.subgroups as group (group.id)}
+        <a href="#{group.id}">{group.label}</a>
+      {/each}
+    </nav>
   </header>
-
-  <nav class="toc" aria-label="On this page" data-pagefind-ignore>
-    <h4>On this page</h4>
-    {#each data.subgroups as group (group.id)}
-      <div class="toc-group">
-        <a class="toc-group-link" href="#{group.id}">{group.label}</a>
-        <ul>
-          {#each group.items as item (item.id)}
-            <li>
-              <a href="#{group.id}-{item.name}">
-                <span class="kind-dot kind-{item.kind}"></span>
-                <span class="t-name">{item.name}</span>
-              </a>
-            </li>
-          {/each}
-        </ul>
-      </div>
-    {/each}
-  </nav>
 
   <div class="items">
     {#each data.subgroups as group (group.id)}
       <section class="subgroup" id={group.id}>
         <header class="subgroup-head">
           <h2>{group.label}</h2>
-          <a class="subfile" href="https://github.com/office-kit/xlsx/blob/main/{group.sourceFile}" target="_blank" rel="noopener">
+          <a href="{REPO_BLOB}/{group.sourceFile}" target="_blank" rel="noopener">
             {group.sourceFile}
           </a>
         </header>
@@ -54,28 +42,102 @@
       </section>
     {/each}
   </div>
+
+  <nav class="toc" aria-label="On this page" data-pagefind-ignore>
+    <h2>On this page</h2>
+    {#each data.subgroups as group (group.id)}
+      <a class="toc-group" href="#{group.id}">{group.label}</a>
+      <ul>
+        {#each group.items as item (item.id)}
+          <li><a href="#{group.id}-{item.name}">{item.name}</a></li>
+        {/each}
+      </ul>
+    {/each}
+  </nav>
 </div>
 
 <style>
   .content {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 240px;
+    grid-template-columns: minmax(0, 1fr) 13rem;
     grid-template-areas:
       'head head'
       'items toc';
-    column-gap: 2rem;
-    max-width: 1280px;
-    padding: 2rem 1.5rem 5rem;
+    column-gap: 2.5rem;
   }
 
-  .section-head {
+  .content > header {
     grid-area: head;
-    margin-bottom: 1.5rem;
+  }
+
+  .lede {
+    max-width: 68ch;
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 1.05rem;
+  }
+
+  .meta {
+    margin: 0.6rem 0 0;
+    color: var(--ink-3);
+    font-size: 0.88rem;
+  }
+
+  .jump {
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 1.5rem 0 0;
+  }
+
+  .jump a {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink-2);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .jump a:hover {
+    color: var(--ink);
+    border-color: var(--ink-3);
+    text-decoration: none;
   }
 
   .items {
     grid-area: items;
     min-width: 0;
+  }
+
+  .subgroup {
+    margin-top: 3rem;
+  }
+
+  .subgroup-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--line-strong);
+  }
+
+  .subgroup-head h2 {
+    margin: 0;
+    font-size: 1.4rem;
+  }
+
+  .subgroup-head a {
+    color: var(--ink-3);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+  }
+
+  .subgroup-head a:hover {
+    color: var(--accent-ink);
   }
 
   .toc {
@@ -84,159 +146,65 @@
     top: calc(var(--header-h) + 1.5rem);
     align-self: start;
     max-height: calc(100vh - var(--header-h) - 3rem);
+    margin-top: 3rem;
     overflow-y: auto;
-    font-size: 13px;
-    padding-left: 1rem;
   }
 
-  h1 {
-    margin: 0 0 0.4rem;
-  }
-
-  .lede {
-    color: var(--fg-soft);
-    margin: 0;
-    max-width: 640px;
-  }
-
-  .meta {
-    color: var(--fg-muted);
+  .toc h2 {
+    margin: 0 0 0.5rem;
+    font-family: var(--sans);
     font-size: 0.85rem;
-    margin: 0.6rem 0 0;
-  }
-
-  .toc h4 {
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--fg-muted);
-    margin: 0 0 0.6rem;
-    border: none;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--ink-3);
   }
 
   .toc-group {
-    margin-bottom: 1rem;
-  }
-
-  .toc-group-link {
     display: block;
+    margin-top: 0.9rem;
+    color: var(--ink);
+    font-size: 0.88rem;
     font-weight: 600;
-    color: var(--fg);
-    padding: 0.2rem 0.4rem;
-    border-radius: 4px;
-    margin-bottom: 0.15rem;
-  }
-
-  .toc-group-link:hover {
-    background: var(--bg-soft);
-    text-decoration: none;
   }
 
   .toc ul {
     list-style: none;
-    padding: 0 0 0 0.7rem;
-    margin: 0;
+    margin: 0.25rem 0 0;
+    padding: 0;
+    border-left: 1px solid var(--line);
   }
 
   .toc li {
-    margin-bottom: 0.05rem;
+    margin: 0;
   }
 
-  .toc a {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.18rem 0.4rem;
-    border-radius: 4px;
-    color: var(--fg-soft);
-    line-height: 1.3;
-  }
-
-  .toc a:hover {
-    color: var(--fg);
-    background: var(--bg-soft);
-    text-decoration: none;
-  }
-
-  .t-name {
+  .toc li a {
+    display: block;
+    padding: 0.2rem 0 0.2rem 0.8rem;
+    color: var(--ink-2);
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 0.78rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .kind-dot {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex: none;
-  }
-  .kind-function {
-    background: #a5d6a7;
-  }
-  .kind-interface {
-    background: #90caf9;
-  }
-  .kind-type {
-    background: #ce93d8;
-  }
-  .kind-class {
-    background: #ffab91;
-  }
-  .kind-variable {
-    background: #ffd54f;
+  .toc a:hover {
+    color: var(--accent-ink);
+    text-decoration: none;
   }
 
-  .subgroup {
-    margin-bottom: 3rem;
-    scroll-margin-top: calc(var(--header-h) + 1rem);
-  }
-
-  .subgroup-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    border-bottom: 2px solid var(--accent);
-    padding-bottom: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .subgroup-head h2 {
-    margin: 0;
-    border: none;
-    padding: 0;
-    font-size: 1.65rem;
-  }
-
-  .subfile {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--fg-muted);
-  }
-
-  .subfile:hover {
-    color: var(--accent);
-  }
-
-  @media (max-width: 1000px) {
+  @media (max-width: 1100px) {
     .content {
-      grid-template-columns: 1fr;
-      grid-template-areas:
-        'head'
-        'toc'
-        'items';
+      display: block;
     }
+
     .toc {
-      position: static;
-      max-height: none;
-      padding-left: 0;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 0.8rem 0;
+      display: none;
+    }
+
+    .jump {
+      display: flex;
     }
   }
 </style>

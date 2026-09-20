@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { ApiKind } from '$lib/api/types';
   import type { RenderedItem } from '../../routes/api/[section]/+page.server';
 
   type Props = {
@@ -10,21 +11,30 @@
 
   const { item, anchorId }: Props = $props();
 
-  const kindLabel: Record<string, string> = {
+  const kindLabel: Record<ApiKind, string> = {
     function: 'function',
     class: 'class',
-    interface: 'interface',
-    type: 'type',
     variable: 'const',
   };
+
+  // Doc comments are hard-wrapped at the source's line length and mark code
+  // with backticks. Reflow each paragraph to the page's measure and set the
+  // code in <code>; a paragraph holding a list keeps its line breaks.
+  const LIST_LINE = /^\s*(?:[-*]|\d+\.)\s/m;
+  const blocks = $derived(
+    item.description.split(/\n{2,}/).map((text) => ({
+      verbatim: LIST_LINE.test(text),
+      // Odd positions are the backticked spans.
+      spans: text.split(/`([^`]+)`/),
+    })),
+  );
 </script>
 
 <section id={anchorId} class="item">
   <header>
     <h3>
-      <a href="#{anchorId}" class="hash" aria-label="Permalink">#</a>
-      <span class="name">{item.name}</span>
-      <span class="kind kind-{item.kind}">{kindLabel[item.kind]}</span>
+      <a href="#{anchorId}">{item.name}</a>
+      <span class="kind">{kindLabel[item.kind]}</span>
     </h3>
     <a href={item.sourceUrl} target="_blank" rel="noopener" class="source">
       {item.sourceFile}:{item.sourceLine}
@@ -32,20 +42,24 @@
   </header>
 
   {#if item.description}
-    <p class="description">{item.description}</p>
+    {#each blocks as block, i (i)}
+      <p class="description" class:verbatim={block.verbatim}>
+        {#each block.spans as span, j (j)}{#if j % 2 === 1}<code>{span}</code>{:else}{span}{/if}{/each}
+      </p>
+    {/each}
   {/if}
 
   <div class="signature">{@html item.signatureHtml}</div>
 
   {#if item.parameters?.length}
-    <div class="params">
-      <h4>Parameters</h4>
+    <h4>Parameters</h4>
+    <div class="table-scroll">
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
+            <th scope="col">Name</th>
+            <th scope="col">Type</th>
+            <th scope="col">Description</th>
           </tr>
         </thead>
         <tbody>
@@ -67,135 +81,100 @@
   {/if}
 
   {#if item.returnType && item.kind === 'function'}
-    <div class="returns">
-      <h4>Returns</h4>
-      <p><code>{item.returnType}</code>{item.returnDescription ? ` — ${item.returnDescription}` : ''}</p>
-    </div>
+    <h4>Returns</h4>
+    <p class="returns">
+      <code>{item.returnType}</code>{item.returnDescription ? ` — ${item.returnDescription}` : ''}
+    </p>
   {/if}
-
 </section>
 
 <style>
   .item {
-    border-top: 1px solid var(--border);
-    padding: 2rem 0 1rem;
-    scroll-margin-top: calc(var(--header-h) + 1rem);
+    padding: 1.75rem 0 1.5rem;
+    border-bottom: 1px solid var(--line);
   }
 
   header {
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
     justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
     margin-bottom: 0.6rem;
   }
 
   h3 {
-    margin: 0;
-    font-size: 1.3rem;
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.5rem;
-  }
-
-  .hash {
-    color: var(--fg-muted);
-    font-weight: 400;
-    text-decoration: none;
-    visibility: hidden;
-  }
-
-  h3:hover .hash {
-    visibility: visible;
-  }
-
-  .name {
+    gap: 0.25rem 0.6rem;
+    min-width: 0;
+    margin: 0;
     font-family: var(--mono);
+    font-size: 1.08rem;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  h3 a {
+    color: var(--ink);
+    overflow-wrap: anywhere;
   }
 
   .kind {
-    font-family: var(--mono);
-    font-size: 13px;
-    padding: 0.1em 0.55em;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    color: var(--fg-muted);
-    background: var(--bg-soft);
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    align-self: center;
-  }
-
-  .kind-function {
-    color: #a5d6a7;
-    border-color: rgba(165, 214, 167, 0.4);
-    background: rgba(165, 214, 167, 0.08);
-  }
-  .kind-interface {
-    color: #90caf9;
-    border-color: rgba(144, 202, 249, 0.4);
-    background: rgba(144, 202, 249, 0.08);
-  }
-  .kind-type {
-    color: #ce93d8;
-    border-color: rgba(206, 147, 216, 0.4);
-    background: rgba(206, 147, 216, 0.08);
-  }
-  .kind-class {
-    color: #ffab91;
-    border-color: rgba(255, 171, 145, 0.4);
-    background: rgba(255, 171, 145, 0.08);
-  }
-  .kind-variable {
-    color: #ffd54f;
-    border-color: rgba(255, 213, 79, 0.4);
-    background: rgba(255, 213, 79, 0.08);
+    color: var(--ink-3);
+    font-size: 0.78rem;
+    font-weight: 400;
   }
 
   .source {
+    color: var(--ink-3);
     font-family: var(--mono);
-    font-size: 13px;
-    color: var(--fg-muted);
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
   }
 
   .source:hover {
-    color: var(--accent);
+    color: var(--accent-ink);
   }
 
   .description {
+    max-width: 72ch;
     margin: 0 0 0.8rem;
-    color: var(--fg-soft);
-    line-height: 1.55;
+    color: var(--ink-2);
+  }
+
+  .description.verbatim {
     white-space: pre-wrap;
   }
 
   .signature :global(pre) {
-    margin: 0.5rem 0 0.8rem;
-    border-radius: var(--radius);
+    margin: 0.5rem 0 0;
   }
 
   h4 {
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--fg-muted);
-    margin: 1.2rem 0 0.4rem;
-    border: none;
+    margin: 1.4rem 0 0.25rem;
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-2);
   }
 
   table {
-    margin: 0.4rem 0;
-    font-size: 14px;
-  }
-
-  td code,
-  td .default {
-    font-size: 13px;
+    min-width: 28rem;
+    margin: 0;
+    font-size: 0.9rem;
   }
 
   .default {
-    color: var(--fg-muted);
     margin-left: 0.4em;
+    color: var(--ink-3);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+
+  .returns {
+    margin: 0.25rem 0 0;
+    font-size: 0.95rem;
   }
 </style>

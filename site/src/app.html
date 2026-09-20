@@ -1,17 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-product="xlsx">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/png" sizes="32x32" href="%sveltekit.assets%/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="@office-kit/xlsx — read and write Excel xlsx in Node and the browser." />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="@office-kit/xlsx — read, edit, and write Excel .xlsx files from TypeScript, in Node and the browser. Part of Office Kit."
+    />
+    <script>
+      // Runs before first paint so a stored dark preference never flashes light.
+      try {
+        const stored = localStorage.getItem('office-kit-theme');
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.dataset.theme = stored;
+        }
+      } catch {
+        // Storage is blocked (private mode); the OS preference still applies.
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=JetBrains+Mono:ital,wght@0,400..700;1,400..700&family=Mona+Sans:ital,wght,wdth@0,200..900,75..125;1,200..900,75..125&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&family=Funnel+Sans:ital,wght@0,300..800;1,300..800&family=Geist+Mono:wght@400..600&display=swap"
     />
     %sveltekit.head%
   </head>

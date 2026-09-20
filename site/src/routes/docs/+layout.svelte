@@ -2,6 +2,7 @@
   import { base } from '$app/paths';
   import { page } from '$app/state';
   import Sidebar from '$lib/components/Sidebar.svelte';
+  import SidebarShell from '$lib/components/SidebarShell.svelte';
   import { allDocLinks } from '$lib/docs-nav';
 
   type Props = {
@@ -11,93 +12,112 @@
   const { children }: Props = $props();
 
   const mdHref = $derived(`${page.url.pathname.replace(/\/$/, '')}.md`);
-  const currentRoute = $derived(page.url.pathname.replace(new RegExp(`^${base}`), '') || '/');
-  const knownDoc = $derived(allDocLinks.some((l) => l.href === currentRoute));
+  const currentRoute = $derived(
+    page.url.pathname.replace(new RegExp(`^${base}`), '').replace(/\/$/, '') || '/',
+  );
+  const index = $derived(allDocLinks.findIndex((l) => l.href === currentRoute));
+  const current = $derived(allDocLinks[index]);
+  const prev = $derived(index > 0 ? allDocLinks[index - 1] : undefined);
+  const next = $derived(index >= 0 ? allDocLinks[index + 1] : undefined);
 </script>
 
-<div class="layout">
-  <Sidebar />
-  <div class="main">
-    <article class="doc-content">
-      {@render children?.()}
-    </article>
-    {#if knownDoc}
-      <div class="md-link">
-        <span class="md-coord">md</span>
-        <a href={mdHref}>View raw Markdown</a>
-        <span class="muted">
-          (LLMs and tools can fetch this URL or
-          <a href="{base}/llms.txt">/llms.txt</a> for the full index)
-        </span>
-      </div>
-    {/if}
-  </div>
-</div>
+<SidebarShell label={current?.title ?? 'Documentation'}>
+  {#snippet nav()}
+    <Sidebar />
+  {/snippet}
+
+  <article class="doc-content">
+    {@render children?.()}
+  </article>
+
+  {#if current}
+    <nav class="pager" aria-label="Previous and next page" data-pagefind-ignore>
+      {#if prev}
+        <a href="{base}{prev.href}" class="prev">
+          <span>Previous</span>
+          {prev.title}
+        </a>
+      {/if}
+      {#if next}
+        <a href="{base}{next.href}" class="next">
+          <span>Next</span>
+          {next.title}
+        </a>
+      {/if}
+    </nav>
+    <p class="md-link" data-pagefind-ignore>
+      <a href={mdHref}>View this page as Markdown</a>. Models and tools can fetch that URL, or
+      <a href="{base}/llms.txt">/llms.txt</a> for the full index.
+    </p>
+  {/if}
+</SidebarShell>
 
 <style>
-  .layout {
-    display: flex;
-    align-items: stretch;
-    max-width: var(--max-wide);
-    margin: 0 auto;
+  .doc-content,
+  .pager,
+  .md-link {
+    max-width: var(--measure);
   }
 
-  .main {
-    flex: 1;
-    min-width: 0;
-    padding: 0 1rem;
-  }
-
-  .doc-content {
-    max-width: var(--max-content);
-    padding: 2.25rem 1.5rem 3rem;
+  /* Wide content scrolls in its own box so a long table or signature never
+   * pushes the page sideways on a phone. */
+  .doc-content :global(table) {
+    display: block;
+    overflow-x: auto;
   }
 
   .doc-content :global(h2) {
-    margin-top: 2.5rem;
+    margin-top: 3rem;
+  }
+
+  .pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 3.5rem;
+  }
+
+  .pager a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .pager a:hover {
+    border-color: var(--accent);
+    text-decoration: none;
+  }
+
+  .pager span {
+    color: var(--ink-3);
+    font-size: 0.82rem;
+    font-weight: 450;
+  }
+
+  .pager .next {
+    grid-column: 2;
+    text-align: right;
   }
 
   .md-link {
-    max-width: var(--max-content);
-    padding: 1.5rem 1.5rem 3rem;
-    border-top: 1px solid var(--border);
-    margin: 2rem 1.5rem 0;
-    font-family: var(--mono);
-    font-size: 0.85rem;
-    color: var(--fg-soft);
-    display: flex;
-    align-items: baseline;
-    gap: 0.6rem;
-    flex-wrap: wrap;
+    margin: 1.5rem 0 0;
+    color: var(--ink-3);
+    font-size: 0.88rem;
   }
 
-  .md-coord {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.1em 0.45em;
-    font-size: 10.5px;
-    font-weight: 500;
-    color: var(--accent);
-    background: var(--accent-soft);
-    border: 1px solid var(--accent-soft);
-    border-radius: 3px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
+  @media (max-width: 480px) {
+    .pager {
+      grid-template-columns: 1fr;
+    }
 
-  .md-link a {
-    font-weight: 600;
-    color: var(--accent);
-  }
-
-  .muted {
-    color: var(--fg-muted);
-  }
-
-  @media (max-width: 800px) {
-    .layout {
-      flex-direction: column;
+    .pager .next {
+      grid-column: 1;
+      text-align: left;
     }
   }
 </style>
