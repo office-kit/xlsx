@@ -1,5 +1,13 @@
 # @office-kit/xlsx
 
+## 0.20.0
+
+### Minor Changes
+
+- [#177](https://github.com/office-kit/xlsx/pull/177) [`265874f`](https://github.com/office-kit/xlsx/commit/265874ffadbef26ef368189c1709753bdbd38341) Thanks [@baseballyama](https://github.com/baseballyama)! - Read common ISO 29500 Strict XLSX files through `loadWorkbook` and `loadWorkbookStream`, including mixed-namespace packages, styles, shared strings, formulas, themes and supported charts. ISO date cells and cached dates become Excel serial numbers. Saving produces Transitional XLSX. Strict content that cannot be converted safely raises an explicit error; see the README for supported date ranges and conversion limits.
+
+  Fix buffered ZIP compression of sparse binary parts, such as printer settings, so saving and reloading preserves their bytes.
+
 ## 0.19.0
 
 ### Minor Changes
