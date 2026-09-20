@@ -65,7 +65,7 @@ importers:
     devDependencies:
       '@office-kit/site-kit':
         specifier: github:office-kit/office-kit.github.io#site-kit
-        version: https://codeload.github.com/office-kit/office-kit.github.io/tar.gz/37735122933c20f091fd5df535ee8a138e20a981(@sveltejs/kit@2.69.1(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.3(@types/node@22.19.18)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.4)(typescript@5.9.3)(vite@8.1.3(@types/node@22.19.18)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.4)
+        version: https://codeload.github.com/office-kit/office-kit.github.io/tar.gz/78ac57e707c578d14c352593e7d9a74a9667b33b(@sveltejs/kit@2.69.1(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.3(@types/node@22.19.18)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.4)(typescript@5.9.3)(vite@8.1.3(@types/node@22.19.18)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.4)
       '@sveltejs/adapter-static':
         specifier: ^3.0.10
         version: 3.0.10(@sveltejs/kit@2.69.1(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.3(@types/node@22.19.18)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.4)(typescript@5.9.3)(vite@8.1.3(@types/node@22.19.18)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0)))
@@ -457,8 +457,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@office-kit/site-kit@https://codeload.github.com/office-kit/office-kit.github.io/tar.gz/37735122933c20f091fd5df535ee8a138e20a981':
-    resolution: {gitHosted: true, integrity: sha512-E7cEsiuAvN5VpsoYtUdX98ErLf5IQBDeVjeC1uef7nxOAP6WLG4p+oOQmTqp/BgV6n5zBm+DU0qPJ5UksnXQfQ==, tarball: https://codeload.github.com/office-kit/office-kit.github.io/tar.gz/37735122933c20f091fd5df535ee8a138e20a981}
+  '@office-kit/site-kit@https://codeload.github.com/office-kit/office-kit.github.io/tar.gz/78ac57e707c578d14c352593e7d9a74a9667b33b':
+    resolution: {gitHosted: true, integrity: sha512-dkuPrVV94KbGFuPbWSaedpZvsESHsK9q7OpzbgMO2qexRivsS6XTtAW5bHa0Zcfl7XLiVwUXwVNMQfBBbOKrvQ==, tarball: https://codeload.github.com/office-kit/office-kit.github.io/tar.gz/78ac57e707c578d14c352593e7d9a74a9667b33b}
     version: 0.1.0
     peerDependencies:
       '@sveltejs/kit': ^2.0.0
@@ -2885,7 +2885,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
 
-  '@office-kit/site-kit@https://codeload.github.com/office-kit/office-kit.github.io/tar.gz/37735122933c20f091fd5df535ee8a138e20a981(@sveltejs/kit@2.69.1(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.3(@types/node@22.19.18)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.4)(typescript@5.9.3)(vite@8.1.3(@types/node@22.19.18)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.4)':
+  '@office-kit/site-kit@https://codeload.github.com/office-kit/office-kit.github.io/tar.gz/78ac57e707c578d14c352593e7d9a74a9667b33b(@sveltejs/kit@2.69.1(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.3(@types/node@22.19.18)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.4)(typescript@5.9.3)(vite@8.1.3(@types/node@22.19.18)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.4)':
     dependencies:
       '@sveltejs/kit': 2.69.1(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.3(@types/node@22.19.18)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.4)(typescript@5.9.3)(vite@8.1.3(@types/node@22.19.18)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0))
       svelte: 5.56.4
