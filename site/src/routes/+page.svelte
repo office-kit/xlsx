@@ -1,6 +1,7 @@
 <script lang="ts">
   import { base } from '$app/paths';
   import { FamilyGrid, InstallCommand, getProduct } from '@office-kit/site-kit';
+  import SheetGrid from '$lib/components/SheetGrid.svelte';
   import type { PageProps } from './$types';
 
   const { data }: PageProps = $props();
@@ -10,23 +11,6 @@
   const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
   const DOWNLOAD_NAME = 'office-kit-demo.xlsx';
   const BYTES_PER_KB = 1024;
-
-  // The formula bar describes the first formula cell, the way Excel's does for
-  // the selected cell.
-  const selected = $derived.by(() => {
-    for (const row of data.grid.rows) {
-      const index = row.cells.findIndex((cell) => cell.formula !== undefined);
-      if (index >= 0) {
-        return {
-          row: row.number,
-          col: index,
-          ref: `${data.grid.columns[index]?.letter}${row.number}`,
-          formula: row.cells[index]?.formula,
-        };
-      }
-    }
-    return undefined;
-  });
 
   let download = $state<{ state: 'idle' | 'working' | 'done' | 'failed'; note: string }>({
     state: 'idle',
@@ -171,61 +155,15 @@
         </div>
       </figure>
       <figure class="sheet-pane">
-        <div class="sheet">
-          {#if selected}
-            <div class="formula-bar">
-              <span class="name-box">{selected.ref}</span>
-              <span class="fx" aria-hidden="true">fx</span>
-              <span class="formula">{selected.formula}</span>
-            </div>
-          {/if}
-          <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-          <div class="sheet-scroll" tabindex="0" role="region" aria-label="The worksheet the code produced">
-            <table>
-              <colgroup>
-                <col class="gutter-col" />
-                {#each data.grid.columns as column (column.letter)}
-                  <col class="data-col" style:--col-w="{column.width}px" />
-                {/each}
-              </colgroup>
-              <thead>
-                <tr>
-                  <td></td>
-                  {#each data.grid.columns as column (column.letter)}
-                    <th scope="col">{column.letter}</th>
-                  {/each}
-                </tr>
-              </thead>
-              <tbody>
-                {#each data.grid.rows as row (row.number)}
-                  <tr>
-                    <th scope="row">{row.number}</th>
-                    {#each row.cells as cell, col (col)}
-                      <td
-                        class:numeric={cell.numeric}
-                        class:bold={cell.bold}
-                        class:rule-above={cell.ruleAbove}
-                        class:selected={selected?.row === row.number && selected.col === col}
-                        style:color={cell.color}
-                        style:background-color={cell.fill}
-                      >
-                        {cell.text}
-                      </td>
-                    {/each}
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
-          <div class="sheet-tabs"><span>{data.grid.sheetName}</span></div>
-        </div>
+        <SheetGrid sheets={data.sheets} />
       </figure>
     </div>
     <div class="stage-foot">
       <p>
         That sheet is real output. The code shown with it built the workbook, the library saved it and
         read the bytes back, and <code>getCellDisplayText</code> put each value through its number format.
-        Download it and open it in Excel: the totals are live formulas.
+        Download it and open it in Excel: the totals are live formulas. Or change the code and watch
+        the sheet follow in <a href="{base}/repl">the REPL</a>.
       </p>
       <div class="stage-action">
         <button
@@ -524,145 +462,10 @@
     font-size: 0.8rem;
   }
 
-  /* The sheet is a document, so like paper it stays light in both themes. */
-  .sheet {
-    --sheet-paper: #ffffff;
-    --sheet-chrome: #f3f4f6;
-    --sheet-rule: #e2e4e9;
-    --sheet-rule-strong: #c9cdd6;
-    --sheet-ink: #15171c;
-    --sheet-ink-2: #5b616e;
-    --sheet-select: #168a4f;
-    --sheet-row-h: 30px;
-    --sheet-gutter-w: 38px;
-    --sheet-scale: 1;
-
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+  .sheet-pane {
     border-radius: 4px;
-    background: var(--sheet-paper);
-    color: var(--sheet-ink);
     box-shadow: var(--shadow-pop);
     overflow: hidden;
-    font-size: 0.84rem;
-    line-height: 1.2;
-  }
-
-  .formula-bar {
-    flex: none;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.45rem 0.6rem;
-    border-bottom: 1px solid var(--sheet-rule-strong);
-    background: var(--sheet-chrome);
-    font-family: var(--mono);
-    font-size: 0.78rem;
-  }
-
-  .name-box,
-  .formula {
-    padding: 0.3rem 0.55rem;
-    border: 1px solid var(--sheet-rule-strong);
-    border-radius: 3px;
-    background: var(--sheet-paper);
-  }
-
-  .name-box {
-    min-width: 3.25rem;
-  }
-
-  .formula {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .fx {
-    color: var(--sheet-ink-2);
-    font-style: italic;
-  }
-
-  .sheet-scroll {
-    flex: 1;
-    overflow-x: auto;
-  }
-
-  .sheet table {
-    width: max-content;
-    min-width: 100%;
-    margin: 0;
-    table-layout: fixed;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: inherit;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .gutter-col {
-    width: var(--sheet-gutter-w);
-  }
-
-  .data-col {
-    width: calc(var(--col-w) * var(--sheet-scale));
-  }
-
-  .sheet th,
-  .sheet td {
-    height: var(--sheet-row-h);
-    padding: 0 0.45rem;
-    border: none;
-    border-right: 1px solid var(--sheet-rule);
-    border-bottom: 1px solid var(--sheet-rule);
-    vertical-align: middle;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  .sheet th,
-  .sheet thead td {
-    background: var(--sheet-chrome);
-    border-color: var(--sheet-rule-strong);
-    color: var(--sheet-ink-2);
-    font-size: 0.74rem;
-    font-weight: 500;
-    text-align: center;
-  }
-
-  .sheet td.numeric {
-    text-align: right;
-  }
-
-  .sheet td.bold {
-    font-weight: 700;
-  }
-
-  .sheet td.rule-above {
-    box-shadow: inset 0 1px 0 var(--sheet-ink);
-  }
-
-  .sheet td.selected {
-    outline: 2px solid var(--sheet-select);
-    outline-offset: -2px;
-  }
-
-  .sheet-tabs {
-    flex: none;
-    padding: 0 0.6rem;
-    border-top: 1px solid var(--sheet-rule-strong);
-    background: var(--sheet-chrome);
-    font-size: 0.78rem;
-  }
-
-  .sheet-tabs span {
-    display: inline-block;
-    margin-top: -1px;
-    padding: 0.4rem 0.9rem;
-    border: 1px solid var(--sheet-rule-strong);
-    border-top-color: var(--sheet-paper);
-    border-bottom: 2px solid var(--sheet-select);
-    background: var(--sheet-paper);
-    font-weight: 600;
   }
 
   .stage-foot {
@@ -679,6 +482,11 @@
     margin: 0;
     font-size: 1rem;
     line-height: 1.55;
+  }
+
+  .stage-foot a {
+    color: inherit;
+    text-decoration: underline;
   }
 
   .stage-foot code {
@@ -1174,18 +982,6 @@
   }
 
   @media (max-width: 520px) {
-    /* Scaled down so the four columns that hold data fit a phone without scrolling. */
-    .sheet {
-      --sheet-scale: 0.8;
-      --sheet-gutter-w: 30px;
-      font-size: 0.78rem;
-    }
-
-    .sheet th,
-    .sheet td {
-      padding: 0 0.35rem;
-    }
-
     .cta .btn {
       flex: 1 1 100%;
     }

@@ -6,30 +6,20 @@
   // svelte.config.js (`@office-kit/xlsx/io` → `../src/io/index.ts`, etc). The
   // playground exercises the real surface the same way the rest of the
   // docs site does.
-  import { isFormulaValue } from '@office-kit/xlsx/cell';
   import { fromArrayBuffer, loadWorkbook, workbookToBytes } from '@office-kit/xlsx/io';
-  import { getCellDisplayText, registerCellStyle } from '@office-kit/xlsx/styles';
-  import { columnLetterFromIndex } from '@office-kit/xlsx/utils';
+  import { registerCellStyle } from '@office-kit/xlsx/styles';
   import { addWorksheet, createWorkbook, iterWorksheets } from '@office-kit/xlsx/workbook';
-  import { appendRow, appendRows, getCell, getCellExtent, getCellExtentRef } from '@office-kit/xlsx/worksheet';
+  import { appendRow, appendRows } from '@office-kit/xlsx/worksheet';
   import type { Workbook } from '@office-kit/xlsx/workbook';
-  import type { Worksheet } from '@office-kit/xlsx/worksheet';
+  import SheetGrid from '$lib/components/SheetGrid.svelte';
+  import { readWorkbookGrids } from '$lib/sheet-grid';
 
   const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
   const SAMPLE_NAME = 'sample.xlsx';
 
   // A DOM table of a whole sheet would freeze the tab on a large workbook, so
   // the preview stops here and says so.
-  const MAX_PREVIEW_ROWS = 200;
-  const MAX_PREVIEW_COLS = 40;
-
-  type GridCell = { text: string; numeric: boolean };
-  type Preview = {
-    columns: string[];
-    rows: Array<{ number: number; cells: GridCell[] }>;
-    usedRange: string;
-    clipped: boolean;
-  };
+  const PREVIEW_LIMIT = { maxRows: 200, maxCols: 40 };
 
   let fileName = $state('');
   let status = $state('');
@@ -37,35 +27,9 @@
   let dropping = $state(false);
   let workbook = $state.raw<Workbook | undefined>();
   let loadedBytes = $state(0);
-  let activeSheet = $state(0);
 
-  const worksheets = $derived(workbook ? [...iterWorksheets(workbook)] : []);
-  const preview = $derived.by(() => {
-    const ws = worksheets[activeSheet];
-    return workbook && ws ? previewSheet(workbook, ws) : undefined;
-  });
-
-  function previewSheet(wb: Workbook, ws: Worksheet): Preview | undefined {
-    const extent = getCellExtent(ws);
-    if (!extent) return undefined;
-    const lastRow = Math.min(extent.maxRow, MAX_PREVIEW_ROWS);
-    const lastCol = Math.min(extent.maxCol, MAX_PREVIEW_COLS);
-    const columnIndices = Array.from({ length: lastCol }, (_, i) => i + 1);
-    return {
-      columns: columnIndices.map(columnLetterFromIndex),
-      rows: Array.from({ length: lastRow }, (_, i) => ({
-        number: i + 1,
-        cells: columnIndices.map((col): GridCell => {
-          const cell = getCell(ws, i + 1, col);
-          if (!cell) return { text: '', numeric: false };
-          const value = isFormulaValue(cell.value) ? cell.value.cachedValue : cell.value;
-          return { text: getCellDisplayText(wb, cell), numeric: typeof value === 'number' };
-        }),
-      })),
-      usedRange: getCellExtentRef(ws) ?? '',
-      clipped: extent.maxRow > lastRow || extent.maxCol > lastCol,
-    };
-  }
+  const sheets = $derived(workbook ? readWorkbookGrids(workbook, PREVIEW_LIMIT) : []);
+  const clipped = $derived(sheets.filter((sheet) => sheet.clipped));
 
   function buildSampleWorkbook(): Workbook {
     const wb = createWorkbook();
@@ -112,7 +76,6 @@
     workbook = wb;
     fileName = name;
     loadedBytes = byteLength;
-    activeSheet = 0;
   }
 
   async function loadSample(): Promise<void> {
@@ -229,8 +192,9 @@
   </div>
 
   <p class="caveat">
-    The preview is values only: no fills, fonts, merges, or charts, and formulas show the result
-    Excel cached, because the library never calculates. The re-saved file is the loaded workbook
+    The preview draws values, number formats, fonts, fills, borders, merges, and column widths. It
+    does not draw charts, images, or conditional formats, and formulas show the result Excel cached,
+    because the library never calculates. The re-saved file is the loaded workbook
     written back out by the library, with everything it does not model carried through. For files
     too large to load whole, see <a href="{base}/docs/streaming">streaming</a>.
   </p>
@@ -246,60 +210,25 @@
         </div>
         <div class="cell">
           <span class="label">Worksheets</span>
-          <span class="value">{worksheets.length}</span>
+          <span class="value">{sheets.length}</span>
         </div>
         <div class="cell">
-          <span class="label">Used range of this sheet</span>
-          <span class="value">{preview?.usedRange || 'Empty'}</span>
+          <span class="label">Used ranges</span>
+          <span class="value">
+            {sheets.map((sheet) => `${sheet.name} ${sheet.usedRange || 'empty'}`).join(', ')}
+          </span>
         </div>
       </div>
     </div>
 
-    <div class="tabs" role="tablist" aria-label="Worksheets">
-      {#each worksheets as ws, index (index)}
-        <button
-          type="button"
-          role="tab"
-          aria-selected={index === activeSheet}
-          onclick={() => (activeSheet = index)}
-        >
-          {ws.title}
-        </button>
-      {/each}
+    <div class="preview">
+      <SheetGrid {sheets} />
     </div>
-
-    {#if preview}
-      <!-- A scrollable region must be focusable, or keyboard users cannot scroll it. -->
-      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-      <div class="grid-scroll" tabindex="0" role="region" aria-label="Cells of the selected worksheet">
-        <table class="grid">
-          <thead>
-            <tr>
-              <td></td>
-              {#each preview.columns as letter (letter)}
-                <th scope="col">{letter}</th>
-              {/each}
-            </tr>
-          </thead>
-          <tbody>
-            {#each preview.rows as row (row.number)}
-              <tr>
-                <th scope="row">{row.number}</th>
-                {#each row.cells as cell, col (col)}
-                  <td class:numeric={cell.numeric}>{cell.text}</td>
-                {/each}
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
-      {#if preview.clipped}
-        <p class="caveat">
-          Showing the first {MAX_PREVIEW_ROWS} rows and {MAX_PREVIEW_COLS} columns of {preview.usedRange}.
-        </p>
-      {/if}
-    {:else}
-      <p class="empty">This sheet has no cells.</p>
+    {#if clipped.length > 0}
+      <p class="caveat">
+        Showing the first {PREVIEW_LIMIT.maxRows} rows and {PREVIEW_LIMIT.maxCols} columns of
+        {clipped.map((sheet) => sheet.name).join(', ')}.
+      </p>
     {/if}
   {/if}
 </section>
@@ -426,112 +355,11 @@
     overflow-wrap: anywhere;
   }
 
-  .tabs {
-    display: flex;
-    gap: 0.25rem;
+  .preview {
+    --sheet-max-height: 70vh;
     margin-top: 2rem;
-    overflow-x: auto;
-    border-bottom: 1px solid var(--line-strong);
-  }
-
-  .tabs button {
-    flex: none;
-    min-height: 40px;
-    margin-bottom: -1px;
-    padding: 0 0.9rem;
-    border: none;
-    border-bottom: 2px solid transparent;
-    background: none;
-    color: var(--ink-2);
-    font-family: var(--sans);
-    font-size: 0.93rem;
-    font-weight: 550;
-    cursor: pointer;
-  }
-
-  .tabs button:hover {
-    color: var(--ink);
-  }
-
-  .tabs button[aria-selected='true'] {
-    border-bottom-color: var(--accent);
-    color: var(--accent-ink);
-  }
-
-  .tabs button:focus-visible {
-    outline-offset: -2px;
-  }
-
-  .grid-scroll {
-    max-height: 70vh;
-    overflow: auto;
     border: 1px solid var(--line-strong);
-    border-top: none;
-  }
-
-  .grid {
-    width: max-content;
-    min-width: 100%;
-    margin: 0;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.86rem;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .grid th,
-  .grid td {
-    max-width: 22rem;
-    padding: 0.35rem 0.6rem;
-    border: none;
-    border-right: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    white-space: nowrap;
+    border-radius: var(--radius);
     overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .grid th,
-  .grid thead td {
-    background: var(--wash);
-    color: var(--ink-3);
-    font-size: 0.78rem;
-    font-weight: 500;
-    text-align: center;
-  }
-
-  /* Headers stay in view while the cells scroll under them, as in Excel. */
-  .grid thead th,
-  .grid thead td {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    border-bottom-color: var(--line-strong);
-  }
-
-  .grid tbody th {
-    position: sticky;
-    left: 0;
-    z-index: 1;
-    border-right-color: var(--line-strong);
-  }
-
-  .grid thead td {
-    left: 0;
-    z-index: 3;
-    border-right-color: var(--line-strong);
-  }
-
-  .grid td.numeric {
-    text-align: right;
-  }
-
-  .empty {
-    margin: 0;
-    padding: 2rem 1rem;
-    border: 1px solid var(--line-strong);
-    border-top: none;
-    color: var(--ink-3);
-    text-align: center;
   }
 </style>
