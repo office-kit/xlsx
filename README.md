@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="./assets/logo.png" alt="@office-kit/xlsx" width="180" height="180" />
-</p>
-
 # @office-kit/xlsx
 
 A TypeScript library for reading and writing Excel `.xlsx` workbooks
