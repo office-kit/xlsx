@@ -15,7 +15,7 @@ export const prerender = true;
 
 const HEADER = `# @office-kit/xlsx
 
-> Read and write Excel \`.xlsx\` workbooks from Node 22+ and modern browsers, with no Python or native runtime dependencies. Includes a streaming writer (10M rows in fixed memory) and a SAX-based row iterator for huge sheets.
+> Read and write Excel \`.xlsx\` workbooks from Node 22+ and modern browsers, with no Python or native runtime dependencies. Includes a streaming writer with bounded row buffering and a SAX-based row iterator for huge sheets.
 
 This file is written for AI assistants. It is self-contained: an agent can use
 every documented feature of @office-kit/xlsx from this page alone. The link index at
@@ -296,7 +296,7 @@ const ws = await wb.addWorksheet('Data');
 ws.setColumnWidth(1, 24);
 ws.setColumnWidth(2, 12);
 
-for (let r = 0; r < 10_000_000; r++) {
+for (let r = 0; r < 1_000_000; r++) {
   await ws.appendRow([r, \`row-\${r}\`, r * Math.PI]);
 }
 
@@ -315,8 +315,9 @@ Streaming-write constraints:
 - Charts, drawings, and Excel tables are not supported in the streaming
   writer. If you need them, build the workbook in memory.
 
-For a 10M-row × 3-column workbook on commodity hardware: ~30s, ~75 MB peak
-heap, ~110 MB on disk.
+Row buffering stays at about 64 KiB plus the current row and the deflate
+scratch. Excel allows at most 1,048,576 rows per sheet; split larger datasets
+across sheets.
 
 ## Styling cells
 

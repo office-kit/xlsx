@@ -44,10 +44,10 @@ export const examples = {
     source: browserFetch,
   },
   streamingWrite: {
-    title: 'Streaming write — 10M rows',
+    title: 'Streaming write',
     path: 'site/src/lib/examples/streaming-write.ts',
     description:
-      'createWriteOnlyWorkbook deflates rows as they arrive. Heap stays under 100 MB.',
+      'createWriteOnlyWorkbook deflates each row as it arrives, so the sheet is never held in memory.',
     source: streamingWrite,
   },
   streamingRead: {

@@ -334,9 +334,9 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
     recipes: [
       {
         slug: 'streaming-write',
-        title: 'Write 10M rows in a fixed memory budget',
+        title: 'Write a million rows without holding them in memory',
         teaser:
-          '`createWriteOnlyWorkbook` deflates each row as it arrives — heap stays under 100 MB even for 10M-row sheets.',
+          '`createWriteOnlyWorkbook` deflates each row as it arrives, so row buffering stays near 64 KiB however long the sheet gets. Excel caps a sheet at 1,048,576 rows; split anything longer across sheets.',
         path: 'site/src/lib/examples/streaming-write.ts',
         source: streamingWrite,
         notes: [

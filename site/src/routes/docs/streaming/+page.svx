@@ -15,7 +15,7 @@ Two orthogonal modes:
 
 Both live behind the `@office-kit/xlsx/streaming` entry, which is browser-safe (no `node:fs` imports). Use `@office-kit/xlsx/node` to bridge to a `fs.ReadStream` / `fs.WriteStream`.
 
-## Streaming write — 10M rows under 100 MB heap
+## Streaming write
 
 <CodeBlock html={ex.streamingWrite.html} title={ex.streamingWrite.path} />
 
@@ -27,7 +27,7 @@ A few constraints:
 - **No random-access edits.** Once a row is appended you can't go back and change a cell.
 - **`ws.close()` and `wb.finalize()` are required** — that's when the central directory is written. Without them you'll get a truncated zip.
 
-For a 10M-row × 3-col workbook on commodity hardware: ~30s, ~75 MB peak heap, ~110 MB on disk.
+Row buffering stays at about 64 KiB plus the current row and the deflate scratch, however many rows you append. Excel allows at most 1,048,576 rows per sheet, so split a larger dataset across sheets.
 
 ## Streaming read — iter rows without loading
 
