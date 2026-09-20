@@ -15,6 +15,7 @@
     { path: '/docs/recipes', label: 'Recipes' },
     { path: '/api', label: 'API' },
     { path: '/playground', label: 'Playground' },
+    { path: '/repl', label: 'REPL' },
   ];
 </script>
 

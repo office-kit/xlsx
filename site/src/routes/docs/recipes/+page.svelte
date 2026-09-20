@@ -59,8 +59,9 @@
 
 <p class="more">
   To drive a workbook end to end, walk through
-  <a href="{base}/docs/getting-started">Getting started</a>, then open
-  <a href="{base}/playground">the playground</a> to inspect a real file.
+  <a href="{base}/docs/getting-started">Getting started</a>. To experiment without installing
+  anything, open <a href="{base}/repl">the REPL</a>; to inspect a real file, open
+  <a href="{base}/playground">the playground</a>.
 </p>
 
 <style>
