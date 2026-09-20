@@ -11,7 +11,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "devDependencies": {
-    "@office-kit/site-kit": "github:office-kit/office-kit.github.io#main&path:/packages/site-kit",
+    "@office-kit/site-kit": "github:office-kit/office-kit.github.io#site-kit",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.69.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
