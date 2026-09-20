@@ -6,6 +6,7 @@
 // `iterParse`. The iterator streams rows without materialising the full sheet
 // in memory.
 
+import { normalizeStrictArchive } from '../io/strict.js';
 import { makeSharedStrings, parseSharedStringsXml, type SharedStringsTable } from '../workbook/shared-strings.js';
 import { ARC_CONTENT_TYPES, ARC_ROOT_RELS, localNameOf } from '../xml/namespaces.js';
 import { findById, findByType, makeRelationships, relsFromBytes } from '../packaging/relationships.js';
@@ -741,73 +742,79 @@ export async function loadWorkbookStream(
   // caller reaches later, and a band query that yields nothing never builds a
   // budget at all.
   const contentLimits = resolveContentLimits(opts.contentLimits);
-  const archive = await openZip(
+  const rawArchive = await openZip(
     source,
     opts.decompressionLimits === undefined ? {} : { decompressionLimits: opts.decompressionLimits },
   );
-  if (!archive.has(ARC_CONTENT_TYPES)) {
-    throw new OpenXmlSchemaError(`loadWorkbookStream: missing "${ARC_CONTENT_TYPES}"`);
-  }
-  // Manifest parse is intentionally cheap and discarded — we resolve sheets by
-  // walking workbook.xml.rels directly.
-  manifestFromBytes(archive.read(ARC_CONTENT_TYPES));
-
-  if (!archive.has(ARC_ROOT_RELS)) {
-    throw new OpenXmlSchemaError(`loadWorkbookStream: missing "${ARC_ROOT_RELS}"`);
-  }
-  const rootRels = relsFromBytes(archive.read(ARC_ROOT_RELS));
-  const officeDocRel = findByType(rootRels, OFFICE_DOC_REL_TYPE);
-  if (!officeDocRel) {
-    assertNotStrictRelTypes(rootRels.rels.map((r) => r.type));
-    throw new OpenXmlSchemaError(`loadWorkbookStream: no officeDocument relationship in root rels`);
-  }
-  const workbookPath = resolveRelTarget('', officeDocRel.target);
-  if (!archive.has(workbookPath)) {
-    throw new OpenXmlSchemaError(`loadWorkbookStream: workbook part "${workbookPath}" missing`);
-  }
-  const workbookRoot = parseXml(archive.read(workbookPath));
-  if (workbookRoot.name !== WORKBOOK_TAG) {
-    assertNotStrictRoot(workbookRoot.name);
-    throw new OpenXmlSchemaError(
-      `loadWorkbookStream: ${workbookPath} root is "${workbookRoot.name}", expected workbook`,
-    );
-  }
-  // loadWorkbook's `<sheets>` parser, and its rejections below: a declaration
-  // that loader refuses must not read here as a workbook without that sheet.
-  const declaredSheets = parseSheetEntries(workbookRoot);
-  const wbRelsPath = relsPathFor(workbookPath);
-  if (declaredSheets.length > 0 && !archive.has(wbRelsPath)) {
-    throw new OpenXmlSchemaError(
-      `loadWorkbookStream: workbook has sheets but rels part "${wbRelsPath}" is missing`,
-    );
-  }
-  const wbRels = archive.has(wbRelsPath) ? relsFromBytes(archive.read(wbRelsPath)) : makeRelationships();
-  const partPathByName = new Map<string, string>();
-  for (const declared of declaredSheets) {
-    if (partPathByName.has(declared.name)) {
-      throw new OpenXmlSchemaError(`loadWorkbookStream: duplicate sheet name "${declared.name}"`);
+  try {
+    const archive = normalizeStrictArchive(rawArchive);
+    if (!archive.has(ARC_CONTENT_TYPES)) {
+      throw new OpenXmlSchemaError(`loadWorkbookStream: missing "${ARC_CONTENT_TYPES}"`);
     }
-    const rel = findById(wbRels, declared.rId);
-    if (!rel) {
+    // Manifest parse is intentionally cheap and discarded — we resolve sheets by
+    // walking workbook.xml.rels directly.
+    manifestFromBytes(archive.read(ARC_CONTENT_TYPES));
+
+    if (!archive.has(ARC_ROOT_RELS)) {
+      throw new OpenXmlSchemaError(`loadWorkbookStream: missing "${ARC_ROOT_RELS}"`);
+    }
+    const rootRels = relsFromBytes(archive.read(ARC_ROOT_RELS));
+    const officeDocRel = findByType(rootRels, OFFICE_DOC_REL_TYPE);
+    if (!officeDocRel) {
+      assertNotStrictRelTypes(rootRels.rels.map((r) => r.type));
+      throw new OpenXmlSchemaError(`loadWorkbookStream: no officeDocument relationship in root rels`);
+    }
+    const workbookPath = resolveRelTarget('', officeDocRel.target);
+    if (!archive.has(workbookPath)) {
+      throw new OpenXmlSchemaError(`loadWorkbookStream: workbook part "${workbookPath}" missing`);
+    }
+    const workbookRoot = parseXml(archive.read(workbookPath));
+    if (workbookRoot.name !== WORKBOOK_TAG) {
+      assertNotStrictRoot(workbookRoot.name);
       throw new OpenXmlSchemaError(
-        `loadWorkbookStream: sheet "${declared.name}" rId "${declared.rId}" has no matching rels entry`,
+        `loadWorkbookStream: ${workbookPath} root is "${workbookRoot.name}", expected workbook`,
       );
     }
-    partPathByName.set(declared.name, resolveRelTarget(workbookPath, rel.target));
+    // loadWorkbook's `<sheets>` parser, and its rejections below: a declaration
+    // that loader refuses must not read here as a workbook without that sheet.
+    const declaredSheets = parseSheetEntries(workbookRoot);
+    const wbRelsPath = relsPathFor(workbookPath);
+    if (declaredSheets.length > 0 && !archive.has(wbRelsPath)) {
+      throw new OpenXmlSchemaError(
+        `loadWorkbookStream: workbook has sheets but rels part "${wbRelsPath}" is missing`,
+      );
+    }
+    const wbRels = archive.has(wbRelsPath) ? relsFromBytes(archive.read(wbRelsPath)) : makeRelationships();
+    const partPathByName = new Map<string, string>();
+    for (const declared of declaredSheets) {
+      if (partPathByName.has(declared.name)) {
+        throw new OpenXmlSchemaError(`loadWorkbookStream: duplicate sheet name "${declared.name}"`);
+      }
+      const rel = findById(wbRels, declared.rId);
+      if (!rel) {
+        throw new OpenXmlSchemaError(
+          `loadWorkbookStream: sheet "${declared.name}" rId "${declared.rId}" has no matching rels entry`,
+        );
+      }
+      partPathByName.set(declared.name, resolveRelTarget(workbookPath, rel.target));
+    }
+
+    const sstBytes = readOptionalWorkbookPart(archive, workbookPath, wbRels, SHARED_STRINGS_PART);
+    const sst: SharedStringsTable = sstBytes === undefined ? makeSharedStrings() : parseSharedStringsXml(sstBytes);
+    const stylesBytes = readOptionalWorkbookPart(archive, workbookPath, wbRels, STYLES_PART);
+    const styles: Stylesheet = stylesBytes === undefined ? makeStylesheet() : parseStylesheetXml(stylesBytes);
+
+    return makeStreamingReadOnlyWorkbook(
+      declaredSheets.map((e) => e.name),
+      styles,
+      parseDate1904(workbookRoot),
+      archive,
+      partPathByName,
+      sst.entries.map((e) => (typeof e === 'string' ? e : e.runs.map((r) => r.text).join(''))),
+      contentLimits,
+    );
+  } catch (cause) {
+    rawArchive.close();
+    throw cause;
   }
-
-  const sstBytes = readOptionalWorkbookPart(archive, workbookPath, wbRels, SHARED_STRINGS_PART);
-  const sst: SharedStringsTable = sstBytes === undefined ? makeSharedStrings() : parseSharedStringsXml(sstBytes);
-  const stylesBytes = readOptionalWorkbookPart(archive, workbookPath, wbRels, STYLES_PART);
-  const styles: Stylesheet = stylesBytes === undefined ? makeStylesheet() : parseStylesheetXml(stylesBytes);
-
-  return makeStreamingReadOnlyWorkbook(
-    declaredSheets.map((e) => e.name),
-    styles,
-    parseDate1904(workbookRoot),
-    archive,
-    partPathByName,
-    sst.entries.map((e) => (typeof e === 'string' ? e : e.runs.map((r) => r.text).join(''))),
-    contentLimits,
-  );
 }

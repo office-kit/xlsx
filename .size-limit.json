@@ -33,7 +33,7 @@
     "name": "@office-kit/xlsx/streaming (minified parse size, transitive)",
     "path": "dist/streaming.mjs",
     "import": "*",
-    "limit": "220 KB",
+    "limit": "225 KB",
     "brotli": false,
     "gzip": false
   },
@@ -41,7 +41,7 @@
     "name": "@office-kit/xlsx/io (minified parse size, transitive)",
     "path": "dist/io.mjs",
     "import": "*",
-    "limit": "420 KB",
+    "limit": "430 KB",
     "brotli": false,
     "gzip": false
   }

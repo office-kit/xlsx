@@ -10,6 +10,7 @@
 // fixture (3 empty sheets) and to give the rest of phase 3 a stable scaffolding
 // to layer onto.
 
+import { normalizeStrictArchive } from './strict.js';
 import { findUserShapesRId, parseChartXml } from '../chart/chart-xml.js';
 import { isChartExBytes, parseChartExXml } from '../chart/cx/chartex-xml.js';
 import { parseUserShapesXml } from '../chart/user-shapes-xml.js';
@@ -358,7 +359,7 @@ export async function loadWorkbook(source: XlsxSource, opts: LoadOptions = {}): 
     opts.decompressionLimits === undefined ? {} : { decompressionLimits: opts.decompressionLimits },
   );
   try {
-    return loadWorkbookFromArchive(archive, contentLimits);
+    return loadWorkbookFromArchive(normalizeStrictArchive(archive), contentLimits);
   } finally {
     archive.close();
   }

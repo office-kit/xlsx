@@ -46,17 +46,9 @@ export const PICTURE_NS = 'http://schemas.openxmlformats.org/drawingml/2006/pict
 
 // ---- ISO 29500 strict -------------------------------------------------------
 //
-// "Strict Open XML Spreadsheet" in Excel's Save As dialog writes the same
-// document model as the transitional form above, under a `purl.oclc.org`
-// namespace family instead of a `schemas.openxmlformats.org` one, and it keeps
-// the `.xlsx` extension. The reader is built on transitional QNames, so
-// `strict-package.ts` matches element roots and relationship types against this
-// prefix to name the format instead of reporting a lookup miss.
-//
-// Detection is per part: a converter can write the package relationships in one
-// family and the parts in the other, so a hit on one part says nothing about
-// the rest of the package. The OPC layer (`PKG_NS` above) is identical in both
-// variants, which is why this prefix covers the markup namespaces only.
+// Workbook loaders normalize supported Strict markup to Transitional QNames.
+// Low-level part readers use this prefix to reject unconverted Strict parts.
+// OPC container namespaces are shared by both variants.
 export const STRICT_NS_ROOT = 'http://purl.oclc.org/ooxml/';
 
 // ---- Microsoft extensions ---------------------------------------------------

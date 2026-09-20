@@ -1,15 +1,12 @@
-// ISO 29500 strict detection, shared by every reader that resolves elements or
-// relationships by transitional QName. A strict package arrives as a plain
-// `.xlsx` and differs only in its namespaces, so without this the mismatch
-// surfaces as a missing relationship, an unexpected root element, or a workbook
-// that loads with no sheets in it.
+// Low-level part readers require Transitional markup. Workbook loaders perform
+// supported Strict conversions before invoking these readers.
 
 import { OpenXmlNotImplementedError } from '../utils/exceptions.js';
 import { parseQName, STRICT_NS_ROOT } from './namespaces.js';
 
 const strictPackageError = (found: string): OpenXmlNotImplementedError =>
   new OpenXmlNotImplementedError(
-    'ISO 29500 strict ("Strict Open XML Spreadsheet" in Excel\'s Save As dialog) is not supported:' +
+    'ISO 29500 strict ("Strict Open XML Spreadsheet" in Excel\'s Save As dialog) requires workbook-level normalization:' +
       ` ${found}. Re-save the file from Excel as "Excel Workbook (.xlsx)" to get the transitional` +
       ' form.',
   );

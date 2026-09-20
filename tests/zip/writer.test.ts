@@ -1,3 +1,4 @@
+import { unzipSync } from 'fflate';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,6 +26,19 @@ describe('createZipWriter (basic)', () => {
     expect(zip.list()).toEqual(['a/b.txt', 'hello.txt']);
     expect(new TextDecoder().decode(zip.read('hello.txt'))).toBe('hello');
     expect(new TextDecoder().decode(zip.read('a/b.txt'))).toBe('nested');
+  });
+
+  it.each([0, 1, 6, 9] as const)('preserves sparse binary entries at compression level %i', async (compressionLevel) => {
+    const payload = new Uint8Array(72);
+    payload.set([116, 101], 4);
+    const sink = toBuffer();
+    const writer = createZipWriter(sink, { compressionLevel });
+    await writer.addEntry('printerSettings.bin', payload);
+    const bytes = await writer.finalize();
+    expect(unzipSync(bytes)['printerSettings.bin']).toEqual(payload);
+    const archive = await openZip(fromBuffer(bytes));
+    try { expect(archive.read('printerSettings.bin')).toEqual(payload); }
+    finally { archive.close(); }
   });
 
   it('honours compress: false (STORE) — bytes still round-trip', async () => {

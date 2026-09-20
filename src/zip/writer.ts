@@ -1,6 +1,6 @@
-// ZIP write layer. Streaming-deflate via fflate's `Zip` + per-entry
-// `ZipDeflate` / `ZipPassThrough` so the writer never holds the whole archive
-// in memory. Each addEntry pushes its bytes through the deflate stream and the
+// ZIP write layer. Per-entry compression via fflate keeps the whole archive
+// out of memory. Buffered entries use deflateSync; streaming entries use
+// ZipDeflate. Each addEntry compresses its supplied bytes and the
 // resulting ZIP chunks land on the sink one at a time — the buffered
 // `toBytes()` sink concatenates them on finish, while a streaming sink can
 // flush them as they arrive.
@@ -19,10 +19,24 @@
 // detect that. xlsx workbooks don't approach that limit in practice, but the
 // constraint is real — surface it in your own size estimates.
 
-import { Zip, ZipDeflate, ZipPassThrough } from 'fflate';
+import { deflateSync, Zip, ZipDeflate, ZipPassThrough, type DeflateOptions } from 'fflate';
 import type { XlsxSink } from '../io/sink.js';
 import { OpenXmlIoError } from '../utils/exceptions.js';
 import { applyZip64EntryCountPatch } from './zip64-patch.js';
+
+// fflate 0.8.3's streaming compressor can reference its zero-filled lookback
+// before the first input byte for some binary payloads. A complete entry uses
+// deflateSync, which has no synthetic lookback and preserves these bytes.
+class BufferedZipDeflate extends ZipPassThrough {
+  constructor(path: string, private readonly options: DeflateOptions | undefined) {
+    super(path);
+    this.compression = 8;
+  }
+
+  override process(chunk: Uint8Array, final: boolean): void {
+    this.ondata(null, deflateSync(chunk, this.options), final);
+  }
+}
 
 const ZIP32_MAX_ENTRIES = 0xffff;
 const LOCAL_TIMESTAMP_OFFSET = 10;
@@ -168,8 +182,9 @@ export function createZipWriter(sink: XlsxSink, opts: ZipWriterOptions = {}): Zi
   // fflate clones mtime and reads local getters, so even a Date subclass cannot
   // represent UTC times in a local DST gap. Give it a safe placeholder and patch
   // only its header chunks below; payload chunks must never be signature-scanned.
-  const newEntry = (path: string, compress: boolean): ZipDeflate | ZipPassThrough => {
-    const file = compress ? new ZipDeflate(path, deflateOpts) : new ZipPassThrough(path);
+  const newEntry = (path: string, compress: boolean, buffered = false): ZipPassThrough | ZipDeflate => {
+    const file = !compress ? new ZipPassThrough(path)
+      : buffered ? new BufferedZipDeflate(path, deflateOpts) : new ZipDeflate(path, deflateOpts);
     if (stamp !== undefined) {
       file.mtime = new Date(2000, 0, 1);
       pendingLocalHeader = true;
@@ -251,7 +266,7 @@ export function createZipWriter(sink: XlsxSink, opts: ZipWriterOptions = {}): Zi
       }
       guardAdd(path);
       seen.add(path);
-      const file = newEntry(path, entryOpts?.compress ?? true);
+      const file = newEntry(path, entryOpts?.compress ?? true, true);
       try {
         zip.add(file);
         file.push(bytes, /* final */ true);

@@ -76,10 +76,17 @@ Honest list:
   projects.
 - **`.xlsx` only**: no `.xls` (BIFF), `.xlsb`, `.ods`, or `.csv`. Use
   SheetJS for those.
-- **Transitional OOXML only**: a file saved through Excel's "Strict Open XML
-  Spreadsheet" entry is ISO 29500 **strict**, and reading it is not
-  implemented. `loadWorkbook` and `loadWorkbookStream` name the format and tell
-  you to re-save it as "Excel Workbook (.xlsx)" instead of mis-reading it.
+- **Strict input, Transitional output**: `loadWorkbook` and `loadWorkbookStream`
+  read common ISO 29500 Strict workbooks through the existing API. Saving always
+  writes Transitional XLSX. Unsupported Strict part types (including opaque
+  Strict pivot parts), direction-relative alignment and DrawingML universal
+  measures raise `OpenXmlNotImplementedError`; re-save those files in Excel.
+  ISO date cells become numeric Excel serials, including cached formula results.
+  Supported dates run from March 1, 1900 (January 1, 1904 for the 1904 system)
+  through 9999, at millisecond precision. Time-only and duration ISO cells are
+  not supported. Datetimes without a zone use UTC.
+  With `dateCompatibility=false`, `date1904` is ignored; numeric date cells before
+  March 1900 are refused because their calendar meaning changes on conversion.
 - **Node 22+ required**: relies on built-in `Web Streams`, `Blob`, and
   `fetch`. Node 18 / 20 (EOL) are not supported.
 - **Browser stress-test history is shorter** than ExcelJS's. If you ship
@@ -398,17 +405,16 @@ map, including the formats that stay out of scope.
   Treemap, Waterfall, Histogram, Pareto, Funnel, BoxWhisker, RegionMap),
   spPr / txPr / dLbls / trendline / errBars wiring, chartsheets, UserShapes
 - ✅ Pivot tables / VBA / OLE / threaded comments / external links / Power
-  Query metadata / customXml / customUI: byte-identical passthrough so
+  Query metadata / customXml / customUI in Transitional files: byte-identical passthrough so
   Excel 365 still renders parts we don't model. The `<workbook>` body
   extras and per-sheet rels chain are preserved end-to-end.
 - ✅ Encrypted xlsx detection (CFB Compound Document magic): clear error
   pointing at `msoffcrypto-tool` for decryption.
-- ✅ ISO 29500 strict detection: a file saved from Excel as "Strict Open XML
-  Spreadsheet" carries the `.xlsx` extension but a different namespace family,
-  so `loadWorkbook` and `loadWorkbookStream` throw an
-  `OpenXmlNotImplementedError` naming the format and saying to re-save it as
-  "Excel Workbook (.xlsx)". Converter output that mixes the two families is
-  caught per part. Reading strict packages is not implemented.
+- ✅ ISO 29500 Strict input: workbook/worksheet metadata, strings, styles,
+  formulas, ISO date cells, themes and supported drawings/charts are normalized
+  at the workbook loading boundary, including mixed-namespace packages.
+  Output is Transitional; general XML and ZIP readers preserve original content.
+  See the limitations above for Strict content that cannot be converted.
 - ✅ ZIP64 write — partial: workbooks with > 65 535 entries get a ZIP64 EOCD
   record + locator spliced into the final chunk. Read works too. **Limit:**
   individual entry sizes and the central-directory offset must still fit in

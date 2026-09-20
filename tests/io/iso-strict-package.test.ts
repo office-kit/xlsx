@@ -1,18 +1,16 @@
-// ISO 29500 strict packages. Excel's Save As dialog offers "Strict Open XML
-// Spreadsheet", it writes a file with the .xlsx extension, and every part
-// inside it carries a purl.oclc.org namespace instead of a
-// schemas.openxmlformats.org one. The readers are built on the transitional
-// namespaces, so they have to say that rather than report a missing
-// relationship, an unexpected root element, or nothing at all.
+// Synthetic namespace variants supplement the genuine Excel fixtures in strict-read.test.ts.
 
 import { describe, expect, it } from 'vitest';
 import { loadWorkbook } from '../../src/io/load.js';
 import { fromBuffer, toBuffer } from '../../src/io/node.js';
 import { workbookToBytes } from '../../src/io/save.js';
 import { loadWorkbookStream } from '../../src/streaming/read-only.js';
-import { OpenXmlNotImplementedError, OpenXmlSchemaError } from '../../src/utils/exceptions.js';
+import { OpenXmlSchemaError } from '../../src/utils/exceptions.js';
 import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
-import { setCell } from '../../src/worksheet/worksheet.js';
+import { makeBarChart, makeBarSeries, makeChartSpace } from '../../src/chart/chart.js';
+import { addChartAt } from '../../src/drawing/drawing.js';
+import { validateXlsx } from '../conformance/validate.js';
+import { getCell, setCell } from '../../src/worksheet/worksheet.js';
 import { openZip } from '../../src/zip/reader.js';
 import { createZipWriter } from '../../src/zip/writer.js';
 
@@ -22,6 +20,10 @@ import { createZipWriter } from '../../src/zip/writer.js';
  * is why this is a table rather than a prefix swap.
  */
 const STRICT_NAMESPACES: ReadonlyArray<readonly [string, string]> = [
+  ...['chart', 'spreadsheetDrawing', 'chartDrawing', 'picture'].map((part): readonly [string, string] => [
+    `http://schemas.openxmlformats.org/drawingml/2006/${part}`,
+    `http://purl.oclc.org/ooxml/drawingml/${part}`,
+  ]),
   [
     'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
     'http://purl.oclc.org/ooxml/officeDocument/relationships',
@@ -111,10 +113,21 @@ const strictPackage = memo(async (): Promise<Uint8Array> =>
   rezipWithNamespaces(await transitionalPackage(), STRICT_NAMESPACES),
 );
 
-const expectNamedAsStrict = async (load: Promise<unknown>): Promise<void> => {
-  await expect(load).rejects.toBeInstanceOf(OpenXmlNotImplementedError);
-  await expect(load).rejects.toThrow(/ISO 29500 strict/);
-  await expect(load).rejects.toThrow(/Excel Workbook \(\.xlsx\)/);
+const expectReadable = async (bytes: Uint8Array): Promise<void> => {
+  const wb = await loadWorkbook(fromBuffer(bytes));
+  expect(wb.sheets.map((s) => s.sheet.title)).toEqual(['Data']);
+  const first = wb.sheets[0];
+  if (first?.kind !== 'worksheet') throw new Error('expected worksheet');
+  expect(getCell(first.sheet, 1, 1)?.value).toBe('header');
+  expect(getCell(first.sheet, 2, 1)?.value).toBe(42);
+  const streamed = await loadWorkbookStream(fromBuffer(bytes));
+  try {
+    for (const options of [{}, { minRow: 2, maxRow: 2 }]) {
+      const rows = [];
+      for await (const row of streamed.openWorksheet('Data').iterRows(options)) rows.push(row);
+      expect(rows.length).toBe(options.minRow === 2 ? 1 : 2);
+    }
+  } finally { await streamed.close(); }
 };
 
 const partText = async (bytes: Uint8Array, path: string): Promise<string> => {
@@ -127,59 +140,20 @@ const partText = async (bytes: Uint8Array, path: string): Promise<string> => {
 };
 
 describe('loadWorkbook on an ISO 29500 strict package', () => {
-  it('names the format instead of reporting a missing relationship', async () => {
-    const load = loadWorkbook(fromBuffer(await strictPackage()));
-    await expectNamedAsStrict(load);
-    await expect(load).rejects.toThrow(/Strict Open XML Spreadsheet/);
-    await expect(load).rejects.not.toThrow(/missing officeDocument relationship/);
+  it('reads Strict package relationships and parts', async () => {
+    await expectReadable(await strictPackage());
   });
 
-  it('catches strict parts behind transitional package relationships', async () => {
-    // A converter can leave _rels/.rels transitional while writing strict
-    // parts. Without detection in the part readers this surfaces as
-    // `parseSharedStringsXml: root is "{…strict…}sst", expected sst`.
+  it('reads Strict parts behind Transitional package relationships', async () => {
     const partsOnly = STRICT_NAMESPACES.filter(([from]) => !from.endsWith('/relationships'));
-    const mixed = await rezipWithNamespaces(await transitionalPackage(), partsOnly);
-    await expectNamedAsStrict(loadWorkbook(fromBuffer(mixed)));
-    await expectNamedAsStrict(loadWorkbookStream(fromBuffer(mixed)));
+    await expectReadable(await rezipWithNamespaces(await transitionalPackage(), partsOnly));
   });
 
-  it('catches a strict workbook part, which otherwise reads as a sheetless workbook', async () => {
-    // The `<sheets>` lookups are transitional QNames, so a strict workbook.xml
-    // matches none of them: before the root-element check this package loaded
-    // as a workbook with no sheets and no error at all.
-    const mixed = await rezipWithNamespaces(
-      await transitionalPackage(),
-      STRICT_NAMESPACES,
-      (path) => path === WORKBOOK_PART,
-    );
-    await expectNamedAsStrict(loadWorkbook(fromBuffer(mixed)));
-    await expectNamedAsStrict(loadWorkbookStream(fromBuffer(mixed)));
-  });
-
-  it('catches a strict worksheet part', async () => {
-    const mixed = await rezipWithNamespaces(
-      await transitionalPackage(),
-      STRICT_NAMESPACES,
-      (path) => path === WORKSHEET_PART,
-    );
-    await expectNamedAsStrict(loadWorkbook(fromBuffer(mixed)));
-    for (const options of [{}, { minRow: 2, maxRow: 2 }]) {
-      const streamed = await loadWorkbookStream(fromBuffer(mixed));
-      try {
-        const worksheet = streamed.openWorksheet('Data');
-        await expectNamedAsStrict((async () => {
-          for await (const row of worksheet.iterRows(options)) void row;
-        })());
-      } finally {
-        await streamed.close();
-      }
-    }
-  });
-
-  it('names the format from the streaming reader too', async () => {
-    await expectNamedAsStrict(loadWorkbookStream(fromBuffer(await strictPackage())));
-  });
+  for (const part of [WORKBOOK_PART, WORKSHEET_PART]) {
+    it(`reads a Strict ${part} in a mixed package`, async () => {
+      await expectReadable(await rezipWithNamespaces(await transitionalPackage(), STRICT_NAMESPACES, (path) => path === part));
+    });
+  }
 
   it('keeps the OPC package namespaces, so detection cannot key off them', async () => {
     // Strict rewrites the markup namespaces and leaves ECMA-376 part 2 alone:
@@ -201,6 +175,7 @@ describe('loadWorkbook on a transitional package', () => {
     expect(wb.sheets.map((s) => s.sheet.title)).toEqual(['Data']);
     const streamed = await loadWorkbookStream(fromBuffer(bytes));
     expect(streamed.sheetNames).toEqual(['Data']);
+    await streamed.close();
   });
 
   it('rejects a workbook root in an unrelated namespace rather than reading it as sheetless', async () => {
@@ -218,4 +193,21 @@ describe('loadWorkbook on a transitional package', () => {
     await expect(loadWorkbook(fromBuffer(wrongNs))).rejects.toThrow(/expected workbook/);
     await expect(loadWorkbookStream(fromBuffer(wrongNs))).rejects.toThrow(/expected workbook/);
   });
+});
+
+it('round-trips synthetic Strict chart and drawing namespaces', async () => {
+  const wb = createWorkbook();
+  const ws = addWorksheet(wb, 'Data');
+  setCell(ws, 1, 1, 42);
+  addChartAt(ws, 'D3', { space: makeChartSpace({ title: 'Values', plotArea: {
+    chart: makeBarChart({ series: [makeBarSeries({ idx: 0, val: { ref: 'Data!$A$1', cache: [42] } })] }),
+  } }) });
+  const strict = await rezipWithNamespaces(await workbookToBytes(wb), STRICT_NAMESPACES);
+  const loaded = await loadWorkbook(fromBuffer(strict));
+  const ref = loaded.sheets[0];
+  if (ref?.kind !== 'worksheet') throw new Error('expected worksheet');
+  expect(ref.sheet.drawing?.items[0]?.content).toMatchObject({ kind: 'chart', chart: { space: { title: { text: 'Values' } } } });
+  const saved = await workbookToBytes(loaded);
+  expect((await validateXlsx(saved)).issues).toEqual([]);
+  expect(await partText(saved, 'xl/charts/chart1.xml')).not.toContain('http://purl.oclc.org/ooxml/');
 });
