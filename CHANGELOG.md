@@ -1,5 +1,26 @@
 # @office-kit/xlsx
 
+## 0.21.1
+
+### Patch Changes
+
+- [#182](https://github.com/office-kit/xlsx/pull/182) [`1717d9f`](https://github.com/office-kit/xlsx/commit/1717d9fd0f246c714b8d841d2cd8b8227994dd69) Thanks [@kibertoad](https://github.com/kibertoad)! - fix: `setCellAtAddress` / `getCellAtAddress` say which argument is wrong
+
+  Reaching for a `setCellAtAddress(wb, ws, 'A1', value)` signature that does not
+  exist used to fail with `parseSheetRange: missing "!" delimiter in
+"[object Object]"`, naming a helper the caller never called and a delimiter
+  that was not the problem. Passing the Worksheet the other way round, as
+  `getCellAtAddress(ws, 'Data!A1')`, escaped as a raw `TypeError: wb.sheets is
+not iterable` rather than an `OpenXmlError`. Both functions now check both
+  arguments and report which one is wrong, what they expected, what they
+  received, and, when the value is an object, point at `getCellByCoord` /
+  `setCellByCoord` for the case where the worksheet is already in hand.
+  `parseSheetRange` names the type it was handed rather than stringifying it.
+
+- [#164](https://github.com/office-kit/xlsx/pull/164) [`9ea6e25`](https://github.com/office-kit/xlsx/commit/9ea6e2589dc7bf1cdc5acb2f2daea7b17c44469a) Thanks [@kibertoad](https://github.com/kibertoad)! - Improve failed-load diagnostics with bounded hints for text/CSV, UTF-8 and UTF-16 byte-order marks, PDF and ZIP prefixes. Empty or short inputs report their length against the 22-byte ZIP trailer minimum. ZIP errors distinguish whether an end-of-central-directory signature was found without treating that signature as proof of a complete archive.
+
+  Document the load error hierarchy, source I/O retry considerations and resource limits. Limit errors do not establish workbook validity, and callers should branch on error classes rather than message text.
+
 ## 0.21.0
 
 ### Minor Changes
