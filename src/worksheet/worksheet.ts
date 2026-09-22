@@ -1046,7 +1046,12 @@ export function unmergeCells(ws: Worksheet, refOrRange: RangeRef): boolean {
   return true;
 }
 
-/** Read-only iterator over the worksheet's merged ranges. */
+/**
+ * Every merged range on the worksheet, as a read-only view of the live array, not a copy. `mergeCells` and
+ * `unmergeCells` are visible through it, and `removeAllMergedRanges` replaces
+ * the array outright, which leaves an earlier return value stale. Copy it
+ * (`[...getMergedCells(ws)]`) before mutating the sheet while you read.
+ */
 export function getMergedCells(ws: Worksheet): ReadonlyArray<CellRange> {
   return ws.mergedCells;
 }
@@ -2106,7 +2111,7 @@ export function getHyperlink(ws: Worksheet, ref: string): Hyperlink | undefined 
   return ws.hyperlinks.find((h) => h.ref === ref);
 }
 
-/** Read-only snapshot of every hyperlink on the sheet. */
+/** Every hyperlink on the sheet, as a read-only view of the live array, not a copy. See {@link getMergedCells}. */
 export function listHyperlinks(ws: Worksheet): ReadonlyArray<Hyperlink> {
   return ws.hyperlinks;
 }
@@ -2153,7 +2158,7 @@ export function removeDataValidations(ws: Worksheet, predicate: (dv: DataValidat
   return before - ws.dataValidations.length;
 }
 
-/** Read-only snapshot of every data validation block on the sheet. */
+/** Every data validation block on the sheet, as a read-only view of the live array, not a copy. See {@link getMergedCells}. */
 export function listDataValidations(ws: Worksheet): ReadonlyArray<DataValidation> {
   return ws.dataValidations;
 }
@@ -2202,7 +2207,7 @@ export function getTable(ws: Worksheet, displayName: string): TableDefinition | 
   return ws.tables.find((t) => t.displayName === displayName);
 }
 
-/** Read-only snapshot of every Excel table defined on the sheet. */
+/** Every Excel table defined on the sheet, as a read-only view of the live array, not a copy. See {@link getMergedCells}. */
 export function listTables(ws: Worksheet): ReadonlyArray<TableDefinition> {
   return ws.tables;
 }
@@ -2262,7 +2267,7 @@ export function removeComment(ws: Worksheet, ref: string): boolean {
   return true;
 }
 
-/** Read-only snapshot of every legacy comment on the sheet. */
+/** Every legacy comment on the sheet, as a read-only view of the live array, not a copy. See {@link getMergedCells}. */
 export function listComments(ws: Worksheet): ReadonlyArray<LegacyComment> {
   return ws.legacyComments;
 }

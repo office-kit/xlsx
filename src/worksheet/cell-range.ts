@@ -201,9 +201,10 @@ export function rangeContainsRange(outer: CellRange, inner: CellRange): boolean 
 }
 
 /**
- * Shift a range by (dr, dc) integer offsets. The returned range is clamped to
- * the OOXML grid; callers that want hard bounds should pass values that keep
- * the result inside the spec.
+ * Shift a range by (dr, dc) integer offsets. Throws when the result falls
+ * outside the OOXML grid (rows 1..1048576, cols 1..16384) rather than clamping
+ * to it, so a shift that would silently change which cells the range covers
+ * fails instead. {@link shiftRangeStr} is the same rule on A1 strings.
  */
 export function shiftRange(r: CellRange, dr: number, dc: number): CellRange {
   if (!Number.isInteger(dr) || !Number.isInteger(dc)) {

@@ -196,27 +196,31 @@ export function getCustomNumFmts(ss: Stylesheet): ReadonlyArray<{ id: number; co
   return out;
 }
 
-/** Read-only snapshot of every Font entry in the pool, indexed by id. */
+/**
+ * Every Font entry in the pool, indexed by id, as a read-only view of the live array, not a copy: a later
+ * `addFont` is visible through it. The same holds for the other pool
+ * accessors below.
+ */
 export function listFonts(ss: Stylesheet): ReadonlyArray<Font> {
   return ss.fonts;
 }
 
-/** Read-only snapshot of every Fill entry in the pool, indexed by id. */
+/** Every Fill entry in the pool, indexed by id. Live, as {@link listFonts}. */
 export function listFills(ss: Stylesheet): ReadonlyArray<Fill> {
   return ss.fills;
 }
 
-/** Read-only snapshot of every Border entry in the pool, indexed by id. */
+/** Every Border entry in the pool, indexed by id. Live, as {@link listFonts}. */
 export function listBorders(ss: Stylesheet): ReadonlyArray<Border> {
   return ss.borders;
 }
 
-/** Read-only snapshot of every CellXf entry in the cellXfs pool. */
+/** Every CellXf entry in the cellXfs pool. Live, as {@link listFonts}. */
 export function listCellXfs(ss: Stylesheet): ReadonlyArray<CellXf> {
   return ss.cellXfs;
 }
 
-/** Read-only snapshot of every CellStyleXf entry (named-style xfs). */
+/** Every CellStyleXf entry (named-style xfs). Live, as {@link listFonts}. */
 export function listCellStyleXfs(ss: Stylesheet): ReadonlyArray<CellXf> {
   return ss.cellStyleXfs;
 }

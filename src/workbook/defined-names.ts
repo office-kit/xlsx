@@ -179,9 +179,16 @@ export const removeDefinedName = (wb: Workbook, name: string, scope?: number): b
 };
 
 /**
- * Read-only snapshot of every defined name. Pass `{ scope }` to narrow to
- * workbook-scope (`scope: undefined`) or one specific sheet (`scope: 0`) — omit
- * the option entirely to list all.
+ * Every defined name. Pass `{ scope }` to narrow to workbook-scope
+ * (`scope: 'workbook'`) or one specific sheet (`scope: 0`); omit the option, or
+ * pass `'all'`, to list every name. `'workbook'` is the only spelling that
+ * narrows to the unscoped ones: the option is `number | 'workbook' | 'all'`, so
+ * there is no `undefined` to pass for them.
+ *
+ * A narrowed call filters, so it hands back a fresh array. Listing all hands
+ * back a read-only view of the live one, which `addDefinedName` and
+ * `renameDefinedName` are visible through and which `removeDefinedNames`
+ * replaces outright.
  */
 export const listDefinedNames = (
   wb: Workbook,
