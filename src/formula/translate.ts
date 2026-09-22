@@ -1,10 +1,10 @@
 // Shared / array formula translator. TS port of openpyxl
 // `formula/translate.py`. Walks the tokens produced by `tokenize`, shifts
 // the OPERAND-RANGE cell refs by `(row_delta, col_delta)`, and re-renders
-// the formula. Absolute (`$`-prefixed) anchors stay put; falling off the
-// top or left of the grid raises `TranslatorError`. **Never evaluates.**
+// the formula. Absolute (`$`-prefixed) anchors stay put; falling off any edge
+// of the grid raises `TranslatorError`. **Never evaluates.**
 
-import { columnIndexFromLetter, columnLetterFromIndex, coordinateToTuple } from '../utils/coordinate.js';
+import { columnIndexFromLetter, columnLetterFromIndex, coordinateToTuple, MAX_ROW } from '../utils/coordinate.js';
 import { OpenXmlError } from '../utils/exceptions.js';
 import { LITERAL, OPERAND, RANGE, renderTokens, type Token, tokenize } from './tokenizer.js';
 
@@ -21,12 +21,19 @@ export const CELL_REF_RE = /^(\$?[A-Za-z]{1,3})(\$?[1-9][0-9]{0,6})$/;
 
 /**
  * Shift a row-snippet (`"3"` or `"$3"`) by `rdelta` rows. Absolute
- * anchors return verbatim; falling below row 1 raises `TranslatorError`.
+ * anchors return verbatim; falling off either end of the grid raises
+ * `TranslatorError`.
+ *
+ * The bottom bound is where this leaves openpyxl, which checks only for row 0
+ * and below. {@link translateCol} has always raised at both ends, because
+ * `columnLetterFromIndex` has no letters past XFD to hand back, so without the
+ * check here a translation past row 1048576 was the one direction that quietly
+ * produced a reference no spreadsheet can resolve.
  */
 export function translateRow(rowStr: string, rdelta: number): string {
   if (rowStr.startsWith('$')) return rowStr;
   const newRow = Number.parseInt(rowStr, 10) + rdelta;
-  if (newRow <= 0) {
+  if (newRow <= 0 || newRow > MAX_ROW) {
     throw new TranslatorError('Formula out of range');
   }
   return String(newRow);

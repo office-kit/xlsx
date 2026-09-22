@@ -12,6 +12,7 @@ import {
   translateRow,
   translatorRender,
 } from '../../src/formula/translate.js';
+import { MAX_ROW } from '../../src/utils/coordinate.js';
 
 // --- regex tests (mirrors openpyxl test_translate.test_*_re) ---------------
 
@@ -89,6 +90,19 @@ describe('translateRow', () => {
   it('throws when shift would underflow', () => {
     expect(() => translateRow('12', -15)).toThrowError(TranslatorError);
   });
+
+  it('throws when shift would overflow past the last row', () => {
+    // translateCol has always raised at both ends, because there are no column
+    // letters past XFD to hand back. This direction used to produce A1048581,
+    // a reference no spreadsheet can resolve.
+    expect(() => translateRow('1048576', 1)).toThrowError(TranslatorError);
+    expect(() => translateRow('1', MAX_ROW)).toThrowError(TranslatorError);
+  });
+
+  it('still allows a shift that lands on the last row', () => {
+    expect(translateRow('1048575', 1)).toBe('1048576');
+    expect(translateRow('$1048576', 5)).toBe('$1048576');
+  });
 });
 
 describe('translateCol', () => {
@@ -107,6 +121,26 @@ describe('translateCol', () => {
 
   it('throws when shift would underflow', () => {
     expect(() => translateCol('AA', -100)).toThrowError(TranslatorError);
+  });
+
+  it('throws when shift would overflow past the last column', () => {
+    expect(() => translateCol('XFD', 1)).toThrowError(TranslatorError);
+  });
+});
+
+describe('translateFormula against the grid edges', () => {
+  it('refuses to shift a reference off the bottom', () => {
+    expect(() => translateFormula('=A1048576', 'A1', { rowDelta: 5 })).toThrowError(TranslatorError);
+  });
+
+  it('refuses to shift a row range off the bottom', () => {
+    expect(() => translateFormula('=SUM(1048570:1048576)', 'A1', { rowDelta: 10 })).toThrowError(
+      TranslatorError,
+    );
+  });
+
+  it('leaves an absolute row anchored, however far the destination is', () => {
+    expect(translateFormula('=A$1', 'A1', { rowDelta: MAX_ROW - 1 })).toBe('=A$1');
   });
 });
 
