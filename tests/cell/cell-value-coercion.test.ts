@@ -86,6 +86,20 @@ describe('cellValueAsNumber', () => {
     ).toBeUndefined();
   });
 
+  it('joins rich-text runs, then parses', () => {
+    // The docblock has always promised this; the branch was missing, so a
+    // number typed into a cell that carries per-run formatting read as
+    // undefined. `cellValueAsString` already joins the runs, so reading the
+    // same cell numerically has to see the same text.
+    expect(cellValueAsNumber({ kind: 'rich-text', runs: [{ text: '42' }] })).toBe(42);
+    expect(
+      cellValueAsNumber({ kind: 'rich-text', runs: [{ text: '1', font: { b: true } }, { text: '2.5' }] }),
+    ).toBe(12.5);
+    expect(cellValueAsNumber({ kind: 'rich-text', runs: [{ text: 'hello' }] })).toBeUndefined();
+    expect(cellValueAsNumber({ kind: 'rich-text', runs: [] })).toBeUndefined();
+    expect(cellValueAsNumber({ kind: 'rich-text', runs: [{ text: '' }] })).toBeUndefined();
+  });
+
   it('null / Date / errors / durations → undefined', () => {
     expect(cellValueAsNumber(null)).toBeUndefined();
     expect(cellValueAsNumber(new Date(0))).toBeUndefined();

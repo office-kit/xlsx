@@ -484,14 +484,20 @@ export function cellValueAsNumber(v: CellValue): number | undefined {
   if (v === null) return undefined;
   if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
   if (typeof v === 'boolean') return v ? 1 : 0;
-  if (typeof v === 'string') {
-    if (v === '') return undefined;
-    const n = Number(v);
-    return Number.isFinite(n) ? n : undefined;
-  }
+  if (typeof v === 'string') return parseNumericText(v);
+  // A number typed into a cell that carries per-run formatting is still a
+  // number to the reader, and `cellValueAsString` already joins the runs, so
+  // reading one numerically has to go through the same text.
+  if (isRichTextValue(v)) return parseNumericText(richTextToString(v.runs));
   if (isFormulaValue(v) && typeof v.cachedValue === 'number') return v.cachedValue;
   return undefined;
 }
+
+const parseNumericText = (text: string): number | undefined => {
+  if (text === '') return undefined;
+  const n = Number(text);
+  return Number.isFinite(n) ? n : undefined;
+};
 
 /**
  * Map a CellValue to the most natural JS primitive for display / export.
