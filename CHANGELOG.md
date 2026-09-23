@@ -1,5 +1,67 @@
 # @office-kit/xlsx
 
+## 0.22.0
+
+### Minor Changes
+
+- [#191](https://github.com/office-kit/xlsx/pull/191) [`8f61e51`](https://github.com/office-kit/xlsx/commit/8f61e51a0c0f15d1ee0d6d65c5d8fc41407781dc) Thanks [@kibertoad](https://github.com/kibertoad)! - Writing a cell past Excel's 32,767-unit ceiling now throws `OpenXmlSchemaError` naming the cell and both lengths, instead of producing a workbook Excel reports as needing repair. Applies to plain strings, rich text (counted across the cell's runs, not per run) and a cached formula string result, on both the modelled and the write-only path.
+
+  The ceiling counts UTF-16 code units, the unit `String.length` counts and Excel's own `LEN` reports: 16,384 emoji are 16,384 characters but 32,768 code units, and Excel refuses that cell.
+
+  Adds `MAX_CELL_TEXT_LENGTH` to `@office-kit/xlsx/utils` so a caller with text of unknown length can shorten it before the write rather than handle a thrown error. A slice has to keep a surrogate pair together, since a lone surrogate is rejected further down as unrepresentable in XML.
+
+  Reading is unchanged, so a file from a producer that does not check still loads; saving it back out fails until the cell named in the error is shortened.
+
+- [#185](https://github.com/office-kit/xlsx/pull/185) [`e45e46a`](https://github.com/office-kit/xlsx/commit/e45e46ae06f96f3ed30edbd9965ff1ef8256124b) Thanks [@kibertoad](https://github.com/kibertoad)! - fix: `copyRange` corrupted an overlapping same-sheet copy, and both range movers left stale cells behind.
+
+  `copyRange`'s write loop read `ws.rows` as it went, so a copy shifted by less than its own height or width re-read cells it had already written: `copyRange(ws, 'A1:A3', 'A2:A4')` over `[1, 2, 3]` produced `[1, 1, 1, 1]` instead of `[1, 1, 2, 3]`. Source cells are now read in full before the first write.
+
+  Behaviour changes that go with it:
+
+  - `copyRange` / `moveRange` replace the landing rectangle whole, the way pasting over a selection in Excel does. A coordinate whose source cell is empty now lands empty instead of keeping whatever the destination held. Previously `copyRange(ws, 'A1:A3', 'C1:C3')` with an empty `A2` left `C2` untouched, so a copied block could arrive with a foreign value wedged into its gap.
+  - A destination cell no longer keeps its own `hyperlinkId` / `commentId` when a copy or move lands on it. Copying an unlinked cell over a linked one used to leave the new value wearing the old link. Cross-sheet copies still drop the source's ids, since those index the source sheet's own `hyperlinks` / `legacyComments` arrays.
+  - The return value counts populated source cells only. For a sparse source overlapping its target it can now be lower than before: the old count included destination cells the loop had created itself and then re-read.
+
+  `opts.targetWs` has to be a sheet in the same workbook. `styleId` indexes that workbook's `cellXfs` and is copied verbatim, so cells copied into a second workbook arrive wearing whichever style occupies the same slot there. This was always true; it is now stated on both functions.
+
+- [#189](https://github.com/office-kit/xlsx/pull/189) [`d8df7a8`](https://github.com/office-kit/xlsx/commit/d8df7a876a9d73b02c27bc885b392856bed32acc) Thanks [@kibertoad](https://github.com/kibertoad)! - Formula text that still begins with `=` after the leading one is removed is now rejected instead of reaching the file. `normalizeFormulaText` strips exactly one `=`, so a hand-built `{ kind: 'formula', formula: '==A1' }` was written as `<f>=A1</f>`, which Excel reports as damaged, and `makeFormula('==A1')` stored `=A1` on the value and then wrote `<f>A1</f>`, a different formula from the one the caller passed.
+
+  `makeFormula`, `setFormula`, `bindValue`, the array / shared / data-table constructors, `makeDefinedName`, `makeCfRule` and `makeDataValidation` now throw `OpenXmlSchemaError` for such text, as do the `<f>`, `<formula>`, `<formula1>`, `<formula2>` and `<definedName>` serialisers for a value built as a literal. The message names the call or the cell it came from. `'==A1'` is invalid in Excel's formula bar too, so there is no reading to recover: stripping the second `=` would silently store `A1`.
+
+  Reading is unaffected. A file whose formula text carries the doubled prefix still loads, with the prefix removed, as before.
+
+- [#193](https://github.com/office-kit/xlsx/pull/193) [`de7376e`](https://github.com/office-kit/xlsx/commit/de7376ee421a3d54fa8b68053d0bb413d9a6c784) Thanks [@kibertoad](https://github.com/kibertoad)! - `loadWorkbookStream` now reports rich text the way `loadWorkbook` does. It flattened a shared or inline string built from `<r>` runs into the joined plain text, so per-run formatting (bold, colour, size) was reachable through one entry point and not the other, even though `ReadOnlyCell.value` is typed `CellValue` and so already admitted the rich-text variant. A cell that `loadWorkbook` reports as `{ kind: 'rich-text', runs }` now reads the same way when streamed.
+
+  A CDATA section inside a streamed cell's `<v>` or `<t>` also read as empty, so `<t><![CDATA[a<b]]></t>` streamed as `''` where `loadWorkbook` reported `'a<b'`. The streaming reader now reads it as text.
+
+  Callers that relied on a streamed rich-text cell arriving as a `string` should pass it through `cellValueAsString` from `@office-kit/xlsx/cell`.
+
+  The remaining difference between the two readers, which is deliberate, is documented on `loadWorkbookStream`: the streaming reader reports a cell as empty for a `t="s"` index with no shared string behind it and for a `t="b"` value outside `xsd:boolean`, where `loadWorkbook` rejects the file.
+
+### Patch Changes
+
+- [#186](https://github.com/office-kit/xlsx/pull/186) [`73e2bf7`](https://github.com/office-kit/xlsx/commit/73e2bf78b45ea18805579c72424ba90a07734681) Thanks [@kibertoad](https://github.com/kibertoad)! - Fix an edit to one column dropping the widths of its neighbours. A loaded `<col min="1" max="16384" width="12"/>` is a single entry covering every column, and `setColumnWidth` / `hideColumn` / `groupColumns` deleted the whole run before writing the one column they were asked about. Loading a workbook, changing one column's width and saving lost the width of every other column the run covered. Such a run is now split around the columns being edited, and the rest of it keeps its fields.
+
+  The bulk helpers (`hideColumns`, `unhideColumns`, `setColumnWidths`, `autofitColumns`, `groupColumns`, `ungroupColumns`, `collapseColumnGroup`, `expandColumnGroup`) pair the whole band against the existing runs in one pass instead of scanning the entry map once per column, so their cost grows with the band rather than with its square. `hideColumns(ws, 1, 8000)` drops from about 270 ms to about 1 ms, and 4000 widths through `setColumnWidths` from about 64 ms to about 1.5 ms.
+
+  `unhideColumn` now rejects a column outside the sheet with an `OpenXmlSchemaError`, the way `hideColumn` already did, instead of returning silently.
+
+- [#190](https://github.com/office-kit/xlsx/pull/190) [`5e6228c`](https://github.com/office-kit/xlsx/commit/5e6228c6ee0f7cfcfbce765e0dc22c1ecd950005) Thanks [@kibertoad](https://github.com/kibertoad)! - A non-finite column width or row height no longer reaches the worksheet part. Excel opens a part carrying `width="NaN"` without complaint and turns the column into `width="0" hidden="1"`, so `setColumnWidth(ws, 1, NaN)` produced a workbook whose column had silently disappeared; `ht="NaN"` fell back to the default row height the same way.
+
+  - `setColumnWidth` and `setRowHeight` throw `OpenXmlSchemaError` for a size that is not a non-negative finite number.
+  - Saving throws rather than writing `width="NaN"` / `ht="NaN"` when a non-finite size was put into `ws.columnDimensions` / `ws.rowDimensions` directly. A negative size is left alone, so a file that carries one still round-trips.
+  - The streaming `setColumnWidth` on a write-only worksheet validated nothing. It now rejects the same sizes, plus a column index outside `[1, 16384]`, and reports them as `OpenXmlSchemaError` like the modelled setter.
+  - `setColumnWidths` and `setRowHeights` skip a negative entry the way they already skipped a non-finite one, so a bad entry cannot abort the call part-way through.
+  - `autofitColumn` and `autofitColumns` check `padding` / `min` / `max` before resizing anything, so a `NaN` there is reported against the option the caller passed.
+
+  Excel's own ceilings (255 characters, 409 points) are still not enforced: Excel keeps a value past them as written rather than refusing it, so rejecting one would refuse a file that opens fine.
+
+- [#184](https://github.com/office-kit/xlsx/pull/184) [`d6ac079`](https://github.com/office-kit/xlsx/commit/d6ac079281385f151339bbf2e9ca77e1fd4bfce2) Thanks [@kibertoad](https://github.com/kibertoad)! - Fix cell text that already looks like the `_xHHHH_` escape convention losing characters on save. The writer protects such a sequence by escaping the underscore that opens it, and it missed openers in two shapes: one whose closing underscore is shared with the next sequence (`_x0041_x0042_` came back as `_x0041B`), and one whose closer is a character the writer escapes in turn, such as a line break (`"SKU_x0041\nrest"` came back as `SKUAx000A_rest`). Text of this shape now round-trips through shared strings, rich-text runs and inline strings. A workbook written by an earlier version is unaffected: it still reads back the way Excel reads it.
+
+  `loadWorkbook` now decodes each `<t>` of a shared string on its own, the way `loadWorkbookStream` already did. The two returned different text for an entry carrying more than one `<t>`, a shape the schema does not allow but both readers accept.
+
+- [#187](https://github.com/office-kit/xlsx/pull/187) [`b398f01`](https://github.com/office-kit/xlsx/commit/b398f01a787e0fb08788a8ed46a4ed3a48ff6d35) Thanks [@kibertoad](https://github.com/kibertoad)! - Fix `setPrintTitles` producing an unreadable reference when the sheet name contains an apostrophe. It wrapped the name in quotes without doubling the apostrophes inside it, so a sheet called `Bob's Sheet` yielded `'Bob's Sheet'!$1:$1`, which Excel treats as a broken defined name and which `getDefinedNameTarget` rejected with a missing-delimiter error. Titles with apostrophes are accepted by `validateSheetTitle`, so this was reachable from supported input.
+
 ## 0.21.1
 
 ### Patch Changes
