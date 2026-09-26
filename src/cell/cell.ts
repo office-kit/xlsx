@@ -8,7 +8,7 @@
 
 import { columnLetterFromIndex, MAX_COL, MAX_ROW } from '../utils/coordinate.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
-import { normalizeFormulaText, startsWithEquals } from '../utils/formula-text.js';
+import { normalizeFormulaText, spellsFormula } from '../utils/formula-text.js';
 import { ERROR_CODES } from '../utils/inference.js';
 import { type RichText, richTextToString } from './rich-text.js';
 
@@ -108,14 +108,15 @@ export function setCellValue(c: Cell, value: CellValue): void {
 
 /**
  * "Smart" setter: infers the cell value from a JS runtime value.
- * - `string` starting with `=` → formula
+ * - `string` starting with `=` → formula, except a lone `'='`, which is text
  * - `string` matching an Excel error token → error variant
  * - other primitives / Date / null pass through verbatim
  *
- * The `=` is the whole test, so the string then has to be a formula: `'='` and
- * `'==A1'` throw here the way {@link setFormula} throws for them, rather than
- * landing as text. Data that may legitimately start with `=` (a CSV column
- * holding `'==>'`) belongs in {@link setCellValue}, which infers nothing.
+ * This follows what Excel does with the same text typed into a cell. A string
+ * sent down the formula path has to be a formula: `'==A1'` and `'= '` throw
+ * here the way {@link setFormula} throws for them, as Excel refuses them too.
+ * Data that may legitimately start with `=` (a CSV column holding `'==>'`)
+ * belongs in {@link setCellValue}, which infers nothing.
  *
  * Intentionally not the default — explicit is clearer for typed code, and
  * inferring on every write costs measurable time on the worksheet write hot
@@ -123,7 +124,7 @@ export function setCellValue(c: Cell, value: CellValue): void {
  */
 export function bindValue(c: Cell, value: number | string | boolean | Date | null): void {
   if (typeof value === 'string') {
-    if (startsWithEquals(value)) {
+    if (spellsFormula(value)) {
       setFormula(c, value);
       return;
     }

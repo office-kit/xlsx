@@ -19,8 +19,17 @@ import { OpenXmlSchemaError } from './exceptions.js';
 const EQUALS_SIGN_CODE = 61;
 
 /** True iff `text` is spelled the way a spreadsheet UI shows a formula. */
-export function startsWithEquals(text: string): boolean {
+function startsWithEquals(text: string): boolean {
   return text.charCodeAt(0) === EQUALS_SIGN_CODE;
+}
+
+/**
+ * True iff Excel reads `text`, typed into a cell, as a formula. A lone `=` is
+ * the exception to the prefix rule: Excel stores it as text, where `'= '` is
+ * refused like any other malformed formula.
+ */
+export function spellsFormula(text: string): boolean {
+  return startsWithEquals(text) && text.length > 1;
 }
 
 /** Drop one leading `=` and the whitespace around it: `' =SUM(A1)'` → `'SUM(A1)'`. */
@@ -31,18 +40,20 @@ const stripPrefix = (text: string): string => {
 
 /**
  * Normalise formula text a caller supplied. `context` names the call or the
- * element being written, so a rejection says where the text came from.
+ * element being written, and `at`, when given, where it sits, so a rejection
+ * says where the text came from. They stay apart so the writer's hot path
+ * builds the message only when it throws.
  *
  * @throws OpenXmlSchemaError if the text still begins with `=` once the leading
  * one is gone. Writing it as-is stores `<f>=A1</f>`, the shape this function
  * exists to keep out of the file, and stripping again invents a reading for
  * input that has none.
  */
-export function normalizeFormulaText(text: string, context: string): string {
+export function normalizeFormulaText(text: string, context: string, at?: string): string {
   const body = stripPrefix(text);
   if (startsWithEquals(body)) {
     throw new OpenXmlSchemaError(
-      `${context}: formula text still begins with "=" once the leading one is removed` +
+      `${context}${at === undefined ? '' : ` at ${at}`}: formula text still begins with "=" once the leading one is removed` +
         ` (got "${quoteCellText(text)}"). OOXML stores formula text without it and Excel` +
         ' reports a file that carries one as damaged',
     );

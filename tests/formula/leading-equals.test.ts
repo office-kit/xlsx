@@ -20,6 +20,7 @@ import {
   setFormula,
   setSharedFormula,
 } from '../../src/cell/cell.js';
+import { inferCellType } from '../../src/utils/inference.js';
 import { loadWorkbook } from '../../src/io/load.js';
 import { fromBuffer } from '../../src/io/node.js';
 import { workbookToBytes } from '../../src/io/save.js';
@@ -113,6 +114,14 @@ describe('formula values normalise a leading =', () => {
     // `bindValue` routes any string starting with `=` to the formula path, so
     // it reports the same problem instead of landing `<f>=A1</f>` on the cell.
     expect(() => bindValue(cell, '==A1')).toThrow(OpenXmlSchemaError);
+    expect(() => bindValue(cell, '= ')).toThrow(OpenXmlSchemaError);
+  });
+
+  it('binds a lone = as text, as Excel stores it', () => {
+    const cell = makeCell(1, 1);
+    bindValue(cell, '=');
+    expect(cell.value).toBe('=');
+    expect(inferCellType('=')).toBe('s');
   });
 
   it('names the call in the rejection', () => {
@@ -329,9 +338,9 @@ describe('a second = in the other elements that carry formula text', () => {
     const part = 'xl/workbook.xml';
     const entry = archive[part];
     if (!entry) throw new Error(`no ${part} in the package`);
-    archive[part] = new TextEncoder().encode(
-      new TextDecoder().decode(entry).replace('>Sheet1!$A$1<', '>==Sheet1!$A$1<'),
-    );
+    const patched = new TextDecoder().decode(entry).replace('>Sheet1!$A$1<', () => '>==Sheet1!$A$1<');
+    expect(patched).toContain('>==Sheet1!$A$1</definedName>');
+    archive[part] = new TextEncoder().encode(patched);
 
     const reloaded = await loadWorkbook(fromBuffer(zipSync(archive)));
     expect(reloaded.definedNames[0]?.value).toBe('Sheet1!$A$1');

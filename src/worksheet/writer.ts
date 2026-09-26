@@ -466,7 +466,7 @@ const serializeFormulaCell = (ref: string, styleAttr: string, f: FormulaValue): 
   // dynamic array. We never synthesise a prefix here — we only echo what the
   // source contained — so we can't emit a form Excel didn't itself author.
   const fAttrStr = fAttrs.length > 0 ? ` ${fAttrs.join(' ')}` : '';
-  const normalized = normalizeFormulaText(f.formula, `worksheet: <f> at ${ref}`);
+  const normalized = normalizeFormulaText(f.formula, 'worksheet: <f>', ref);
   if ((f.t === 'normal' || f.t === 'array') && normalized.length === 0) {
     throw new OpenXmlSchemaError(`worksheet: ${f.t} formula must not be empty at ${ref}`);
   }
@@ -689,7 +689,7 @@ const serializeCfRule = (rule: ConditionalFormattingRule): string => {
   const inner: string[] = [];
   for (const f of rule.formulas) {
     const at = `priority ${rule.priority}`;
-    const normalized = normalizeFormulaText(f, `worksheet: <formula> at ${at}`);
+    const normalized = normalizeFormulaText(f, 'worksheet: <formula>', at);
     const text = escapeXmlTextVerbatim(normalized, 'worksheet: conditional-formatting formula', at);
     inner.push(`<formula>${text}</formula>`);
   }
@@ -722,12 +722,12 @@ const serializeDataValidation = (dv: DataValidation): string => {
 
   const formulas: string[] = [];
   if (dv.formula1 !== undefined) {
-    const normalized = normalizeFormulaText(dv.formula1, `worksheet: <formula1> at ${sqref}`);
+    const normalized = normalizeFormulaText(dv.formula1, 'worksheet: <formula1>', sqref);
     const text = escapeXmlTextVerbatim(normalized, 'worksheet: data-validation formula1', sqref);
     formulas.push(`<formula1>${text}</formula1>`);
   }
   if (dv.formula2 !== undefined) {
-    const normalized = normalizeFormulaText(dv.formula2, `worksheet: <formula2> at ${sqref}`);
+    const normalized = normalizeFormulaText(dv.formula2, 'worksheet: <formula2>', sqref);
     const text = escapeXmlTextVerbatim(normalized, 'worksheet: data-validation formula2', sqref);
     formulas.push(`<formula2>${text}</formula2>`);
   }

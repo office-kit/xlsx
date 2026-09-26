@@ -2,7 +2,7 @@
 // `t` attribute value. Mirrors openpyxl's `Cell._bind_value` /
 // `_TYPES` / error-code path in openpyxl/openpyxl/cell/cell.py.
 
-import { startsWithEquals } from './formula-text.js';
+import { spellsFormula } from './formula-text.js';
 
 /**
  * OOXML `t` attribute values. Note that 'inlineStr' is treated
@@ -55,22 +55,21 @@ export const ERROR_CODES: ReadonlySet<string> = new Set([
  *   the caller because Excel decides on type via the cell's number
  *   format, not the raw value)
  * - `Date` → 'd'
- * - string starting with `=` → 'f' (formula)
+ * - string starting with `=` → 'f' (formula), except a lone `'='`, which is 's'
  * - string in {@link ERROR_CODES} → 'e'
  * - any other string → 's'
  * - `null` / `undefined` → 'n' (empty)
  *
  * Throws nothing: 'n' is the no-information fallback. It reports the spelling
  * and nothing more, so 'f' is not a promise that the formula constructors will
- * accept the text: `'='` and `'==A1'` classify as 'f' and `setFormula` rejects
- * both.
+ * accept the text: `'==A1'` classifies as 'f' and `setFormula` rejects it.
  */
 export function inferCellType(value: unknown): CellDataType {
   if (typeof value === 'boolean') return 'b';
   if (typeof value === 'number') return 'n';
   if (value instanceof Date) return 'd';
   if (typeof value === 'string') {
-    if (startsWithEquals(value)) return 'f';
+    if (spellsFormula(value)) return 'f';
     if (ERROR_CODES.has(value)) return 'e';
     return 's';
   }
