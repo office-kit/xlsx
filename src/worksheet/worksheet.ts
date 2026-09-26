@@ -357,22 +357,67 @@ export function deleteCell(ws: Worksheet, row: number, col: number): void {
 }
 
 /**
+ * Delete the populated cells of `range` for which `keep` is false, pruning any
+ * row map that empties. Returns how many were deleted.
+ *
+ * A range can be far larger than the cells inside it: `'A:A'` is 1_048_576
+ * coordinates and `'A1:XFD1048576'` is seventeen billion, both of which Excel
+ * lets a caller name. Walking every coordinate of one costs time proportional
+ * to its area whatever the sheet holds, so each axis is enumerated whichever
+ * way is smaller: over the range when the range is narrower than the sparse
+ * store, and over the store when it is not. That keeps a whole-column merge on
+ * a handful of cells cheap without making a two-by-two clear on a
+ * million-row sheet expensive.
+ *
+ * Deleting from a Map while iterating it is defined behaviour: the iterator
+ * visits each remaining entry once and skips what has been removed.
+ */
+const deleteCellsInRange = (
+  ws: Worksheet,
+  bounds: CellRange,
+  keep?: (row: number, col: number) => boolean,
+): number => {
+  const { minRow, maxRow, minCol, maxCol } = bounds;
+  const bandCols = maxCol - minCol + 1;
+  let removed = 0;
+
+  const clearRow = (row: number, rowMap: Map<number, Cell>): void => {
+    if (bandCols <= rowMap.size) {
+      for (let c = minCol; c <= maxCol; c++) {
+        if (keep?.(row, c)) continue;
+        if (rowMap.delete(c)) removed++;
+      }
+    } else {
+      for (const c of rowMap.keys()) {
+        if (c < minCol || c > maxCol) continue;
+        if (keep?.(row, c)) continue;
+        rowMap.delete(c);
+        removed++;
+      }
+    }
+    if (rowMap.size === 0) ws.rows.delete(row);
+  };
+
+  if (maxRow - minRow + 1 <= ws.rows.size) {
+    for (let r = minRow; r <= maxRow; r++) {
+      const rowMap = ws.rows.get(r);
+      if (rowMap) clearRow(r, rowMap);
+    }
+  } else {
+    for (const [r, rowMap] of ws.rows) {
+      if (r >= minRow && r <= maxRow) clearRow(r, rowMap);
+    }
+  }
+  return removed;
+};
+
+/**
  * Delete every populated cell inside a range. Returns the number of cells
  * removed. Row maps that go empty are pruned. Column / row dimensions, merges,
  * comments etc. are left untouched.
  */
 export function clearRange(ws: Worksheet, range: RangeRef): number {
-  const { minRow, maxRow, minCol, maxCol } = parseRange(range);
-  let n = 0;
-  for (let r = minRow; r <= maxRow; r++) {
-    const rowMap = ws.rows.get(r);
-    if (!rowMap) continue;
-    for (let c = minCol; c <= maxCol; c++) {
-      if (rowMap.delete(c)) n++;
-    }
-    if (rowMap.size === 0) ws.rows.delete(r);
-  }
-  return n;
+  return deleteCellsInRange(ws, parseRange(range));
 }
 
 /**
@@ -1032,14 +1077,7 @@ export function mergeCells(ws: Worksheet, refOrRange: RangeRef): CellRange {
     }
   }
   // Drop every cell except the top-left from the sparse store.
-  for (let r = range.minRow; r <= range.maxRow; r++) {
-    for (let c = range.minCol; c <= range.maxCol; c++) {
-      if (r === range.minRow && c === range.minCol) continue;
-      ws.rows.get(r)?.delete(c);
-      const row = ws.rows.get(r);
-      if (row && row.size === 0) ws.rows.delete(r);
-    }
-  }
+  deleteCellsInRange(ws, range, (row, col) => row === range.minRow && col === range.minCol);
   ws.mergedCells.push(range);
   return range;
 }

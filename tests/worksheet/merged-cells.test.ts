@@ -57,6 +57,31 @@ describe('mergeCells / unmergeCells', () => {
     expect(getMergedCells(ws).length).toBe(1);
   });
 
+  it('drops cells in a whole-column band except the top-left', () => {
+    // The walk picks whichever axis is smaller to enumerate, so a band far
+    // larger than the sheet takes the sparse path. Same outcome as a small
+    // rectangle, which is what this pins.
+    const wb = createWorkbook();
+    const ws = addWorksheet(wb, 'S');
+    setCell(ws, 1, 1, 'keep');
+    setCell(ws, 5, 3, 'inside');
+    setCell(ws, 7, 11, 'outside the column band');
+    mergeCells(ws, 'A:J');
+    expect(getCell(ws, 1, 1)?.value).toBe('keep');
+    expect(getCell(ws, 5, 3)).toBeUndefined();
+    expect(getCell(ws, 7, 11)?.value).toBe('outside the column band');
+  });
+
+  it('prunes a row that the merge empties', () => {
+    const wb = createWorkbook();
+    const ws = addWorksheet(wb, 'S');
+    setCell(ws, 1, 1, 'keep');
+    setCell(ws, 4, 2, 'goes');
+    mergeCells(ws, 'A1:C9');
+    expect(ws.rows.has(4)).toBe(false);
+    expect(ws.rows.has(1)).toBe(true);
+  });
+
   it('unmergeCells drops the matching range', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'M');
