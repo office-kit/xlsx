@@ -1,5 +1,17 @@
 # @office-kit/xlsx
 
+## 0.23.1
+
+### Patch Changes
+
+- [#195](https://github.com/office-kit/xlsx/pull/195) [`28a3cc9`](https://github.com/office-kit/xlsx/commit/28a3cc97da1cbdcbe60cbe871526d6af7f60e266) Thanks [@kibertoad](https://github.com/kibertoad)! - `mergeCells` and `clearRange` no longer cost time proportional to the area of the range: the work is bounded by the populated cells on the sheet. Both walked every coordinate of the rectangle, so merging a band Excel lets a caller name was unusable at scale: `mergeCells(ws, 'A:J')` took 57 ms on a sheet holding 20 cells, and a whole-sheet `mergeCells(ws, 'A1:XFD1048576')` walked seventeen billion coordinates and effectively never returned. Both now finish in well under a millisecond on the same sheet.
+
+  Each axis is enumerated whichever way is smaller, so a small range on a sheet with hundreds of thousands of rows stays cheap too.
+
+- [#192](https://github.com/office-kit/xlsx/pull/192) [`b097a8d`](https://github.com/office-kit/xlsx/commit/b097a8dffb6727439249f88b47d5d95be73e3e05) Thanks [@kibertoad](https://github.com/kibertoad)! - fix: `loadWorkbook` failed on a shared formula filled into column XFD, and gave a shared formula filled down to the last row a reference past row 1048576. Both now wrap to the opposite edge of the grid, which is what Excel shows for the same file: a formula referencing `B1048576`, filled one row down, reads `B1`. A token past the grid such as `A2000000` is a name to Excel and is no longer shifted.
+
+- [#203](https://github.com/office-kit/xlsx/pull/203) [`8581fad`](https://github.com/office-kit/xlsx/commit/8581fad3096955ae22eef4fed7ab89c49fa40ae9) Thanks [@kibertoad](https://github.com/kibertoad)! - fix: `loadWorkbook` dropped the sheet from a sheet-qualified defined name in the dependent cells of a shared formula. A formula `Data!total+B1` filled down read `total+B2` in the next cell, which then referred to a different name or to none, and a save wrote that text back out. It now reads `Data!total+B2`.
+
 ## 0.23.0
 
 ### Minor Changes
