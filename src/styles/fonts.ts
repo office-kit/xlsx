@@ -9,13 +9,14 @@
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
 import { type Color, colorToHex, makeColor } from './colors.js';
 
-/** Underline styles per openpyxl's NestedNoneSet. */
-export type UnderlineStyle = 'single' | 'double' | 'singleAccounting' | 'doubleAccounting';
+/** Underline styles per ECMA-376 ST_UnderlineValues, including explicit no underline. */
+export type UnderlineStyle = 'single' | 'double' | 'singleAccounting' | 'doubleAccounting' | 'none';
 export const UNDERLINE_STYLES: ReadonlyArray<UnderlineStyle> = Object.freeze([
   'single',
   'double',
   'singleAccounting',
   'doubleAccounting',
+  'none',
 ]);
 
 export type VertAlign = 'baseline' | 'superscript' | 'subscript';
@@ -43,6 +44,7 @@ export interface Font {
   readonly shadow?: boolean;
   readonly condense?: boolean;
   readonly extend?: boolean;
+  /** `none` explicitly disables underline; omission leaves it unspecified (e.g. in a DXF). */
   readonly underline?: UnderlineStyle;
   readonly vertAlign?: VertAlign;
   readonly scheme?: FontScheme;
@@ -151,9 +153,10 @@ export function fontToCss(font: Font | undefined): Record<string, string> {
   if (font.bold) css['font-weight'] = 'bold';
   if (font.italic) css['font-style'] = 'italic';
   const decorations: string[] = [];
-  if (font.underline !== undefined) decorations.push('underline');
+  if (font.underline !== undefined && font.underline !== 'none') decorations.push('underline');
   if (font.strike) decorations.push('line-through');
   if (decorations.length > 0) css['text-decoration'] = decorations.join(' ');
+  else if (font.underline === 'none') css['text-decoration'] = 'none';
   if (font.color !== undefined) {
     const argb = colorToHex(font.color);
     if (argb !== undefined) {

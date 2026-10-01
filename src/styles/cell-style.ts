@@ -522,7 +522,8 @@ export function setStrikethrough(wb: Workbook, c: Cell, on = true): void {
 /**
  * Set the underline style. Pass `false` to drop underline; pass `'single' |
  * 'double' | 'singleAccounting' | 'doubleAccounting'` to apply that style; pass
- * `true` for the most common single-line.
+ * `true` for the most common single-line. Pass `'none'` to preserve an explicit
+ * no-underline value in XML.
  */
 export function setUnderline(
   wb: Workbook,
