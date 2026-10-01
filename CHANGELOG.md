@@ -1,5 +1,11 @@
 # @office-kit/xlsx
 
+## 0.23.2
+
+### Patch Changes
+
+- [#207](https://github.com/office-kit/xlsx/pull/207) [`55be009`](https://github.com/office-kit/xlsx/commit/55be00944b3e927b6984a9a6c16dffcc5ac04924) Thanks [@baseballyama](https://github.com/baseballyama)! - Fix loading workbooks whose stylesheet fonts contain `<u val="none"/>`. Preserve explicit no-underline values in cell and differential fonts when saving, and render them without an underline in `fontToCss`.
+
 ## 0.23.1
 
 ### Patch Changes
