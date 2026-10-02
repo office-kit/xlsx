@@ -28,7 +28,7 @@ export async function exercise(url, adapter, streaming, sheetName = 'Audit') {
   const reloaded = await loadWorkbook(fromArrayBuffer(saved));
   const ws = getSheet(reloaded, sheetName);
   const cell = getCell(ws, 1, 1);
-  return { values: Array.from({ length: getCell(ws, 2, 1) ? 2 : 1 }, (_, i) => canonical(getCell(ws, i + 1, 1)?.value ?? null)), date: getCellDate(reloaded, cell)?.toISOString(), names: reloaded.definedNames, date1904: reloaded.date1904, font: getCellFont(reloaded, cell), border: getCellBorder(reloaded, cell).left?.style, edited: getCell(ws, 2, 2)?.value };
+  return { bytes: Array.from(saved), values: Array.from({ length: getCell(ws, 2, 1) ? 2 : 1 }, (_, i) => canonical(getCell(ws, i + 1, 1)?.value ?? null)), date: getCellDate(reloaded, cell)?.toISOString(), names: reloaded.definedNames, date1904: reloaded.date1904, font: getCellFont(reloaded, cell), border: getCellBorder(reloaded, cell).left?.style, edited: getCell(ws, 2, 2)?.value };
 }
 
 function canonical(value) { return value instanceof Date ? { date: value.toISOString() } : value; }

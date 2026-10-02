@@ -216,3 +216,14 @@ anchor, empty run, timeout, compile failure or missing report fails the gate.
 The working sources are never mutated. CI retains per-mutant diagnostics and
 the exact failing test names in `.qa/mutations/`. This proves detection of this
 curated set; it is not a general mutation score or a conformance percentage.
+
+### Independent browser output validation
+
+Each real Chromium/Firefox/WebKit test returns the actual saved bytes to the
+Node host. Every case/adapter output must pass independent ZIP/XML/OPC/XSD and
+semantic validation before the test passes. All 82 × 3 × 4 outputs are retained
+and independently checked by Open XML SDK (Office2016 profile). The expected
+output manifest is declared before execution, the export directory is cleared
+first, and the SDK requires the exact output set. Missing cases, stale outputs
+and a missing saved byte array cannot produce a vacuous pass. Streaming read
+paths have semantic tests; they do not claim to produce a saved workbook.
