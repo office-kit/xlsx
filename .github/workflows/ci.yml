@@ -190,6 +190,8 @@ jobs:
       # Test manual evidence bookkeeping; this does not execute desktop Excel.
       - run: pnpm qa:excel-features
       - run: dotnet run --project tests/conformance/sdk --no-restore -- .qa/excel-feature-corpus
+      - run: pnpm qa:native-excel
+      - run: dotnet run --project tests/conformance/sdk --no-restore -- .qa/native-excel-corpus
       - run: pnpm qa:excel-calibration
       - run: pnpm qa:mutations
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -199,6 +201,7 @@ jobs:
           path: |
             .qa/corpus/
             .qa/excel-feature-corpus/
+            .qa/native-excel-corpus/
             .qa/libreoffice/results.json
             .qa/mutations/
           retention-days: 7

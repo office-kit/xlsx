@@ -400,3 +400,15 @@ Mac Excel 16.113.3 Open / Save As observation with no repair and a passing
 independent comparison. The evidence matrix keeps it separate from the
 nine-case cell profile. This does not establish all table/chart/image features,
 rendered geometry, actual pagination, or Windows Excel compatibility.
+
+### Pinned native Excel regression
+
+`pnpm qa:native-excel` replays the synthetic feature file saved by Microsoft
+Excel 16.113.3 on macOS. `fixtures/excel-mac/manifest.json` records the original
+observation, source/output hashes, license and published fixture hash. The public
+fixture replaces personal `cp:lastModifiedBy` metadata with `QA` and repacks the
+ZIP; all other uncompressed parts retain Excel's bytes. CI checks the hash,
+OPC/XSD, independent attached-feature projection, public edit/reopen and SDK
+validation. Excel's omitted fit dimensions are interpreted with their schema
+default of one. This replay preserves a real application regression sample; it
+does not execute Excel continuously or cover all Excel versions.
