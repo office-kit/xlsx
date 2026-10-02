@@ -92,6 +92,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           submodules: recursive
+          fetch-depth: 0
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
@@ -105,6 +106,10 @@ jobs:
       # Install the tarball into tests/consumer and compile + run against it
       # under node16, nodenext and bundler resolution.
       - run: pnpm check:consumer
+      - run: pnpm check:api-calibration
+      - run: pnpm check:api
+        env:
+          QA_API_BASE_REF: ${{ github.event.pull_request.base.sha }}
 
   # Performance regression gate. Runs the dedicated perf-test config with
   # PERF_GATE=1 so the throughput thresholds in tests/perf/ fail the run on

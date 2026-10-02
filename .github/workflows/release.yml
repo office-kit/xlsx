@@ -73,6 +73,10 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm size
+      - run: pnpm check:attw
+      - run: pnpm check:consumer
+      - run: pnpm check:api
+      - run: pnpm check:api-calibration
 
       - name: Create Release PR or publish to npm
         id: changesets

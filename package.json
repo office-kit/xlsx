@@ -118,7 +118,7 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm build && changeset publish",
-    "prepublishOnly": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm size && pnpm check:attw && pnpm check:consumer",
+    "prepublishOnly": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm size && pnpm check:attw && pnpm check:consumer && pnpm check:api",
     "qa:corpus": "node scripts/qa-corpus.mjs",
     "test:browser": "pnpm build && pnpm qa:corpus && playwright test",
     "qa:mutations": "node scripts/qa-mutations.mjs",
@@ -128,7 +128,9 @@
     "qa:matrix": "node scripts/qa-matrix.mjs",
     "qa:matrix-calibration": "node --test scripts/qa-matrix.test.mjs",
     "qa:excel-features": "node scripts/qa-excel-features.mjs",
-    "qa:native-excel": "node scripts/qa-native-excel.mjs"
+    "qa:native-excel": "node scripts/qa-native-excel.mjs",
+    "check:api": "node scripts/check-api.mjs",
+    "check:api-calibration": "node --test scripts/check-api.test.mjs"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
