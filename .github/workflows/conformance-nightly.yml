@@ -27,14 +27,19 @@ jobs:
         env:
           QA_FUZZ_RUNS: '1000'
           QA_FUZZ_SEED: ${{ github.run_number }}
+          QA_EDIT_RUNS: '250'
+          QA_EDIT_SEED: ${{ github.run_number }}
+          QA_EDIT_MAX_OPERATIONS: '50'
         shell: bash
         run: |
           mkdir -p .qa
           set -o pipefail
-          pnpm exec vitest run tests/conformance/property.test.ts tests/conformance/invalid-generation.test.ts 2>&1 | tee .qa/fuzz.log
+          pnpm exec vitest run tests/conformance/property.test.ts tests/conformance/invalid-generation.test.ts tests/conformance/sheet-operations.test.ts 2>&1 | tee .qa/fuzz.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: conformance-fuzz
-          path: .qa/fuzz.log
+          path: |
+            .qa/fuzz.log
+            .qa/sheet-operations-counterexample.json
           retention-days: 14
