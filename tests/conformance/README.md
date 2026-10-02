@@ -412,3 +412,23 @@ OPC/XSD, independent attached-feature projection, public edit/reopen and SDK
 validation. Excel's omitted fit dimensions are interpreted with their schema
 default of one. This replay preserves a real application regression sample; it
 does not execute Excel continuously or cover all Excel versions.
+
+## Isolated adversarial resource checks
+
+Build first, then run `pnpm qa:resources-calibration` and `pnpm qa:resources`.
+The built public model and streaming loaders receive independently assembled
+8 MiB inflated XML, 100,000 empty rows, 100,000 cells and DTD inputs, plus a
+positive single-cell workbook with a misleading full-grid dimension. Both
+loaders must return the configured typed error, or the exact positive value.
+Each case runs in its own child process with a 128 MiB V8 heap cap, 15-second
+wall timeout and a 256 MiB measured peak RSS assertion. Input generation and
+module startup are included in measurements; reports record Node/platform.
+Peak RSS uses Node's documented KiB `process.resourceUsage().maxRSS` value.
+
+Timeout, heap exhaustion, crashes, excessive RSS and absent reports fail QA;
+calibration deliberately triggers these failure paths. A heap cap is not an
+OS limit on all native/buffer memory, and measured RSS is checked after exit.
+This bounds the test runner and detects regressions on the stated inputs, not
+a universal loader CPU deadline, upload-size cap or every hostile ZIP grammar.
+CI executes the profile on Node 22 / Ubuntu 24.04 and retains partial diagnostics.
+Reference: [Node resource usage](https://nodejs.org/api/process.html#processresourceusage).

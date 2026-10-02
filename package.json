@@ -129,6 +129,8 @@
     "qa:matrix-calibration": "node --test scripts/qa-matrix.test.mjs",
     "qa:excel-features": "node scripts/qa-excel-features.mjs",
     "qa:native-excel": "node scripts/qa-native-excel.mjs",
+    "qa:resources": "node scripts/qa-resources.mjs",
+    "qa:resources-calibration": "node --test scripts/qa-resources.test.mjs",
     "check:api": "node scripts/check-api.mjs",
     "check:api-calibration": "node --test scripts/check-api.test.mjs"
   },

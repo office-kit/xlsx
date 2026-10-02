@@ -220,6 +220,27 @@
           "anchor": "Follow relationships from the workbook"
         }
       ]
+    },
+    {
+      "id": "node-isolated",
+      "subject": "library",
+      "execution": "ci",
+      "runtimes": [
+        "Node 22 on Ubuntu 24.04"
+      ],
+      "adapters": [
+        "built public fromBuffer and fromStream (7-byte chunks)"
+      ],
+      "evidence": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "anchor": "resource-conformance:"
+        },
+        {
+          "path": "scripts/qa-resources.mjs",
+          "anchor": "runIsolated"
+        }
+      ]
     }
   ],
   "requirements": [
@@ -2005,6 +2026,27 @@
         {
           "path": "scripts/qa-office-check.py",
           "anchor": "Follow relationships from the workbook"
+        }
+      ]
+    },
+    {
+      "requirement": "loader-resource-contract",
+      "profile": "node-isolated",
+      "operations": [
+        "read",
+        "reject"
+      ],
+      "status": "tested",
+      "scope": "Ten bounded child-process cases: 8MiB inflated XML, 100000 empty rows, 100000 cells, DTD and misleading grid-wide dimension. Configured typed rejection/positive value required within 15s and 256MiB measured peak RSS, with a 128MiB V8 heap cap. Timeout, OOM, crash or missing report fails QA. Not an OS RSS limit or universal production deadline.",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "scripts/qa-resource-worker.mjs",
+          "anchor": "100_000"
+        },
+        {
+          "path": "scripts/qa-resources.test.mjs",
+          "anchor": "heap exhaustion is a runner failure"
         }
       ]
     }
