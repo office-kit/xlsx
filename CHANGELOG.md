@@ -1,5 +1,11 @@
 # @office-kit/xlsx
 
+## 0.23.3
+
+### Patch Changes
+
+- [#210](https://github.com/office-kit/xlsx/pull/210) [`a124169`](https://github.com/office-kit/xlsx/commit/a1241693de3d3e765a693470dce51e6861744e7e) Thanks [@baseballyama](https://github.com/baseballyama)! - Fix stylesheet fonts incorrectly enabling bold, italic, strike-through and other toggles when their XML value is false. Preserve explicit false font values, including differential fonts, and XF flags such as `applyFont="0"` when saving workbooks.
+
 ## 0.23.2
 
 ### Patch Changes
