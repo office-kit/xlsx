@@ -48,5 +48,55 @@
     "tests": [
       "tests/conformance/preservation.test.ts"
     ]
+  },
+  {
+    "id": "local-name-owner",
+    "regression": "PR #221: local names follow tab ownership",
+    "file": "src/workbook/workbook.ts",
+    "before": "name.scope = next;",
+    "after": "name.scope = 0;",
+    "tests": [
+      "tests/conformance/sheet-operations.test.ts"
+    ]
+  },
+  {
+    "id": "active-tab-owner",
+    "regression": "PR #221: active tab follows stable sheet identity",
+    "file": "src/workbook/workbook.ts",
+    "before": "const active = previous[activeIndex];",
+    "after": "const active = previous[0];",
+    "tests": [
+      "tests/conformance/sheet-operations.test.ts"
+    ]
+  },
+  {
+    "id": "rich-numeric-value",
+    "regression": "PR #194/#222: numeric coercion of formatted text",
+    "file": "src/cell/cell.ts",
+    "before": "if (isRichTextValue(v)) return parseNumericText(richTextToString(v.runs));",
+    "after": "if (isRichTextValue(v)) return undefined;",
+    "tests": [
+      "tests/cell/cell-value-coercion.test.ts"
+    ]
+  },
+  {
+    "id": "loader-cell-budget",
+    "regression": "PR #224: public cell resource limit is enforced",
+    "file": "src/worksheet/content-budget.ts",
+    "before": "if (budget.cells > budget.limits.maxCells) {",
+    "after": "if (false && budget.cells > budget.limits.maxCells) {",
+    "tests": [
+      "tests/conformance/loader-boundaries.test.ts"
+    ]
+  },
+  {
+    "id": "loader-row-budget",
+    "regression": "PR #224: public row resource limit is enforced",
+    "file": "src/worksheet/content-budget.ts",
+    "before": "if (budget.rows > budget.limits.maxRows) {",
+    "after": "if (false && budget.rows > budget.limits.maxRows) {",
+    "tests": [
+      "tests/conformance/loader-boundaries.test.ts"
+    ]
   }
 ]
