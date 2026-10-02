@@ -2,6 +2,7 @@
 // coercion helpers.
 
 import { describe, expect, it } from 'vitest';
+import fc from 'fast-check';
 import {
   cellValueAsNumber,
   cellValueAsString,
@@ -110,5 +111,22 @@ describe('cellValueAsNumber', () => {
   it('NaN / Infinity → undefined', () => {
     expect(cellValueAsNumber(Number.NaN)).toBeUndefined();
     expect(cellValueAsNumber(Number.POSITIVE_INFINITY)).toBeUndefined();
+  });
+});
+
+
+describe('numeric text contract', () => {
+  it.each(['', ' ', '0', '-0', '12.5', '1e3', '0xff', 'Infinity', 'NaN', '12px', '１２'])('plain and formatted %j have the same numeric reading', (text) => {
+    const expected = text === '' || !Number.isFinite(Number(text)) ? undefined : Number(text);
+    expect(cellValueAsNumber(text)).toBe(expected);
+    expect(cellValueAsNumber({ kind: 'rich-text', runs: [{ text, font: { b: true } }] })).toBe(expected);
+  });
+
+  it('formatting and splitting arbitrary text never changes numeric coercion', () => {
+    fc.assert(fc.property(fc.array(fc.string({ maxLength: 20 }), { maxLength: 8 }), (chunks) => {
+      const text = chunks.join('');
+      const expected = text === '' || !Number.isFinite(Number(text)) ? undefined : Number(text);
+      expect(cellValueAsNumber({ kind: 'rich-text', runs: chunks.map(chunk => ({ text: chunk, font: { b: true } })) })).toBe(expected);
+    }), { seed: 194262, numRuns: 500 });
   });
 });
