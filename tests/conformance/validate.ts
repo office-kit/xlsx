@@ -198,7 +198,7 @@ export async function validateXlsx(bytes: Uint8Array, options: ValidateOptions =
       const groups = new Map<string, string[]>();
       const files = new Map<string, string>();
       for (const [i, job] of jobs.entries()) {
-        const file = join(temp, `${i}.xml`); writeFileSync(file, job.xml); files.set(file, job.part);
+        const file = join(temp, `${i}.xml`); writeFileSync(file, job.xml); files.set(file.replaceAll('\\', '/'), job.part);
         const group = groups.get(job.schema) ?? []; group.push(file); groups.set(job.schema, group);
       }
       for (const [schema, paths] of groups) {
@@ -209,7 +209,7 @@ export async function validateXlsx(bytes: Uint8Array, options: ValidateOptions =
         if (!diagnostics.length) issue('xsd', '<runner>', `xmllint failed without diagnostics: exit=${result.status}, signal=${result.signal}`);
         for (const line of diagnostics) {
           const file = /^(.+?\.xml)(?::| )/.exec(line)?.[1];
-          issue('xsd', file ? files.get(file) ?? '<runner>' : '<runner>', line);
+          issue('xsd', file ? files.get(file.replaceAll('\\', '/')) ?? '<runner>' : '<runner>', line);
         }
       }
     } finally { rmSync(temp, { recursive: true, force: true }); }
