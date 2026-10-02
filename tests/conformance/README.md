@@ -227,3 +227,53 @@ output manifest is declared before execution, the export directory is cleared
 first, and the SDK requires the exact output set. Missing cases, stale outputs
 and a missing saved byte array cannot produce a vacuous pass. Streaming read
 paths have semantic tests; they do not claim to produce a saved workbook.
+
+### Native desktop Excel manual profile
+
+No licensed Windows self-hosted runner is currently available. Desktop Excel
+is a separately recorded manual profile, not an automatically passing CI job.
+Prepare the current corpus, then use a fresh directory:
+
+```sh
+pnpm qa:corpus
+pnpm qa:excel --prepare .qa/excel-session-2026-10-02
+```
+
+Open each of the nine `input/*.output.xlsx` files in licensed desktop Excel.
+A repair dialog is a failure: decline repair and investigate. Save As the same
+basename in `output/`, close all tested workbooks (including their lock files),
+and record Excel's complete version/build, platform, observation timestamp,
+`openedWithoutRepair: true`, and saved-file SHA256 in `observations.json`.
+On macOS `shasum -a 256 FILE` computes the hash; on Windows use
+`Get-FileHash -Algorithm SHA256 FILE`. Preparation already records input hashes.
+Never set a no-repair observation for a workbook that was not actually opened.
+
+```sh
+pnpm qa:excel --check .qa/excel-session-2026-10-02
+```
+
+The checker requires the exact current normative case manifest, exact input and
+saved output sets, all nine observations, and matching hashes. Failed reruns
+remove stale passing reports. Python independently compares values, edit
+preservation, name scope/reference, rich-text runs, date epoch and number format.
+Keep the entire session directory with `results.json` and `check.log` as evidence.
+A report alone cannot prove a human observation; this is a manual protocol.
+`qa:excel-calibration` tests evidence rejection in Linux CI using synthetic
+observations; it neither launches Excel nor counts as application compatibility.
+
+`corpus/excel-mac-observation.json` records the actual 2026-10-02 native macOS
+Excel 16.113.3 (16.113.26092714) run: nine opened without repair, saved, and passed
+the independent comparison. The report covers shared formula caches, inline/SST
+rich text, quoted/scoped names and both date systems. It is not a calculation
+engine or visual-rendering certification, and is not evidence for Windows Excel.
+
+The original scoped-name corpus used `$A$1` without a sheet reference. Both XSD
+and Open XML SDK accepted it, but native Excel requested repair. The corpus now
+uses `Audit!$A$1` with `localSheetId="0"`; this opened without repair. Name scope
+and the target sheet reference are separate concepts. This corrects our test
+input, not a demonstrated production serializer defect. Schema acceptance alone
+must not be used as evidence that a workbook opens without Excel repair.
+
+Date inputs also explicitly apply their number format (`applyNumberFormat="1"`).
+The independent office comparison now checks this format as well as the serial
+and epoch; a numerically unchanged date rendered as General is a failure.

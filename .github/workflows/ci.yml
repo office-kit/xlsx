@@ -185,6 +185,8 @@ jobs:
       - run: dotnet restore tests/conformance/sdk --locked-mode
       - run: dotnet run --project tests/conformance/sdk --no-restore -- .qa/corpus
       - run: pnpm qa:office
+      # Test manual evidence bookkeeping; this does not execute desktop Excel.
+      - run: pnpm qa:excel-calibration
       - run: pnpm qa:mutations
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()

@@ -5,7 +5,9 @@ import sys
 import xml.etree.ElementTree as ET
 import zipfile
 
-source, output = map(pathlib.Path, sys.argv[1:])
+source, output = map(pathlib.Path, sys.argv[1:3])
+application = sys.argv[3] if len(sys.argv) > 3 else 'libreoffice'
+if application not in ('libreoffice', 'excel'): raise ValueError('Unknown application profile')
 ns = {'s': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
 results = []
 failures = []
@@ -41,17 +43,15 @@ for case in json.loads((source / 'manifest.json').read_text()):
             check(observed, case['expectedDate1904'], case['id'] + ':date1904')
         if 'expectedNames' in case:
             sheet_names = [n.get('name') for n in workbook.findall('s:sheets/s:sheet', ns)]
-            def name_value(n):
-                text = n.text
-                scope = n.get('localSheetId')
+            def name_value(text, scope):
                 if scope is not None:
                     name = sheet_names[int(scope)]
-                    # Calc may qualify an otherwise identical sheet-local reference.
+                    # Normalize only this exact sheet's prefix; localSheetId is not a reference.
                     for prefix in (name + '!', "'" + name.replace("'", "''") + "'!"):
                         if text.startswith(prefix): return text[len(prefix):]
                 return text
-            observed = sorted((n.get('name'), name_value(n), n.get('localSheetId')) for n in workbook.findall('s:definedNames/s:definedName', ns))
-            wanted = sorted((n['name'], n['value'], str(n['scope']) if 'scope' in n else None) for n in case['expectedNames'])
+            observed = sorted((n.get('name'), name_value(n.text, n.get('localSheetId')), n.get('localSheetId')) for n in workbook.findall('s:definedNames/s:definedName', ns))
+            wanted = sorted((n['name'], name_value(n['value'], str(n['scope']) if 'scope' in n else None), str(n['scope']) if 'scope' in n else None) for n in case['expectedNames'])
             check(observed, wanted, case['id'] + ':names')
         if isinstance(case.get('expectedValue'), dict) and case['expectedValue'].get('kind') == 'rich-text':
             cell = cells['A1']
@@ -67,6 +67,14 @@ for case in json.loads((source / 'manifest.json').read_text()):
             check(runs, case['expectedValue']['runs'], case['id'] + ':runs')
         styles = ET.fromstring(package.read('xl/styles.xml'))
         xf = styles.find('s:cellXfs', ns)[int(cells['A1'].get('s', '0'))]
+        if 'numFmtId' in case:
+            if case['numFmtId'] != 14: raise ValueError('Unprofiled office number format')
+            format_id = int(xf.get('numFmtId', '0'))
+            custom = {int(n.get('numFmtId')): n.get('formatCode') for n in styles.findall('s:numFmts/s:numFmt', ns)}
+            # Built-in 14 is locale-dependent; Calc expands it to a custom date format.
+            observed = 'date' if format_id == 14 or custom.get(format_id, '').lower() in ('mm/dd/yyyy', 'mm/dd/yy', 'm/d/yy', 'mm-dd-yy') else custom.get(format_id, str(format_id))
+            if xf.get('applyNumberFormat') in ('0', 'false'): observed = 'not-applied'
+            check(observed, 'date', case['id'] + ':numberFormat')
         font = styles.find('s:fonts', ns)[int(xf.get('fontId', '0'))]
         tags = {'bold': 'b', 'italic': 'i', 'strike': 'strike', 'outline': 'outline', 'shadow': 'shadow', 'condense': 'condense', 'extend': 'extend'}
         for key, wanted in case.get('expectedFont', {}).items():
@@ -87,7 +95,7 @@ for case in json.loads((source / 'manifest.json').read_text()):
             observed = side.get('style', 'none') if side is not None else 'none'
             check(observed, case['expectedBorder'], case['id'] + ':border')
         results.append({'id': case['id'], 'status': 'pass'})
-profile = json.loads(pathlib.Path('tests/conformance/corpus/libreoffice-profile.json').read_text())
+profile = json.loads(pathlib.Path('tests/conformance/corpus/libreoffice-profile.json').read_text()) if application == 'libreoffice' else {}
 known = []
 unexpected = []
 for context, actual, expected in failures:
@@ -98,12 +106,14 @@ for context, actual, expected in failures:
         unexpected.append((context, actual, expected))
 missing = set(profile) - {entry['context'] for entry in known}
 for entry in results:
-    if any(k['context'].startswith(entry['id'] + ':') for k in known):
+    if any(context == entry['id'] or context.startswith(entry['id'] + ':') for context, _, _ in unexpected):
+        entry['status'] = 'fail'
+    elif any(k['context'].startswith(entry['id'] + ':') for k in known):
         entry['status'] = 'known-compatibility-difference'
 report = {'cases': results, 'knownDifferences': known, 'unexpectedDifferences': unexpected,
           'changedBaseline': sorted(missing)}
 (output / 'results.json').write_text(json.dumps(report, indent=2))
-print(f"LibreOffice: {len(results) - len(known)} pass, {len(known)} known compatibility differences, {len(unexpected)} unexpected differences")
+print(f"{application}: {sum(entry['status'] == 'pass' for entry in results)} pass, {len(known)} known compatibility differences, {len(unexpected)} unexpected differences")
 if unexpected or missing:
     print(json.dumps(report, indent=2))
     sys.exit(1)

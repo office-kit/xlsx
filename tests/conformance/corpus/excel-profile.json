@@ -1,0 +1,15 @@
+{
+  "profile": "excel-semantic-smoke-v1",
+  "cases": [
+    "shared-formula-qualified-name",
+    "rich-text-inline",
+    "rich-text-shared",
+    "defined-name-quoted",
+    "defined-name-scoped",
+    "date-1900-1904-01-02",
+    "date-1900-2024-02-29",
+    "date-1904-1904-01-02",
+    "date-1904-2024-02-29"
+  ],
+  "scope": "Native desktop open without repair, Save As, independent value/style/name/epoch comparison. Formula evaluation and full OOXML conformance are outside this profile."
+}

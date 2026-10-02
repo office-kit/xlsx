@@ -1,0 +1,72 @@
+{
+  "profile": "excel-semantic-smoke-v1",
+  "application": "Microsoft Excel",
+  "version": "16.113.3 (16.113.26092714)",
+  "platform": "darwin",
+  "method": "native-ui-manual",
+  "cases": [
+    {
+      "id": "shared-formula-qualified-name",
+      "openedWithoutRepair": true,
+      "observedAt": "2026-10-02T05:22:10.872780+00:00",
+      "inputSha256": "f58b07229789c1331a725faa8de15bc817f5e3b14c11040ba3e96162503a9203",
+      "outputSha256": "8d3dcf3b02e63136262acaf38d11f68fde1a8c0d904d9bac65a8c15605bfd1d5"
+    },
+    {
+      "id": "rich-text-inline",
+      "openedWithoutRepair": true,
+      "observedAt": "2026-10-02T05:24:06.375860+00:00",
+      "inputSha256": "9afee622d897e9b232c9ae7930ddb203a52e0fa2b4da50c138fa2b11f011ee95",
+      "outputSha256": "d9c9e59806cd620fde5568266ed9555887027b83106cef81e979a932ee34a6e8"
+    },
+    {
+      "id": "rich-text-shared",
+      "openedWithoutRepair": true,
+      "observedAt": "2026-10-02T05:22:10.873615+00:00",
+      "inputSha256": "c6ed08d0dfec476083eaa805bbdfd8b9045be707ec4dac10a0fee6967af77568",
+      "outputSha256": "020f77333d9aa7b5398d1f0d9813c57e93f9c3b96c77f609b5cd584878754c47"
+    },
+    {
+      "id": "defined-name-quoted",
+      "openedWithoutRepair": true,
+      "observedAt": "2026-10-02T05:24:40.772837+00:00",
+      "inputSha256": "4df19135a84dcb1603f7c111387b7ff9b26a6a5011f1144f553ed42b8a552b4d",
+      "outputSha256": "26fa06312626771832821e931017b39d53ae995c87c21abd622e3edebf549aa1"
+    },
+    {
+      "id": "defined-name-scoped",
+      "openedWithoutRepair": true,
+      "observedAt": "2026-10-02T05:33:12.747350+00:00",
+      "inputSha256": "5c111703ebbbb5f62bbc20c87b43cf9e7a1cec97793e3b8495fb0032f2ce5271",
+      "outputSha256": "e3af7b5458a315838973e2004a702231180166dd663c37e8a3262337e85f92cd"
+    },
+    {
+      "id": "date-1900-1904-01-02",
+      "openedWithoutRepair": true,
+      "observedAt": "2026-10-02T05:45:21.237942+00:00",
+      "inputSha256": "e57e7e8a31df5b23d729a483dfe7de8364221ee77518049356709ee2b84a563f",
+      "outputSha256": "41bf6101deaa0d57efb534181b131773e32a23e78361596b235a80d4bef37728"
+    },
+    {
+      "id": "date-1900-2024-02-29",
+      "openedWithoutRepair": true,
+      "observedAt": "2026-10-02T05:45:29.858477+00:00",
+      "inputSha256": "80eee644f1bf6366656ec8d4cf4d125c08bbe2afe197173410b3b5c5ae0f9b4c",
+      "outputSha256": "43c0949bda110e413bf9da7e96759fbad4e371b8f37709861f4bd4febd6370f6"
+    },
+    {
+      "id": "date-1904-1904-01-02",
+      "openedWithoutRepair": true,
+      "observedAt": "2026-10-02T05:46:22.553950+00:00",
+      "inputSha256": "403cee284ca2eb855a62d63fcae65f0842ba7bc7a020e404acdf9a76262a5f78",
+      "outputSha256": "af9bc2d4e9d14e6d5d749e79d46826e8377756e59e43e6c690a0f287a8430d2e"
+    },
+    {
+      "id": "date-1904-2024-02-29",
+      "openedWithoutRepair": true,
+      "observedAt": "2026-10-02T05:46:31.062097+00:00",
+      "inputSha256": "193a6d2cc12fcbce1164424332d11d7c9a62763d30bfbe4e5c52455169e7e57d",
+      "outputSha256": "ccc021f28aa9d1f4caaca53c223d4d5297b04680da37a0e155d992840231d1ea"
+    }
+  ]
+}
