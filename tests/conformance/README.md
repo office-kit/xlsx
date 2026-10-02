@@ -326,6 +326,19 @@ checks local name ownership, active tabs, numeric cells, formula caches, and
 unique table identifiers. Formula expressions remain verbatim: automatic
 rewriting of renamed/deleted sheet references is outside this API contract.
 
+PR CI retains the fixed 30-run, 10-operation regression seed. Nightly CI also
+explores 250 sequences of up to 50 operations with its run number as the seed.
+Failures are shrunk and retained as `.qa/sheet-operations-counterexample.json`
+with the operation list, seed and shrink path; these are evidence for adding a
+small permanent regression, not an automatically approved corpus case.
+Replay the same generator and bounds with:
+
+```sh
+QA_EDIT_RUNS=250 QA_EDIT_SEED=123 QA_EDIT_MAX_OPERATIONS=50 QA_EDIT_PATH='0:1' pnpm exec vitest run tests/conformance/sheet-operations.test.ts
+```
+
+Use the recorded seed/path/maxOperations rather than the illustrative values.
+
 ## Public loader resource contract
 
 `loader-boundaries.test.ts` exercises both public loaders through buffered and

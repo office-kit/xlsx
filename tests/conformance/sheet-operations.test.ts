@@ -1,4 +1,5 @@
 import fc from 'fast-check';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { strFromU8, unzipSync } from 'fflate';
 import { expect, it } from 'vitest';
 import { workbookToBytes } from '../../src/io/save.js';
@@ -29,10 +30,15 @@ it('keeps local names and active sheet attached through move, swap, insert and r
 });
 
 it('generated editing sequences preserve independently tracked names, cells and table uniqueness', async () => {
-  await fc.assert(fc.asyncProperty(fc.array(fc.record({
+  const numRuns = Number(process.env['QA_EDIT_RUNS'] ?? 30);
+  const seed = Number(process.env['QA_EDIT_SEED'] ?? 376194);
+  const maxLength = Number(process.env['QA_EDIT_MAX_OPERATIONS'] ?? 10);
+  if (!Number.isSafeInteger(numRuns) || numRuns < 1 || !Number.isSafeInteger(seed) || !Number.isSafeInteger(maxLength) || maxLength < 1 || maxLength > 100) throw new Error('Invalid editing fuzz configuration');
+  console.info(`sheet operations: seed=${seed}, runs=${numRuns}, maxOperations=${maxLength}`);
+  const result = await fc.check(fc.asyncProperty(fc.array(fc.record({
     kind: fc.constantFrom('move', 'swap', 'rename', 'copy', 'remove'),
     first: fc.nat(20), second: fc.nat(20),
-  }), { minLength: 1, maxLength: 10 }), async operations => {
+  }), { minLength: 1, maxLength }), async operations => {
     const wb = createWorkbook();
     const expected: Array<{ title: string; value: number }> = [];
     for (let i = 0; i < 3; i++) {
@@ -87,5 +93,11 @@ it('generated editing sequences preserve independently tracked names, cells and 
       expect((await validateXlsx(await workbookToBytes(wb), { skipXsd: true })).issues).toEqual([]);
     }
     expect((await validateXlsx(await workbookToBytes(wb))).issues).toEqual([]);
-  }), { seed: 376194, numRuns: 30 });
-}, 60_000);
+  }), { seed, numRuns, ...(process.env['QA_EDIT_PATH'] ? { path: process.env['QA_EDIT_PATH'] } : {}) });
+  if (result.failed) {
+    mkdirSync('.qa', { recursive: true });
+    const replay = { seed: result.seed, path: result.counterexamplePath, maxOperations: maxLength, operations: result.counterexample?.[0] };
+    writeFileSync('.qa/sheet-operations-counterexample.json', JSON.stringify(replay, null, 2));
+    throw new Error(`Editing sequence failed: ${JSON.stringify(replay)}`, { cause: result.errorInstance });
+  }
+}, process.env['QA_EDIT_RUNS'] ? 600_000 : 60_000);
