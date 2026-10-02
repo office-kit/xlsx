@@ -2,7 +2,7 @@
 //
 // Font is the most varied of the styles slots — most fields are nested
 // elements with a single `val` attribute (`<sz val="11"/>`), the boolean
-// toggles (`<b/>`, `<i/>`, ...) are presence-only marker tags, and
+// toggles (`<b/>`, `<i/>`, ...) carry an optional boolean `val` (default true), and
 // `<color>` is a fully nested object element. The schema layer carries
 // each pattern as its own ElementDef kind.
 

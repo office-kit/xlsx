@@ -87,7 +87,8 @@ export type ElementDef =
   | {
       /**
        * Empty marker element — `<key/>` whose presence sets `T[key] = true`,
-       * absence leaves it `undefined`. Used by Font's `<b/>`, `<i/>`, etc.
+       * absence leaves it `undefined`. Elements with a boolean `val` attribute
+       * use `nested` instead so explicit false values survive.
        */
       kind: 'empty';
       key: string;

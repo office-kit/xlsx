@@ -100,15 +100,13 @@ describe('FontSchema XML round-trip', () => {
     );
     expect(xml).toContain('<name val="Arial"/>');
     expect(xml).toContain('<sz val="12"/>');
-    expect(xml).toContain('<b/>');
+    expect(xml).toContain('<b val="1"/>');
   });
 
-  it('does not emit empty markers when the value is false or absent', () => {
-    // italic is omitted entirely; bold is present-as-false. Both must
-    // round-trip to "no marker" output.
+  it('preserves explicit false and omits absent toggles', () => {
     const xml = new TextDecoder().decode(serializeXml(toTree(makeFont({ name: 'Arial', bold: false }), FontSchema)));
-    expect(xml).not.toContain('<b/>');
-    expect(xml).not.toContain('<i/>');
+    expect(xml).toContain('<b val="0"/>');
+    expect(xml).not.toContain('<i');
   });
 
   it('parses openpyxl-style XML with mixed attrs / empty markers', () => {

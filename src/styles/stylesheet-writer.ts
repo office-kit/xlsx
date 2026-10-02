@@ -142,14 +142,14 @@ const cellXfToTree = (xf: CellXf): XmlNode => {
     borderId: String(xf.borderId),
   };
   if (xf.xfId !== undefined) attrs['xfId'] = String(xf.xfId);
-  if (xf.applyFont) attrs['applyFont'] = '1';
-  if (xf.applyFill) attrs['applyFill'] = '1';
-  if (xf.applyBorder) attrs['applyBorder'] = '1';
-  if (xf.applyNumberFormat) attrs['applyNumberFormat'] = '1';
-  if (xf.applyAlignment) attrs['applyAlignment'] = '1';
-  if (xf.applyProtection) attrs['applyProtection'] = '1';
-  if (xf.pivotButton) attrs['pivotButton'] = '1';
-  if (xf.quotePrefix) attrs['quotePrefix'] = '1';
+  if (xf.applyFont !== undefined) attrs['applyFont'] = xf.applyFont ? '1' : '0';
+  if (xf.applyFill !== undefined) attrs['applyFill'] = xf.applyFill ? '1' : '0';
+  if (xf.applyBorder !== undefined) attrs['applyBorder'] = xf.applyBorder ? '1' : '0';
+  if (xf.applyNumberFormat !== undefined) attrs['applyNumberFormat'] = xf.applyNumberFormat ? '1' : '0';
+  if (xf.applyAlignment !== undefined) attrs['applyAlignment'] = xf.applyAlignment ? '1' : '0';
+  if (xf.applyProtection !== undefined) attrs['applyProtection'] = xf.applyProtection ? '1' : '0';
+  if (xf.pivotButton !== undefined) attrs['pivotButton'] = xf.pivotButton ? '1' : '0';
+  if (xf.quotePrefix !== undefined) attrs['quotePrefix'] = xf.quotePrefix ? '1' : '0';
   const node = el(XF_TAG, attrs);
   if (xf.alignment) node.children.push(toTree(xf.alignment, AlignmentSchema));
   if (xf.protection) node.children.push(toTree(xf.protection, ProtectionSchema));
