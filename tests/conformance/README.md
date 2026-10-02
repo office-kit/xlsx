@@ -317,3 +317,11 @@ and observations. The inventory checks metadata, not test execution or a human
 observation; the referenced CI/manual gates supply that separate evidence.
 Adding a corpus case requires an explicit requirement assignment. No count in
 this inventory is a percentage of OOXML conformance.
+
+## Editing sequences
+
+`sheet-operations.test.ts` compares generated move/swap/rename/copy/remove
+sequences against an independent tab/name model and inspects saved XML. It
+checks local name ownership, active tabs, numeric cells, formula caches, and
+unique table identifiers. Formula expressions remain verbatim: automatic
+rewriting of renamed/deleted sheet references is outside this API contract.
