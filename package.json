@@ -130,6 +130,7 @@
     "qa:excel-features": "node scripts/qa-excel-features.mjs",
     "qa:feature-interactions": "node scripts/qa-feature-interactions.mjs",
     "qa:native-excel": "node scripts/qa-native-excel.mjs",
+    "qa:render": "node scripts/qa-render.mjs",
     "qa:resources": "node scripts/qa-resources.mjs",
     "qa:resources-calibration": "node --test scripts/qa-resources.test.mjs",
     "check:api": "node scripts/check-api.mjs",

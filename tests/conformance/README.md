@@ -443,3 +443,24 @@ reopening also checks that edits remain on the correct sheet. Single-fault
 controls must detect changed formulas/orientation and a drawing attached to the
 wrong sheet. This is a bounded combination, not every rule/chart/table feature,
 copy/rename formula rewriting, rendering or pagination.
+
+## Same-environment PDF and raster comparison
+
+`pnpm qa:render` requires LibreOffice Calc, Liberation Sans, Python 3, xmllint and Poppler
+(pdfinfo/pdffonts/pdftotext/pdftoppm). Set `SOFFICE` to a nonstandard executable;
+`QA_RENDER_FONT` can name its exact Liberation Sans file. CI runs on Ubuntu 24.04.
+The hand-assembled input specifies a font, row height, print area, orientation,
+pie sector colors and an attached PNG. OPC/XSD validates input and library output.
+Five fresh LibreOffice profiles render input, saved output and three single-fault
+controls. Page counts, extracted text and every 96-DPI raster pixel must match
+between input and output; orientation changes, detached drawings and chart color
+changes must be detected. Both pie sector colors must actually be visible, and
+the color control must preserve extracted text while changing pixels.
+
+Reports retain exact software versions, font hash, input/PDF/raster hashes,
+conversion logs, PDFs and preview PNGs under `.qa/render` (CI artifacts: seven days).
+The CLI clears its output before each run and failures retain partial diagnostics.
+This is one explicit one-page print layout compared within the same environment,
+not a cross-version golden image, general pagination guarantee, unspecified font
+or row-height default equivalence, or Excel rendering equivalence. The existing
+native Excel profile checks application compatibility separately.

@@ -241,6 +241,27 @@
           "anchor": "runIsolated"
         }
       ]
+    },
+    {
+      "id": "libreoffice-render",
+      "subject": "consumer",
+      "execution": "ci",
+      "runtimes": [
+        "LibreOffice Calc / Poppler on Ubuntu 24.04; versions recorded per run"
+      ],
+      "adapters": [
+        "PDF export with fresh profiles; 96 DPI PPM; Liberation Sans, C.UTF-8, UTC"
+      ],
+      "evidence": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "anchor": "render-conformance:"
+        },
+        {
+          "path": "scripts/qa-render-check.py",
+          "anchor": "def equivalent"
+        }
+      ]
     }
   ],
   "requirements": [
@@ -2051,6 +2072,28 @@
         {
           "path": "scripts/qa-resources.test.mjs",
           "anchor": "heap exhaustion is a runner failure"
+        }
+      ]
+    },
+    {
+      "requirement": "visual-rendering",
+      "profile": "libreoffice-render",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "One explicit one-page print area with cell labels, visible colored pie sectors and PNG: input/output page counts, text and all raster pixels equal within the same run. Three deliberate orientation/drawing/chart-color faults must be detected. No cross-version, implicit font/row defaults or Excel pixel equivalence.",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "tests/conformance/render-roundtrip.test.ts",
+          "anchor": "prepares independently assembled print"
+        },
+        {
+          "path": "scripts/qa-render-check.py",
+          "anchor": "Expected visible pie sector is missing"
         }
       ]
     }

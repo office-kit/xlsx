@@ -438,3 +438,38 @@ Profile evidence: [.github/workflows/ci.yml](../../.github/workflows/ci.yml) (an
 Bounded claims and evidence:
 
 - **loader-resource-contract / read, reject: tested**. Ten bounded child-process cases: 8MiB inflated XML, 100000 empty rows, 100000 cells, DTD and misleading grid-wide dimension. Configured typed rejection/positive value required within 15s and 256MiB measured peak RSS, with a 128MiB V8 heap cap. Timeout, OOM, crash or missing report fails QA. Not an OS RSS limit or universal production deadline. [scripts/qa-resource-worker.mjs](../../scripts/qa-resource-worker.mjs) (anchor: 100_000); [scripts/qa-resources.test.mjs](../../scripts/qa-resources.test.mjs) (anchor: heap exhaustion is a runner failure)
+
+## libreoffice-render
+
+Subject: consumer; execution: ci. Runtime: LibreOffice Calc / Poppler on Ubuntu 24.04; versions recorded per run. Adapter: PDF export with fresh profiles; 96 DPI PPM; Liberation Sans, C.UTF-8, UTC.
+
+| Requirement | Read | Write | Preserve | Reject |
+| --- | --- | --- | --- | --- |
+| font-booleans | U | U | U | U |
+| underline | U | U | U | U |
+| border | U | U | U | U |
+| cell-booleans | U | U | U | U |
+| xml-text | U | U | U | U |
+| row-index | U | U | U | U |
+| formula-cache | U | U | U | U |
+| shared-formula | U | U | U | U |
+| rich-text | U | U | U | U |
+| defined-name | U | U | U | U |
+| dates | U | U | U | U |
+| package-structure | U | U | U | U |
+| coordinate-uri-zip32 | U | U | U | U |
+| mc-subset | U | U | U | U |
+| serialized-parts | U | U | U | U |
+| zip64-oracle | U | U | U | U |
+| strict-oracle | U | U | U | U |
+| mc-full | U | U | U | U |
+| formula-calculation | U | U | U | U |
+| visual-rendering | T | T | T | U |
+| feature-interactions | U | U | U | U |
+| loader-resource-contract | U | U | U | U |
+
+Profile evidence: [.github/workflows/ci.yml](../../.github/workflows/ci.yml) (anchor: render-conformance:); [scripts/qa-render-check.py](../../scripts/qa-render-check.py) (anchor: def equivalent)
+
+Bounded claims and evidence:
+
+- **visual-rendering / read, write, preserve: tested**. One explicit one-page print area with cell labels, visible colored pie sectors and PNG: input/output page counts, text and all raster pixels equal within the same run. Three deliberate orientation/drawing/chart-color faults must be detected. No cross-version, implicit font/row defaults or Excel pixel equivalence. [tests/conformance/render-roundtrip.test.ts](../../tests/conformance/render-roundtrip.test.ts) (anchor: prepares independently assembled print); [scripts/qa-render-check.py](../../scripts/qa-render-check.py) (anchor: Expected visible pie sector is missing)
