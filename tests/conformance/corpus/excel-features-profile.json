@@ -1,0 +1,7 @@
+{
+  "profile": "excel-features-smoke-v1",
+  "cases": [
+    "excel-table-chart-image-print"
+  ],
+  "scope": "One combined table, pie chart, PNG drawing and A4 landscape print configuration. Native desktop open without repair, Save As and independent relationship-aware projection. No rendering/pagination or full feature-family claim."
+}

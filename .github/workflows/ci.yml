@@ -188,6 +188,8 @@ jobs:
       - run: dotnet run --project tests/conformance/sdk --no-restore -- .qa/corpus
       - run: pnpm qa:office
       # Test manual evidence bookkeeping; this does not execute desktop Excel.
+      - run: pnpm qa:excel-features
+      - run: dotnet run --project tests/conformance/sdk --no-restore -- .qa/excel-feature-corpus
       - run: pnpm qa:excel-calibration
       - run: pnpm qa:mutations
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -196,6 +198,7 @@ jobs:
           name: independent-conformance
           path: |
             .qa/corpus/
+            .qa/excel-feature-corpus/
             .qa/libreoffice/results.json
             .qa/mutations/
           retention-days: 7

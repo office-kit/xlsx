@@ -294,7 +294,7 @@ locale-specific rendered text.
 
 ### Machine-readable requirement coverage
 
-[`coverage.json`](coverage.json) inventories 21 bounded requirements and eight
+[`coverage.json`](coverage.json) inventories 22 bounded requirements and nine
 profiles with subject (library/oracle/consumer), runtime, adapter, operation
 (read/write/preserve/reject), status, exact corpus cases and evidence anchors.
 [`coverage.md`](coverage.md) is generated from it. Unlisted combinations expand
@@ -312,7 +312,7 @@ pnpm qa:matrix-calibration
 CI rejects missing/duplicate corpus assignments, missing test/file anchors,
 unknown profiles/statuses, overlapping claims, incomplete tested case sets,
 Windows marked tested without an available runner, and Mac claims outside the
-recorded nine-case profile. Calibration supplies deliberately false inventories
+recorded bounded profiles. Calibration supplies deliberately false inventories
 and observations. The inventory checks metadata, not test execution or a human
 observation; the referenced CI/manual gates supply that separate evidence.
 Adding a corpus case requires an explicit requirement assignment. No count in
@@ -352,3 +352,35 @@ which this normative XSD rejects. Tests retain those original bytes and record
 the precise discrepancy; tolerant production reading is a different contract.
 Schema validity alone does not establish formula calculation, visual fidelity
 or support for every Strict feature.
+
+## Mac Excel feature profile
+
+A separate, independently assembled fixture combines a filtered table, cached
+pie chart, PNG image and print settings. After an unrelated cell edit, CI checks
+both packages against XSD/OPC rules and the saved package with Open XML SDK.
+It also calibrates the independent Python comparison with deliberately detached
+relationships, changed chart/table references, moved anchors, changed image
+bytes and changed print settings. These synthetic controls do not execute Excel.
+
+```sh
+pnpm qa:excel-features
+pnpm qa:excel --prepare /tmp/excel-features-new-session --features
+# Open the one file in input/ in desktop Excel without accepting any repair.
+# Save As the same basename into output/, then CLOSE the workbook.
+# Record the actual version, no-repair observation, UTC time and saved SHA256
+# in observations.json, as for the cell profile above.
+pnpm qa:excel --check /tmp/excel-features-new-session --features
+```
+
+Use a fresh directory and retain the input file. Closing the workbook removes
+Excel's temporary lock file; an unexpected XLSX in output/ is rejected.
+The comparator follows attached relationships rather than accepting orphan
+parts. It checks table range/header/filter, pie category/value references and
+caches, exact image bytes, cell anchors and stored page setup/margins/centering.
+Omitted fit-width/height values use the official CT_PageSetup default of 1;
+changing a nondefault value still fails. The feature manifest and
+`excel-features-mac-observation.json` pin this one-case profile and an actual
+Mac Excel 16.113.3 Open / Save As observation with no repair and a passing
+independent comparison. The evidence matrix keeps it separate from the
+nine-case cell profile. This does not establish all table/chart/image features,
+rendered geometry, actual pagination, or Windows Excel compatibility.

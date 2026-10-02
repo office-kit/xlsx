@@ -1,5 +1,7 @@
 """Check a canonical semantic projection using Python stdlib only."""
+import hashlib
 import json
+import posixpath
 import pathlib
 import sys
 import xml.etree.ElementTree as ET
@@ -13,6 +15,69 @@ results = []
 failures = []
 def check(actual, expected, context):
     if actual != expected: failures.append((context, actual, expected))
+def features(package):
+    # Follow relationships from the workbook; orphan parts cannot satisfy a claim.
+    r = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+    n = {'s': ns['s'], 'c': 'http://schemas.openxmlformats.org/drawingml/2006/chart',
+         'a': 'http://schemas.openxmlformats.org/drawingml/2006/main',
+         'x': 'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing'}
+    def xml(path): return ET.fromstring(package.read(path))
+    def target(path, identifier, kind):
+        relpath = posixpath.join(posixpath.dirname(path), '_rels', posixpath.basename(path) + '.rels')
+        rel = next(node for node in xml(relpath) if node.get('Id') == identifier)
+        if rel.get('Type') != r + '/' + kind or rel.get('TargetMode') == 'External':
+            raise ValueError('Wrong feature relationship type/mode')
+        to = rel.get('Target')
+        return posixpath.normpath(to[1:] if to.startswith('/') else posixpath.join(posixpath.dirname(path), to))
+    workbook = xml('xl/workbook.xml')
+    sheet_ref = workbook.find('s:sheets/s:sheet', n)
+    path = target('xl/workbook.xml', sheet_ref.get('{' + r + '}id'), 'worksheet')
+    sheet = xml(path)
+    tables, charts, images, anchors = [], [], [], []
+    for link in sheet.findall('s:tableParts/s:tablePart', n):
+        table = xml(target(path, link.get('{' + r + '}id'), 'table'))
+        tables.append({'name': table.get('name'), 'ref': table.get('ref'),
+                       'columns': [col.get('name') for col in table.findall('s:tableColumns/s:tableColumn', n)],
+                       'autoFilter': table.find('s:autoFilter', n).get('ref') if table.find('s:autoFilter', n) is not None else None})
+    drawing_link = sheet.find('s:drawing', n)
+    if drawing_link is not None:
+        drawing_path = target(path, drawing_link.get('{' + r + '}id'), 'drawing')
+        drawing = xml(drawing_path)
+        for anchor in drawing:
+            chart_link = anchor.find('.//c:chart', n)
+            image_link = anchor.find('.//a:blip', n)
+            if chart_link is None and image_link is None: continue
+            def marker(tag, coordinate):
+                node = anchor.find('x:' + tag + '/x:' + coordinate, n)
+                return int(node.text) if node is not None else None
+            anchors.append(['chart' if chart_link is not None else 'image', marker('from', 'col'), marker('from', 'row'), marker('to', 'col'), marker('to', 'row')])
+            if chart_link is not None:
+                chart = xml(target(drawing_path, chart_link.get('{' + r + '}id'), 'chart'))
+                plot = chart.find('c:chart/c:plotArea', n)
+                kinds = [node for node in plot if node.tag.endswith('Chart')]
+                for kind in kinds:
+                    for ser in kind.findall('c:ser', n):
+                        def text(query):
+                            node = ser.find(query, n)
+                            return node.text if node is not None else None
+                        charts.append({'type': kind.tag.split('}')[1], 'valueRef': text('c:val/c:numRef/c:f'),
+                                       'categoryRef': text('c:cat/c:strRef/c:f'),
+                                       'values': [float(node.text) for node in ser.findall('c:val/c:numRef/c:numCache/c:pt/c:v', n)],
+                                       'categories': [node.text for node in ser.findall('c:cat/c:strRef/c:strCache/c:pt/c:v', n)]})
+            if image_link is not None:
+                image = package.read(target(drawing_path, image_link.get('{' + r + '}embed'), 'image'))
+                images.append(hashlib.sha256(image).hexdigest())
+    def attributes(tag, keys, convert=str):
+        node = sheet.find('s:' + tag, n)
+        return {key: convert(node.get(key)) for key in keys if node is not None and node.get(key) is not None}
+    page_setup = attributes('pageSetup', ('paperSize', 'orientation', 'fitToWidth', 'fitToHeight'))
+    # ECMA-376 CT_PageSetup defaults: Excel may omit an explicit value of 1.
+    if sheet.find('s:pageSetup', n) is not None:
+        for key in ('fitToWidth', 'fitToHeight'): page_setup.setdefault(key, '1')
+    return {'tables': tables, 'charts': charts, 'images': images, 'anchors': anchors,
+            'pageSetup': page_setup,
+            'pageMargins': attributes('pageMargins', ('left', 'right', 'top', 'bottom', 'header', 'footer'), float),
+            'printOptions': attributes('printOptions', ('horizontalCentered',))}
 for case in json.loads((source / 'manifest.json').read_text()):
     with zipfile.ZipFile(output / (case['id'] + '.output.xlsx')) as package:
         sheet = ET.fromstring(package.read('xl/worksheets/sheet1.xml'))
@@ -31,6 +96,7 @@ for case in json.loads((source / 'manifest.json').read_text()):
                 return v.text in ('1', 'true')
             if kind in (None, 'n') and v is not None and v.text is not None: return float(v.text)
             return v.text if v is not None else None
+        if 'expectedFeatures' in case: check(features(package), case['expectedFeatures'], case['id'] + ':features')
         actual = value(cells['A1'])
         expected = case.get('officeValue', case.get('expectedValue', 'audit'))
         check(actual, expected, case['id'])

@@ -1,0 +1,16 @@
+{
+  "profile": "excel-features-smoke-v1",
+  "application": "Microsoft Excel",
+  "version": "16.113.3 (16.113.26092714)",
+  "platform": "macOS",
+  "method": "native-ui-manual",
+  "cases": [
+    {
+      "id": "excel-table-chart-image-print",
+      "openedWithoutRepair": true,
+      "observedAt": "2026-10-02T07:17:20.661208+00:00",
+      "inputSha256": "0b51023bd5c4ceded73e4ab846a7d4a19883c1d6e87d99ba8d7d0a6478404b03",
+      "outputSha256": "7f64df0c29480af68dbb0ebaa72d0b11bb8c16b3ebaa70548a3c6dc7dfe06acc"
+    }
+  ]
+}
