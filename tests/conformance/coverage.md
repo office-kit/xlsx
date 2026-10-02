@@ -60,7 +60,7 @@ Subject: library; execution: ci. Runtime: Node 22/24/26 × Linux/macOS/Windows. 
 | mc-full | U | U | U | U |
 | formula-calculation | U | U | U | U |
 | visual-rendering | U | U | U | U |
-| feature-interactions | U | U | U | U |
+| feature-interactions | U | U | T | U |
 
 Profile evidence: [.github/workflows/ci.yml](../../.github/workflows/ci.yml) (anchor: pnpm test); [tests/conformance/corpus.test.ts](../../tests/conformance/corpus.test.ts) (anchor: normative corpus: independent expected semantics)
 
@@ -78,6 +78,7 @@ Bounded claims and evidence:
 - **defined-name / read, write, preserve: tested** (2 selected cases). Expected model before and after B2 edit; independent saved-package validation. [tests/conformance/corpus.test.ts](../../tests/conformance/corpus.test.ts) (anchor: normative corpus: independent expected semantics)
 - **dates / read, write, preserve: tested** (4 selected cases). Expected model before and after B2 edit; independent saved-package validation. [tests/conformance/corpus.test.ts](../../tests/conformance/corpus.test.ts) (anchor: normative corpus: independent expected semantics)
 - **serialized-parts / preserve: tested**. Three pinned openpyxl fixtures and hand-authored extensions. Comment-sheet regenerated VML, arbitrary custom parts and all unselected parts are outside this contract. [tests/conformance/preservation.test.ts](../../tests/conformance/preservation.test.ts) (anchor: preserves bytes, content types, graph and XML bindings); [tests/conformance/preservation.test.ts](../../tests/conformance/preservation.test.ts) (anchor: preserves unknown extension subtrees and explicit empty style pools); [tests/conformance/preservation.test.ts](../../tests/conformance/preservation.test.ts) (anchor: calibrates missing binary, changed content type, graph target)
+- **feature-interactions / preserve: tested**. Seeded sheet editing sequences: local name ownership, active tab, saved cells/formula caches and unique copied table identifiers. Expressions are retained verbatim. [tests/conformance/sheet-operations.test.ts](../../tests/conformance/sheet-operations.test.ts) (anchor: generated editing sequences preserve independently tracked names, cells and table uniqueness)
 
 ## node-stream
 

@@ -1887,6 +1887,22 @@
           "anchor": "consumer profile"
         }
       ]
+    },
+    {
+      "requirement": "feature-interactions",
+      "profile": "node-model",
+      "status": "tested",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "tests/conformance/sheet-operations.test.ts",
+          "anchor": "generated editing sequences preserve independently tracked names, cells and table uniqueness"
+        }
+      ],
+      "scope": "Seeded sheet editing sequences: local name ownership, active tab, saved cells/formula caches and unique copied table identifiers. Expressions are retained verbatim.",
+      "operations": [
+        "preserve"
+      ]
     }
   ]
 }

@@ -391,15 +391,31 @@ export function sheetNames(wb: Workbook): string[] {
   return wb.sheets.map((s) => s.sheet.title);
 }
 
-/** Remove a sheet by title. No-op if the title is not registered. */
+// localSheetId is a tab index, not sheetId. Preserve ownership whenever the
+// tab array changes, including chartsheets that count toward those indices.
+function remapSheetIndices(wb: Workbook, previous: SheetRef[], activeIndex: number): void {
+  const positions = new Map(wb.sheets.map((ref, index) => [ref.sheetId, index]));
+  wb.definedNames = wb.definedNames.filter(name => {
+    if (name.scope === undefined) return true;
+    const owner = previous[name.scope];
+    const next = owner === undefined ? undefined : positions.get(owner.sheetId);
+    if (next === undefined) return false;
+    name.scope = next;
+    return true;
+  });
+  const active = previous[activeIndex];
+  wb.activeSheetIndex = (active === undefined ? undefined : positions.get(active.sheetId))
+    ?? Math.max(0, Math.min(activeIndex, wb.sheets.length - 1));
+}
+
+/** Remove a sheet and its local defined names; reindex surviving scopes. No-op for an unknown title. Formula text is not rewritten. */
 export function removeSheet(wb: Workbook, title: string): void {
   const i = wb.sheets.findIndex((s) => s.sheet.title === title);
   if (i < 0) return;
+  const previous = wb.sheets.slice();
+  const active = wb.activeSheetIndex;
   wb.sheets.splice(i, 1);
-  // Clamp activeSheetIndex within bounds.
-  if (wb.activeSheetIndex >= wb.sheets.length) {
-    wb.activeSheetIndex = Math.max(0, wb.sheets.length - 1);
-  }
+  remapSheetIndices(wb, previous, active);
 }
 
 /** Set the active sheet by title; throws on unknown title. */
@@ -412,7 +428,8 @@ export function setActiveSheet(wb: Workbook, title: string): void {
 /**
  * Rename a sheet from `oldTitle` to `newTitle`. Throws if no sheet matches
  * `oldTitle`, or if `newTitle` collides with an existing sheet (Excel requires
- * sheet names to be unique within a workbook).
+ * sheet names to be unique within a workbook). Formula text and defined-name
+ * expressions are retained verbatim; callers must update sheet references.
  */
 export function renameSheet(wb: Workbook, oldTitle: string, newTitle: string): void {
   const i = wb.sheets.findIndex((s) => s.sheet.title === oldTitle);
@@ -522,18 +539,11 @@ export function moveSheet(wb: Workbook, title: string, toIndex: number): void {
   }
   const dest = Math.max(0, Math.min(wb.sheets.length - 1, toIndex));
   if (from === dest) return;
-  const wasActive = wb.activeSheetIndex === from;
+  const previous = wb.sheets.slice();
+  const active = wb.activeSheetIndex;
   const [moved] = wb.sheets.splice(from, 1);
   if (moved) wb.sheets.splice(dest, 0, moved);
-  if (wasActive) {
-    wb.activeSheetIndex = dest;
-  } else {
-    // Re-index activeSheetIndex if the move shifted it.
-    let cur = wb.activeSheetIndex;
-    if (from < cur) cur -= 1;
-    if (dest <= cur) cur += 1;
-    wb.activeSheetIndex = Math.max(0, Math.min(wb.sheets.length - 1, cur));
-  }
+  remapSheetIndices(wb, previous, active);
 }
 
 /**
@@ -550,10 +560,11 @@ export function swapSheets(wb: Workbook, titleA: string, titleB: string): void {
   const a = wb.sheets[i];
   const b = wb.sheets[j];
   if (!a || !b) return;
+  const previous = wb.sheets.slice();
+  const active = wb.activeSheetIndex;
   wb.sheets[i] = b;
   wb.sheets[j] = a;
-  if (wb.activeSheetIndex === i) wb.activeSheetIndex = j;
-  else if (wb.activeSheetIndex === j) wb.activeSheetIndex = i;
+  remapSheetIndices(wb, previous, active);
 }
 
 /**
@@ -570,6 +581,8 @@ export function swapSheets(wb: Workbook, titleA: string, titleB: string): void {
  * (default `"_2"`) so it doesn't collide with the original
  *
  * The new sheet is inserted at the optional `index` (default: appended).
+ * Local defined names are copied; existing scopes and the active tab follow
+ * their original sheets. Formula and name expressions remain verbatim.
  */
 export function duplicateSheet(
   wb: Workbook,
@@ -607,7 +620,7 @@ export function duplicateSheet(
       n += 1;
     }
     t.displayName = candidate;
-    if (t.name === undefined) t.name = candidate;
+    t.name = candidate;
     usedDisplayNames.add(candidate);
   }
 
@@ -617,14 +630,17 @@ export function duplicateSheet(
     sheetId: allocateSheetId(wb),
     state: opts.state ?? 'visible',
   };
-  if (opts.index === undefined) {
-    wb.sheets.push(ref);
-  } else {
-    if (opts.index < 0 || opts.index > wb.sheets.length) {
-      throw new OpenXmlSchemaError(`duplicateSheet: index ${opts.index} out of range`);
-    }
-    wb.sheets.splice(opts.index, 0, ref);
+  const index = opts.index ?? wb.sheets.length;
+  if (!Number.isInteger(index) || index < 0 || index > wb.sheets.length) {
+    throw new OpenXmlSchemaError(`duplicateSheet: index ${index} out of range`);
   }
+  const previous = wb.sheets.slice();
+  const active = wb.activeSheetIndex;
+  const sourceIndex = previous.indexOf(sourceRef);
+  const localNames = wb.definedNames.filter(name => name.scope === sourceIndex).map(name => Object.assign({}, name, { scope: index }));
+  wb.sheets.splice(index, 0, ref);
+  remapSheetIndices(wb, previous, active);
+  wb.definedNames.push(...localNames);
   return cloned;
 }
 
