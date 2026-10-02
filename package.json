@@ -124,7 +124,9 @@
     "qa:mutations": "node scripts/qa-mutations.mjs",
     "qa:excel": "node scripts/qa-excel.mjs",
     "qa:office": "node scripts/qa-office.mjs",
-    "qa:excel-calibration": "node --test scripts/qa-excel.test.mjs"
+    "qa:excel-calibration": "node --test scripts/qa-excel.test.mjs",
+    "qa:matrix": "node scripts/qa-matrix.mjs",
+    "qa:matrix-calibration": "node --test scripts/qa-matrix.test.mjs"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

@@ -1,0 +1,1892 @@
+{
+  "formatVersion": 1,
+  "scope": "Bounded quality evidence, not OOXML certification or a library capability declaration. Unsupported means outside the named QA profile. Untested is the default for every unlisted requirement \u00d7 operation \u00d7 profile combination. Tested means bounded assertions exist, not all inputs work.",
+  "defaultStatus": "untested",
+  "operations": [
+    "read",
+    "write",
+    "preserve",
+    "reject"
+  ],
+  "profiles": [
+    {
+      "id": "node-model",
+      "subject": "library",
+      "execution": "ci",
+      "runtimes": [
+        "Node 22/24/26 \u00d7 Linux/macOS/Windows"
+      ],
+      "adapters": [
+        "fromBuffer"
+      ],
+      "evidence": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "anchor": "pnpm test"
+        },
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "normative corpus: independent expected semantics"
+        }
+      ]
+    },
+    {
+      "id": "node-stream",
+      "subject": "library",
+      "execution": "ci",
+      "runtimes": [
+        "Node 22/24/26 \u00d7 Linux/macOS/Windows"
+      ],
+      "adapters": [
+        "fromStream (7-byte chunks)"
+      ],
+      "evidence": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "anchor": "pnpm test"
+        },
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "id": "browser-model",
+      "subject": "library",
+      "execution": "ci",
+      "runtimes": [
+        "Chromium",
+        "Firefox",
+        "WebKit"
+      ],
+      "adapters": [
+        "arrayBuffer",
+        "blob",
+        "response",
+        "stream"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/output-setup.ts",
+          "anchor": "['chromium', 'firefox', 'webkit']"
+        },
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "anchor": "pnpm test:browser"
+        }
+      ]
+    },
+    {
+      "id": "browser-stream",
+      "subject": "library",
+      "execution": "ci",
+      "runtimes": [
+        "Chromium",
+        "Firefox",
+        "WebKit"
+      ],
+      "adapters": [
+        "arrayBuffer",
+        "blob",
+        "response",
+        "stream"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "expectedStreamValues"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "anchor": "pnpm test:browser"
+        }
+      ]
+    },
+    {
+      "id": "independent-oracles",
+      "subject": "oracle",
+      "execution": "ci",
+      "runtimes": [
+        "libxml2",
+        "Open XML SDK Office2016",
+        "fflate/saxes"
+      ],
+      "adapters": [
+        "ZIP32 corpus inputs",
+        "Node outputs",
+        "browser outputs (SDK/XSD)"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/validate.ts",
+          "anchor": "validateXlsx"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "anchor": "dotnet run --project tests/conformance/sdk"
+        }
+      ]
+    },
+    {
+      "id": "libreoffice",
+      "subject": "consumer",
+      "execution": "ci",
+      "runtimes": [
+        "LibreOffice Calc headless + Python"
+      ],
+      "adapters": [
+        "library-saved corpus XLSX"
+      ],
+      "evidence": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "anchor": "pnpm qa:office"
+        },
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "known-compatibility-difference"
+        }
+      ]
+    },
+    {
+      "id": "excel-mac",
+      "subject": "consumer",
+      "execution": "manual",
+      "runtimes": [
+        "Excel for Mac 16.113.3 (16.113.26092714)"
+      ],
+      "adapters": [
+        "native UI Open / Save As"
+      ],
+      "caseLimit": "tests/conformance/corpus/excel-profile.json",
+      "observation": "tests/conformance/corpus/excel-mac-observation.json",
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus/excel-mac-observation.json",
+          "anchor": "native-ui-manual"
+        },
+        {
+          "path": "scripts/qa-excel.mjs",
+          "anchor": "Independent Excel comparison failed"
+        }
+      ]
+    },
+    {
+      "id": "excel-windows",
+      "subject": "consumer",
+      "execution": "unavailable",
+      "runtimes": [
+        "Windows desktop Excel (no licensed runner)"
+      ],
+      "adapters": [
+        "native Open / Save As"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/README.md",
+          "anchor": "No licensed Windows self-hosted runner"
+        }
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "font-booleans",
+      "clauses": [
+        "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty"
+      ],
+      "contract": "Seven font boolean properties, six presence/lexical variants each.",
+      "caseIds": [
+        "font-b-absent",
+        "font-b-default",
+        "font-b-0",
+        "font-b-1",
+        "font-b-false",
+        "font-b-true",
+        "font-i-absent",
+        "font-i-default",
+        "font-i-0",
+        "font-i-1",
+        "font-i-false",
+        "font-i-true",
+        "font-strike-absent",
+        "font-strike-default",
+        "font-strike-0",
+        "font-strike-1",
+        "font-strike-false",
+        "font-strike-true",
+        "font-outline-absent",
+        "font-outline-default",
+        "font-outline-0",
+        "font-outline-1",
+        "font-outline-false",
+        "font-outline-true",
+        "font-shadow-absent",
+        "font-shadow-default",
+        "font-shadow-0",
+        "font-shadow-1",
+        "font-shadow-false",
+        "font-shadow-true",
+        "font-condense-absent",
+        "font-condense-default",
+        "font-condense-0",
+        "font-condense-1",
+        "font-condense-false",
+        "font-condense-true",
+        "font-extend-absent",
+        "font-extend-default",
+        "font-extend-0",
+        "font-extend-1",
+        "font-extend-false",
+        "font-extend-true"
+      ]
+    },
+    {
+      "id": "underline",
+      "clauses": [
+        "18.18.82 ST_UnderlineValues"
+      ],
+      "contract": "Five underline values, including explicit none.",
+      "caseIds": [
+        "underline-single",
+        "underline-double",
+        "underline-singleAccounting",
+        "underline-doubleAccounting",
+        "underline-none"
+      ]
+    },
+    {
+      "id": "border",
+      "clauses": [
+        "18.18.3 ST_BorderStyle"
+      ],
+      "contract": "Fourteen left-border styles, including explicit none.",
+      "caseIds": [
+        "border-none",
+        "border-thin",
+        "border-medium",
+        "border-dashed",
+        "border-dotted",
+        "border-thick",
+        "border-double",
+        "border-hair",
+        "border-mediumDashed",
+        "border-dashDot",
+        "border-mediumDashDot",
+        "border-dashDotDot",
+        "border-mediumDashDotDot",
+        "border-slantDashDot"
+      ]
+    },
+    {
+      "id": "cell-booleans",
+      "clauses": [
+        "18.3.1.4 c / 18.18.11 ST_CellType"
+      ],
+      "contract": "Four lexical cell boolean values.",
+      "caseIds": [
+        "cell-boolean-0",
+        "cell-boolean-1",
+        "cell-boolean-false",
+        "cell-boolean-true"
+      ]
+    },
+    {
+      "id": "xml-text",
+      "clauses": [
+        "18.3.1.53 is / XML 1.0 \u00a74.1",
+        "18.3.1.53 is / XML 1.0 \u00a72.7"
+      ],
+      "contract": "Unicode character references and CDATA in inline strings.",
+      "caseIds": [
+        "inline-character-references",
+        "inline-cdata"
+      ]
+    },
+    {
+      "id": "row-index",
+      "clauses": [
+        "18.3.1.73 row"
+      ],
+      "contract": "An omitted row index in a one-row worksheet.",
+      "caseIds": [
+        "optional-row-index"
+      ]
+    },
+    {
+      "id": "formula-cache",
+      "clauses": [
+        "ECMA-376-1 \u00a718.3.1.40 f / \u00a718.3.1.96 v"
+      ],
+      "contract": "Five cache types; formula objects and cached values have distinct assertions.",
+      "caseIds": [
+        "formula-numeric-cache",
+        "formula-boolean-cache",
+        "formula-text-cache",
+        "formula-empty-cache",
+        "formula-error-cache"
+      ]
+    },
+    {
+      "id": "shared-formula",
+      "clauses": [
+        "ECMA-376-1 \u00a718.3.1.40 f"
+      ],
+      "contract": "Sheet-qualified defined name, master/follower translation and caches.",
+      "caseIds": [
+        "shared-formula-qualified-name"
+      ]
+    },
+    {
+      "id": "rich-text",
+      "clauses": [
+        "ECMA-376-1 \u00a718.4.4 r / \u00a718.4.7 rPr"
+      ],
+      "contract": "Inline and shared strings with two styled runs.",
+      "caseIds": [
+        "rich-text-inline",
+        "rich-text-shared"
+      ]
+    },
+    {
+      "id": "defined-name",
+      "clauses": [
+        "ECMA-376-1 \u00a718.2.5 definedName"
+      ],
+      "contract": "Quoted target sheet and local scope/reference.",
+      "caseIds": [
+        "defined-name-quoted",
+        "defined-name-scoped"
+      ]
+    },
+    {
+      "id": "dates",
+      "clauses": [
+        "ECMA-376-1 \u00a718.2.28 workbookPr / \u00a718.18.11 ST_CellType"
+      ],
+      "contract": "Both epochs, half-day serials and leap day; built-in date format 14.",
+      "caseIds": [
+        "date-1900-1904-01-02",
+        "date-1900-2024-02-29",
+        "date-1904-1904-01-02",
+        "date-1904-2024-02-29"
+      ]
+    },
+    {
+      "id": "package-structure",
+      "clauses": [
+        "ECMA-376 Part 2 OPC",
+        "ECMA-376 Part 1 Transitional schemas"
+      ],
+      "contract": "XML, bounded OPC graph, Transitional XSD and cross-part indices; not full semantic or application validity.",
+      "caseIds": []
+    },
+    {
+      "id": "coordinate-uri-zip32",
+      "clauses": [
+        "ECMA-376 Part 1 worksheet grid",
+        "ECMA-376 Part 2 internal targets",
+        "ZIP32 oracle resource profile"
+      ],
+      "contract": "Bounded grid/internal URI/ZIP32 checks before inflation.",
+      "caseIds": []
+    },
+    {
+      "id": "mc-subset",
+      "clauses": [
+        "ECMA-376 Part 3 Markup Compatibility",
+        "XML 1.0 xml:space"
+      ],
+      "contract": "Requires/Choice/Fallback ordering, namespace bindings, ProcessContent, MustUnderstand and xml:space.",
+      "caseIds": []
+    },
+    {
+      "id": "serialized-parts",
+      "clauses": [
+        "ECMA-376 Parts 1/2/3 preservation contracts",
+        "Microsoft VBA relationship namespace"
+      ],
+      "contract": "Selected VBA/control/printer-settings/external-link bytes, types, relationship graph/bindings and unknown extension/style subtrees after an unrelated edit.",
+      "caseIds": []
+    },
+    {
+      "id": "zip64-oracle",
+      "clauses": [
+        "ZIP64 format; outside bounded ZIP32 oracle"
+      ],
+      "contract": "Complete independent ZIP64 validation.",
+      "caseIds": []
+    },
+    {
+      "id": "strict-oracle",
+      "clauses": [
+        "ECMA-376 Strict profile"
+      ],
+      "contract": "Independent Strict OOXML schema conformance.",
+      "caseIds": []
+    },
+    {
+      "id": "mc-full",
+      "clauses": [
+        "ECMA-376 Part 3 full profile"
+      ],
+      "contract": "Every MC preservation directive and full compatibility behavior.",
+      "caseIds": []
+    },
+    {
+      "id": "formula-calculation",
+      "clauses": [
+        "ECMA-376 Part 1 formula semantics"
+      ],
+      "contract": "General formula evaluation, recalculation accuracy and Excel calculation-engine equivalence.",
+      "caseIds": []
+    },
+    {
+      "id": "visual-rendering",
+      "clauses": [
+        "ECMA-376 Part 1 presentation features"
+      ],
+      "contract": "Pixel/print-layout equivalence across fonts, locale and application versions.",
+      "caseIds": []
+    },
+    {
+      "id": "feature-interactions",
+      "clauses": [
+        "ECMA-376 Part 1 feature interactions"
+      ],
+      "contract": "Exhaustive charts/tables/drawings/custom-part interactions and arbitrary number formats.",
+      "caseIds": []
+    }
+  ],
+  "claims": [
+    {
+      "requirement": "font-booleans",
+      "profile": "node-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected model before and after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "font-b-absent",
+        "font-b-default",
+        "font-b-0",
+        "font-b-1",
+        "font-b-false",
+        "font-b-true",
+        "font-i-absent",
+        "font-i-default",
+        "font-i-0",
+        "font-i-1",
+        "font-i-false",
+        "font-i-true",
+        "font-strike-absent",
+        "font-strike-default",
+        "font-strike-0",
+        "font-strike-1",
+        "font-strike-false",
+        "font-strike-true",
+        "font-outline-absent",
+        "font-outline-default",
+        "font-outline-0",
+        "font-outline-1",
+        "font-outline-false",
+        "font-outline-true",
+        "font-shadow-absent",
+        "font-shadow-default",
+        "font-shadow-0",
+        "font-shadow-1",
+        "font-shadow-false",
+        "font-shadow-true",
+        "font-condense-absent",
+        "font-condense-default",
+        "font-condense-0",
+        "font-condense-1",
+        "font-condense-false",
+        "font-condense-true",
+        "font-extend-absent",
+        "font-extend-default",
+        "font-extend-0",
+        "font-extend-1",
+        "font-extend-false",
+        "font-extend-true"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "normative corpus: independent expected semantics"
+        }
+      ]
+    },
+    {
+      "requirement": "font-booleans",
+      "profile": "browser-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected reloaded model after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "font-b-absent",
+        "font-b-default",
+        "font-b-0",
+        "font-b-1",
+        "font-b-false",
+        "font-b-true",
+        "font-i-absent",
+        "font-i-default",
+        "font-i-0",
+        "font-i-1",
+        "font-i-false",
+        "font-i-true",
+        "font-strike-absent",
+        "font-strike-default",
+        "font-strike-0",
+        "font-strike-1",
+        "font-strike-false",
+        "font-strike-true",
+        "font-outline-absent",
+        "font-outline-default",
+        "font-outline-0",
+        "font-outline-1",
+        "font-outline-false",
+        "font-outline-true",
+        "font-shadow-absent",
+        "font-shadow-default",
+        "font-shadow-0",
+        "font-shadow-1",
+        "font-shadow-false",
+        "font-shadow-true",
+        "font-condense-absent",
+        "font-condense-default",
+        "font-condense-0",
+        "font-condense-1",
+        "font-condense-false",
+        "font-condense-true",
+        "font-extend-absent",
+        "font-extend-default",
+        "font-extend-0",
+        "font-extend-1",
+        "font-extend-false",
+        "font-extend-true"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        }
+      ]
+    },
+    {
+      "requirement": "font-booleans",
+      "profile": "libreoffice",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Independent import/export comparison; six enabled condense/extend and two accounting-underline differences remain explicitly known, not passing semantics.",
+      "caseIds": [
+        "font-b-absent",
+        "font-b-default",
+        "font-b-0",
+        "font-b-1",
+        "font-b-false",
+        "font-b-true",
+        "font-i-absent",
+        "font-i-default",
+        "font-i-0",
+        "font-i-1",
+        "font-i-false",
+        "font-i-true",
+        "font-strike-absent",
+        "font-strike-default",
+        "font-strike-0",
+        "font-strike-1",
+        "font-strike-false",
+        "font-strike-true",
+        "font-outline-absent",
+        "font-outline-default",
+        "font-outline-0",
+        "font-outline-1",
+        "font-outline-false",
+        "font-outline-true",
+        "font-shadow-absent",
+        "font-shadow-default",
+        "font-shadow-0",
+        "font-shadow-1",
+        "font-shadow-false",
+        "font-shadow-true",
+        "font-condense-absent",
+        "font-condense-default",
+        "font-condense-0",
+        "font-condense-1",
+        "font-condense-false",
+        "font-condense-true",
+        "font-extend-absent",
+        "font-extend-default",
+        "font-extend-0",
+        "font-extend-1",
+        "font-extend-false",
+        "font-extend-true"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "unexpectedDifferences"
+        },
+        {
+          "path": "tests/conformance/corpus/libreoffice-profile.json",
+          "anchor": "reason"
+        }
+      ]
+    },
+    {
+      "requirement": "underline",
+      "profile": "node-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected model before and after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "underline-single",
+        "underline-double",
+        "underline-singleAccounting",
+        "underline-doubleAccounting",
+        "underline-none"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "normative corpus: independent expected semantics"
+        }
+      ]
+    },
+    {
+      "requirement": "underline",
+      "profile": "browser-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected reloaded model after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "underline-single",
+        "underline-double",
+        "underline-singleAccounting",
+        "underline-doubleAccounting",
+        "underline-none"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        }
+      ]
+    },
+    {
+      "requirement": "underline",
+      "profile": "libreoffice",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Independent import/export comparison; six enabled condense/extend and two accounting-underline differences remain explicitly known, not passing semantics.",
+      "caseIds": [
+        "underline-single",
+        "underline-double",
+        "underline-singleAccounting",
+        "underline-doubleAccounting",
+        "underline-none"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "unexpectedDifferences"
+        },
+        {
+          "path": "tests/conformance/corpus/libreoffice-profile.json",
+          "anchor": "reason"
+        }
+      ]
+    },
+    {
+      "requirement": "border",
+      "profile": "node-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected model before and after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "border-none",
+        "border-thin",
+        "border-medium",
+        "border-dashed",
+        "border-dotted",
+        "border-thick",
+        "border-double",
+        "border-hair",
+        "border-mediumDashed",
+        "border-dashDot",
+        "border-mediumDashDot",
+        "border-dashDotDot",
+        "border-mediumDashDotDot",
+        "border-slantDashDot"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "normative corpus: independent expected semantics"
+        }
+      ]
+    },
+    {
+      "requirement": "border",
+      "profile": "browser-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected reloaded model after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "border-none",
+        "border-thin",
+        "border-medium",
+        "border-dashed",
+        "border-dotted",
+        "border-thick",
+        "border-double",
+        "border-hair",
+        "border-mediumDashed",
+        "border-dashDot",
+        "border-mediumDashDot",
+        "border-dashDotDot",
+        "border-mediumDashDotDot",
+        "border-slantDashDot"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        }
+      ]
+    },
+    {
+      "requirement": "border",
+      "profile": "libreoffice",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Independent import/export comparison; six enabled condense/extend and two accounting-underline differences remain explicitly known, not passing semantics.",
+      "caseIds": [
+        "border-none",
+        "border-thin",
+        "border-medium",
+        "border-dashed",
+        "border-dotted",
+        "border-thick",
+        "border-double",
+        "border-hair",
+        "border-mediumDashed",
+        "border-dashDot",
+        "border-mediumDashDot",
+        "border-dashDotDot",
+        "border-mediumDashDotDot",
+        "border-slantDashDot"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "unexpectedDifferences"
+        },
+        {
+          "path": "tests/conformance/corpus/libreoffice-profile.json",
+          "anchor": "reason"
+        }
+      ]
+    },
+    {
+      "requirement": "cell-booleans",
+      "profile": "node-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected model before and after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "cell-boolean-0",
+        "cell-boolean-1",
+        "cell-boolean-false",
+        "cell-boolean-true"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "normative corpus: independent expected semantics"
+        }
+      ]
+    },
+    {
+      "requirement": "cell-booleans",
+      "profile": "browser-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected reloaded model after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "cell-boolean-0",
+        "cell-boolean-1",
+        "cell-boolean-false",
+        "cell-boolean-true"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        }
+      ]
+    },
+    {
+      "requirement": "cell-booleans",
+      "profile": "node-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "cell-boolean-0",
+        "cell-boolean-1",
+        "cell-boolean-false",
+        "cell-boolean-true"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "cell-booleans",
+      "profile": "browser-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "cell-boolean-0",
+        "cell-boolean-1",
+        "cell-boolean-false",
+        "cell-boolean-true"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "cell-booleans",
+      "profile": "libreoffice",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Independent import/export comparison; six enabled condense/extend and two accounting-underline differences remain explicitly known, not passing semantics.",
+      "caseIds": [
+        "cell-boolean-0",
+        "cell-boolean-1",
+        "cell-boolean-false",
+        "cell-boolean-true"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "unexpectedDifferences"
+        },
+        {
+          "path": "tests/conformance/corpus/libreoffice-profile.json",
+          "anchor": "reason"
+        }
+      ]
+    },
+    {
+      "requirement": "xml-text",
+      "profile": "node-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected model before and after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "inline-character-references",
+        "inline-cdata"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "normative corpus: independent expected semantics"
+        }
+      ]
+    },
+    {
+      "requirement": "xml-text",
+      "profile": "browser-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected reloaded model after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "inline-character-references",
+        "inline-cdata"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        }
+      ]
+    },
+    {
+      "requirement": "xml-text",
+      "profile": "node-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "inline-character-references",
+        "inline-cdata"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "xml-text",
+      "profile": "browser-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "inline-character-references",
+        "inline-cdata"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "xml-text",
+      "profile": "libreoffice",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Independent import/export comparison; six enabled condense/extend and two accounting-underline differences remain explicitly known, not passing semantics.",
+      "caseIds": [
+        "inline-character-references",
+        "inline-cdata"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "unexpectedDifferences"
+        },
+        {
+          "path": "tests/conformance/corpus/libreoffice-profile.json",
+          "anchor": "reason"
+        }
+      ]
+    },
+    {
+      "requirement": "row-index",
+      "profile": "node-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected model before and after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "optional-row-index"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "normative corpus: independent expected semantics"
+        }
+      ]
+    },
+    {
+      "requirement": "row-index",
+      "profile": "browser-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected reloaded model after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "optional-row-index"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        }
+      ]
+    },
+    {
+      "requirement": "row-index",
+      "profile": "node-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "optional-row-index"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "row-index",
+      "profile": "browser-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "optional-row-index"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "row-index",
+      "profile": "libreoffice",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Independent import/export comparison; six enabled condense/extend and two accounting-underline differences remain explicitly known, not passing semantics.",
+      "caseIds": [
+        "optional-row-index"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "unexpectedDifferences"
+        },
+        {
+          "path": "tests/conformance/corpus/libreoffice-profile.json",
+          "anchor": "reason"
+        }
+      ]
+    },
+    {
+      "requirement": "formula-cache",
+      "profile": "node-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected model before and after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "formula-numeric-cache",
+        "formula-boolean-cache",
+        "formula-text-cache",
+        "formula-empty-cache",
+        "formula-error-cache"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "normative corpus: independent expected semantics"
+        }
+      ]
+    },
+    {
+      "requirement": "formula-cache",
+      "profile": "browser-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected reloaded model after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "formula-numeric-cache",
+        "formula-boolean-cache",
+        "formula-text-cache",
+        "formula-empty-cache",
+        "formula-error-cache"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        }
+      ]
+    },
+    {
+      "requirement": "formula-cache",
+      "profile": "node-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "formula-numeric-cache",
+        "formula-boolean-cache",
+        "formula-text-cache",
+        "formula-empty-cache",
+        "formula-error-cache"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "formula-cache",
+      "profile": "browser-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "formula-numeric-cache",
+        "formula-boolean-cache",
+        "formula-text-cache",
+        "formula-empty-cache",
+        "formula-error-cache"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "formula-cache",
+      "profile": "libreoffice",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Independent import/export comparison; six enabled condense/extend and two accounting-underline differences remain explicitly known, not passing semantics.",
+      "caseIds": [
+        "formula-numeric-cache",
+        "formula-boolean-cache",
+        "formula-text-cache",
+        "formula-empty-cache",
+        "formula-error-cache"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "unexpectedDifferences"
+        },
+        {
+          "path": "tests/conformance/corpus/libreoffice-profile.json",
+          "anchor": "reason"
+        }
+      ]
+    },
+    {
+      "requirement": "shared-formula",
+      "profile": "node-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected model before and after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "shared-formula-qualified-name"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "normative corpus: independent expected semantics"
+        }
+      ]
+    },
+    {
+      "requirement": "shared-formula",
+      "profile": "browser-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected reloaded model after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "shared-formula-qualified-name"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        }
+      ]
+    },
+    {
+      "requirement": "shared-formula",
+      "profile": "node-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "shared-formula-qualified-name"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "shared-formula",
+      "profile": "browser-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "shared-formula-qualified-name"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "shared-formula",
+      "profile": "libreoffice",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Independent import/export comparison; six enabled condense/extend and two accounting-underline differences remain explicitly known, not passing semantics.",
+      "caseIds": [
+        "shared-formula-qualified-name"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "unexpectedDifferences"
+        },
+        {
+          "path": "tests/conformance/corpus/libreoffice-profile.json",
+          "anchor": "reason"
+        }
+      ]
+    },
+    {
+      "requirement": "shared-formula",
+      "profile": "excel-mac",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Nine-case manual Open without repair / Save As profile; independent cache/value, run, name, date epoch/format comparison. No calculation or rendering certification.",
+      "caseIds": [
+        "shared-formula-qualified-name"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "application == 'libreoffice'"
+        },
+        {
+          "path": "tests/conformance/corpus/excel-mac-observation.json",
+          "anchor": "shared-formula-qualified-name"
+        }
+      ]
+    },
+    {
+      "requirement": "rich-text",
+      "profile": "node-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected model before and after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "rich-text-inline",
+        "rich-text-shared"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "normative corpus: independent expected semantics"
+        }
+      ]
+    },
+    {
+      "requirement": "rich-text",
+      "profile": "browser-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected reloaded model after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "rich-text-inline",
+        "rich-text-shared"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        }
+      ]
+    },
+    {
+      "requirement": "rich-text",
+      "profile": "node-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "rich-text-inline",
+        "rich-text-shared"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "rich-text",
+      "profile": "browser-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "rich-text-inline",
+        "rich-text-shared"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "rich-text",
+      "profile": "libreoffice",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Independent import/export comparison; six enabled condense/extend and two accounting-underline differences remain explicitly known, not passing semantics.",
+      "caseIds": [
+        "rich-text-inline",
+        "rich-text-shared"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "unexpectedDifferences"
+        },
+        {
+          "path": "tests/conformance/corpus/libreoffice-profile.json",
+          "anchor": "reason"
+        }
+      ]
+    },
+    {
+      "requirement": "rich-text",
+      "profile": "excel-mac",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Nine-case manual Open without repair / Save As profile; independent cache/value, run, name, date epoch/format comparison. No calculation or rendering certification.",
+      "caseIds": [
+        "rich-text-inline",
+        "rich-text-shared"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "application == 'libreoffice'"
+        },
+        {
+          "path": "tests/conformance/corpus/excel-mac-observation.json",
+          "anchor": "rich-text-inline"
+        }
+      ]
+    },
+    {
+      "requirement": "defined-name",
+      "profile": "node-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected model before and after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "defined-name-quoted",
+        "defined-name-scoped"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "normative corpus: independent expected semantics"
+        }
+      ]
+    },
+    {
+      "requirement": "defined-name",
+      "profile": "browser-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected reloaded model after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "defined-name-quoted",
+        "defined-name-scoped"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        }
+      ]
+    },
+    {
+      "requirement": "defined-name",
+      "profile": "libreoffice",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Independent import/export comparison; six enabled condense/extend and two accounting-underline differences remain explicitly known, not passing semantics.",
+      "caseIds": [
+        "defined-name-quoted",
+        "defined-name-scoped"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "unexpectedDifferences"
+        },
+        {
+          "path": "tests/conformance/corpus/libreoffice-profile.json",
+          "anchor": "reason"
+        }
+      ]
+    },
+    {
+      "requirement": "defined-name",
+      "profile": "excel-mac",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Nine-case manual Open without repair / Save As profile; independent cache/value, run, name, date epoch/format comparison. No calculation or rendering certification.",
+      "caseIds": [
+        "defined-name-quoted",
+        "defined-name-scoped"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "application == 'libreoffice'"
+        },
+        {
+          "path": "tests/conformance/corpus/excel-mac-observation.json",
+          "anchor": "defined-name-quoted"
+        }
+      ]
+    },
+    {
+      "requirement": "dates",
+      "profile": "node-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected model before and after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "date-1900-1904-01-02",
+        "date-1900-2024-02-29",
+        "date-1904-1904-01-02",
+        "date-1904-2024-02-29"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "normative corpus: independent expected semantics"
+        }
+      ]
+    },
+    {
+      "requirement": "dates",
+      "profile": "browser-model",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Expected reloaded model after B2 edit; independent saved-package validation.",
+      "caseIds": [
+        "date-1900-1904-01-02",
+        "date-1900-2024-02-29",
+        "date-1904-1904-01-02",
+        "date-1904-2024-02-29"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        }
+      ]
+    },
+    {
+      "requirement": "dates",
+      "profile": "node-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "date-1900-1904-01-02",
+        "date-1900-2024-02-29",
+        "date-1904-1904-01-02",
+        "date-1904-2024-02-29"
+      ],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus.test.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "dates",
+      "profile": "browser-stream",
+      "operations": [
+        "read"
+      ],
+      "status": "tested",
+      "scope": "Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion.",
+      "caseIds": [
+        "date-1900-1904-01-02",
+        "date-1900-2024-02-29",
+        "date-1904-1904-01-02",
+        "date-1904-2024-02-29"
+      ],
+      "evidence": [
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "expectedStreamValues"
+        }
+      ]
+    },
+    {
+      "requirement": "dates",
+      "profile": "libreoffice",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Independent import/export comparison; six enabled condense/extend and two accounting-underline differences remain explicitly known, not passing semantics.",
+      "caseIds": [
+        "date-1900-1904-01-02",
+        "date-1900-2024-02-29",
+        "date-1904-1904-01-02",
+        "date-1904-2024-02-29"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "unexpectedDifferences"
+        },
+        {
+          "path": "tests/conformance/corpus/libreoffice-profile.json",
+          "anchor": "reason"
+        }
+      ]
+    },
+    {
+      "requirement": "dates",
+      "profile": "excel-mac",
+      "operations": [
+        "write"
+      ],
+      "status": "tested",
+      "scope": "Nine-case manual Open without repair / Save As profile; independent cache/value, run, name, date epoch/format comparison. No calculation or rendering certification.",
+      "caseIds": [
+        "date-1900-1904-01-02",
+        "date-1900-2024-02-29",
+        "date-1904-1904-01-02",
+        "date-1904-2024-02-29"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "application == 'libreoffice'"
+        },
+        {
+          "path": "tests/conformance/corpus/excel-mac-observation.json",
+          "anchor": "date-1900-1904-01-02"
+        }
+      ]
+    },
+    {
+      "requirement": "package-structure",
+      "profile": "independent-oracles",
+      "operations": [
+        "read",
+        "write",
+        "reject"
+      ],
+      "status": "tested",
+      "scope": "Corpus inputs/Node saves plus browser saves; malformed XML, missing/wrong relationships/types, index/count errors, and unavailable/skipped schema runner are calibrated.",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "tests/conformance/validator-calibration.test.ts",
+          "anchor": "missing package officeDocument relationship"
+        },
+        {
+          "path": "tests/conformance/validator-calibration.test.ts",
+          "anchor": "reports a missing XSD executable as inconclusive"
+        },
+        {
+          "path": "tests/conformance/sdk/Program.cs",
+          "anchor": "OpenXmlValidator"
+        },
+        {
+          "path": "tests/browser/corpus.spec.ts",
+          "anchor": "validateXlsx"
+        }
+      ]
+    },
+    {
+      "requirement": "coordinate-uri-zip32",
+      "profile": "independent-oracles",
+      "operations": [
+        "reject"
+      ],
+      "status": "tested",
+      "scope": "Out-of-grid refs, invalid targets, duplicate names and inflation budgets; valid XFD1048576 control. These are oracle checks, not production-reader rejection guarantees.",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "tests/conformance/invalid-generation.test.ts",
+          "anchor": "rejects generated out-of-grid references"
+        },
+        {
+          "path": "tests/conformance/invalid-generation.test.ts",
+          "anchor": "detects duplicate names before inflation"
+        },
+        {
+          "path": "tests/conformance/invalid-generation.test.ts",
+          "anchor": "rejects advertised oversized inflation"
+        }
+      ]
+    },
+    {
+      "requirement": "mc-subset",
+      "profile": "independent-oracles",
+      "operations": [
+        "read",
+        "reject"
+      ],
+      "status": "tested",
+      "scope": "Only listed understood namespaces and calibrated MC constructs; ordering is checked even after a supported Choice.",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "tests/conformance/validator-calibration.test.ts",
+          "anchor": "carries namespace bindings from a selected Choice"
+        },
+        {
+          "path": "tests/conformance/validator-calibration.test.ts",
+          "anchor": "rejects unknown MustUnderstand namespaces"
+        },
+        {
+          "path": "tests/conformance/invalid-generation.test.ts",
+          "anchor": "validates xml:space before normalization"
+        },
+        {
+          "path": "tests/conformance/invalid-generation.test.ts",
+          "anchor": "validates the entire AlternateContent sequence"
+        }
+      ]
+    },
+    {
+      "requirement": "serialized-parts",
+      "profile": "node-model",
+      "operations": [
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "Three pinned openpyxl fixtures and hand-authored extensions. Comment-sheet regenerated VML, arbitrary custom parts and all unselected parts are outside this contract.",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "tests/conformance/preservation.test.ts",
+          "anchor": "preserves bytes, content types, graph and XML bindings"
+        },
+        {
+          "path": "tests/conformance/preservation.test.ts",
+          "anchor": "preserves unknown extension subtrees and explicit empty style pools"
+        },
+        {
+          "path": "tests/conformance/preservation.test.ts",
+          "anchor": "calibrates missing binary, changed content type, graph target"
+        }
+      ]
+    },
+    {
+      "requirement": "zip64-oracle",
+      "profile": "independent-oracles",
+      "operations": [
+        "read",
+        "write"
+      ],
+      "status": "unsupported",
+      "scope": "Oracle reports incomplete, never valid; this says nothing about production ZIP64 capability.",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "tests/conformance/invalid-generation.test.ts",
+          "anchor": "never certifies ZIP64 outside the bounded profile"
+        }
+      ]
+    },
+    {
+      "requirement": "strict-oracle",
+      "profile": "independent-oracles",
+      "operations": [
+        "read",
+        "write"
+      ],
+      "status": "unsupported",
+      "scope": "Only Transitional schemas are vendored. Existing Strict production fixtures do not establish Strict schema conformance.",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "tests/conformance/schema-map.ts",
+          "anchor": "transitional"
+        }
+      ]
+    },
+    {
+      "requirement": "mc-full",
+      "profile": "independent-oracles",
+      "operations": [
+        "read",
+        "write",
+        "preserve",
+        "reject"
+      ],
+      "status": "unsupported",
+      "scope": "The consumer oracle implements a bounded MC subset, not all preservation directives.",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "tests/conformance/mc-strip.ts",
+          "anchor": "consumer profile"
+        }
+      ]
+    }
+  ]
+}

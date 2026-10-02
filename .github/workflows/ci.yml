@@ -32,6 +32,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm lint
+      - run: pnpm qa:matrix
+      - run: pnpm qa:matrix-calibration
       - run: pnpm --dir site exec svelte-kit sync
       - run: pnpm knip
       - run: pnpm build

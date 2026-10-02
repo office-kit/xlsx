@@ -22,9 +22,11 @@ compatibility target; its behavior does not override normative expectations.
 | Schema structure | vendored ECMA XSDs through `xmllint --nonet` | missing/crashed runner is inconclusive, never a pass |
 | Cross-part semantics | actual child counts and coordinate/index checks | reject invalid references even without optional declared counts |
 | Reader meaning and edit preservation | hand-authored inputs and independent expected values | compare meaning before and after an unrelated edit |
-| Browser distribution | built package in Chromium, Firefox, WebKit | compare expected meaning through four adapters and two reading modes |
+| Browser distribution | built package in Chromium, Firefox, WebKit | compare expected meaning through four adapters/two reading modes; validate actual saves with XSD and SDK |
 | Second schema implementation | pinned Open XML SDK | reject validation errors and require negative calibration to fail |
 | Application compatibility | headless LibreOffice plus Python XML/ZIP inspection | record exact known differences; reject new or changed differences |
+| Desktop Excel | separately recorded native Mac Open/Save As | require no repair, provenance, exact cases/hashes and independent semantic comparison; manual evidence only |
+| Coverage inventory | requirement × operation × adapter/runtime profile | fail missing cases/evidence or report drift; expose untested/unsupported guarantees |
 
 The oracle uses `fflate` rather than the production ZIP parser, `saxes` rather
 than the production XML model parser, and no production manifest/relationship
@@ -68,8 +70,9 @@ MC preprocessing understands the explicitly listed namespace profile,
 requires every `Choice/@Requires` namespace to be understood, preserves
 namespace scope when promoting children, handles `ProcessContent`, and rejects
 unsupported `MustUnderstand`. Raw XML is always checked first. It is not a
-complete implementation of every MC rule; for example, full AlternateContent
-ordering and preservation directives need dedicated expansion.
+complete implementation of every MC rule. Full Choice/Fallback ordering is
+calibrated, including after a supported Choice; preservation directives and
+other rules remain outside the bounded oracle profile.
 
 ## Run locally
 
@@ -104,23 +107,26 @@ For reproducible generation:
 QA_FUZZ_RUNS=1000 QA_FUZZ_SEED=376262 pnpm exec vitest run tests/conformance/property.test.ts
 ```
 
-The generator explores bounded cells, styles, merges, names, dimensions, and
-panes. It does not generate every XML grammar or hostile ZIP input. Failures
+The valid generator explores bounded cells, styles, merges, names, dimensions,
+and panes. A separate invalid generator and single-fault calibration cover grid,
+URI, ZIP and MC faults. Neither explores every XML grammar or hostile ZIP input. Failures
 retain fast-check seed, shrink path, counterexample, and validator diagnostics.
 Convert a minimized failure into a permanent corpus or calibration case.
 
 ## CI and interpretation
 
 Existing Node/OS, package, size, and performance gates remain. PR CI adds the
-three-browser corpus and the SDK/LibreOffice validators. A nightly job runs
-1,000 generated workbooks with a recorded seed. Diagnostic artifacts are
-uploaded even on failure. These workflow changes have been checked locally;
-GitHub-hosted runs occur after the branch is submitted.
+three-browser corpus, SDK/LibreOffice validators, curated regression mutations,
+manual Excel protocol calibration, and the coverage inventory. A nightly job
+runs the valid and invalid generators with recorded seeds and 1,000 runs.
+Diagnostic artifacts are uploaded even on failure.
 
 Open XML SDK checks schema validity using the Office2016 profile. It does not
 prove Excel rendering, formula calculation, or the absence of Excel repair
-dialogs. Browser tests check model and save/reload semantics; they do not
-independently run libxml2 on every browser-produced byte stream.
+dialogs. Browser tests check save/reload semantics and independently validate
+every saved byte stream with ZIP/XML/OPC/XSD and Open XML SDK. Streaming read
+paths check row values/caches and date epoch flags, not saved output or all
+ordinary-reader metadata.
 
 The observed LibreOffice 26.2.4.2 baseline has **74 matching cases and 8 known
 differences**: enabled `condense`/`extend` are dropped (six lexical variants),
@@ -141,33 +147,35 @@ optional/default values, element presence), and exercise input adapters and
 streaming where applicable. Do not turn a regenerated writer output into its
 own expected answer, or broadly allowlist validation failures.
 
-The next coverage priorities are Strict OOXML, unknown extension/VBA/custom
-parts preservation, charts/tables/drawings and their relationship combinations,
-formula/date/number-format semantics, Excel-produced fixture provenance, and
-Excel open/save/repair checks. Duplicate ZIP entries, full OPC URI rules,
-resource exhaustion, full MC compliance, visual rendering, calculation, and
-exhaustive feature interactions are not guaranteed by the current suite.
+The current additions establish bounded formula/cache, rich-text, name and date
+contracts, selected serialized-part preservation, ZIP/URI/resource and MC
+calibration, independent browser-save validation, curated mutation detection,
+and a nine-case native Mac Excel profile. Further work remains for independent
+Strict validation, arbitrary custom-part and feature interactions, full OPC URI
+and MC compliance, hostile ZIP grammars beyond the bounded profile, formula
+calculation, visual rendering, and Windows desktop Excel execution. Existing
+production tests outside this inventory do not imply these broader guarantees.
 
 Track coverage by specification requirement × read/write/preserve × adapter ×
 runtime, with explicit supported/unsupported/untested outcomes. A growing case
 count alone must never be presented as a percentage of OOXML conformance.
 
-## Local verification, 2026-10-02
+## Verification checkpoint, 2026-10-02
 
-On macOS with Node 26, the complete unit suite passed (361 files, 3,366 tests),
-as did 1,000 generated workbooks with seed 376262. All 204 browser cases passed
-(68 per engine, four adapters × two reading modes each). Open XML SDK 3.5.1
-accepted all 68 outputs and rejected its negative calibration. LibreOffice
-26.2.4.2 produced the 60/8 compatibility baseline described above.
+On macOS with Node 26, the complete unit suite passed (3,401 tests), as did
+1,000 valid generated workbooks with seed 376262. All 246 browser tests passed
+(82 per engine, four adapters × two reading modes); all 984 saved files passed
+independent XSD and Open XML SDK checks. Open XML SDK accepted all 82 Node
+outputs and rejected its negative calibration. LibreOffice 26.2.4.2 produced
+the 74/8 compatibility baseline. Five curated regression mutants were killed
+by assertions, not compiler failures. Nine actual desktop Mac Excel cases
+opened without repair and passed independent saved-file comparison.
 
-Frozen-lockfile installation, lint (no lint warnings), TypeScript, build, knip,
-size limits, published type resolution, real consumer compilation/execution,
-and the enabled performance gate passed. The lower-level package checks cover
-node16, nodenext, and bundler resolution. Existing pnpm configuration and root
-Svelte configuration notices are unrelated tool notices, not test failures.
-
-This is local evidence. The new Linux CI jobs, all nine existing Node/OS matrix
-combinations, and desktop Excel itself have not been executed in this run.
+Frozen-lockfile installation, lint, TypeScript, build, knip, size limits,
+published type resolution, real consumer compilation/execution, and performance
+checks passed. Submitted QA PRs require the GitHub Node/OS, browser, independent
+conformance and packaging checks before merge. Desktop Excel is manual and
+its nine observations cannot substitute for Windows or continuous desktop CI.
 
 References: [ECMA-376](https://ecma-international.org/publications-and-standards/standards/ecma-376/),
 [Open XML SDK validator](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.validation.openxmlvalidator),
@@ -283,3 +291,29 @@ custom date spellings observed on macOS (`mm/dd/yyyy`) and Linux (`m/d/yyyy`),
 as well as the listed two-digit-year forms; it still rejects General or an
 explicitly disabled format. This is date-category preservation, not identical
 locale-specific rendered text.
+
+### Machine-readable requirement coverage
+
+[`coverage.json`](coverage.json) inventories 21 bounded requirements and eight
+profiles with subject (library/oracle/consumer), runtime, adapter, operation
+(read/write/preserve/reject), status, exact corpus cases and evidence anchors.
+[`coverage.md`](coverage.md) is generated from it. Unlisted combinations expand
+to **untested**; **unsupported** means outside that named QA profile, not that a
+library feature is necessarily unsupported. **Tested** means the stated bounded
+assertions exist, not every input works. Consumer write describes import/export
+of library output; oracle rejection does not assert production-reader rejection.
+
+```sh
+pnpm qa:matrix --write # after deliberate inventory changes
+pnpm qa:matrix         # references, complete corpus assignment and report drift
+pnpm qa:matrix-calibration
+```
+
+CI rejects missing/duplicate corpus assignments, missing test/file anchors,
+unknown profiles/statuses, overlapping claims, incomplete tested case sets,
+Windows marked tested without an available runner, and Mac claims outside the
+recorded nine-case profile. Calibration supplies deliberately false inventories
+and observations. The inventory checks metadata, not test execution or a human
+observation; the referenced CI/manual gates supply that separate evidence.
+Adding a corpus case requires an explicit requirement assignment. No count in
+this inventory is a percentage of OOXML conformance.
