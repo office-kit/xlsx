@@ -127,7 +127,8 @@
     "qa:excel-calibration": "node --test scripts/qa-excel.test.mjs",
     "qa:matrix": "node scripts/qa-matrix.mjs",
     "qa:matrix-calibration": "node --test scripts/qa-matrix.test.mjs",
-    "qa:excel-features": "node scripts/qa-excel-features.mjs"
+    "qa:excel-features": "node scripts/qa-excel-features.mjs",
+    "qa:native-excel": "node scripts/qa-native-excel.mjs"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
