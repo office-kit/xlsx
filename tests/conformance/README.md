@@ -1,7 +1,7 @@
 # OOXML quality assurance
 
 This directory is the starting point for a test262-style, specification-linked
-suite. It tests a **bounded Transitional SpreadsheetML profile**, not every
+suite. It tests **bounded Transitional and Strict SpreadsheetML profiles**, not every
 feature of ECMA-376. Passing it is not an OOXML certification.
 
 ## Why these gates
@@ -151,7 +151,7 @@ The current additions establish bounded formula/cache, rich-text, name and date
 contracts, selected serialized-part preservation, ZIP/URI/resource and MC
 calibration, independent browser-save validation, curated mutation detection,
 and a nine-case native Mac Excel profile. Further work remains for independent
-Strict validation, arbitrary custom-part and feature interactions, full OPC URI
+full Strict conformance, arbitrary custom-part and feature interactions, full OPC URI
 and MC compliance, hostile ZIP grammars beyond the bounded profile, formula
 calculation, visual rendering, and Windows desktop Excel execution. Existing
 production tests outside this inventory do not imply these broader guarantees.
@@ -338,3 +338,17 @@ explicit caller configuration. A cap is not a deadline, a compressed-input
 size limit or complete validation of all OOXML. Applications still need their
 own upload-size/time boundaries. Existing lower-level tests cover dishonest
 ZIP sizes, cancellation and cross-sheet/query budget behavior.
+## Independent Strict validation
+
+Pass `{ conformance: 'strict' }` to the test-only oracle to validate original
+Strict namespaces against the unmodified ECMA-376 Part 1 fifth-edition schemas.
+The default remains Transitional. Schema hashes and archive provenance are
+pinned in `schemas/strict/provenance.json`; validation runs offline. Production
+namespace normalization is not involved. Numeric/ISO-date/boolean inputs and
+single-fault type/style/shared-string controls calibrate the profile.
+
+Both genuine Excel Strict fixtures contain unqualified `dateCompatibility`,
+which this normative XSD rejects. Tests retain those original bytes and record
+the precise discrepancy; tolerant production reading is a different contract.
+Schema validity alone does not establish formula calculation, visual fidelity
+or support for every Strict feature.

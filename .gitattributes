@@ -3,3 +3,6 @@
 # `Bin 2085 -> 3026 bytes` with nothing for a reviewer to read. TypeScript
 # sources are always text, so diff them as text.
 *.ts diff
+
+# Preserve the official archive bytes, including mixed LF/CRLF schema files.
+tests/conformance/schemas/strict/*.xsd -text

@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, posix } from 'node:path';
 import { required } from './required.js';
+import { parseXsdDiagnostics } from './xsd-diagnostics.js';
 import { checkZipEnvelope } from './zip-envelope.js';
 import { unzipSync } from 'fflate';
 import { stripIgnorableMarkup } from './mc-strip.js';
@@ -20,10 +21,9 @@ export interface ValidationResult {
   /** XML parts without an applied schema; opaque binary parts are not included. */
   skipped: string[];
 }
-export interface ValidateOptions { ignoreParts?: ReadonlySet<string>; skipXsd?: boolean }
+export interface ValidateOptions { ignoreParts?: ReadonlySet<string>; skipXsd?: boolean; conformance?: 'transitional' | 'strict' }
 const CT = 'http://schemas.openxmlformats.org/package/2006/content-types';
 const REL = 'http://schemas.openxmlformats.org/package/2006/relationships';
-const SML = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 const R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 interface Relationship { id: string; type: string; target: string; external: boolean }
 const relPath = (part: string) => part ? posix.join(posix.dirname(part), '_rels', `${posix.basename(part)}.rels`) : '_rels/.rels';
@@ -40,6 +40,7 @@ function decode(bytes: Uint8Array): string {
 }
 /** A skipped stage or an unsupported XML part can never yield a full pass. */
 export async function validateXlsx(bytes: Uint8Array, options: ValidateOptions = {}): Promise<ValidationResult> {
+  const SML = options.conformance === 'strict' ? 'http://purl.oclc.org/ooxml/spreadsheetml/main' : 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
   const issues: ValidationIssue[] = [];
   const skipped: string[] = [];
   const issue = (tier: Tier, part: string, message: string) => { issues.push({ tier, part, message }); };
@@ -131,7 +132,7 @@ export async function validateXlsx(bytes: Uint8Array, options: ValidateOptions =
     try {
       const xml = part === '[Content_Types].xml' || part.endsWith('.rels') ? required(texts.get(part)) : stripIgnorableMarkup(required(texts.get(part)));
       processed.set(part, parseDocument(xml));
-      const schema = part === '[Content_Types].xml' ? CONTENT_TYPES_SCHEMA : part.endsWith('.rels') ? RELATIONSHIPS_SCHEMA : schemaFor(types.get(part) ?? '');
+      const schema = part === '[Content_Types].xml' ? CONTENT_TYPES_SCHEMA : part.endsWith('.rels') ? RELATIONSHIPS_SCHEMA : schemaFor(types.get(part) ?? '', options.conformance);
       if (!schema || options.ignoreParts?.has(part)) skipped.push(part);
       else if (!options.skipXsd) jobs.push({ part, schema, xml });
     } catch (cause) { issue('xsd', part, `MC preprocessing failed: ${String(cause)}`); }
@@ -205,12 +206,9 @@ export async function validateXlsx(bytes: Uint8Array, options: ValidateOptions =
         const result = spawnSync('xmllint', ['--nonet', '--noout', '--schema', schema, ...paths], { encoding: 'utf8', timeout: 30_000, maxBuffer: 16 * 1024 * 1024 });
         if (result.error) { issue('xsd', '<runner>', result.error.message); continue; }
         if (result.status === 0) continue;
-        const diagnostics = result.stderr.split('\n').filter(line => line.trim() && !/validates$/.test(line));
+        const diagnostics = parseXsdDiagnostics(result.stderr, files);
         if (!diagnostics.length) issue('xsd', '<runner>', `xmllint failed without diagnostics: exit=${result.status}, signal=${result.signal}`);
-        for (const line of diagnostics) {
-          const file = /^(.+?\.xml)(?::| )/.exec(line)?.[1];
-          issue('xsd', file ? files.get(file) ?? '<runner>' : '<runner>', line);
-        }
+        for (const diagnostic of diagnostics) issue('xsd', diagnostic.part, diagnostic.message);
       }
     } finally { rmSync(temp, { recursive: true, force: true }); }
   }

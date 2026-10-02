@@ -1,7 +1,7 @@
 // Maps an OPC content type to the XSD that covers it.
 //
-// The schemas in `schemas/transitional/` and `schemas/opc/` are vendored from
-// ECMA-376 5th edition (Part 4 Transitional, Part 2 OPC). xmllint resolves
+// The schemas in `schemas/strict/`, `schemas/transitional/` and `schemas/opc/`
+// are vendored from ECMA-376 (Part 1 Strict, Part 4 Transitional, Part 2 OPC). xmllint resolves
 // each schema's relative `<xsd:import>` paths against the file's own
 // directory, so cross-schema references (e.g. sml.xsd → dml-spreadsheetDrawing.xsd)
 // work as long as we point xmllint at the leaf XSD listed below.
@@ -10,7 +10,7 @@
 // validation — they're either binary parts (printer settings, OLE blobs)
 // or formats our library does not generate yet.
 
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -86,6 +86,8 @@ export const CONTENT_TYPES_SCHEMA = OPC_CONTENT_TYPES;
 export const RELATIONSHIPS_SCHEMA = OPC_RELATIONSHIPS;
 
 /** Returns the schema path for a content type, or undefined if unmapped. */
-export function schemaFor(contentType: string): string | undefined {
-  return SCHEMA_BY_CONTENT_TYPE[contentType];
+export function schemaFor(contentType: string, conformance: 'transitional' | 'strict' = 'transitional'): string | undefined {
+  const schema = SCHEMA_BY_CONTENT_TYPE[contentType];
+  return schema && conformance === 'strict' && dirname(schema) === TRANSITIONAL_DIR
+    ? join(HERE, 'schemas/strict', basename(schema)) : schema;
 }
