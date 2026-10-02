@@ -1865,15 +1865,19 @@
       "profile": "independent-oracles",
       "operations": [
         "read",
-        "write"
+        "reject"
       ],
-      "status": "unsupported",
-      "scope": "Only Transitional schemas are vendored. Existing Strict production fixtures do not establish Strict schema conformance.",
+      "status": "tested",
+      "scope": "Unmodified Part 1 fifth-edition Strict XSDs; independent numeric/ISO-date/boolean positive input, invalid type/style/string controls, and explicit rejection of dateCompatibility in two genuine Excel fixtures. Not full Strict feature conformance.",
       "caseIds": [],
       "evidence": [
         {
-          "path": "tests/conformance/schema-map.ts",
-          "anchor": "transitional"
+          "path": "tests/conformance/strict-oracle.test.ts",
+          "anchor": "independently validates Strict input with the normative Strict schemas"
+        },
+        {
+          "path": "tests/io/strict-read.test.ts",
+          "anchor": "dateCompatibility"
         }
       ]
     },

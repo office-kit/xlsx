@@ -6,6 +6,9 @@ const SUPPORTED = new Set([
   'http://schemas.openxmlformats.org/spreadsheetml/2006/main',
   'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
   ...['main', 'chart', 'spreadsheetDrawing', 'chartDrawing', 'diagram', 'picture'].map(n => `http://schemas.openxmlformats.org/drawingml/2006/${n}`),
+  'http://purl.oclc.org/ooxml/spreadsheetml/main',
+  'http://purl.oclc.org/ooxml/officeDocument/relationships',
+  ...['main', 'chart', 'spreadsheetDrawing', 'chartDrawing', 'diagram', 'picture'].map(n => `http://purl.oclc.org/ooxml/drawingml/${n}`),
   XML_NS,
 ]);
 interface Scope { ignorable: Set<string>; processContent: Set<string> }

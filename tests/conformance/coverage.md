@@ -233,7 +233,7 @@ Subject: oracle; execution: ci. Runtime: libxml2; Open XML SDK Office2016; fflat
 | mc-subset | T | U | U | T |
 | serialized-parts | U | U | U | U |
 | zip64-oracle | O | O | U | U |
-| strict-oracle | O | O | U | U |
+| strict-oracle | T | U | U | T |
 | mc-full | O | O | O | O |
 | formula-calculation | U | U | U | U |
 | visual-rendering | U | U | U | U |
@@ -248,7 +248,7 @@ Bounded claims and evidence:
 - **coordinate-uri-zip32 / reject: tested**. Out-of-grid refs, invalid targets, duplicate names and inflation budgets; valid XFD1048576 control. These are oracle checks, not production-reader rejection guarantees. [tests/conformance/invalid-generation.test.ts](../../tests/conformance/invalid-generation.test.ts) (anchor: rejects generated out-of-grid references); [tests/conformance/invalid-generation.test.ts](../../tests/conformance/invalid-generation.test.ts) (anchor: detects duplicate names before inflation); [tests/conformance/invalid-generation.test.ts](../../tests/conformance/invalid-generation.test.ts) (anchor: rejects advertised oversized inflation)
 - **mc-subset / read, reject: tested**. Only listed understood namespaces and calibrated MC constructs; ordering is checked even after a supported Choice. [tests/conformance/validator-calibration.test.ts](../../tests/conformance/validator-calibration.test.ts) (anchor: carries namespace bindings from a selected Choice); [tests/conformance/validator-calibration.test.ts](../../tests/conformance/validator-calibration.test.ts) (anchor: rejects unknown MustUnderstand namespaces); [tests/conformance/invalid-generation.test.ts](../../tests/conformance/invalid-generation.test.ts) (anchor: validates xml:space before normalization); [tests/conformance/invalid-generation.test.ts](../../tests/conformance/invalid-generation.test.ts) (anchor: validates the entire AlternateContent sequence)
 - **zip64-oracle / read, write: unsupported**. Oracle reports incomplete, never valid; this says nothing about production ZIP64 capability. [tests/conformance/invalid-generation.test.ts](../../tests/conformance/invalid-generation.test.ts) (anchor: never certifies ZIP64 outside the bounded profile)
-- **strict-oracle / read, write: unsupported**. Only Transitional schemas are vendored. Existing Strict production fixtures do not establish Strict schema conformance. [tests/conformance/schema-map.ts](../../tests/conformance/schema-map.ts) (anchor: transitional)
+- **strict-oracle / read, reject: tested**. Unmodified Part 1 fifth-edition Strict XSDs; independent numeric/ISO-date/boolean positive input, invalid type/style/string controls, and explicit rejection of dateCompatibility in two genuine Excel fixtures. Not full Strict feature conformance. [tests/conformance/strict-oracle.test.ts](../../tests/conformance/strict-oracle.test.ts) (anchor: independently validates Strict input with the normative Strict schemas); [tests/io/strict-read.test.ts](../../tests/io/strict-read.test.ts) (anchor: dateCompatibility)
 - **mc-full / read, write, preserve, reject: unsupported**. The consumer oracle implements a bounded MC subset, not all preservation directives. [tests/conformance/mc-strip.ts](../../tests/conformance/mc-strip.ts) (anchor: consumer profile)
 
 ## libreoffice

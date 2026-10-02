@@ -1,0 +1,29 @@
+{
+  "edition": "ECMA-376 Part 1, fifth edition (2016)",
+  "source": "https://ecma-international.org/wp-content/uploads/ECMA-376-1_5th_edition_december_2016.zip",
+  "innerArchive": "OfficeOpenXML-XMLSchema-Strict.zip",
+  "innerArchiveSha256": "73fab4b04ddd93da020ed07583f755466dcaf69f115b2ff6649af7ae16a816f7",
+  "files": {
+    "dml-chart.xsd": "189b9631129a7d6c9f971b42b94c8942d260f11f81615f427db059bbf442cdc3",
+    "dml-chartDrawing.xsd": "1943abd37970b25b355890f183c19a3b1a9b67a1420633030eb50ed5b278bec7",
+    "dml-diagram.xsd": "179cd2fa4b981e1e2faa9ce99bb18c5d4d896dc1edb144af50f5cc8c52eb8569",
+    "dml-lockedCanvas.xsd": "9c3038dd6ccc3472378be0e7c4e3e34013ee7a5619555e7463dd6d7e1d9bde1e",
+    "dml-main.xsd": "078871240cff323ddd22a395281421b737fa61508fd39ffaa2947ba2bc01175e",
+    "dml-picture.xsd": "d36c91b21f80ec504cd05d40737e7e2104713d8ed7c6c8af51e5c6b778fd667c",
+    "dml-spreadsheetDrawing.xsd": "1135493946a4d86773f1421e3453fa94bdebe575f6746e0b09a716360b44b925",
+    "dml-wordprocessingDrawing.xsd": "725d64911076b34f1b2d60004cd14866fc0a399ab9808dc09415197a9e4dd144",
+    "pml.xsd": "63f991936d4b11ecdab09442043d2806f1b19383e6c49b13c64186bcf485fb0b",
+    "shared-additionalCharacteristics.xsd": "2642f009105af888c2374aa550593d7bccc0a953579a4ff70b9a2fbbb76757b2",
+    "shared-bibliography.xsd": "380653d1a4e9760717c33c4d643a042d7f22d070ef012fac51d3fced3ffe36dd",
+    "shared-commonSimpleTypes.xsd": "02df434395eb22d0e13aa2f6445b7f7fbecd3687c6dff238823bbdd3bd9cdf6a",
+    "shared-customXmlDataProperties.xsd": "e5679dbc139f9e192b7754863401f6a429002c10d8189ed68237c4972080125c",
+    "shared-customXmlSchemaProperties.xsd": "32034ef469e73047751ca00f88c4b6e62dd47a7a655b72daf7f95a1c5015f228",
+    "shared-documentPropertiesCustom.xsd": "e04e42fb42404c6e9025fe235b67b0f726b5735d62ac799ec4dca0fa67e99b04",
+    "shared-documentPropertiesExtended.xsd": "62fbc970cd9f08faad142e59085c3656b5248fd97039d9bc35d24c31f032fb62",
+    "shared-documentPropertiesVariantTypes.xsd": "105b7556e4d40ff808410764b4e31193fceb0f5b73191517c45166e0403d8cf6",
+    "shared-math.xsd": "4c6e2aaed399993c80e67e848752dd9c0e177a8b671cf792f0c820496d037823",
+    "shared-relationshipReference.xsd": "82409aacec09c8672eec2f8d7e44bec10c450649f31603659a8229b122a01163",
+    "sml.xsd": "dc4b61faf2b62d2caf875faf40bb14a8f3c0cf3dc52763a2db394a28e79634b4",
+    "wml.xsd": "44fc2233c5df2cfbe0b3b50e7024bd8412ec99dfe7176313ef58845fdec5498d"
+  }
+}

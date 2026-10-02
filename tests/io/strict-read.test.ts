@@ -10,6 +10,12 @@ import { validateXlsx } from '../conformance/validate.js';
 for (const file of ['sample.strict.xlsx', 'SimpleStrict.xlsx']) {
   it(`reads genuine ${file} and saves schema-valid Transitional XML`, async () => {
     const bytes = readFileSync(new URL(`./fixtures/strict/${file}`, import.meta.url));
+    const input = await validateXlsx(bytes, { conformance: 'strict' });
+    // Genuine Excel files contain a non-normative unqualified extension.
+    // Keep the original bytes and report the discrepancy instead of stripping it.
+    expect(input.status).toBe('invalid');
+    expect(input.issues.filter(i => i.message.includes('Schemas validity error')).map(i => [i.part, i.message.includes("attribute 'dateCompatibility'")])).toEqual([['xl/workbook.xml', true]]);
+    expect(input.issues.every(i => i.tier === 'xsd' && i.part === 'xl/workbook.xml')).toBe(true);
     const wb = await loadWorkbook(fromBuffer(bytes));
     expect(wb.sheets.length).toBeGreaterThan(0);
     if (file === 'sample.strict.xlsx') {
