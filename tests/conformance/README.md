@@ -325,3 +325,16 @@ sequences against an independent tab/name model and inspects saved XML. It
 checks local name ownership, active tabs, numeric cells, formula caches, and
 unique table identifiers. Formula expressions remain verbatim: automatic
 rewriting of renamed/deleted sheet references is outside this API contract.
+
+## Public loader resource contract
+
+`loader-boundaries.test.ts` exercises both public loaders through buffered and
+1/7/257-byte stream sources. Independently assembled inputs establish exact
+cell/row/decompressed entry/total boundaries, compression-ratio rejection and
+typed failures for DTDs, mismatched tags and invalid character references.
+Large declared dimensions do not consume the content budget; actual rows and
+cells do. ZIP byte caps are enabled by default, while cell/row caps require
+explicit caller configuration. A cap is not a deadline, a compressed-input
+size limit or complete validation of all OOXML. Applications still need their
+own upload-size/time boundaries. Existing lower-level tests cover dishonest
+ZIP sizes, cancellation and cross-sheet/query budget behavior.
