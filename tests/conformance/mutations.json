@@ -1,0 +1,52 @@
+[
+  {
+    "id": "boolean-false",
+    "regression": "issue #209: false lexical boolean",
+    "file": "src/utils/xsd-boolean.ts",
+    "before": "if (raw === '0' || raw === 'false') return false;",
+    "after": "if (raw === '0' || raw === 'false') return true;",
+    "tests": [
+      "tests/conformance/corpus.test.ts"
+    ]
+  },
+  {
+    "id": "stream-rich-inline",
+    "regression": "PR #193: streaming rich text",
+    "file": "src/streaming/read-only.ts",
+    "before": "return inline === undefined ? '' : richStringValue(inline);",
+    "after": "return '';",
+    "tests": [
+      "tests/conformance/corpus.test.ts"
+    ]
+  },
+  {
+    "id": "cdata-text",
+    "regression": "XML character data preservation",
+    "file": "src/xml/iterparse.ts",
+    "before": "parser.on('cdata', pushText);",
+    "after": "parser.on('cdata', () => {});",
+    "tests": [
+      "tests/conformance/corpus.test.ts"
+    ]
+  },
+  {
+    "id": "vba-content-type",
+    "regression": "PR #214: unrelated binary content types",
+    "file": "src/io/save.ts",
+    "before": "addOverride(manifest, '/xl/vbaProject.bin', 'application/vnd.ms-office.vbaProject');",
+    "after": "addDefault(manifest, 'bin', 'application/vnd.ms-office.vbaProject');",
+    "tests": [
+      "tests/conformance/preservation.test.ts"
+    ]
+  },
+  {
+    "id": "vba-relationship",
+    "regression": "PR #214: duplicate VBA relationship namespace",
+    "file": "src/io/save.ts",
+    "before": "type: 'http://schemas.microsoft.com/office/2006/relationships/vbaProject',",
+    "after": "type: `${REL_NS}/vbaProject`,",
+    "tests": [
+      "tests/conformance/preservation.test.ts"
+    ]
+  }
+]

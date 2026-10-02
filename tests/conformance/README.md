@@ -206,3 +206,13 @@ entries, 16 MiB per inflated part and 64 MiB total. These are oracle resource
 limits, not production API limits. ZIP64 is reported incomplete; it is not
 misrepresented as fully validated. This suite verifies the oracle's rejection
 behavior, not that every production reader rejects every malformed package.
+
+### Curated regression mutations
+
+`pnpm qa:mutations` copies sources/tests into a temporary directory, verifies a
+green baseline, then reintroduces five documented regressions one at a time.
+Every regression must fail a test assertion. A surviving mutant, changed source
+anchor, empty run, timeout, compile failure or missing report fails the gate.
+The working sources are never mutated. CI retains per-mutant diagnostics and
+the exact failing test names in `.qa/mutations/`. This proves detection of this
+curated set; it is not a general mutation score or a conformance percentage.

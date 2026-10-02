@@ -121,6 +121,7 @@
     "prepublishOnly": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm size && pnpm check:attw && pnpm check:consumer",
     "qa:corpus": "node scripts/qa-corpus.mjs",
     "test:browser": "pnpm build && pnpm qa:corpus && playwright test",
+    "qa:mutations": "node scripts/qa-mutations.mjs",
     "qa:office": "node scripts/qa-office.mjs"
   },
   "devDependencies": {

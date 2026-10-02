@@ -179,6 +179,7 @@ jobs:
       - run: dotnet restore tests/conformance/sdk --locked-mode
       - run: dotnet run --project tests/conformance/sdk --no-restore -- .qa/corpus
       - run: pnpm qa:office
+      - run: pnpm qa:mutations
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -186,4 +187,5 @@ jobs:
           path: |
             .qa/corpus/
             .qa/libreoffice/results.json
+            .qa/mutations/
           retention-days: 7
