@@ -14,7 +14,7 @@ export interface Features {
   pageSetup: Record<string, string>; pageMargins: Record<string, number>; printOptions: Record<string, string>;
 }
 /** Independent XML/ZIP projection follows attached relationships, not filenames. */
-export function projectExcelFeatures(bytes: Uint8Array): Features {
+export function projectExcelFeatures(bytes: Uint8Array, title = 'Audit'): Features {
   const parts = unzipSync(bytes);
   const xml = (path: string) => parseDocument(strFromU8(required(parts[path])));
   const target = (path: string, id: string, kind: string): string => {
@@ -25,7 +25,7 @@ export function projectExcelFeatures(bytes: Uint8Array): Features {
     const to = required(attribute(rel, 'Target'));
     return posix.normalize(to.startsWith('/') ? to.slice(1) : posix.join(posix.dirname(path), to));
   };
-  const sheetPath = target('xl/workbook.xml', required(attribute(required(children(required(children(xml('xl/workbook.xml'), 'sheets')[0]), 'sheet')[0]), 'id', R)), 'worksheet');
+  const sheetPath = target('xl/workbook.xml', required(attribute(required(children(required(children(xml('xl/workbook.xml'), 'sheets')[0]), 'sheet').find(n => attribute(n, 'name') === title)), 'id', R)), 'worksheet');
   const sheet = xml(sheetPath);
   const tables = children(required(children(sheet, 'tableParts')[0]), 'tablePart').map(n => {
     const table = xml(target(sheetPath, required(attribute(n, 'id', R)), 'table'));
