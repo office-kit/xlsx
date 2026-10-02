@@ -403,3 +403,38 @@ Profile evidence: [tests/conformance/corpus/excel-features-mac-observation.json]
 Bounded claims and evidence:
 
 - **feature-interactions / read, write, preserve: tested**. One independently assembled combined fixture after an unrelated cell edit: table range/header/filter, pie chart category/value references and caches, attached PNG bytes, chart/image cell anchors, stored page setup/margins/centering. Does not establish full feature-family support, rendered geometry or actual print pagination. [tests/conformance/corpus/excel-features-mac-observation.json](../../tests/conformance/corpus/excel-features-mac-observation.json) (anchor: native-ui-manual); [tests/conformance/excel-features.test.ts](../../tests/conformance/excel-features.test.ts) (anchor: independently preserves attached table, chart, image and print configuration after an unrelated edit); [scripts/qa-office-check.py](../../scripts/qa-office-check.py) (anchor: Follow relationships from the workbook)
+
+## node-isolated
+
+Subject: library; execution: ci. Runtime: Node 22 on Ubuntu 24.04. Adapter: built public fromBuffer and fromStream (7-byte chunks).
+
+| Requirement | Read | Write | Preserve | Reject |
+| --- | --- | --- | --- | --- |
+| font-booleans | U | U | U | U |
+| underline | U | U | U | U |
+| border | U | U | U | U |
+| cell-booleans | U | U | U | U |
+| xml-text | U | U | U | U |
+| row-index | U | U | U | U |
+| formula-cache | U | U | U | U |
+| shared-formula | U | U | U | U |
+| rich-text | U | U | U | U |
+| defined-name | U | U | U | U |
+| dates | U | U | U | U |
+| package-structure | U | U | U | U |
+| coordinate-uri-zip32 | U | U | U | U |
+| mc-subset | U | U | U | U |
+| serialized-parts | U | U | U | U |
+| zip64-oracle | U | U | U | U |
+| strict-oracle | U | U | U | U |
+| mc-full | U | U | U | U |
+| formula-calculation | U | U | U | U |
+| visual-rendering | U | U | U | U |
+| feature-interactions | U | U | U | U |
+| loader-resource-contract | T | U | U | T |
+
+Profile evidence: [.github/workflows/ci.yml](../../.github/workflows/ci.yml) (anchor: resource-conformance:); [scripts/qa-resources.mjs](../../scripts/qa-resources.mjs) (anchor: runIsolated)
+
+Bounded claims and evidence:
+
+- **loader-resource-contract / read, reject: tested**. Ten bounded child-process cases: 8MiB inflated XML, 100000 empty rows, 100000 cells, DTD and misleading grid-wide dimension. Configured typed rejection/positive value required within 15s and 256MiB measured peak RSS, with a 128MiB V8 heap cap. Timeout, OOM, crash or missing report fails QA. Not an OS RSS limit or universal production deadline. [scripts/qa-resource-worker.mjs](../../scripts/qa-resource-worker.mjs) (anchor: 100_000); [scripts/qa-resources.test.mjs](../../scripts/qa-resources.test.mjs) (anchor: heap exhaustion is a runner failure)
