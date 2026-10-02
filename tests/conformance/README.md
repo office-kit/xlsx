@@ -173,3 +173,21 @@ References: [ECMA-376](https://ecma-international.org/publications-and-standards
 [Open XML SDK validator](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.validation.openxmlvalidator),
 [test262](https://github.com/tc39/test262),
 [Playwright browsers](https://playwright.dev/docs/browsers).
+
+## Package preservation contracts
+
+`preservation.test.ts` reads pinned openpyxl fixtures with `fflate`/`saxes` and
+compares the serialized bytes/content types of VBA, controls, printer settings
+and external-link parts after an unrelated T100 edit. It separately compares
+relationship type, source, mode and resolved target, plus XML bindings, so a
+new relationship ID is permitted but a lost connection is not. The legacy
+drawing fixture's contract covers the form-control sheet; the modeled comment
+sheet regenerates its VML with a new path and is outside byte preservation.
+Hand-authored extensions cover unknown worksheet/style subtrees and empty
+style pools. Single-fault controls change bytes, a content type, a target and
+an extension subtree; each must be detected. Existing reference fixture
+provenance/license remain those of the pinned openpyxl submodule.
+
+These contracts exposed and fix two save errors: the VBA relationship must use
+Microsoft's macro relationship namespace, and VBA must be typed by a part
+override rather than replacing every unrelated `.bin` default.

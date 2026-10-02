@@ -652,7 +652,7 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
   if (wb.vbaProject) {
     wbRels.rels.push({
       id: orig?.vbaProject ?? allocateRId(),
-      type: `${REL_NS}/vbaProject`,
+      type: 'http://schemas.microsoft.com/office/2006/relationships/vbaProject',
       target: 'vbaProject.bin',
     });
   }
@@ -765,8 +765,8 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
   addDefault(manifest, 'rels', 'application/vnd.openxmlformats-package.relationships+xml');
   addDefault(manifest, 'xml', 'application/xml');
   // Defaults carried over for passthrough parts go first: addDefault is
-  // last-wins, so the writer's own registrations below (vml for comments, bin
-  // for VBA, image formats) still take precedence on a shared extension.
+  // last-wins, so the writer's own VML/image registrations below still take
+  // precedence on a shared extension. VBA uses a part-specific override.
   if (wb.passthroughDefaults) {
     for (const [ext, ct] of wb.passthroughDefaults) addDefault(manifest, ext, ct);
   }
@@ -802,7 +802,7 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
     addOverride(manifest, `/xl/drawings/chartDrawing${us.id}.xml`, DRAWING_TYPE);
   }
   if (wb.vbaProject) {
-    addDefault(manifest, 'bin', 'application/vnd.ms-office.vbaProject');
+    addOverride(manifest, '/xl/vbaProject.bin', 'application/vnd.ms-office.vbaProject');
   }
   if (wb.passthrough) {
     for (const path of wb.passthrough.keys()) {

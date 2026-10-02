@@ -43,7 +43,7 @@ describe('VBA project round-trip', () => {
 
     const ct = td.decode(entries['[Content_Types].xml']);
     expect(ct).toContain('macroEnabled.main+xml');
-    expect(ct).toContain('Extension="bin"');
+    expect(ct).toContain('PartName="/xl/vbaProject.bin"');
     expect(ct).toContain('vnd.ms-office.vbaProject');
 
     const wbRels = td.decode(entries['xl/_rels/workbook.xml.rels']);

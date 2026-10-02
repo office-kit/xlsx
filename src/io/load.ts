@@ -1263,7 +1263,7 @@ function captureWorkbookRelsExtras(
       original.theme = rel.id;
       continue;
     }
-    if (rel.type === `${REL_NS}/vbaProject`) {
+    if (rel.type === 'http://schemas.microsoft.com/office/2006/relationships/vbaProject') {
       original.vbaProject = rel.id;
       continue;
     }
