@@ -8,7 +8,7 @@ const fresh = () => JSON.parse(read('tests/conformance/coverage.json'));
 test('real inventory resolves evidence and renders explicit Windows and production-rejection gaps', () => {
   const matrix = validateMatrix(fresh(), normative);
   const report = renderMatrix(matrix);
-  const windows = report.split('## excel-windows')[1];
+  const windows = report.split('## excel-windows')[1].split('\n## ')[0];
   assert.ok(windows);
   assert.doesNotMatch(windows, /\| T \|/);
   const node = report.split('## node-model')[1].split('## node-stream')[0];
@@ -51,4 +51,21 @@ for (const [name, mutate, error] of [
     const observation = JSON.parse(body); mutate(observation); return JSON.stringify(observation);
   };
   assert.throws(() => validateMatrix(fresh(), normative, source), error);
+});
+
+for (const [name, mutate, error] of [
+  ['unknown external feature case', m => { m.profiles.find(p => p.id === 'excel-mac-features').caseManifest = 'tests/conformance/corpus/manifest.json'; }, /Unknown profile case/],
+  ['unsafe feature manifest', m => { m.profiles.find(p => p.id === 'excel-mac-features').caseManifest = '../private.json'; }, /Unsafe evidence path/],
+]) test(`reject ${name}`, () => {
+  const matrix = fresh(); mutate(matrix);
+  assert.throws(() => validateMatrix(matrix, normative), error);
+});
+test('reject duplicate external feature cases', () => {
+  const source = path => {
+    const body = read(path);
+    if (!path.endsWith('excel-features-manifest.json')) return body;
+    const manifest = JSON.parse(body); manifest.cases.push(manifest.cases[0]);
+    return JSON.stringify(manifest);
+  };
+  assert.throws(() => validateMatrix(fresh(), normative, source), /Duplicate/);
 });

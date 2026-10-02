@@ -1,0 +1,79 @@
+{
+  "license": "MIT",
+  "provenance": "Hand-authored independent XML and a generated solid-color PNG; no production serializer defines the expected features.",
+  "cases": [
+    {
+      "id": "excel-table-chart-image-print",
+      "clause": "ECMA-376-1 tables, ChartML, DrawingML and worksheet page setup",
+      "expectedValue": "audit",
+      "officeValues": [
+        "audit",
+        1,
+        2
+      ],
+      "expectedFeatures": {
+        "tables": [
+          {
+            "name": "AuditTable",
+            "ref": "A1:A3",
+            "columns": [
+              "audit"
+            ],
+            "autoFilter": "A1:A3"
+          }
+        ],
+        "charts": [
+          {
+            "type": "pieChart",
+            "valueRef": "Audit!$A$2:$A$3",
+            "categoryRef": "Audit!$C$2:$C$3",
+            "values": [
+              1,
+              2
+            ],
+            "categories": [
+              "First",
+              "Second"
+            ]
+          }
+        ],
+        "images": [
+          "de47562d84abfc65ee0c6f925ae0dfe54a53273766e7863ad2afd87194ea4216"
+        ],
+        "anchors": [
+          [
+            "chart",
+            4,
+            0,
+            11,
+            11
+          ],
+          [
+            "image",
+            4,
+            14,
+            6,
+            17
+          ]
+        ],
+        "pageSetup": {
+          "paperSize": "9",
+          "orientation": "landscape",
+          "fitToWidth": "1",
+          "fitToHeight": "0"
+        },
+        "pageMargins": {
+          "left": 0.25,
+          "right": 0.25,
+          "top": 0.5,
+          "bottom": 0.5,
+          "header": 0.2,
+          "footer": 0.2
+        },
+        "printOptions": {
+          "horizontalCentered": "1"
+        }
+      }
+    }
+  ]
+}

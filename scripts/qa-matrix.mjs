@@ -45,7 +45,14 @@ export function validateMatrix(matrix, corpus, source = read) {
     if (profile.caseLimit) {
       const limit = JSON.parse(source(profile.caseLimit));
       unique(limit.cases, `${profile.id} case limit`);
-      if (limit.cases.some(id => !corpusIds.has(id))) fail(`Unknown profile case: ${profile.id}`);
+      let allowed = corpusIds;
+      if (profile.caseManifest) {
+        evidence([{ path: profile.caseManifest, anchor: '"cases"' }], source, `${profile.id} case manifest`);
+        const ids = JSON.parse(source(profile.caseManifest)).cases.map(c => c.id);
+        unique(ids, `${profile.id} manifest cases`);
+        allowed = new Set(ids);
+      }
+      if (limit.cases.some(id => !allowed.has(id))) fail(`Unknown profile case: ${profile.id}`);
       limits.set(profile.id, new Set(limit.cases));
       if (profile.execution === 'manual') {
         const observation = JSON.parse(source(profile.observation));

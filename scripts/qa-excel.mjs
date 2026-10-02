@@ -5,12 +5,15 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync,
 import { join, resolve } from 'node:path';
 const mode = process.argv[2];
 const directory = resolve(process.argv[3] ?? '.qa/excel-manual');
+const features = process.argv[4] === '--features';
+if ((process.argv[4] && !features) || process.argv.length > 5) throw new Error('Unknown Excel profile option');
+const corpusDirectory = features ? '.qa/excel-feature-corpus' : '.qa/corpus';
 const input = join(directory, 'input');
 const output = join(directory, 'output');
-const profile = JSON.parse(readFileSync('tests/conformance/corpus/excel-profile.json', 'utf8'));
+const profile = JSON.parse(readFileSync(`tests/conformance/corpus/${features ? 'excel-features-profile' : 'excel-profile'}.json`, 'utf8'));
 const hash = path => createHash('sha256').update(readFileSync(path)).digest('hex');
 const sameSet = (actual, expected) => actual.length === expected.length && new Set(actual).size === actual.length && [...actual].sort().join('\n') === [...expected].sort().join('\n');
-const normative = JSON.parse(readFileSync('tests/conformance/corpus/manifest.json', 'utf8')).cases;
+const normative = JSON.parse(readFileSync(`tests/conformance/corpus/${features ? 'excel-features-manifest' : 'manifest'}.json`, 'utf8')).cases;
 if (!profile.cases.length || new Set(profile.cases).size !== profile.cases.length) throw new Error('Empty or duplicate Excel profile');
 const expectedCases = profile.cases.map(id => {
   const c = normative.find(candidate => candidate.id === id);
@@ -19,16 +22,16 @@ const expectedCases = profile.cases.map(id => {
 });
 if (mode === '--prepare') {
   if (existsSync(directory)) throw new Error('Use a fresh session directory; refusing stale manual results');
-  const corpus = JSON.parse(readFileSync('.qa/corpus/manifest.json', 'utf8'));
+  const corpus = JSON.parse(readFileSync(join(corpusDirectory, 'manifest.json'), 'utf8'));
   const cases = profile.cases.map(id => {
     const c = corpus.find(candidate => candidate.id === id);
     if (!c) throw new Error(`Missing corpus case ${id}`);
     return c;
   });
-  if (JSON.stringify(cases) !== JSON.stringify(expectedCases)) throw new Error('Regenerate qa:corpus after corpus changes');
+  if (JSON.stringify(cases) !== JSON.stringify(expectedCases)) throw new Error('Regenerate the selected QA corpus after corpus changes');
   mkdirSync(input, { recursive: true }); mkdirSync(output);
   writeFileSync(join(input, 'manifest.json'), JSON.stringify(cases, null, 2));
-  for (const c of cases) copyFileSync(`.qa/corpus/${c.id}.output.xlsx`, join(input, `${c.id}.output.xlsx`));
+  for (const c of cases) copyFileSync(join(corpusDirectory, `${c.id}.output.xlsx`), join(input, `${c.id}.output.xlsx`));
   const observations = { profile: profile.profile, application: 'Microsoft Excel', version: '', platform: process.platform, method: 'native-ui-manual', cases: cases.map(c => ({ id: c.id, openedWithoutRepair: false, observedAt: '', inputSha256: hash(join(input, `${c.id}.output.xlsx`)), outputSha256: '' })) };
   writeFileSync(join(directory, 'observations.json'), JSON.stringify(observations, null, 2));
   console.info(`Open each file in ${input} in desktop Excel. Do not accept repair. Save As the same basename into ${output}. Record version, timestamp, no-repair observation and saved SHA256 in observations.json; then run qa:excel --check.`);
@@ -52,4 +55,4 @@ if (mode === '--prepare') {
   if (check.error || check.status !== 0) throw new Error(`Independent Excel comparison failed: ${check.error ?? check.stderr ?? check.status}`);
   writeFileSync(join(directory, 'results.json'), JSON.stringify({ profile: profile.profile, status: 'pass', provenance: observations, semantic: JSON.parse(readFileSync(join(output, 'results.json'), 'utf8')) }, null, 2));
   process.stdout.write(check.stdout);
-} else throw new Error('Usage: qa:excel --prepare|--check [fresh-session-directory]');
+} else throw new Error('Usage: qa:excel --prepare|--check [fresh-session-directory] [--features]');

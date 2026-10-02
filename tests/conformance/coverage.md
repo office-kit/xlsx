@@ -80,7 +80,7 @@ Bounded claims and evidence:
 - **defined-name / read, write, preserve: tested** (2 selected cases). Expected model before and after B2 edit; independent saved-package validation. [tests/conformance/corpus.test.ts](../../tests/conformance/corpus.test.ts) (anchor: normative corpus: independent expected semantics)
 - **dates / read, write, preserve: tested** (4 selected cases). Expected model before and after B2 edit; independent saved-package validation. [tests/conformance/corpus.test.ts](../../tests/conformance/corpus.test.ts) (anchor: normative corpus: independent expected semantics)
 - **serialized-parts / preserve: tested**. Three pinned openpyxl fixtures and hand-authored extensions. Comment-sheet regenerated VML, arbitrary custom parts and all unselected parts are outside this contract. [tests/conformance/preservation.test.ts](../../tests/conformance/preservation.test.ts) (anchor: preserves bytes, content types, graph and XML bindings); [tests/conformance/preservation.test.ts](../../tests/conformance/preservation.test.ts) (anchor: preserves unknown extension subtrees and explicit empty style pools); [tests/conformance/preservation.test.ts](../../tests/conformance/preservation.test.ts) (anchor: calibrates missing binary, changed content type, graph target)
-- **feature-interactions / preserve: tested**. Seeded sheet editing sequences: local name ownership, active tab, saved cells/formula caches and unique copied table identifiers. Expressions are retained verbatim. [tests/conformance/sheet-operations.test.ts](../../tests/conformance/sheet-operations.test.ts) (anchor: generated editing sequences preserve independently tracked names, cells and table uniqueness)
+- **feature-interactions / preserve: tested**. Seeded sheet editing sequences: local name ownership, active tab, saved cells/formula caches and unique copied table identifiers. Expressions are retained verbatim. One independently assembled combined fixture after an unrelated cell edit: table range/header/filter, pie chart category/value references and caches, attached PNG bytes, chart/image cell anchors, stored page setup/margins/centering. Does not establish full feature-family support, rendered geometry or actual print pagination. [tests/conformance/sheet-operations.test.ts](../../tests/conformance/sheet-operations.test.ts) (anchor: generated editing sequences preserve independently tracked names, cells and table uniqueness); [tests/conformance/excel-features.test.ts](../../tests/conformance/excel-features.test.ts) (anchor: independently preserves attached table, chart, image and print configuration after an unrelated edit)
 - **loader-resource-contract / read, reject: tested**. Buffered and 1/7/257-byte public stream sources: exact cell/row/ZIP entry/total limits accepted; over-budget and malformed XML rejected with typed errors. [tests/conformance/loader-boundaries.test.ts](../../tests/conformance/loader-boundaries.test.ts) (anchor: applies ZIP entry, total and ratio caps at the public boundary)
 
 ## node-stream
@@ -368,3 +368,38 @@ Profile evidence: [tests/conformance/README.md](../../tests/conformance/README.m
 Bounded claims and evidence:
 
 No tested claims. Every operation remains untested.
+
+## excel-mac-features
+
+Subject: consumer; execution: manual. Runtime: Excel for Mac 16.113.3 (16.113.26092714). Adapter: native UI Open / Save As; independent Python XML/ZIP projection.
+
+| Requirement | Read | Write | Preserve | Reject |
+| --- | --- | --- | --- | --- |
+| font-booleans | U | U | U | U |
+| underline | U | U | U | U |
+| border | U | U | U | U |
+| cell-booleans | U | U | U | U |
+| xml-text | U | U | U | U |
+| row-index | U | U | U | U |
+| formula-cache | U | U | U | U |
+| shared-formula | U | U | U | U |
+| rich-text | U | U | U | U |
+| defined-name | U | U | U | U |
+| dates | U | U | U | U |
+| package-structure | U | U | U | U |
+| coordinate-uri-zip32 | U | U | U | U |
+| mc-subset | U | U | U | U |
+| serialized-parts | U | U | U | U |
+| zip64-oracle | U | U | U | U |
+| strict-oracle | U | U | U | U |
+| mc-full | U | U | U | U |
+| formula-calculation | U | U | U | U |
+| visual-rendering | U | U | U | U |
+| feature-interactions | T | T | T | U |
+| loader-resource-contract | U | U | U | U |
+
+Profile evidence: [tests/conformance/corpus/excel-features-mac-observation.json](../../tests/conformance/corpus/excel-features-mac-observation.json) (anchor: native-ui-manual); [tests/conformance/excel-features.test.ts](../../tests/conformance/excel-features.test.ts) (anchor: independently preserves attached table, chart, image and print configuration after an unrelated edit); [scripts/qa-office-check.py](../../scripts/qa-office-check.py) (anchor: Follow relationships from the workbook)
+
+Bounded claims and evidence:
+
+- **feature-interactions / read, write, preserve: tested**. One independently assembled combined fixture after an unrelated cell edit: table range/header/filter, pie chart category/value references and caches, attached PNG bytes, chart/image cell anchors, stored page setup/margins/centering. Does not establish full feature-family support, rendered geometry or actual print pagination. [tests/conformance/corpus/excel-features-mac-observation.json](../../tests/conformance/corpus/excel-features-mac-observation.json) (anchor: native-ui-manual); [tests/conformance/excel-features.test.ts](../../tests/conformance/excel-features.test.ts) (anchor: independently preserves attached table, chart, image and print configuration after an unrelated edit); [scripts/qa-office-check.py](../../scripts/qa-office-check.py) (anchor: Follow relationships from the workbook)

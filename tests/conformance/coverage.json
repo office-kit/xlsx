@@ -192,6 +192,34 @@
           "anchor": "No licensed Windows self-hosted runner"
         }
       ]
+    },
+    {
+      "id": "excel-mac-features",
+      "subject": "consumer",
+      "execution": "manual",
+      "runtimes": [
+        "Excel for Mac 16.113.3 (16.113.26092714)"
+      ],
+      "adapters": [
+        "native UI Open / Save As; independent Python XML/ZIP projection"
+      ],
+      "caseLimit": "tests/conformance/corpus/excel-features-profile.json",
+      "caseManifest": "tests/conformance/corpus/excel-features-manifest.json",
+      "observation": "tests/conformance/corpus/excel-features-mac-observation.json",
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus/excel-features-mac-observation.json",
+          "anchor": "native-ui-manual"
+        },
+        {
+          "path": "tests/conformance/excel-features.test.ts",
+          "anchor": "independently preserves attached table, chart, image and print configuration after an unrelated edit"
+        },
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "Follow relationships from the workbook"
+        }
+      ]
     }
   ],
   "requirements": [
@@ -1909,9 +1937,13 @@
         {
           "path": "tests/conformance/sheet-operations.test.ts",
           "anchor": "generated editing sequences preserve independently tracked names, cells and table uniqueness"
+        },
+        {
+          "path": "tests/conformance/excel-features.test.ts",
+          "anchor": "independently preserves attached table, chart, image and print configuration after an unrelated edit"
         }
       ],
-      "scope": "Seeded sheet editing sequences: local name ownership, active tab, saved cells/formula caches and unique copied table identifiers. Expressions are retained verbatim.",
+      "scope": "Seeded sheet editing sequences: local name ownership, active tab, saved cells/formula caches and unique copied table identifiers. Expressions are retained verbatim. One independently assembled combined fixture after an unrelated cell edit: table range/header/filter, pie chart category/value references and caches, attached PNG bytes, chart/image cell anchors, stored page setup/margins/centering. Does not establish full feature-family support, rendered geometry or actual print pagination.",
       "operations": [
         "preserve"
       ]
@@ -1947,6 +1979,32 @@
         {
           "path": "tests/conformance/loader-boundaries.test.ts",
           "anchor": "applies ZIP entry, total and ratio caps at the public boundary"
+        }
+      ]
+    },
+    {
+      "requirement": "feature-interactions",
+      "profile": "excel-mac-features",
+      "operations": [
+        "read",
+        "write",
+        "preserve"
+      ],
+      "status": "tested",
+      "scope": "One independently assembled combined fixture after an unrelated cell edit: table range/header/filter, pie chart category/value references and caches, attached PNG bytes, chart/image cell anchors, stored page setup/margins/centering. Does not establish full feature-family support, rendered geometry or actual print pagination.",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "tests/conformance/corpus/excel-features-mac-observation.json",
+          "anchor": "native-ui-manual"
+        },
+        {
+          "path": "tests/conformance/excel-features.test.ts",
+          "anchor": "independently preserves attached table, chart, image and print configuration after an unrelated edit"
+        },
+        {
+          "path": "scripts/qa-office-check.py",
+          "anchor": "Follow relationships from the workbook"
         }
       ]
     }
