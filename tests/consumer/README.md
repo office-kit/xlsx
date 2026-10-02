@@ -63,3 +63,24 @@ repo's own `dist/`, and this fixture would never touch the installed tarball.
 The install runs through npm, not pnpm, so the fixture gets an ordinary
 third-party `node_modules` rather than a workspace link back to `src/`. Both
 `node_modules/` and `dist/` here are generated and gitignored.
+
+## Declaration baseline
+
+After building, `pnpm check:api` compares all published subpaths, export names
+and their reachable declaration graph with `api-baseline.json`. Formatting and
+comments are normalized with the pinned TypeScript printer. Transitive member,
+parameter and union changes are detected even if an entrypoint re-export stays
+the same. Reachable internal declarations also trigger review; this is deliberately
+conservative and is not an automatic assignability or runtime-compatibility proof.
+
+For an intentional change, inspect the diff, run `pnpm check:api --write` and
+commit a new `api-change.json` with `baselineSha256` (the printed hash), `kind`
+(`additive`, `correction`, or `breaking`), an explanatory `reason`, and the path
+to a newly added `changeset` file. CI compares against the PR base commit and
+requires this hash-bound record when the baseline changes. Additions require a
+minor bump, corrections at least patch, and declared breaks minor before 1.0
+or major afterwards with `Breaking` in the changeset. Reviewers must verify
+the classification and migration explanation; relabeling a break as a correction
+cannot be mechanically ruled out. Locally, `pnpm check:api --base origin/main`
+exercises the same approval check. The first baseline PR bootstraps the gate.
+Release and prepublish run the baseline and packaged-consumer checks.
