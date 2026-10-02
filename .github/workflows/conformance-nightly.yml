@@ -31,7 +31,7 @@ jobs:
         run: |
           mkdir -p .qa
           set -o pipefail
-          pnpm exec vitest run tests/conformance/property.test.ts 2>&1 | tee .qa/fuzz.log
+          pnpm exec vitest run tests/conformance/property.test.ts tests/conformance/invalid-generation.test.ts 2>&1 | tee .qa/fuzz.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

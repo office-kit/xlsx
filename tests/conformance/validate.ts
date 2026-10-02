@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, posix } from 'node:path';
 import { required } from './required.js';
+import { checkZipEnvelope } from './zip-envelope.js';
 import { unzipSync } from 'fflate';
 import { stripIgnorableMarkup } from './mc-strip.js';
 import { CONTENT_TYPES_SCHEMA, RELATIONSHIPS_SCHEMA, schemaFor } from './schema-map.js';
@@ -27,7 +28,10 @@ const R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 interface Relationship { id: string; type: string; target: string; external: boolean }
 const relPath = (part: string) => part ? posix.join(posix.dirname(part), '_rels', `${posix.basename(part)}.rels`) : '_rels/.rels';
 function resolve(source: string, target: string): string {
-  return posix.normalize(target.startsWith('/') ? decodeURI(target.slice(1).split('#')[0] ?? '') : posix.join(posix.dirname(source), decodeURI(target.split('#')[0] ?? '')));
+  if (!target || /[\\?\u0000]/.test(target) || /^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith('//')) throw new Error('Invalid internal target URI');
+  const resolved = posix.normalize(target.startsWith('/') ? decodeURI(target.slice(1).split('#')[0] ?? '') : posix.join(posix.dirname(source), decodeURI(target.split('#')[0] ?? '')));
+  if (resolved === '..' || resolved.startsWith('../')) throw new Error('Target escapes the package');
+  return resolved;
 }
 function decode(bytes: Uint8Array): string {
   const encoding = bytes[0] === 0xff && bytes[1] === 0xfe || bytes[0] === 0x3c && bytes[1] === 0 ? 'utf-16le'
@@ -45,7 +49,11 @@ export async function validateXlsx(bytes: Uint8Array, options: ValidateOptions =
     return { ok: status === 'valid', status, issues, skipped };
   };
   let parts: Record<string, Uint8Array>;
-  try { parts = unzipSync(bytes); }
+  try {
+    const profile = checkZipEnvelope(bytes);
+    if (profile === 'zip64') { skipped.push('<ZIP64 envelope outside bounded oracle profile>'); return finish(); }
+    parts = unzipSync(bytes);
+  }
   catch (cause) { issue('zip', '<package>', String(cause)); return finish(); }
   const types = new Map<string, string>();
   const defaults = new Map<string, string>();

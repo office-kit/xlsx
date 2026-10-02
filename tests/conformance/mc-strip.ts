@@ -31,21 +31,36 @@ function extend(node: XmlElement, parent: Scope): Scope {
   return scope;
 }
 function process(node: XmlElement, parent: Scope): Array<XmlElement | string> {
+  const space = attribute(node, 'space', XML_NS);
+  if (space !== undefined && space !== 'default' && space !== 'preserve') throw new OpenXmlSchemaError('Invalid xml:space');
   const scope = extend(node, parent);
   const contents = (n: XmlElement, s: Scope) => n.children.flatMap(c => typeof c === 'string' ? [c] : process(c, s));
   if (node.uri === MC && node.local === 'AlternateContent') {
     let fallback: XmlElement | undefined;
+    let selected: XmlElement | undefined;
+    let choices = 0;
     for (const c of node.children) {
-      if (typeof c === 'string') continue;
+      if (typeof c === 'string') {
+        if (c.trim()) throw new OpenXmlSchemaError('Text in AlternateContent');
+        continue;
+      }
       if (c.uri !== MC) throw new OpenXmlSchemaError('Invalid AlternateContent child');
       if (c.local === 'Choice') {
+        if (fallback) throw new OpenXmlSchemaError('Choice after Fallback');
+        choices++;
         const requires = words(attribute(c, 'Requires'));
         if (!requires.length) throw new OpenXmlSchemaError('Choice requires a non-empty Requires');
-        if (requires.every(p => SUPPORTED.has(namespace(c, p)))) return contents(c, extend(c, scope));
-      } else if (c.local === 'Fallback') fallback = c;
+        const understood = requires.map(p => SUPPORTED.has(namespace(c, p)));
+        if (!selected && understood.every(Boolean)) selected = c;
+      } else if (c.local === 'Fallback') {
+        if (fallback) throw new OpenXmlSchemaError('Duplicate Fallback');
+        fallback = c;
+      }
       else throw new OpenXmlSchemaError('Invalid AlternateContent child');
     }
-    return fallback ? contents(fallback, extend(fallback, scope)) : [];
+    if (!choices) throw new OpenXmlSchemaError('AlternateContent requires a Choice');
+    const branch = selected ?? fallback;
+    return branch ? contents(branch, extend(branch, scope)) : [];
   }
   if (scope.ignorable.has(node.uri) && !SUPPORTED.has(node.uri)) {
     return scope.processContent.has(`${node.uri}|${node.local}`) ? contents(node, scope) : [];

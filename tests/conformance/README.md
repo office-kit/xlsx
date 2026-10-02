@@ -191,3 +191,18 @@ provenance/license remain those of the pinned openpyxl submodule.
 These contracts exposed and fix two save errors: the VBA relationship must use
 Microsoft's macro relationship namespace, and VBA must be typed by a part
 override rather than replacing every unrelated `.bin` default.
+
+### Invalid-input calibration
+
+`invalid-generation.test.ts` starts from hand-authored packages, checks the valid
+XFD1048576 boundary, and generates out-of-grid references with a reproducible
+fast-check seed and shrinking. Single faults cover invalid internal targets,
+duplicate ZIP entries, inflation budgets, and the complete MC Choice/Fallback
+sequence even after an earlier supported Choice. Invalid xml:space is rejected
+before normalization. Nightly runs exercise both valid and invalid generators.
+
+The independent ZIP preflight is a bounded UTF-8 ZIP32 profile: at most 10,000
+entries, 16 MiB per inflated part and 64 MiB total. These are oracle resource
+limits, not production API limits. ZIP64 is reported incomplete; it is not
+misrepresented as fully validated. This suite verifies the oracle's rejection
+behavior, not that every production reader rejects every malformed package.
