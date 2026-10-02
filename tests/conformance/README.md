@@ -224,6 +224,9 @@ anchor, empty run, timeout, compile failure or missing report fails the gate.
 The working sources are never mutated. CI retains per-mutant diagnostics and
 the exact failing test names in `.qa/mutations/`. This proves detection of this
 curated set; it is not a general mutation score or a conformance percentage.
+The ten selected regressions include local-name ownership, active-tab identity,
+rich-text numeric coercion and public cell/row budgets. Each is first checked
+against a passing baseline; runner failures cannot count as detection.
 
 ### Independent browser output validation
 
