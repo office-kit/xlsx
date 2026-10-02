@@ -1,0 +1,517 @@
+{
+  "formatVersion": 1,
+  "edition": "ECMA-376 5th edition, Transitional",
+  "license": "MIT",
+  "provenance": "Hand-authored from normative types; no library writer used for inputs.",
+  "cases": [
+    {
+      "id": "font-b-absent",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "",
+      "expectedFont": {},
+      "expectedMissingFont": [
+        "bold"
+      ]
+    },
+    {
+      "id": "font-b-default",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<b/>",
+      "expectedFont": {
+        "bold": true
+      }
+    },
+    {
+      "id": "font-b-0",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<b val=\"0\"/>",
+      "expectedFont": {
+        "bold": false
+      }
+    },
+    {
+      "id": "font-b-1",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<b val=\"1\"/>",
+      "expectedFont": {
+        "bold": true
+      }
+    },
+    {
+      "id": "font-b-false",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<b val=\"false\"/>",
+      "expectedFont": {
+        "bold": false
+      }
+    },
+    {
+      "id": "font-b-true",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<b val=\"true\"/>",
+      "expectedFont": {
+        "bold": true
+      }
+    },
+    {
+      "id": "font-i-absent",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "",
+      "expectedFont": {},
+      "expectedMissingFont": [
+        "italic"
+      ]
+    },
+    {
+      "id": "font-i-default",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<i/>",
+      "expectedFont": {
+        "italic": true
+      }
+    },
+    {
+      "id": "font-i-0",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<i val=\"0\"/>",
+      "expectedFont": {
+        "italic": false
+      }
+    },
+    {
+      "id": "font-i-1",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<i val=\"1\"/>",
+      "expectedFont": {
+        "italic": true
+      }
+    },
+    {
+      "id": "font-i-false",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<i val=\"false\"/>",
+      "expectedFont": {
+        "italic": false
+      }
+    },
+    {
+      "id": "font-i-true",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<i val=\"true\"/>",
+      "expectedFont": {
+        "italic": true
+      }
+    },
+    {
+      "id": "font-strike-absent",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "",
+      "expectedFont": {},
+      "expectedMissingFont": [
+        "strike"
+      ]
+    },
+    {
+      "id": "font-strike-default",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<strike/>",
+      "expectedFont": {
+        "strike": true
+      }
+    },
+    {
+      "id": "font-strike-0",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<strike val=\"0\"/>",
+      "expectedFont": {
+        "strike": false
+      }
+    },
+    {
+      "id": "font-strike-1",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<strike val=\"1\"/>",
+      "expectedFont": {
+        "strike": true
+      }
+    },
+    {
+      "id": "font-strike-false",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<strike val=\"false\"/>",
+      "expectedFont": {
+        "strike": false
+      }
+    },
+    {
+      "id": "font-strike-true",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<strike val=\"true\"/>",
+      "expectedFont": {
+        "strike": true
+      }
+    },
+    {
+      "id": "font-outline-absent",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "",
+      "expectedFont": {},
+      "expectedMissingFont": [
+        "outline"
+      ]
+    },
+    {
+      "id": "font-outline-default",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<outline/>",
+      "expectedFont": {
+        "outline": true
+      }
+    },
+    {
+      "id": "font-outline-0",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<outline val=\"0\"/>",
+      "expectedFont": {
+        "outline": false
+      }
+    },
+    {
+      "id": "font-outline-1",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<outline val=\"1\"/>",
+      "expectedFont": {
+        "outline": true
+      }
+    },
+    {
+      "id": "font-outline-false",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<outline val=\"false\"/>",
+      "expectedFont": {
+        "outline": false
+      }
+    },
+    {
+      "id": "font-outline-true",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<outline val=\"true\"/>",
+      "expectedFont": {
+        "outline": true
+      }
+    },
+    {
+      "id": "font-shadow-absent",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "",
+      "expectedFont": {},
+      "expectedMissingFont": [
+        "shadow"
+      ]
+    },
+    {
+      "id": "font-shadow-default",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<shadow/>",
+      "expectedFont": {
+        "shadow": true
+      }
+    },
+    {
+      "id": "font-shadow-0",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<shadow val=\"0\"/>",
+      "expectedFont": {
+        "shadow": false
+      }
+    },
+    {
+      "id": "font-shadow-1",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<shadow val=\"1\"/>",
+      "expectedFont": {
+        "shadow": true
+      }
+    },
+    {
+      "id": "font-shadow-false",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<shadow val=\"false\"/>",
+      "expectedFont": {
+        "shadow": false
+      }
+    },
+    {
+      "id": "font-shadow-true",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<shadow val=\"true\"/>",
+      "expectedFont": {
+        "shadow": true
+      }
+    },
+    {
+      "id": "font-condense-absent",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "",
+      "expectedFont": {},
+      "expectedMissingFont": [
+        "condense"
+      ]
+    },
+    {
+      "id": "font-condense-default",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<condense/>",
+      "expectedFont": {
+        "condense": true
+      }
+    },
+    {
+      "id": "font-condense-0",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<condense val=\"0\"/>",
+      "expectedFont": {
+        "condense": false
+      }
+    },
+    {
+      "id": "font-condense-1",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<condense val=\"1\"/>",
+      "expectedFont": {
+        "condense": true
+      }
+    },
+    {
+      "id": "font-condense-false",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<condense val=\"false\"/>",
+      "expectedFont": {
+        "condense": false
+      }
+    },
+    {
+      "id": "font-condense-true",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<condense val=\"true\"/>",
+      "expectedFont": {
+        "condense": true
+      }
+    },
+    {
+      "id": "font-extend-absent",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "",
+      "expectedFont": {},
+      "expectedMissingFont": [
+        "extend"
+      ]
+    },
+    {
+      "id": "font-extend-default",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<extend/>",
+      "expectedFont": {
+        "extend": true
+      }
+    },
+    {
+      "id": "font-extend-0",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<extend val=\"0\"/>",
+      "expectedFont": {
+        "extend": false
+      }
+    },
+    {
+      "id": "font-extend-1",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<extend val=\"1\"/>",
+      "expectedFont": {
+        "extend": true
+      }
+    },
+    {
+      "id": "font-extend-false",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<extend val=\"false\"/>",
+      "expectedFont": {
+        "extend": false
+      }
+    },
+    {
+      "id": "font-extend-true",
+      "clause": "ECMA-376 Part 1 styles; sml.xsd CT_Font / CT_BooleanProperty",
+      "fontXml": "<extend val=\"true\"/>",
+      "expectedFont": {
+        "extend": true
+      }
+    },
+    {
+      "id": "underline-single",
+      "clause": "18.18.82 ST_UnderlineValues",
+      "fontXml": "<u val=\"single\"/>",
+      "expectedFont": {
+        "underline": "single"
+      }
+    },
+    {
+      "id": "underline-double",
+      "clause": "18.18.82 ST_UnderlineValues",
+      "fontXml": "<u val=\"double\"/>",
+      "expectedFont": {
+        "underline": "double"
+      }
+    },
+    {
+      "id": "underline-singleAccounting",
+      "clause": "18.18.82 ST_UnderlineValues",
+      "fontXml": "<u val=\"singleAccounting\"/>",
+      "expectedFont": {
+        "underline": "singleAccounting"
+      }
+    },
+    {
+      "id": "underline-doubleAccounting",
+      "clause": "18.18.82 ST_UnderlineValues",
+      "fontXml": "<u val=\"doubleAccounting\"/>",
+      "expectedFont": {
+        "underline": "doubleAccounting"
+      }
+    },
+    {
+      "id": "underline-none",
+      "clause": "18.18.82 ST_UnderlineValues",
+      "fontXml": "<u val=\"none\"/>",
+      "expectedFont": {
+        "underline": "none"
+      }
+    },
+    {
+      "id": "border-none",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"none\"/>",
+      "expectedBorder": "none"
+    },
+    {
+      "id": "border-thin",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"thin\"/>",
+      "expectedBorder": "thin"
+    },
+    {
+      "id": "border-medium",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"medium\"/>",
+      "expectedBorder": "medium"
+    },
+    {
+      "id": "border-dashed",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"dashed\"/>",
+      "expectedBorder": "dashed"
+    },
+    {
+      "id": "border-dotted",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"dotted\"/>",
+      "expectedBorder": "dotted"
+    },
+    {
+      "id": "border-thick",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"thick\"/>",
+      "expectedBorder": "thick"
+    },
+    {
+      "id": "border-double",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"double\"/>",
+      "expectedBorder": "double"
+    },
+    {
+      "id": "border-hair",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"hair\"/>",
+      "expectedBorder": "hair"
+    },
+    {
+      "id": "border-mediumDashed",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"mediumDashed\"/>",
+      "expectedBorder": "mediumDashed"
+    },
+    {
+      "id": "border-dashDot",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"dashDot\"/>",
+      "expectedBorder": "dashDot"
+    },
+    {
+      "id": "border-mediumDashDot",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"mediumDashDot\"/>",
+      "expectedBorder": "mediumDashDot"
+    },
+    {
+      "id": "border-dashDotDot",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"dashDotDot\"/>",
+      "expectedBorder": "dashDotDot"
+    },
+    {
+      "id": "border-mediumDashDotDot",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"mediumDashDotDot\"/>",
+      "expectedBorder": "mediumDashDotDot"
+    },
+    {
+      "id": "border-slantDashDot",
+      "clause": "18.18.3 ST_BorderStyle",
+      "borderXml": "<left style=\"slantDashDot\"/>",
+      "expectedBorder": "slantDashDot"
+    },
+    {
+      "id": "cell-boolean-0",
+      "clause": "18.3.1.4 c / 18.18.11 ST_CellType",
+      "cellXml": "<c r=\"A1\" t=\"b\" s=\"0\"><v>0</v></c>",
+      "expectedValue": false
+    },
+    {
+      "id": "cell-boolean-1",
+      "clause": "18.3.1.4 c / 18.18.11 ST_CellType",
+      "cellXml": "<c r=\"A1\" t=\"b\" s=\"0\"><v>1</v></c>",
+      "expectedValue": true
+    },
+    {
+      "id": "cell-boolean-false",
+      "clause": "18.3.1.4 c / 18.18.11 ST_CellType",
+      "cellXml": "<c r=\"A1\" t=\"b\" s=\"0\"><v>false</v></c>",
+      "expectedValue": false
+    },
+    {
+      "id": "cell-boolean-true",
+      "clause": "18.3.1.4 c / 18.18.11 ST_CellType",
+      "cellXml": "<c r=\"A1\" t=\"b\" s=\"0\"><v>true</v></c>",
+      "expectedValue": true
+    },
+    {
+      "id": "inline-character-references",
+      "clause": "18.3.1.53 is / XML 1.0 \u00a74.1",
+      "cellXml": "<c r=\"A1\" t=\"inlineStr\" s=\"0\"><is><t>A&#38;B&#x1F600;</t></is></c>",
+      "expectedValue": "A&B\ud83d\ude00"
+    },
+    {
+      "id": "inline-cdata",
+      "clause": "18.3.1.53 is / XML 1.0 \u00a72.7",
+      "cellXml": "<c r=\"A1\" t=\"inlineStr\" s=\"0\"><is><t><![CDATA[A&B\ud83d\ude00]]></t></is></c>",
+      "expectedValue": "A&B\ud83d\ude00"
+    },
+    {
+      "id": "optional-row-index",
+      "clause": "18.3.1.73 row",
+      "omitRowIndex": true,
+      "expectedValue": "audit"
+    }
+  ]
+}

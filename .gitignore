@@ -165,3 +165,10 @@ tests/e2e/output/*.xlsm
 # Playwright MCP scratch (page snapshots, screenshots at repo root)
 .playwright-mcp/
 /*.png
+
+# QA outputs and browser failure traces
+.qa/
+playwright-report/
+test-results/
+tests/conformance/sdk/bin/
+tests/conformance/sdk/obj/

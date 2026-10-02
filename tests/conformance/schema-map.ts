@@ -36,6 +36,8 @@ const PKG = 'application/vnd.openxmlformats-package';
 /** Maps OPC content type → absolute path of the XSD root file. */
 const SCHEMA_BY_CONTENT_TYPE: Readonly<Record<string, string>> = {
   // SpreadsheetML core
+  'application/vnd.ms-excel.sheet.macroEnabled.main+xml': SML,
+  'application/vnd.ms-excel.template.macroEnabled.main+xml': SML,
   [`${SHEETML}.sheet.main+xml`]: SML,
   [`${SHEETML}.template.main+xml`]: SML,
   [`${SHEETML}.worksheet+xml`]: SML,
@@ -82,11 +84,6 @@ const SCHEMA_BY_CONTENT_TYPE: Readonly<Record<string, string>> = {
 export const CONTENT_TYPES_SCHEMA = OPC_CONTENT_TYPES;
 /** Path to the OPC relationships schema (used to validate every `*.rels`). */
 export const RELATIONSHIPS_SCHEMA = OPC_RELATIONSHIPS;
-
-/** True when the given content type is mapped to a vendored XSD. */
-export function hasSchemaFor(contentType: string): boolean {
-  return contentType in SCHEMA_BY_CONTENT_TYPE;
-}
 
 /** Returns the schema path for a content type, or undefined if unmapped. */
 export function schemaFor(contentType: string): string | undefined {

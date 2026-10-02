@@ -118,15 +118,20 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm build && changeset publish",
-    "prepublishOnly": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm size && pnpm check:attw && pnpm check:consumer"
+    "prepublishOnly": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm size && pnpm check:attw && pnpm check:consumer",
+    "qa:corpus": "node scripts/qa-corpus.mjs",
+    "test:browser": "pnpm build && pnpm qa:corpus && playwright test",
+    "qa:office": "node scripts/qa-office.mjs"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.31.0",
+    "@playwright/test": "^1.63.0",
     "@size-limit/preset-small-lib": "^12.1.0",
     "@types/node": "^22.19.18",
     "@vitest/coverage-v8": "^4.1.9",
+    "esbuild": "^0.28.0",
     "fast-check": "^4.8.0",
     "knip": "^6.24.0",
     "oxlint": "^1.72.0",

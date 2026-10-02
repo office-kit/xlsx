@@ -242,7 +242,10 @@ describe('conformance: property-based oracle', () => {
   it('every well-formed WorkbookSpec produces a schema-clean xlsx', async () => {
     // CI runs more iterations than local — see vitest.config.ts; the env hook
     // here keeps local turnaround fast while still letting CI exercise depth.
-    const numRuns = process.env['CI'] ? 50 : 25;
+    const numRuns = Number(process.env['QA_FUZZ_RUNS'] ?? (process.env['CI'] ? 50 : 25));
+    const seed = Number(process.env['QA_FUZZ_SEED'] ?? 376262);
+    if (!Number.isInteger(numRuns) || numRuns < 1 || !Number.isInteger(seed)) throw new Error('Invalid fuzz configuration');
+    console.info(`conformance fuzz: seed=${seed}, runs=${numRuns}`);
     await fc.assert(
       fc.asyncProperty(workbookSpec, async (spec) => {
         const wb = buildWorkbook(spec);
@@ -258,7 +261,7 @@ describe('conformance: property-based oracle', () => {
           );
         }
       }),
-      { numRuns, verbose: false },
+      { numRuns, seed, verbose: false },
     );
-  }, 120_000);
+  }, process.env['QA_FUZZ_RUNS'] ? 600_000 : 120_000);
 });

@@ -1,0 +1,42 @@
+{
+  "font-condense-default:condense": {
+    "actual": false,
+    "expected": true,
+    "reason": "LibreOffice drops this enabled font property on XLSX re-export."
+  },
+  "font-condense-1:condense": {
+    "actual": false,
+    "expected": true,
+    "reason": "LibreOffice drops this enabled font property on XLSX re-export."
+  },
+  "font-condense-true:condense": {
+    "actual": false,
+    "expected": true,
+    "reason": "LibreOffice drops this enabled font property on XLSX re-export."
+  },
+  "font-extend-default:extend": {
+    "actual": false,
+    "expected": true,
+    "reason": "LibreOffice drops this enabled font property on XLSX re-export."
+  },
+  "font-extend-1:extend": {
+    "actual": false,
+    "expected": true,
+    "reason": "LibreOffice drops this enabled font property on XLSX re-export."
+  },
+  "font-extend-true:extend": {
+    "actual": false,
+    "expected": true,
+    "reason": "LibreOffice drops this enabled font property on XLSX re-export."
+  },
+  "underline-singleAccounting:underline": {
+    "actual": "single",
+    "expected": "singleAccounting",
+    "reason": "LibreOffice re-exports accounting underline as ordinary underline."
+  },
+  "underline-doubleAccounting:underline": {
+    "actual": "double",
+    "expected": "doubleAccounting",
+    "reason": "LibreOffice re-exports accounting underline as ordinary underline."
+  }
+}

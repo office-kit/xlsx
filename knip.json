@@ -5,16 +5,29 @@
       "entry": [
         "tests/**/*.{test,spec,bench}.ts",
         "typedoc.json",
-        ".size-limit.json"
+        ".size-limit.json",
+        "scripts/*.mjs"
       ],
-      "project": ["src/**/*.ts", "tests/**/*.ts"],
-      "ignore": ["tests/consumer/**"],
-      "ignoreBinaries": ["xmllint"]
+      "project": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ],
+      "ignore": [
+        "tests/consumer/**"
+      ],
+      "ignoreBinaries": [
+        "xmllint",
+        "python3",
+        "svelte-kit"
+      ]
     },
     "site": {
-      "entry": ["src/**/*.{ts,svelte}"],
-      "project": ["src/**/*.{ts,svelte}"],
-      "ignoreUnresolved": ["./\\$types"]
+      "entry": [
+        "src/**/*.{ts,svelte}"
+      ],
+      "project": [
+        "src/**/*.{ts,svelte}"
+      ]
     }
   }
 }

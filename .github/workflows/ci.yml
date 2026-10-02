@@ -32,6 +32,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm lint
+      - run: pnpm --dir site exec svelte-kit sync
       - run: pnpm knip
       - run: pnpm build
       # Bundle-size gate: @office-kit/xlsx/streaming ≤80KB, full lib ≤120KB
@@ -129,3 +130,60 @@ jobs:
       # A real regression fails both.
       - name: Perf gate, retried once
         run: PERF_GATE=1 pnpm test:perf || PERF_GATE=1 pnpm test:perf
+
+  browser-conformance:
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          submodules: recursive
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - run: pnpm test:browser
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: browser-conformance
+          path: |
+            .qa/browser-results.json
+            test-results/
+          retention-days: 7
+
+  independent-conformance:
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          submodules: recursive
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: '10.0.x'
+      - run: sudo apt-get update && sudo apt-get install -y libxml2-utils libreoffice-calc
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm qa:corpus
+      - run: dotnet restore tests/conformance/sdk --locked-mode
+      - run: dotnet run --project tests/conformance/sdk --no-restore -- .qa/corpus
+      - run: pnpm qa:office
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: independent-conformance
+          path: |
+            .qa/corpus/
+            .qa/libreoffice/results.json
+          retention-days: 7

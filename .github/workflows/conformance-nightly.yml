@@ -1,0 +1,40 @@
+name: Nightly conformance
+on:
+  schedule:
+    - cron: '31 18 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: conformance-nightly
+  cancel-in-progress: true
+jobs:
+  generated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          submodules: recursive
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+      - run: pnpm install --frozen-lockfile
+      - name: Record reproducible seed and retain shrink diagnostics
+        env:
+          QA_FUZZ_RUNS: '1000'
+          QA_FUZZ_SEED: ${{ github.run_number }}
+        shell: bash
+        run: |
+          mkdir -p .qa
+          set -o pipefail
+          pnpm exec vitest run tests/conformance/property.test.ts 2>&1 | tee .qa/fuzz.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: conformance-fuzz
+          path: .qa/fuzz.log
+          retention-days: 14

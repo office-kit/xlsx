@@ -1,7 +1,6 @@
 import { defineConfig } from 'vitest/config';
 
-// Node-hosted suite. Browser-target tests will live under tests/browser/ and
-// run via @vitest/browser in a later bootstrap commit.
+// Node-hosted suite. Real browser tests in tests/browser/ run via Playwright.
 //
 // Vitest is the unified runner for both unit and integration suites; coverage
 // is V8.

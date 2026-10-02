@@ -103,9 +103,11 @@ without flagging it in the PR description.
   arbitrary inputs.
 - **ECMA-376 conformance** lives under `tests/conformance/`. New
   worksheet-level XML output should pass `validate.ts`'s OPC + XSD + semantic
-  checks.
+  checks. See the [conformance guide](tests/conformance/README.md) for adding
+  independent normative cases, calibrating rejection, real browser checks,
+  SDK/LibreOffice validation, and replaying generated failures.
 
-The CI matrix runs against Node 22 / 24 / 26 on Ubuntu. `xmllint` (from
+The CI matrix runs against Node 22 / 24 / 26 on Ubuntu, macOS, and Windows. `xmllint` (from
 `libxml2-utils`) is installed explicitly so schema validation never silently
 skips. If your test depends on a CLI tool, document it in the test file and
 add it to the install step in `.github/workflows/ci.yml`.
