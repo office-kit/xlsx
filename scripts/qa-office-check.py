@@ -72,7 +72,7 @@ for case in json.loads((source / 'manifest.json').read_text()):
             format_id = int(xf.get('numFmtId', '0'))
             custom = {int(n.get('numFmtId')): n.get('formatCode') for n in styles.findall('s:numFmts/s:numFmt', ns)}
             # Built-in 14 is locale-dependent; Calc expands it to a custom date format.
-            observed = 'date' if format_id == 14 or custom.get(format_id, '').lower() in ('mm/dd/yyyy', 'mm/dd/yy', 'm/d/yy', 'mm-dd-yy') else custom.get(format_id, str(format_id))
+            observed = 'date' if format_id == 14 or custom.get(format_id, '').lower() in ('mm/dd/yyyy', 'm/d/yyyy', 'mm/dd/yy', 'm/d/yy', 'mm-dd-yy') else custom.get(format_id, str(format_id))
             if xf.get('applyNumberFormat') in ('0', 'false'): observed = 'not-applied'
             check(observed, 'date', case['id'] + ':numberFormat')
         font = styles.find('s:fonts', ns)[int(xf.get('fontId', '0'))]

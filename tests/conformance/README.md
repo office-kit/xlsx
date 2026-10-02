@@ -277,3 +277,9 @@ must not be used as evidence that a workbook opens without Excel repair.
 Date inputs also explicitly apply their number format (`applyNumberFormat="1"`).
 The independent office comparison now checks this format as well as the serial
 and epoch; a numerically unchanged date rendered as General is a failure.
+
+Built-in 14 is locale-dependent. The bounded comparator accepts the equivalent
+custom date spellings observed on macOS (`mm/dd/yyyy`) and Linux (`m/d/yyyy`),
+as well as the listed two-digit-year forms; it still rejects General or an
+explicitly disabled format. This is date-category preservation, not identical
+locale-specific rendered text.

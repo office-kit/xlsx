@@ -91,3 +91,17 @@ test('correct values and hashes cannot hide a lost date format', () => session((
   assert.ok(failed.unexpectedDifferences.some(([context]) => context === `${c.id}:numberFormat`));
   assert.equal(existsSync(join(path, 'results.json')), false);
 }));
+
+for (const format of ['mm/dd/yyyy', 'm/d/yyyy']) test(`date format survives a custom ${format} expansion`, () => session((path, file, observations) => {
+  for (const c of observations.cases.filter(candidate => candidate.id.startsWith('date-'))) {
+    const output = join(path, 'output', `${c.id}.output.xlsx`);
+    const parts = unzipSync(readFileSync(output));
+    const original = strFromU8(parts['xl/styles.xml']);
+    parts['xl/styles.xml'] = strToU8(original.replace('<fonts', `<numFmts count="1"><numFmt numFmtId="165" formatCode="${format}"/></numFmts><fonts`).replaceAll('numFmtId="14"', 'numFmtId="165"'));
+    writeFileSync(output, zipSync(parts));
+    c.outputSha256 = hash(output);
+  }
+  write(file, observations);
+  const checked = run('--check', path);
+  assert.equal(checked.status, 0, checked.stderr);
+}));
