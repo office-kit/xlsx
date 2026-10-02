@@ -446,7 +446,7 @@ copy/rename formula rewriting, rendering or pagination.
 
 ## Same-environment PDF and raster comparison
 
-`pnpm qa:render` requires LibreOffice Calc, Liberation Sans, Python 3 and Poppler
+`pnpm qa:render` requires LibreOffice Calc, Liberation Sans, Python 3, xmllint and Poppler
 (pdfinfo/pdffonts/pdftotext/pdftoppm). Set `SOFFICE` to a nonstandard executable;
 `QA_RENDER_FONT` can name its exact Liberation Sans file. CI runs on Ubuntu 24.04.
 The hand-assembled input specifies a font, row height, print area, orientation,
