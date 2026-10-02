@@ -512,6 +512,241 @@
       "clause": "18.3.1.73 row",
       "omitRowIndex": true,
       "expectedValue": "audit"
+    },
+    {
+      "id": "formula-numeric-cache",
+      "clause": "ECMA-376-1 \u00a718.3.1.40 f / \u00a718.3.1.96 v",
+      "cellXml": "<c r=\"A1\" t=\"n\"><f>1+1</f><v>2</v></c>",
+      "expectedValue": {
+        "kind": "formula",
+        "t": "normal",
+        "formula": "1+1",
+        "cachedValue": 2
+      },
+      "officeValue": 2,
+      "expectedStreamValues": [
+        2
+      ]
+    },
+    {
+      "id": "formula-boolean-cache",
+      "clause": "ECMA-376-1 \u00a718.3.1.40 f / \u00a718.3.1.96 v",
+      "cellXml": "<c r=\"A1\" t=\"b\"><f>1=1</f><v>1</v></c>",
+      "expectedValue": {
+        "kind": "formula",
+        "t": "normal",
+        "formula": "1=1",
+        "cachedValue": true
+      },
+      "officeValue": true,
+      "expectedStreamValues": [
+        true
+      ]
+    },
+    {
+      "id": "formula-text-cache",
+      "clause": "ECMA-376-1 \u00a718.3.1.40 f / \u00a718.3.1.96 v",
+      "cellXml": "<c r=\"A1\" t=\"str\"><f>&quot;hello&quot;</f><v>hello</v></c>",
+      "expectedValue": {
+        "kind": "formula",
+        "t": "normal",
+        "formula": "\"hello\"",
+        "cachedValue": "hello"
+      },
+      "officeValue": "hello",
+      "expectedStreamValues": [
+        "hello"
+      ]
+    },
+    {
+      "id": "formula-empty-cache",
+      "clause": "ECMA-376-1 \u00a718.3.1.40 f / \u00a718.3.1.96 v",
+      "cellXml": "<c r=\"A1\" t=\"str\"><f>1+1</f><v></v></c>",
+      "expectedValue": {
+        "kind": "formula",
+        "t": "normal",
+        "formula": "1+1",
+        "cachedValue": ""
+      },
+      "officeValue": 2,
+      "expectedStreamValues": [
+        ""
+      ]
+    },
+    {
+      "id": "formula-error-cache",
+      "clause": "ECMA-376-1 \u00a718.3.1.40 f / \u00a718.3.1.96 v",
+      "cellXml": "<c r=\"A1\" t=\"e\"><f>NA()</f><v>#N/A</v></c>",
+      "expectedValue": {
+        "kind": "formula",
+        "t": "normal",
+        "formula": "NA()",
+        "cachedValue": "#N/A",
+        "cachedValueType": "error"
+      },
+      "officeValue": "#N/A",
+      "expectedStreamValues": [
+        {
+          "kind": "error",
+          "code": "#N/A"
+        }
+      ]
+    },
+    {
+      "id": "shared-formula-qualified-name",
+      "clause": "ECMA-376-1 \u00a718.3.1.40 f",
+      "rowsXml": "<row r=\"1\"><c r=\"A1\"><f t=\"shared\" ref=\"A1:A2\" si=\"0\">'Audit'!Rate+C1</f><v>3</v></c><c r=\"C1\"><v>1</v></c></row><row r=\"2\"><c r=\"A2\"><f t=\"shared\" si=\"0\"/><v>4</v></c><c r=\"C2\"><v>2</v></c></row>",
+      "workbookAfterSheets": "<definedNames><definedName name=\"Rate\" localSheetId=\"0\">2</definedName></definedNames>",
+      "expectedValue": {
+        "kind": "formula",
+        "t": "shared",
+        "formula": "'Audit'!Rate+C1",
+        "si": 0,
+        "ref": "A1:A2",
+        "cachedValue": 3
+      },
+      "expectedValues": [
+        {
+          "kind": "formula",
+          "t": "shared",
+          "formula": "'Audit'!Rate+C1",
+          "si": 0,
+          "ref": "A1:A2",
+          "cachedValue": 3
+        },
+        {
+          "kind": "formula",
+          "t": "shared",
+          "formula": "'Audit'!Rate+C2",
+          "cachedValue": 4,
+          "si": 0
+        }
+      ],
+      "officeValue": 3,
+      "officeValues": [
+        3,
+        4
+      ],
+      "expectedStreamValues": [
+        3,
+        4
+      ]
+    },
+    {
+      "id": "rich-text-inline",
+      "clause": "ECMA-376-1 \u00a718.4.4 r / \u00a718.4.7 rPr",
+      "cellXml": "<c r=\"A1\" t=\"inlineStr\"><is><r><rPr><b/></rPr><t>bold</t></r><r><rPr><i/></rPr><t xml:space=\"preserve\"> italic</t></r></is></c>",
+      "expectedValue": {
+        "kind": "rich-text",
+        "runs": [
+          {
+            "text": "bold",
+            "font": {
+              "b": true
+            }
+          },
+          {
+            "text": " italic",
+            "font": {
+              "i": true
+            }
+          }
+        ]
+      },
+      "officeValue": "bold italic"
+    },
+    {
+      "id": "rich-text-shared",
+      "clause": "ECMA-376-1 \u00a718.4.4 r / \u00a718.4.7 rPr",
+      "cellXml": "<c r=\"A1\" t=\"s\"><v>0</v></c>",
+      "sharedStringsXml": "<si><r><rPr><b/></rPr><t>bold</t></r><r><rPr><i/></rPr><t xml:space=\"preserve\"> italic</t></r></si>",
+      "expectedValue": {
+        "kind": "rich-text",
+        "runs": [
+          {
+            "text": "bold",
+            "font": {
+              "b": true
+            }
+          },
+          {
+            "text": " italic",
+            "font": {
+              "i": true
+            }
+          }
+        ]
+      },
+      "officeValue": "bold italic"
+    },
+    {
+      "id": "defined-name-quoted",
+      "clause": "ECMA-376-1 \u00a718.2.5 definedName",
+      "sheetName": "O&apos;Brien",
+      "workbookAfterSheets": "<definedNames><definedName name=\"Area\">'O''Brien'!$A$1</definedName></definedNames>",
+      "expectedNames": [
+        {
+          "name": "Area",
+          "value": "'O''Brien'!$A$1"
+        }
+      ]
+    },
+    {
+      "id": "defined-name-scoped",
+      "clause": "ECMA-376-1 \u00a718.2.5 definedName",
+      "sheetName": "Audit",
+      "workbookAfterSheets": "<definedNames><definedName name=\"Area\" localSheetId=\"0\">$A$1</definedName></definedNames>",
+      "expectedNames": [
+        {
+          "name": "Area",
+          "value": "$A$1",
+          "scope": 0
+        }
+      ]
+    },
+    {
+      "id": "date-1900-1904-01-02",
+      "clause": "ECMA-376-1 \u00a718.2.28 workbookPr / \u00a718.18.11 ST_CellType",
+      "workbookBeforeSheets": "<workbookPr date1904=\"0\"/>",
+      "cellXml": "<c r=\"A1\" s=\"0\"><v>1463.5</v></c>",
+      "expectedValue": 1463.5,
+      "expectedDate1904": false,
+      "officeValue": 1463.5,
+      "expectedDate": "1904-01-02T12:00:00.000Z",
+      "numFmtId": 14
+    },
+    {
+      "id": "date-1900-2024-02-29",
+      "clause": "ECMA-376-1 \u00a718.2.28 workbookPr / \u00a718.18.11 ST_CellType",
+      "workbookBeforeSheets": "<workbookPr date1904=\"0\"/>",
+      "cellXml": "<c r=\"A1\" s=\"0\"><v>45351.0</v></c>",
+      "expectedValue": 45351.0,
+      "expectedDate1904": false,
+      "officeValue": 45351.0,
+      "expectedDate": "2024-02-29T00:00:00.000Z",
+      "numFmtId": 14
+    },
+    {
+      "id": "date-1904-1904-01-02",
+      "clause": "ECMA-376-1 \u00a718.2.28 workbookPr / \u00a718.18.11 ST_CellType",
+      "workbookBeforeSheets": "<workbookPr date1904=\"1\"/>",
+      "cellXml": "<c r=\"A1\" s=\"0\"><v>1.5</v></c>",
+      "expectedValue": 1.5,
+      "expectedDate1904": true,
+      "officeValue": 1.5,
+      "expectedDate": "1904-01-02T12:00:00.000Z",
+      "numFmtId": 14
+    },
+    {
+      "id": "date-1904-2024-02-29",
+      "clause": "ECMA-376-1 \u00a718.2.28 workbookPr / \u00a718.18.11 ST_CellType",
+      "workbookBeforeSheets": "<workbookPr date1904=\"1\"/>",
+      "cellXml": "<c r=\"A1\" s=\"0\"><v>43889.0</v></c>",
+      "expectedValue": 43889.0,
+      "expectedDate1904": true,
+      "officeValue": 43889.0,
+      "expectedDate": "2024-02-29T00:00:00.000Z",
+      "numFmtId": 14
     }
   ]
 }

@@ -17,21 +17,54 @@ for case in json.loads((source / 'manifest.json').read_text()):
         cells = {cell.attrib['r']: cell for cell in sheet.findall('.//s:c', ns)}
         shared = []
         if 'xl/sharedStrings.xml' in package.namelist():
-            shared = [''.join(si.itertext()) for si in ET.fromstring(package.read('xl/sharedStrings.xml'))]
+            shared = [''.join(t.text or '' for t in si.findall('.//s:t', ns)) for si in ET.fromstring(package.read('xl/sharedStrings.xml'))]
         def value(cell):
             kind = cell.get('t')
             v = cell.find('s:v', ns)
             if kind == 's':
                 return shared[int(v.text)]
             if kind == 'inlineStr':
-                return ''.join(cell.find('s:is', ns).itertext())
+                return ''.join(t.text or '' for t in cell.findall('.//s:t', ns))
             if kind == 'b':
                 return v.text in ('1', 'true')
+            if kind in (None, 'n') and v is not None and v.text is not None: return float(v.text)
             return v.text if v is not None else None
         actual = value(cells['A1'])
-        expected = case.get('expectedValue', 'audit')
+        expected = case.get('officeValue', case.get('expectedValue', 'audit'))
         check(actual, expected, case['id'])
+        for i, wanted in enumerate(case.get('officeValues', []), 1): check(value(cells['A' + str(i)]), wanted, case['id'] + ':A' + str(i))
         check(value(cells['B2']), 'edited', case['id'] + ':edited')
+        workbook = ET.fromstring(package.read('xl/workbook.xml'))
+        if 'expectedDate1904' in case:
+            properties = workbook.find('s:workbookPr', ns)
+            observed = properties is not None and properties.get('date1904', '0') in ('1', 'true')
+            check(observed, case['expectedDate1904'], case['id'] + ':date1904')
+        if 'expectedNames' in case:
+            sheet_names = [n.get('name') for n in workbook.findall('s:sheets/s:sheet', ns)]
+            def name_value(n):
+                text = n.text
+                scope = n.get('localSheetId')
+                if scope is not None:
+                    name = sheet_names[int(scope)]
+                    # Calc may qualify an otherwise identical sheet-local reference.
+                    for prefix in (name + '!', "'" + name.replace("'", "''") + "'!"):
+                        if text.startswith(prefix): return text[len(prefix):]
+                return text
+            observed = sorted((n.get('name'), name_value(n), n.get('localSheetId')) for n in workbook.findall('s:definedNames/s:definedName', ns))
+            wanted = sorted((n['name'], n['value'], str(n['scope']) if 'scope' in n else None) for n in case['expectedNames'])
+            check(observed, wanted, case['id'] + ':names')
+        if isinstance(case.get('expectedValue'), dict) and case['expectedValue'].get('kind') == 'rich-text':
+            cell = cells['A1']
+            container = ET.fromstring(package.read('xl/sharedStrings.xml'))[int(cell.find('s:v', ns).text)] if cell.get('t') == 's' else cell.find('s:is', ns)
+            runs = []
+            for run in container.findall('s:r', ns):
+                properties = run.find('s:rPr', ns)
+                font = {}
+                for key in ('b', 'i'):
+                    prop = properties.find('s:' + key, ns) if properties is not None else None
+                    if prop is not None and prop.get('val', 'true') in ('1', 'true'): font[key] = True
+                runs.append({'text': ''.join(t.text or '' for t in run.findall('s:t', ns)), 'font': font})
+            check(runs, case['expectedValue']['runs'], case['id'] + ':runs')
         styles = ET.fromstring(package.read('xl/styles.xml'))
         xf = styles.find('s:cellXfs', ns)[int(cells['A1'].get('s', '0'))]
         font = styles.find('s:fonts', ns)[int(xf.get('fontId', '0'))]

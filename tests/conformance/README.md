@@ -36,11 +36,19 @@ complete implementation independence.
 
 `corpus/manifest.json` records the specification edition, provenance, license,
 stable case ID, schema type/clause, input fragments, and expected semantics.
-The initial 68 cases cover:
+The 82 cases cover:
 
 - Seven font boolean properties: absent, implicit true, `0`, `1`, `false`, `true`.
 - Five underline and fourteen border values, including explicit `none`.
 - Four cell boolean spellings, Unicode character references, CDATA, optional row index.
+- Numeric, boolean, text, empty and error formula caches; sheet-qualified names
+  in shared formulas, including the translated follower.
+- Inline/shared rich text, quoted/scoped defined names and leap-day/date-epoch
+  semantics. Dates use numeric serials plus number formats in this Transitional profile.
+
+Streaming intentionally checks cached formula results: its current public contract
+does not expose the ordinary reader’s formula objects. LibreOffice recalculates
+formulas, so its independent expected values differ from an empty input cache.
 
 Inputs are assembled independently of the library writer. Each case validates
 the input, checks the loaded model, edits B2, validates and reloads the output,
@@ -114,7 +122,7 @@ prove Excel rendering, formula calculation, or the absence of Excel repair
 dialogs. Browser tests check model and save/reload semantics; they do not
 independently run libxml2 on every browser-produced byte stream.
 
-The observed LibreOffice 26.2.4.2 baseline has **60 matching cases and 8 known
+The observed LibreOffice 26.2.4.2 baseline has **74 matching cases and 8 known
 differences**: enabled `condense`/`extend` are dropped (six lexical variants),
 and accounting underlines become ordinary single/double underlines (two).
 `corpus/libreoffice-profile.json` records exact expected/actual pairs and their
