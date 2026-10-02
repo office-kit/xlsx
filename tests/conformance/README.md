@@ -432,3 +432,14 @@ This bounds the test runner and detects regressions on the stated inputs, not
 a universal loader CPU deadline, upload-size cap or every hostile ZIP grammar.
 CI executes the profile on Node 22 / Ubuntu 24.04 and retains partial diagnostics.
 Reference: [Node resource usage](https://nodejs.org/api/process.html#processresourceusage).
+## Multiple-sheet feature interactions
+
+`pnpm qa:feature-interactions` combines tables, cached pie charts, PNGs, anchors,
+merges, cellIs conditional formatting, whole-number data validation and print
+settings on two independently assembled sheets. Different formulas, validation
+bounds, table names and print orientations establish per-sheet ownership after
+unrelated edits, move and swap. Each saved state passes OPC/XSD and CI SDK checks;
+reopening also checks that edits remain on the correct sheet. Single-fault
+controls must detect changed formulas/orientation and a drawing attached to the
+wrong sheet. This is a bounded combination, not every rule/chart/table feature,
+copy/rename formula rewriting, rendering or pagination.

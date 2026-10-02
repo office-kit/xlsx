@@ -1962,9 +1962,13 @@
         {
           "path": "tests/conformance/excel-features.test.ts",
           "anchor": "independently preserves attached table, chart, image and print configuration after an unrelated edit"
+        },
+        {
+          "path": "tests/conformance/feature-interactions.test.ts",
+          "anchor": "preserves per-sheet tables, drawings, rules and print setup through edits, moves and swaps"
         }
       ],
-      "scope": "Seeded sheet editing sequences: local name ownership, active tab, saved cells/formula caches and unique copied table identifiers. Expressions are retained verbatim. One independently assembled combined fixture after an unrelated cell edit: table range/header/filter, pie chart category/value references and caches, attached PNG bytes, chart/image cell anchors, stored page setup/margins/centering. Does not establish full feature-family support, rendered geometry or actual print pagination.",
+      "scope": "Seeded sheet editing sequences: local name ownership, active tab, saved cells/formula caches and unique copied table identifiers. Expressions are retained verbatim. One independently assembled combined fixture after an unrelated cell edit: table range/header/filter, pie chart category/value references and caches, attached PNG bytes, chart/image cell anchors, stored page setup/margins/centering. Does not establish full feature-family support, rendered geometry or actual print pagination. Two independently assembled sheets combine all these features with merges, cellIs conditional formatting and whole-number validation through edits, move and swap, with distinct rule/formula/print ownership.",
       "operations": [
         "preserve"
       ]
