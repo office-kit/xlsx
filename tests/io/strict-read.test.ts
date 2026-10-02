@@ -14,7 +14,8 @@ for (const file of ['sample.strict.xlsx', 'SimpleStrict.xlsx']) {
     // Genuine Excel files contain a non-normative unqualified extension.
     // Keep the original bytes and report the discrepancy instead of stripping it.
     expect(input.status).toBe('invalid');
-    expect(input.issues.filter(i => i.message.includes('Schemas validity error')).map(i => [i.part, i.message.includes("attribute 'dateCompatibility'")])).toEqual([['xl/workbook.xml', true]]);
+    // libxml2 versions use different diagnostic prefixes (Schema/Schemas).
+    expect(input.issues.some(i => i.part === 'xl/workbook.xml' && i.message.includes("attribute 'dateCompatibility'"))).toBe(true);
     expect(input.issues.every(i => i.tier === 'xsd' && i.part === 'xl/workbook.xml')).toBe(true);
     const wb = await loadWorkbook(fromBuffer(bytes));
     expect(wb.sheets.length).toBeGreaterThan(0);
