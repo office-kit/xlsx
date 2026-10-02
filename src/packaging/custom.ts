@@ -277,7 +277,7 @@ export const removeCustomProperty = (wb: Workbook, name: string): boolean => {
   return true;
 };
 
-/** Read-only snapshot of every custom property. */
+/** Every custom property, as a read-only view of the live array, not a copy. Empty array when the workbook carries none. */
 export const listCustomProperties = (wb: Workbook): ReadonlyArray<CustomProperty> => {
   return wb.customProperties?.properties ?? [];
 };

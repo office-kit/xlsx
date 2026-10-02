@@ -30,8 +30,10 @@ const decodeForPrescan = (input: Uint8Array | string): string => {
  * longer sees.
  */
 export const rejectDtdDeclarations = (text: string): void => {
-  // Strip XML declaration so any subsequent `<!DOCTYPE` is the real thing. The
-  // declaration is always the first non-BOM token in well-formed XML.
+  // Drop a leading byte-order mark so the scan below starts at the markup. The
+  // XML declaration is left in place: neither pattern can match inside one, and
+  // `<!DOCTYPE` / `<!ENTITY` anywhere in the payload is refused whether or not
+  // it sits where a DTD legally could.
   const stripped = text.replace(/^﻿/, '');
   if (/<!DOCTYPE\b/.test(stripped)) {
     throw new OpenXmlSchemaError('DTD declarations are not permitted in OOXML payloads');
