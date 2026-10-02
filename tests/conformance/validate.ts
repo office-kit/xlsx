@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, posix } from 'node:path';
 import { required } from './required.js';
+import { parseXsdDiagnostics } from './xsd-diagnostics.js';
 import { checkZipEnvelope } from './zip-envelope.js';
 import { unzipSync } from 'fflate';
 import { stripIgnorableMarkup } from './mc-strip.js';
@@ -198,19 +199,16 @@ export async function validateXlsx(bytes: Uint8Array, options: ValidateOptions =
       const groups = new Map<string, string[]>();
       const files = new Map<string, string>();
       for (const [i, job] of jobs.entries()) {
-        const file = join(temp, `${i}.xml`); writeFileSync(file, job.xml); files.set(file.replaceAll('\\', '/'), job.part);
+        const file = join(temp, `${i}.xml`); writeFileSync(file, job.xml); files.set(file, job.part);
         const group = groups.get(job.schema) ?? []; group.push(file); groups.set(job.schema, group);
       }
       for (const [schema, paths] of groups) {
         const result = spawnSync('xmllint', ['--nonet', '--noout', '--schema', schema, ...paths], { encoding: 'utf8', timeout: 30_000, maxBuffer: 16 * 1024 * 1024 });
         if (result.error) { issue('xsd', '<runner>', result.error.message); continue; }
         if (result.status === 0) continue;
-        const diagnostics = result.stderr.split('\n').filter(line => line.trim() && !/validates$/.test(line));
+        const diagnostics = parseXsdDiagnostics(result.stderr, files);
         if (!diagnostics.length) issue('xsd', '<runner>', `xmllint failed without diagnostics: exit=${result.status}, signal=${result.signal}`);
-        for (const line of diagnostics) {
-          const file = /^(.+?\.xml)(?::| )/.exec(line)?.[1];
-          issue('xsd', file ? files.get(file.replaceAll('\\', '/')) ?? '<runner>' : '<runner>', line);
-        }
+        for (const diagnostic of diagnostics) issue('xsd', diagnostic.part, diagnostic.message);
       }
     } finally { rmSync(temp, { recursive: true, force: true }); }
   }
