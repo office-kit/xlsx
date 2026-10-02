@@ -1,5 +1,23 @@
 # @office-kit/xlsx
 
+## 0.23.4
+
+### Patch Changes
+
+- [#197](https://github.com/office-kit/xlsx/pull/197) [`7f3a817`](https://github.com/office-kit/xlsx/commit/7f3a8174afd7e6ceca34934ab02ff9249a1f1f2d) Thanks [@kibertoad](https://github.com/kibertoad)! - Documentation corrections where a docblock described behaviour the code does not have. No runtime change.
+
+  - `getMergedCells`, `listHyperlinks`, `listDataValidations`, `listTables`, `listComments`, `listCustomProperties` and the stylesheet pool accessors (`listFonts`, `listFills`, `listBorders`, `listCellXfs`, `listCellStyleXfs`) were documented as returning a "snapshot". They return a read-only view of the live array, so later mutations are visible through it, and a `removeAll*` replaces the array outright and leaves an earlier return value stale. Copy the result before mutating the sheet while reading it.
+  - `shiftRange` said its result was "clamped to the OOXML grid". It throws, as `shiftRangeStr` already documented.
+  - `listDefinedNames` offered `{ scope: undefined }` for workbook-scope names. That spelling does not compile under `exactOptionalPropertyTypes` and would list every name if it did; `{ scope: 'workbook' }` is the one that narrows.
+
+- [#194](https://github.com/office-kit/xlsx/pull/194) [`eb28b55`](https://github.com/office-kit/xlsx/commit/eb28b55590d2cd201e1abd5106b5a759affa244e) Thanks [@kibertoad](https://github.com/kibertoad)! - `cellValueAsNumber` now reads a rich-text cell, which its documentation has always described ("rich-text concats then parses"). The branch was missing, so a number typed into a cell carrying per-run formatting returned `undefined` while `cellValueAsString` on the same cell returned `"42"`.
+
+- [#228](https://github.com/office-kit/xlsx/pull/228) [`4107257`](https://github.com/office-kit/xlsx/commit/41072573737cd1d80e4c776a4ad71cdc556e8c18) Thanks [@baseballyama](https://github.com/baseballyama)! - Save worksheet fonts in an order accepted by Excel and Open XML SDK validation, including fonts imported from native Mac Excel workbooks.
+
+- [#221](https://github.com/office-kit/xlsx/pull/221) [`ff2134b`](https://github.com/office-kit/xlsx/commit/ff2134bf9c920c444db26184e974a5d3498f9d7c) Thanks [@baseballyama](https://github.com/baseballyama)! - Keep local defined names and the active sheet attached to their original tabs when sheets are moved, swapped, inserted, or removed. Duplicate local names with their sheet and allocate unique table names for copied tables.
+
+- [#214](https://github.com/office-kit/xlsx/pull/214) [`a31feee`](https://github.com/office-kit/xlsx/commit/a31feee078b00835b033cb0dcc584721585c2417) Thanks [@baseballyama](https://github.com/baseballyama)! - Preserve the VBA relationship and printer-settings content type when saving macro-enabled workbooks. Register the VBA binary by part name so it cannot change the type of unrelated `.bin` parts.
+
 ## 0.23.3
 
 ### Patch Changes
