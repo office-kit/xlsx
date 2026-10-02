@@ -461,6 +461,14 @@
       ],
       "contract": "Exhaustive charts/tables/drawings/custom-part interactions and arbitrary number formats.",
       "caseIds": []
+    },
+    {
+      "id": "loader-resource-contract",
+      "clauses": [
+        "Public LoadOptions/ReadOnlyLoadOptions resource and error contract"
+      ],
+      "contract": "End-to-end decompression/content boundaries and selected malformed XML rejection. Not a CPU-time or full hostile-input guarantee.",
+      "caseIds": []
     }
   ],
   "claims": [
@@ -1902,6 +1910,40 @@
       "scope": "Seeded sheet editing sequences: local name ownership, active tab, saved cells/formula caches and unique copied table identifiers. Expressions are retained verbatim.",
       "operations": [
         "preserve"
+      ]
+    },
+    {
+      "requirement": "loader-resource-contract",
+      "profile": "node-model",
+      "operations": [
+        "read",
+        "reject"
+      ],
+      "status": "tested",
+      "scope": "Buffered and 1/7/257-byte public stream sources: exact cell/row/ZIP entry/total limits accepted; over-budget and malformed XML rejected with typed errors.",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "tests/conformance/loader-boundaries.test.ts",
+          "anchor": "applies ZIP entry, total and ratio caps at the public boundary"
+        }
+      ]
+    },
+    {
+      "requirement": "loader-resource-contract",
+      "profile": "node-stream",
+      "operations": [
+        "read",
+        "reject"
+      ],
+      "status": "tested",
+      "scope": "Buffered and 1/7/257-byte public stream sources: exact cell/row/ZIP entry/total limits accepted; over-budget and malformed XML rejected with typed errors.",
+      "caseIds": [],
+      "evidence": [
+        {
+          "path": "tests/conformance/loader-boundaries.test.ts",
+          "anchor": "applies ZIP entry, total and ratio caps at the public boundary"
+        }
       ]
     }
   ]

@@ -33,6 +33,7 @@ This inventory checks references and declared coverage; it does not execute the 
 | formula-calculation | ECMA-376 Part 1 formula semantics: General formula evaluation, recalculation accuracy and Excel calculation-engine equivalence. | 0 |
 | visual-rendering | ECMA-376 Part 1 presentation features: Pixel/print-layout equivalence across fonts, locale and application versions. | 0 |
 | feature-interactions | ECMA-376 Part 1 feature interactions: Exhaustive charts/tables/drawings/custom-part interactions and arbitrary number formats. | 0 |
+| loader-resource-contract | Public LoadOptions/ReadOnlyLoadOptions resource and error contract: End-to-end decompression/content boundaries and selected malformed XML rejection. Not a CPU-time or full hostile-input guarantee. | 0 |
 
 ## node-model
 
@@ -61,6 +62,7 @@ Subject: library; execution: ci. Runtime: Node 22/24/26 × Linux/macOS/Windows. 
 | formula-calculation | U | U | U | U |
 | visual-rendering | U | U | U | U |
 | feature-interactions | U | U | T | U |
+| loader-resource-contract | T | U | U | T |
 
 Profile evidence: [.github/workflows/ci.yml](../../.github/workflows/ci.yml) (anchor: pnpm test); [tests/conformance/corpus.test.ts](../../tests/conformance/corpus.test.ts) (anchor: normative corpus: independent expected semantics)
 
@@ -79,6 +81,7 @@ Bounded claims and evidence:
 - **dates / read, write, preserve: tested** (4 selected cases). Expected model before and after B2 edit; independent saved-package validation. [tests/conformance/corpus.test.ts](../../tests/conformance/corpus.test.ts) (anchor: normative corpus: independent expected semantics)
 - **serialized-parts / preserve: tested**. Three pinned openpyxl fixtures and hand-authored extensions. Comment-sheet regenerated VML, arbitrary custom parts and all unselected parts are outside this contract. [tests/conformance/preservation.test.ts](../../tests/conformance/preservation.test.ts) (anchor: preserves bytes, content types, graph and XML bindings); [tests/conformance/preservation.test.ts](../../tests/conformance/preservation.test.ts) (anchor: preserves unknown extension subtrees and explicit empty style pools); [tests/conformance/preservation.test.ts](../../tests/conformance/preservation.test.ts) (anchor: calibrates missing binary, changed content type, graph target)
 - **feature-interactions / preserve: tested**. Seeded sheet editing sequences: local name ownership, active tab, saved cells/formula caches and unique copied table identifiers. Expressions are retained verbatim. [tests/conformance/sheet-operations.test.ts](../../tests/conformance/sheet-operations.test.ts) (anchor: generated editing sequences preserve independently tracked names, cells and table uniqueness)
+- **loader-resource-contract / read, reject: tested**. Buffered and 1/7/257-byte public stream sources: exact cell/row/ZIP entry/total limits accepted; over-budget and malformed XML rejected with typed errors. [tests/conformance/loader-boundaries.test.ts](../../tests/conformance/loader-boundaries.test.ts) (anchor: applies ZIP entry, total and ratio caps at the public boundary)
 
 ## node-stream
 
@@ -107,6 +110,7 @@ Subject: library; execution: ci. Runtime: Node 22/24/26 × Linux/macOS/Windows. 
 | formula-calculation | U | U | U | U |
 | visual-rendering | U | U | U | U |
 | feature-interactions | U | U | U | U |
+| loader-resource-contract | T | U | U | T |
 
 Profile evidence: [.github/workflows/ci.yml](../../.github/workflows/ci.yml) (anchor: pnpm test); [tests/conformance/corpus.test.ts](../../tests/conformance/corpus.test.ts) (anchor: expectedStreamValues)
 
@@ -119,6 +123,7 @@ Bounded claims and evidence:
 - **shared-formula / read: tested** (1 selected cases). Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion. [tests/conformance/corpus.test.ts](../../tests/conformance/corpus.test.ts) (anchor: expectedStreamValues)
 - **rich-text / read: tested** (2 selected cases). Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion. [tests/conformance/corpus.test.ts](../../tests/conformance/corpus.test.ts) (anchor: expectedStreamValues)
 - **dates / read: tested** (4 selected cases). Row values/cached formula results only; date epoch flag for date cases. No style, defined-name or formula-object assertion. [tests/conformance/corpus.test.ts](../../tests/conformance/corpus.test.ts) (anchor: expectedStreamValues)
+- **loader-resource-contract / read, reject: tested**. Buffered and 1/7/257-byte public stream sources: exact cell/row/ZIP entry/total limits accepted; over-budget and malformed XML rejected with typed errors. [tests/conformance/loader-boundaries.test.ts](../../tests/conformance/loader-boundaries.test.ts) (anchor: applies ZIP entry, total and ratio caps at the public boundary)
 
 ## browser-model
 
@@ -147,6 +152,7 @@ Subject: library; execution: ci. Runtime: Chromium; Firefox; WebKit. Adapter: ar
 | formula-calculation | U | U | U | U |
 | visual-rendering | U | U | U | U |
 | feature-interactions | U | U | U | U |
+| loader-resource-contract | U | U | U | U |
 
 Profile evidence: [tests/browser/output-setup.ts](../../tests/browser/output-setup.ts) (anchor: ['chromium', 'firefox', 'webkit']); [tests/browser/corpus.spec.ts](../../tests/browser/corpus.spec.ts) (anchor: validateXlsx); [.github/workflows/ci.yml](../../.github/workflows/ci.yml) (anchor: pnpm test:browser)
 
@@ -191,6 +197,7 @@ Subject: library; execution: ci. Runtime: Chromium; Firefox; WebKit. Adapter: ar
 | formula-calculation | U | U | U | U |
 | visual-rendering | U | U | U | U |
 | feature-interactions | U | U | U | U |
+| loader-resource-contract | U | U | U | U |
 
 Profile evidence: [tests/browser/corpus.spec.ts](../../tests/browser/corpus.spec.ts) (anchor: expectedStreamValues); [.github/workflows/ci.yml](../../.github/workflows/ci.yml) (anchor: pnpm test:browser)
 
@@ -231,6 +238,7 @@ Subject: oracle; execution: ci. Runtime: libxml2; Open XML SDK Office2016; fflat
 | formula-calculation | U | U | U | U |
 | visual-rendering | U | U | U | U |
 | feature-interactions | U | U | U | U |
+| loader-resource-contract | U | U | U | U |
 
 Profile evidence: [tests/conformance/validate.ts](../../tests/conformance/validate.ts) (anchor: validateXlsx); [.github/workflows/ci.yml](../../.github/workflows/ci.yml) (anchor: dotnet run --project tests/conformance/sdk)
 
@@ -270,6 +278,7 @@ Subject: consumer; execution: ci. Runtime: LibreOffice Calc headless + Python. A
 | formula-calculation | U | U | U | U |
 | visual-rendering | U | U | U | U |
 | feature-interactions | U | U | U | U |
+| loader-resource-contract | U | U | U | U |
 
 Profile evidence: [.github/workflows/ci.yml](../../.github/workflows/ci.yml) (anchor: pnpm qa:office); [scripts/qa-office-check.py](../../scripts/qa-office-check.py) (anchor: known-compatibility-difference)
 
@@ -314,6 +323,7 @@ Subject: consumer; execution: manual. Runtime: Excel for Mac 16.113.3 (16.113.26
 | formula-calculation | U | U | U | U |
 | visual-rendering | U | U | U | U |
 | feature-interactions | U | U | U | U |
+| loader-resource-contract | U | U | U | U |
 
 Profile evidence: [tests/conformance/corpus/excel-mac-observation.json](../../tests/conformance/corpus/excel-mac-observation.json) (anchor: native-ui-manual); [scripts/qa-excel.mjs](../../scripts/qa-excel.mjs) (anchor: Independent Excel comparison failed)
 
@@ -351,6 +361,7 @@ Subject: consumer; execution: unavailable. Runtime: Windows desktop Excel (no li
 | formula-calculation | U | U | U | U |
 | visual-rendering | U | U | U | U |
 | feature-interactions | U | U | U | U |
+| loader-resource-contract | U | U | U | U |
 
 Profile evidence: [tests/conformance/README.md](../../tests/conformance/README.md) (anchor: No licensed Windows self-hosted runner)
 
