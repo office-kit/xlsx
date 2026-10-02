@@ -11,7 +11,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { makeRichText } from '@office-kit/xlsx/cell';
+import { cellValueAsNumber, makeRichText } from '@office-kit/xlsx/cell';
 import { makeBarChart } from '@office-kit/xlsx/chart';
 import { makeChartsheet } from '@office-kit/xlsx/chartsheet';
 import { makeOneCellAnchor } from '@office-kit/xlsx/drawing';
@@ -52,6 +52,7 @@ const subpathEntries: ReadonlyArray<readonly [string, unknown]> = [
 for (const [subpath, exported] of subpathEntries) {
   ok(typeof exported === 'function', `${subpath} export is not callable at runtime`);
 }
+ok(cellValueAsNumber({ kind: 'rich-text', runs: makeRichText([{ text: '1' }, { text: '2.5', font: { b: true } }]) }) === 12.5, 'published numeric coercion lost rich text');
 ok(DEFAULT_DECOMPRESSION_LIMITS.maxTotalUncompressedBytes > 0, 'zip limits did not load');
 
 const scratch = mkdtempSync(join(tmpdir(), 'xlsx-consumer-'));
