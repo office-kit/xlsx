@@ -41,6 +41,8 @@ export interface SheetView {
   showFormulas?: boolean;
   showZeros?: boolean;
   rightToLeft?: boolean;
+  /** Outline (grouping) symbols beside the headers; Excel's Ctrl+8 / Cmd+8 toggle. */
+  showOutlineSymbols?: boolean;
   view?: SheetViewMode;
   topLeftCell?: string;
   zoomScale?: number;
@@ -59,6 +61,7 @@ export function makeSheetView(opts: Partial<SheetView> = {}): SheetView {
     ...(opts.showFormulas !== undefined ? { showFormulas: opts.showFormulas } : {}),
     ...(opts.showZeros !== undefined ? { showZeros: opts.showZeros } : {}),
     ...(opts.rightToLeft !== undefined ? { rightToLeft: opts.rightToLeft } : {}),
+    ...(opts.showOutlineSymbols !== undefined ? { showOutlineSymbols: opts.showOutlineSymbols } : {}),
     ...(opts.view !== undefined ? { view: opts.view } : {}),
     ...(opts.topLeftCell !== undefined ? { topLeftCell: opts.topLeftCell } : {}),
     ...(opts.zoomScale !== undefined ? { zoomScale: opts.zoomScale } : {}),

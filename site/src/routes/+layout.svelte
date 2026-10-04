@@ -3,6 +3,7 @@
   import { KitFooter, KitHeader, KitSeo } from '@office-kit/site-kit';
   import CodeCopyEnhancer from '$lib/components/CodeCopyEnhancer.svelte';
   import Search from '$lib/components/Search.svelte';
+  import { page } from '$app/state';
 
   type Props = {
     children?: import('svelte').Snippet;
@@ -15,6 +16,7 @@
     { path: '/docs/recipes', label: 'Recipes' },
     { path: '/api', label: 'API' },
     { path: '/playground', label: 'Playground' },
+    { path: '/editor', label: 'Editor' },
     { path: '/repl', label: 'REPL' },
   ];
 </script>
@@ -25,21 +27,26 @@
   description="Open any .xlsx or start from an empty workbook, change cells, styles, formulas, and charts through typed functions, and save a file that validates against the ECMA-376 schemas. Runs in Node and the browser."
 />
 
-<a class="skip" href="#main">Skip to content</a>
-
-<KitHeader product="xlsx" {links}>
-  {#snippet search()}
-    <Search />
-  {/snippet}
-</KitHeader>
-
-<main id="main">
+{#if page.route.id === '/editor'}
+  <!-- The editor is a full-window application; site chrome would steal its space. -->
   {@render children?.()}
-</main>
+{:else}
+  <a class="skip" href="#main">Skip to content</a>
 
-<CodeCopyEnhancer />
+  <KitHeader product="xlsx" {links}>
+    {#snippet search()}
+      <Search />
+    {/snippet}
+  </KitHeader>
 
-<KitFooter product="xlsx" {links} />
+  <main id="main">
+    {@render children?.()}
+  </main>
+
+  <CodeCopyEnhancer />
+
+  <KitFooter product="xlsx" {links} />
+{/if}
 
 <style>
   main {

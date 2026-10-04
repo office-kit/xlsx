@@ -266,6 +266,13 @@
   "ignorePatterns": ["dist", "reference", "node_modules", "coverage"],
   "overrides": [
     {
+      "files": ["site/**/*.svelte"],
+      "rules": {
+        "prefer-const": "off",
+        "no-unassigned-vars": "off"
+      }
+    },
+    {
       "files": ["tests/**/*.ts", "tests/**/*.tsx", "site/**/*.ts", "site/**/*.tsx"],
       "rules": {
         "typescript/no-explicit-any": "off"

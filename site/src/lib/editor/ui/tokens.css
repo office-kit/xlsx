@@ -1,0 +1,142 @@
+/* Design tokens for the spreadsheet editor: an Office-like light theme with
+   Excel's green accent. Scoped under .xl-editor so nothing leaks into the
+   docs site. */
+.xl-editor {
+  --xl-accent: #1e7145;
+  --xl-accent-2: #2e8b57;
+  --xl-accent-soft: #e3f1e8;
+  --xl-bg: #f3f2f1;
+  --xl-panel: #ffffff;
+  --xl-ribbon: #f8f8f8;
+  --xl-border: #e1dfdd;
+  --xl-border-strong: #c8c6c4;
+  --xl-text: #201f1e;
+  --xl-text-2: #605e5c;
+  --xl-text-3: #8a8886;
+  --xl-hover: #ebebeb;
+  --xl-pressed: #dcdcdc;
+  --xl-selected: #d6eadc;
+  --xl-danger: #a4262c;
+  --xl-radius: 4px;
+  --xl-shadow: 0 1.6px 3.6px rgba(0, 0, 0, 0.13), 0 0.3px 0.9px rgba(0, 0, 0, 0.1);
+  --xl-shadow-lg: 0 6.4px 14.4px rgba(0, 0, 0, 0.18), 0 1.2px 3.6px rgba(0, 0, 0, 0.11);
+  --xl-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Helvetica Neue', Arial, sans-serif;
+  --xl-mono: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+
+  font-family: var(--xl-font);
+  color: var(--xl-text);
+  font-size: 12px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.xl-editor *,
+.xl-editor *::before,
+.xl-editor *::after {
+  box-sizing: border-box;
+}
+
+.xl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 24px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--xl-text);
+  border-radius: var(--xl-radius);
+  padding: 2px 6px;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.xl-btn:hover:not(:disabled) {
+  background: var(--xl-hover);
+}
+.xl-btn:active:not(:disabled) {
+  background: var(--xl-pressed);
+}
+.xl-btn[aria-pressed='true'] {
+  background: var(--xl-selected);
+  border-color: #9fcfb0;
+}
+.xl-btn:disabled {
+  color: var(--xl-text-3);
+  cursor: default;
+}
+.xl-btn.primary {
+  background: var(--xl-accent);
+  color: #fff;
+  border-color: var(--xl-accent);
+}
+.xl-btn.primary:hover:not(:disabled) {
+  background: var(--xl-accent-2);
+}
+.xl-btn.outlined {
+  border-color: var(--xl-border-strong);
+  background: #fff;
+}
+
+.xl-input,
+.xl-select {
+  border: 1px solid var(--xl-border-strong);
+  border-radius: 3px;
+  background: #fff;
+  color: var(--xl-text);
+  font: inherit;
+  padding: 3px 6px;
+  min-height: 24px;
+}
+.xl-input:focus,
+.xl-select:focus {
+  outline: 2px solid var(--xl-accent);
+  outline-offset: -1px;
+  border-color: var(--xl-accent);
+}
+
+.xl-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 200px;
+  background: #fff;
+  border: 1px solid var(--xl-border);
+  border-radius: 6px;
+  box-shadow: var(--xl-shadow-lg);
+  padding: 4px 0;
+  font-size: 12.5px;
+}
+.xl-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 3px 14px 3px 10px;
+  font: inherit;
+  line-height: 18px;
+  color: var(--xl-text);
+  cursor: pointer;
+}
+.xl-menu-item:hover:not(:disabled),
+.xl-menu-item:focus-visible {
+  background: var(--xl-hover);
+  outline: none;
+}
+.xl-menu-item:disabled {
+  color: var(--xl-text-3);
+  cursor: default;
+}
+.xl-menu-item .shortcut {
+  margin-left: auto;
+  padding-left: 24px;
+  color: var(--xl-text-3);
+  font-size: 11.5px;
+}
+.xl-menu-sep {
+  height: 1px;
+  background: var(--xl-border);
+  margin: 4px 0;
+}

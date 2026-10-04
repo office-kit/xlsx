@@ -1,0 +1,377 @@
+=== Excel ===
+  About Microsoft Excel
+  ----
+  Preferences...	[Cmd+,]
+  Sign Out...
+  ----
+  Services
+    (user-specific entries omitted)
+  ----
+  Hide Excel	[Cmd+H]
+  Hide Others	[Opt+Cmd+H]
+  Show All	(disabled)
+  ----
+  Quit Excel	[Cmd+Q]
+  Quit and Keep Windows	[Opt+Cmd+Q]
+=== File ===
+  New	[Cmd+N]
+  New from Template...	[Shift+Cmd+P]
+  Open...	[Cmd+O]
+  Open Recent
+    (user-specific entries omitted)
+  ----
+  Close	[Cmd+W]
+  Save	[Cmd+S]
+  Save As...	[Shift+Cmd+S]
+  Save as Template...
+  Move...	(disabled)
+  Rename...	(disabled)
+  ----
+  Reset Changes Pane	(disabled)
+  ----
+  Browse Version History	(disabled)
+  ----
+  Import
+  ----
+  Reduce File Size...
+  ----
+  Share
+    Share...	(disabled)
+    ----
+    Send Workbook	(disabled)
+    Send PDF	(disabled)
+  ----
+  Always Open Read-Only
+  Passwords...
+  ----
+  Page Setup...
+  Print Area
+    Set Print Area
+    Clear Print Area
+  Print...	[Cmd+P]
+  ----
+  Properties...
+=== Edit ===
+  Can't Undo	[Cmd+Z]	(disabled)
+  Repeat Close	[Cmd+Y]
+  ----
+  Cut	[Cmd+X]
+  Copy	[Cmd+C]
+  ----
+  Paste	[Cmd+V]
+  Paste Special...	[Ctrl+Cmd+V]
+  Paste and Match Formatting	[Opt+Shift+Cmd+V]
+  ----
+  Fill
+    Down	(disabled)
+    Right	(disabled)
+    Up
+    Left
+    Across Worksheets...	(disabled)
+    Series...
+    Justify
+    Flash Fill
+  Clear
+    All
+    Formats
+    Contents
+    Clear Comments and Notes	(disabled)
+    Hyperlinks
+    Series
+  Select All	[Cmd+A]
+  Delete...
+  Sheet
+    Delete Sheet
+    Move or Copy Sheet...
+  ----
+  Find
+    Find...	[Ctrl+F]
+    Find Next	[Cmd+G]
+    Find Previous	[Shift+Cmd+G]
+    ----
+    Replace...	[Ctrl+H]
+    Go To...	[Ctrl+G]
+  ----
+  Toggle Drawing	[Ctrl+Cmd+Z]
+  ----
+  AutoFill
+    Contact…	(disabled)
+    Passwords…	(disabled)
+    Credit Card…	(disabled)
+  Start Dictation	[🎤]	(disabled)
+  Emoji & Symbols	[E]
+=== View ===
+  Normal
+  Page Layout
+  ----
+  Ribbon	[Opt+Cmd+R]
+  Formula Bar
+  Message Bar
+  ----
+  Formula Builder
+  ----
+  Header and Footer...
+  Ruler	(disabled)
+  Custom Views...
+  Zoom...
+  Enter Full Screen	[F]	(disabled)
+=== Insert ===
+  Cells...
+  Rows
+  Columns
+  Sheet
+    Insert Sheet	[Shift+]
+    Chart Sheet
+  ----
+  Chart
+    Column
+    Bar
+    Line
+    Area
+    Pie
+    Treemap
+    Sunburst
+    Histogram
+    Pareto
+    Box and Whisker
+    X Y (Scatter)
+    Waterfall
+    Funnel
+    Stock
+    Surface
+    Radar
+    Filled Map
+    ----
+    Manage Templates...
+  Sparklines...
+  Table
+  ----
+  Page Break	(disabled)
+  Reset All Page Breaks	(disabled)
+  Function...
+  Name
+    Define Name
+    Paste...	(disabled)
+    Create...
+    Apply...	(disabled)
+    Name Manager
+  New Comment
+  ----
+  Picture
+    Place in Cell
+      Photo Browser…
+      Picture from File...
+      Stock Images...
+      Online Pictures...
+    Place over Cells
+      Photo Browser…
+      Picture from File...
+      Stock Images...
+      Online Pictures...
+  Audio
+    Audio Browser...
+    Audio from File...
+  Movie
+    Movie Browser...
+    Movie from File...
+  Symbol...	(disabled)
+  Shape
+    Rectangle
+    Rounded Rectangle
+    Triangle
+    Oval
+    Line
+  ----
+  Icons...
+  ----
+  3D Models
+    Insert 3D Model From	(disabled)
+    Stock 3D Models...
+    This Device...
+  ----
+  Text Box
+  SmartArt
+    List
+    Process
+    Cycle
+    Hierarchy
+    Relationship
+    Matrix
+    Pyramid
+    Picture
+    Timeline
+    Meet The Team
+    Text Card
+  WordArt
+  Object...
+  Hyperlink...	[Cmd+K]
+  ----
+  Checkbox
+=== Format ===
+  Cells...	[Cmd+1]
+  Row
+    Height...
+    AutoFit
+    Hide
+    Unhide
+  Column
+    Width...
+    AutoFit Selection
+    Hide
+    Unhide
+    Standard Width...
+  Sheet
+    Rename
+    Hide
+    Unhide...	(disabled)
+    Background...
+  ----
+  Conditional Formatting...
+  Style...
+  Phonetic Guide
+    Edit Phonetic	(disabled)
+    Phonetic Settings...
+    Show Phonetic Fields
+  ----
+  Selection Pane...	[Opt+Cmd+U]
+=== Tools ===
+  Spelling...
+  Thesaurus...	[Ctrl+Opt+Cmd+R]	(disabled)
+  Language...
+  AutoCorrect Options...
+  Error Checking...
+  ----
+  Translate...	[Ctrl+Opt+Cmd+T]
+  ----
+  Check Accessibility
+  ----
+  Show Changes	(disabled)
+  ----
+  Track Changes
+    Highlight Changes...
+    Accept or Reject Changes...	(disabled)
+  Merge Workbooks...	(disabled)
+  Protection
+    Protect Sheet...
+    Protect Workbook...
+  ----
+  Goal Seek...
+  Scenarios...
+  Auditing
+    Trace Precedents
+    Trace Dependents
+    Trace Error
+    Remove All Arrows
+  ----
+  Macro
+    Macros...
+    Record New Macro...
+    Visual Basic Editor
+  Excel Add-ins...
+  Customize Keyboard...
+=== Data ===
+  Sort...	[Shift+Cmd+R]
+  AutoFilter
+  Clear Filters	(disabled)
+  Advanced Filter...
+  ----
+  Subtotals...
+  Validation...
+  ----
+  Table...
+  Text to Columns...
+  Consolidate...
+  Group and Outline
+    Hide Detail	(disabled)
+    Show Detail	(disabled)
+    Group...
+    Ungroup...
+    ----
+    Auto Outline
+    Clear Outline
+    Settings...
+  Edit Links...
+  ----
+  Summarize with PivotTable
+  ----
+  Chart Source Data...	(disabled)
+  Chart Add Data...	(disabled)
+  ----
+  Table Tools
+    Remove Duplicates
+    Summarize with PivotTable	(disabled)
+    Rename	(disabled)
+    Convert to Range	(disabled)
+  Get Data (Power Query)
+    Get Data (Power Query)...
+    Launch Power Query Editor...
+    Data Source Settings...
+    ----
+    From Database (Microsoft Query)
+    From HTML
+    From Text (Legacy)
+    From SQL Server ODBC
+    Run Web Query...
+    ----
+    Data Range Properties	(disabled)
+    Parameters...	(disabled)
+  Refresh	(disabled)
+=== Window ===
+  Minimize	[Cmd+M]	(disabled)
+  Zoom	(disabled)
+  ----
+  New Window
+  Arrange...
+  Hide
+  Unhide...	(disabled)
+  ----
+  Split
+  Freeze Panes
+  ----
+  Bring All to Front
+  Minimize All	[Opt+Cmd+M]
+  Zoom All
+  Fill	[Ctrl+F]	(disabled)
+  Center	[Ctrl+C]	(disabled)
+  ----
+  Move & Resize
+    Halves	(disabled)
+    Left	[Ctrl+glyphnull/vk123]	(disabled)
+    Right	[Ctrl+glyphnull/vk124]	(disabled)
+    Top	[Ctrl+glyphnull/vk126]	(disabled)
+    Bottom	[Ctrl+glyphnull/vk125]	(disabled)
+    ----
+    Quarters	(disabled)
+    Top Left	(disabled)
+    Top Right	(disabled)
+    Bottom Left	(disabled)
+    Bottom Right	(disabled)
+    ----
+    Arrange	(disabled)
+    Left & Right	[Ctrl+Shift+glyphnull/vk123]	(disabled)
+    Left & Quarters	[Ctrl+Opt+Shift+glyphnull/vk123]	(disabled)
+    Right & Left	[Ctrl+Shift+glyphnull/vk124]	(disabled)
+    Right & Quarters	[Ctrl+Opt+Shift+glyphnull/vk124]	(disabled)
+    Top & Bottom	[Ctrl+Shift+glyphnull/vk126]	(disabled)
+    Top & Quarters	[Ctrl+Opt+Shift+glyphnull/vk126]	(disabled)
+    Bottom & Top	[Ctrl+Shift+glyphnull/vk125]	(disabled)
+    Bottom & Quarters	[Ctrl+Opt+Shift+glyphnull/vk125]	(disabled)
+    Quarters	(disabled)
+    ----
+    Return to Previous Size	[Ctrl+R]	(disabled)
+  Full Screen Tile	(disabled)
+    Left of Screen	(disabled)
+    Right of Screen	(disabled)
+  ----
+  Remove Window from Set	(disabled)
+  Arrange in Front
+  ----
+  Book2
+=== Help ===
+  Excel Help
+  ----
+  Feedback
+  ----
+  Clear Application Data	(disabled)
+  ----
+  Check for Updates

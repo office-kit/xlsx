@@ -1,7 +1,8 @@
-// `xl/drawings/drawingN.xml` reader/writer. Charts and pictures are modeled;
-// shapes, connectors and groups — and Excel's `<mc:AlternateContent>` wrappers
-// around an anchor — are kept as the verbatim source XML and written back
-// untouched, because the model has no slot for their geometry or text.
+// `xl/drawings/drawingN.xml` reader/writer. Charts, pictures, plain shapes and
+// connectors are modeled; groups, shapes carrying something the model has no
+// slot for (a macro, a hyperlink, `<xdr:clientData>` flags) and Excel's
+// `<mc:AlternateContent>` wrappers around an anchor are kept as the verbatim
+// source XML and written back untouched.
 
 import { escapeXmlAttr } from '../utils/escape.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
@@ -10,8 +11,17 @@ import { parseXml } from '../xml/parser.js';
 import { serializeXml } from '../xml/serializer.js';
 import { findChild, type XmlNode } from '../xml/tree.js';
 import type { AnchorMarker, DrawingAnchor, Point2D, PositiveSize2D } from './anchor.js';
-import { parseShapeProperties, serializeShapeProperties } from './dml/dml-xml.js';
-import { type ChartReference, type Drawing, type DrawingItem, makeDrawing, type PictureReference } from './drawing.js';
+import { parseDmlColor, parseShapeProperties, parseTextBody, serializeDmlColor, serializeShapeProperties, serializeTextBody } from './dml/dml-xml.js';
+import {
+  type ChartReference,
+  type Drawing,
+  type DrawingItem,
+  makeDrawing,
+  type PictureReference,
+  type ShapeReference,
+  type ShapeStyle,
+  type ShapeStyleMatrixRef,
+} from './drawing.js';
 
 const WS_DRAWING_TAG = `{${SHEET_DRAWING_NS}}wsDr`;
 const ABSOLUTE_ANCHOR_TAG = `{${SHEET_DRAWING_NS}}absoluteAnchor`;
@@ -38,6 +48,19 @@ const C_NV_PR_TAG = `{${SHEET_DRAWING_NS}}cNvPr`;
 const BLIP_FILL_TAG = `{${SHEET_DRAWING_NS}}blipFill`;
 const PIC_SP_PR_TAG = `{${SHEET_DRAWING_NS}}spPr`;
 const A_BLIP_TAG = `{${DRAWING_NS}}blip`;
+const SP_TAG = `{${SHEET_DRAWING_NS}}sp`;
+const CXN_SP_TAG = `{${SHEET_DRAWING_NS}}cxnSp`;
+const NV_SP_PR_TAG = `{${SHEET_DRAWING_NS}}nvSpPr`;
+const NV_CXN_SP_PR_TAG = `{${SHEET_DRAWING_NS}}nvCxnSpPr`;
+const C_NV_SP_PR_TAG = `{${SHEET_DRAWING_NS}}cNvSpPr`;
+const C_NV_CXN_SP_PR_TAG = `{${SHEET_DRAWING_NS}}cNvCxnSpPr`;
+const SP_PR_TAG = `{${SHEET_DRAWING_NS}}spPr`;
+const STYLE_TAG = `{${SHEET_DRAWING_NS}}style`;
+const TX_BODY_TAG = `{${SHEET_DRAWING_NS}}txBody`;
+const A_LN_REF_TAG = `{${DRAWING_NS}}lnRef`;
+const A_FILL_REF_TAG = `{${DRAWING_NS}}fillRef`;
+const A_EFFECT_REF_TAG = `{${DRAWING_NS}}effectRef`;
+const A_FONT_REF_TAG = `{${DRAWING_NS}}fontRef`;
 
 const XML_HEADER = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
 const escapeAttr = escapeXmlAttr;
@@ -124,6 +147,75 @@ const parseChartReference = (node: XmlNode): ChartReference | undefined => {
   return undefined;
 };
 
+const hasRelationshipAttr = (node: XmlNode): boolean =>
+  Object.keys(node.attrs).some((name) => name.startsWith(`{${REL_NS}}`)) || node.children.some(hasRelationshipAttr);
+
+const parseStyleMatrixRef = (el: XmlNode | undefined): ShapeStyleMatrixRef | undefined => {
+  if (!el) return undefined;
+  const idx = Number.parseInt(el.attrs['idx'] ?? '', 10);
+  if (!Number.isInteger(idx)) return undefined;
+  const color = parseDmlColor(el);
+  return color ? { idx, color } : { idx };
+};
+
+const parseShapeStyle = (el: XmlNode): ShapeStyle | undefined => {
+  const lnRef = parseStyleMatrixRef(findChild(el, A_LN_REF_TAG));
+  const fillRef = parseStyleMatrixRef(findChild(el, A_FILL_REF_TAG));
+  const effectRef = parseStyleMatrixRef(findChild(el, A_EFFECT_REF_TAG));
+  const fontRefEl = findChild(el, A_FONT_REF_TAG);
+  const fontIdx = fontRefEl?.attrs['idx'];
+  if (!lnRef || !fillRef || !effectRef || !fontRefEl) return undefined;
+  if (fontIdx !== 'major' && fontIdx !== 'minor' && fontIdx !== 'none') return undefined;
+  const fontColor = parseDmlColor(fontRefEl);
+  return { lnRef, fillRef, effectRef, fontRef: fontColor ? { idx: fontIdx, color: fontColor } : { idx: fontIdx } };
+};
+
+/**
+ * Model an `<xdr:sp>` / `<xdr:cxnSp>`, or return undefined so the caller keeps
+ * the anchor verbatim. A shape that runs a macro or links through the drawing
+ * rels (a hyperlink, a picture fill) needs pieces the model drops, as does an
+ * anchor whose `<xdr:clientData>` carries lock/print flags.
+ */
+const parseShapeReference = (anchor: XmlNode): ShapeReference | undefined => {
+  const clientData = findChild(anchor, CLIENT_DATA_TAG);
+  if (clientData && Object.keys(clientData.attrs).length > 0) return undefined;
+  const sp = findChild(anchor, SP_TAG);
+  const cxn = sp ? undefined : findChild(anchor, CXN_SP_TAG);
+  const node = sp ?? cxn;
+  if (!node) return undefined;
+  if ((node.attrs['macro'] ?? '') !== '' || node.attrs['fLocksText'] !== undefined || node.attrs['fPublished'] !== undefined) return undefined;
+  if (hasRelationshipAttr(node)) return undefined;
+  const nv = findChild(node, sp ? NV_SP_PR_TAG : NV_CXN_SP_PR_TAG);
+  const spPrEl = findChild(node, SP_PR_TAG);
+  if (!nv || !spPrEl) return undefined;
+  const out: ShapeReference = { spPr: parseShapeProperties(spPrEl) };
+  if (cxn) out.connector = true;
+  const cNvPr = findChild(nv, C_NV_PR_TAG);
+  if (cNvPr) {
+    if (cNvPr.attrs['name'] !== undefined) out.name = cNvPr.attrs['name'];
+    if (cNvPr.attrs['descr'] !== undefined) out.descr = cNvPr.attrs['descr'];
+    const hiddenRaw = cNvPr.attrs['hidden'];
+    if (hiddenRaw === '1' || hiddenRaw === 'true') out.hidden = true;
+  }
+  // Locks and connection sites (`<a:stCxn id>` names another shape's cNvPr
+  // id, which the writer renumbers) have no slot in the model.
+  const cNvSpPr = findChild(nv, sp ? C_NV_SP_PR_TAG : C_NV_CXN_SP_PR_TAG);
+  if (cNvSpPr && cNvSpPr.children.length > 0) return undefined;
+  const txBoxRaw = sp ? cNvSpPr?.attrs['txBox'] : undefined;
+  if (txBoxRaw === '1' || txBoxRaw === 'true') out.textBox = true;
+  const textLink = sp ? node.attrs['textlink'] : undefined;
+  if (textLink !== undefined && textLink !== '') out.textLink = textLink;
+  const styleEl = findChild(node, STYLE_TAG);
+  if (styleEl) {
+    const style = parseShapeStyle(styleEl);
+    if (!style) return undefined;
+    out.style = style;
+  }
+  const txBodyEl = sp ? findChild(node, TX_BODY_TAG) : undefined;
+  if (txBodyEl) out.txBody = parseTextBody(txBodyEl);
+  return out;
+};
+
 const parseAnchor = (node: XmlNode): DrawingItem | undefined => {
   let anchor: DrawingAnchor | undefined;
   if (node.name === ABSOLUTE_ANCHOR_TAG) {
@@ -168,6 +260,10 @@ const parseAnchor = (node: XmlNode): DrawingItem | undefined => {
   const picture = parsePictureReference(node);
   if (picture) {
     return { anchor, content: { kind: 'picture', picture } };
+  }
+  const shape = parseShapeReference(node);
+  if (shape) {
+    return { anchor, content: { kind: 'shape', shape } };
   }
   // Find the first child that isn't a marker/pos/ext/clientData. Anything we
   // don't model keeps the whole anchor element verbatim — rebuilding it would
@@ -267,6 +363,43 @@ const serializePictureFrame = (picture: PictureReference, anchorIdx: number): st
   ].join('');
 };
 
+const serializeStyleMatrixRef = (tag: string, ref: ShapeStyleMatrixRef): string =>
+  ref.color ? `<a:${tag} idx="${ref.idx}">${serializeDmlColor(ref.color)}</a:${tag}>` : `<a:${tag} idx="${ref.idx}"/>`;
+
+const serializeShapeStyle = (style: ShapeStyle): string =>
+  [
+    '<xdr:style>',
+    serializeStyleMatrixRef('lnRef', style.lnRef),
+    serializeStyleMatrixRef('fillRef', style.fillRef),
+    serializeStyleMatrixRef('effectRef', style.effectRef),
+    style.fontRef.color
+      ? `<a:fontRef idx="${style.fontRef.idx}">${serializeDmlColor(style.fontRef.color)}</a:fontRef>`
+      : `<a:fontRef idx="${style.fontRef.idx}"/>`,
+    '</xdr:style>',
+  ].join('');
+
+const serializeShape = (shape: ShapeReference, anchorIdx: number): string => {
+  const tag = shape.connector ? 'cxnSp' : 'sp';
+  const fallbackName = shape.connector ? 'Straight Connector' : shape.textBox ? 'TextBox' : 'Shape';
+  const nameAttr = `name="${escapeAttr(shape.name ?? `${fallbackName} ${anchorIdx + 1}`)}"`;
+  const descrAttr = shape.descr !== undefined ? ` descr="${escapeAttr(shape.descr)}"` : '';
+  const hiddenAttr = shape.hidden ? ' hidden="1"' : '';
+  const cNvPr = `<xdr:cNvPr id="${anchorIdx + 2}" ${nameAttr}${descrAttr}${hiddenAttr}/>`;
+  const nv = shape.connector
+    ? `<xdr:nvCxnSpPr>${cNvPr}<xdr:cNvCxnSpPr/></xdr:nvCxnSpPr>`
+    : `<xdr:nvSpPr>${cNvPr}<xdr:cNvSpPr${shape.textBox ? ' txBox="1"' : ''}/></xdr:nvSpPr>`;
+  // CT_Connector has no `textlink` attribute.
+  const textLink = !shape.connector && shape.textLink !== undefined ? ` textlink="${escapeAttr(shape.textLink)}"` : '';
+  return [
+    `<xdr:${tag} macro=""${textLink}>`,
+    nv,
+    serializeShapeProperties(shape.spPr, 'xdr:spPr'),
+    shape.style ? serializeShapeStyle(shape.style) : '',
+    !shape.connector && shape.txBody ? serializeTextBody(shape.txBody, 'xdr:txBody') : '',
+    `</xdr:${tag}>`,
+  ].join('');
+};
+
 const serializeChartGraphicFrame = (
   chart: ChartReference,
   anchorIdx: number,
@@ -320,6 +453,8 @@ const serializeAnchor = (item: DrawingItem, idx: number): string => {
     content = serializeChartGraphicFrame(item.content.chart, idx, chartExt);
   } else if (item.content.kind === 'picture') {
     content = serializePictureFrame(item.content.picture, idx);
+  } else if (item.content.kind === 'shape') {
+    content = serializeShape(item.content.shape, idx);
   } else {
     // Unsupported content with no captured source — only reachable for an item
     // built in code, since the reader always records `raw`. An empty chart

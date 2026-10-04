@@ -33,6 +33,7 @@ import {
 } from './cell-range.js';
 import type { LegacyComment } from './comments.js';
 import { makeLegacyComment } from './comments.js';
+import type { ThreadedComment } from './threaded-comments.js';
 import type { ConditionalFormatting } from './conditional-formatting.js';
 import type { DataValidation } from './data-validations.js';
 import { type ColumnDimension, makeColumnDimension, makeRowDimension, type RowDimension } from './dimensions.js';
@@ -48,6 +49,7 @@ import type { ProtectedRange } from './protected-ranges.js';
 import type { SortState } from './sort-state.js';
 import type { WebPublishItem, WorksheetCustomProperty } from './web-publish.js';
 import { type Hyperlink, makeHyperlink } from './hyperlinks.js';
+import type { PivotTable } from './pivot-table.js';
 import type { TableDefinition } from './table.js';
 import { validateTableAgainstSheet } from './table-validate.js';
 import { type FreezeCounts, freezePaneRef, makeFreezePane, makeSheetView, type SheetView } from './views.js';
@@ -113,8 +115,23 @@ export interface Worksheet {
   autoFilter?: AutoFilter;
   /** Excel Table objects. Each lives in its own xl/tables/tableN.xml part. */
   tables: TableDefinition[];
+  /**
+   * PivotTables this library can model, hosted on this sheet. Each is saved as
+   * its own pivotTable / pivotCacheDefinition / pivotCacheRecords parts, all
+   * derived from the definition and the source data at save time. Pivots the
+   * library can't model ride `passthrough` instead.
+   */
+  pivotTables?: PivotTable[];
   /** Legacy comments. Persisted as `xl/commentsN.xml` + a placeholder VML drawing. */
   legacyComments: LegacyComment[];
+  /**
+   * Threaded comments, roots and replies in document order. Persisted as
+   * `xl/threadedComments/threadedCommentN.xml`; the legacy placeholder Excel
+   * also expects for each thread is generated on save. `addWorksheet` sets
+   * it to `[]`; it is optional so worksheet literals written before it
+   * existed still type-check, and absent means no threads.
+   */
+  threadedComments?: ThreadedComment[];
   /** Conditional formatting blocks. */
   conditionalFormatting: ConditionalFormatting[];
   /**
@@ -182,6 +199,12 @@ export interface Worksheet {
    * via the Developer tab). The controlPr child is round-tripped verbatim.
    */
   controls: import('./ole-objects.js').FormControl[];
+  /**
+   * Sparkline groups (Excel 2010+). Stored on the wire in the worksheet
+   * `<extLst>`; every other extension entry stays in {@link bodyExtras}.
+   * Optional for the same reason as `threadedComments`; absent means none.
+   */
+  sparklineGroups?: import('./sparklines.js').SparklineGroup[];
   /** `<printOptions>` — gridlines, headings, horizontal/vertical centering on the printed page. */
   printOptions?: PrintOptions;
   /** `<pageMargins>` — six required margins in inches. */
@@ -271,6 +294,7 @@ export function makeWorksheet(title: string): Worksheet {
     dataValidations: [],
     tables: [],
     legacyComments: [],
+    threadedComments: [],
     conditionalFormatting: [],
     cellWatches: [],
     ignoredErrors: [],
@@ -283,6 +307,7 @@ export function makeWorksheet(title: string): Worksheet {
     customSheetViews: [],
     oleObjects: [],
     controls: [],
+    sparklineGroups: [],
   };
 }
 

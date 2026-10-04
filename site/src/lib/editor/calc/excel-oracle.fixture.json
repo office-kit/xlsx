@@ -1,0 +1,5921 @@
+{
+ "excelVersion": "16.113.3",
+ "data": [
+  [
+   1,
+   1,
+   10
+  ],
+  [
+   2,
+   1,
+   20
+  ],
+  [
+   3,
+   1,
+   30
+  ],
+  [
+   4,
+   1,
+   40
+  ],
+  [
+   5,
+   1,
+   50
+  ],
+  [
+   6,
+   1,
+   -5
+  ],
+  [
+   7,
+   1,
+   0
+  ],
+  [
+   8,
+   1,
+   3.5
+  ],
+  [
+   9,
+   1,
+   100
+  ],
+  [
+   10,
+   1,
+   7
+  ],
+  [
+   1,
+   2,
+   "apple"
+  ],
+  [
+   2,
+   2,
+   "Banana"
+  ],
+  [
+   3,
+   2,
+   "cherry"
+  ],
+  [
+   4,
+   2,
+   "apple"
+  ],
+  [
+   5,
+   2,
+   "date"
+  ],
+  [
+   6,
+   2,
+   ""
+  ],
+  [
+   7,
+   2,
+   "3"
+  ],
+  [
+   8,
+   2,
+   true
+  ],
+  [
+   10,
+   2,
+   "Apple pie"
+  ],
+  [
+   1,
+   3,
+   45292
+  ],
+  [
+   2,
+   3,
+   45323
+  ],
+  [
+   3,
+   3,
+   45351
+  ],
+  [
+   4,
+   3,
+   45382
+  ],
+  [
+   5,
+   3,
+   45412
+  ],
+  [
+   6,
+   3,
+   44927
+  ],
+  [
+   7,
+   3,
+   45657
+  ],
+  [
+   8,
+   3,
+   45000
+  ],
+  [
+   9,
+   3,
+   45016
+  ],
+  [
+   10,
+   3,
+   45306
+  ],
+  [
+   1,
+   4,
+   "x"
+  ],
+  [
+   2,
+   4,
+   "y"
+  ],
+  [
+   3,
+   4,
+   "x"
+  ],
+  [
+   4,
+   4,
+   "z"
+  ],
+  [
+   5,
+   4,
+   "y"
+  ],
+  [
+   6,
+   4,
+   "x"
+  ],
+  [
+   7,
+   4,
+   "z"
+  ],
+  [
+   8,
+   4,
+   "x"
+  ],
+  [
+   9,
+   4,
+   "y"
+  ],
+  [
+   10,
+   4,
+   "x"
+  ],
+  [
+   1,
+   5,
+   1
+  ],
+  [
+   2,
+   5,
+   2
+  ],
+  [
+   3,
+   5,
+   3
+  ],
+  [
+   4,
+   5,
+   4
+  ],
+  [
+   5,
+   5,
+   5
+  ],
+  [
+   6,
+   5,
+   6
+  ],
+  [
+   7,
+   5,
+   7
+  ],
+  [
+   8,
+   5,
+   8
+  ],
+  [
+   9,
+   5,
+   9
+  ],
+  [
+   10,
+   5,
+   10
+  ],
+  [
+   1,
+   6,
+   1
+  ],
+  [
+   2,
+   6,
+   3
+  ],
+  [
+   3,
+   6,
+   5
+  ],
+  [
+   4,
+   6,
+   7
+  ],
+  [
+   5,
+   6,
+   9
+  ],
+  [
+   6,
+   6,
+   11
+  ],
+  [
+   7,
+   6,
+   13
+  ],
+  [
+   8,
+   6,
+   15
+  ],
+  [
+   9,
+   6,
+   17
+  ],
+  [
+   10,
+   6,
+   19
+  ],
+  [
+   1,
+   7,
+   "one"
+  ],
+  [
+   2,
+   7,
+   "three"
+  ],
+  [
+   3,
+   7,
+   "five"
+  ],
+  [
+   4,
+   7,
+   "seven"
+  ],
+  [
+   5,
+   7,
+   "nine"
+  ],
+  [
+   6,
+   7,
+   "eleven"
+  ],
+  [
+   7,
+   7,
+   "thirteen"
+  ],
+  [
+   8,
+   7,
+   "fifteen"
+  ],
+  [
+   9,
+   7,
+   "seventeen"
+  ],
+  [
+   10,
+   7,
+   "nineteen"
+  ],
+  [
+   1,
+   8,
+   {
+    "error": "#N/A"
+   }
+  ],
+  [
+   2,
+   8,
+   5
+  ],
+  [
+   3,
+   8,
+   {
+    "error": "#DIV/0!"
+   }
+  ],
+  [
+   4,
+   8,
+   "text"
+  ],
+  [
+   5,
+   8,
+   2.5
+  ],
+  [
+   1,
+   9,
+   -100
+  ],
+  [
+   2,
+   9,
+   30
+  ],
+  [
+   3,
+   9,
+   35
+  ],
+  [
+   4,
+   9,
+   40
+  ],
+  [
+   5,
+   9,
+   45
+  ],
+  [
+   6,
+   9,
+   50
+  ],
+  [
+   1,
+   10,
+   45292
+  ],
+  [
+   2,
+   10,
+   45323
+  ],
+  [
+   3,
+   10,
+   45383
+  ],
+  [
+   4,
+   10,
+   45444
+  ],
+  [
+   5,
+   10,
+   45505
+  ],
+  [
+   6,
+   10,
+   45566
+  ]
+ ],
+ "db": [
+  [
+   1,
+   1,
+   "Tree"
+  ],
+  [
+   1,
+   2,
+   "Height"
+  ],
+  [
+   1,
+   3,
+   "Age"
+  ],
+  [
+   1,
+   4,
+   "Yield"
+  ],
+  [
+   2,
+   1,
+   "Apple"
+  ],
+  [
+   2,
+   2,
+   18
+  ],
+  [
+   2,
+   3,
+   20
+  ],
+  [
+   2,
+   4,
+   14
+  ],
+  [
+   3,
+   1,
+   "Pear"
+  ],
+  [
+   3,
+   2,
+   12
+  ],
+  [
+   3,
+   3,
+   12
+  ],
+  [
+   3,
+   4,
+   10
+  ],
+  [
+   4,
+   1,
+   "Cherry"
+  ],
+  [
+   4,
+   2,
+   13
+  ],
+  [
+   4,
+   3,
+   14
+  ],
+  [
+   4,
+   4,
+   9
+  ],
+  [
+   5,
+   1,
+   "Apple"
+  ],
+  [
+   5,
+   2,
+   14
+  ],
+  [
+   5,
+   3,
+   15
+  ],
+  [
+   5,
+   4,
+   10
+  ],
+  [
+   6,
+   1,
+   "Pear"
+  ],
+  [
+   6,
+   2,
+   9
+  ],
+  [
+   6,
+   3,
+   8
+  ],
+  [
+   6,
+   4,
+   8
+  ],
+  [
+   7,
+   1,
+   "Apple"
+  ],
+  [
+   7,
+   2,
+   8
+  ],
+  [
+   7,
+   3,
+   9
+  ],
+  [
+   7,
+   4,
+   6
+  ],
+  [
+   9,
+   1,
+   "Tree"
+  ],
+  [
+   9,
+   2,
+   "Height"
+  ],
+  [
+   10,
+   1,
+   "Apple"
+  ],
+  [
+   10,
+   2,
+   ">10"
+  ],
+  [
+   11,
+   1,
+   "Pear"
+  ]
+ ],
+ "cases": [
+  {
+   "formula": "1+2*3",
+   "expected": {
+    "type": "number",
+    "value": 7
+   }
+  },
+  {
+   "formula": "(1+2)*3",
+   "expected": {
+    "type": "number",
+    "value": 9
+   }
+  },
+  {
+   "formula": "-2^2",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "2^3^2",
+   "expected": {
+    "type": "number",
+    "value": 64
+   }
+  },
+  {
+   "formula": "2^-1",
+   "expected": {
+    "type": "number",
+    "value": 0.5
+   }
+  },
+  {
+   "formula": "10/4",
+   "expected": {
+    "type": "number",
+    "value": 2.5
+   }
+  },
+  {
+   "formula": "7-10",
+   "expected": {
+    "type": "number",
+    "value": -3
+   }
+  },
+  {
+   "formula": "5%",
+   "expected": {
+    "type": "number",
+    "value": 0.05
+   }
+  },
+  {
+   "formula": "50%*200",
+   "expected": {
+    "type": "number",
+    "value": 100
+   }
+  },
+  {
+   "formula": "1/0",
+   "expected": {
+    "type": "error",
+    "value": "#DIV/0!"
+   }
+  },
+  {
+   "formula": "0/0",
+   "expected": {
+    "type": "error",
+    "value": "#DIV/0!"
+   }
+  },
+  {
+   "formula": "0^0",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "0^-1",
+   "expected": {
+    "type": "error",
+    "value": "#DIV/0!"
+   }
+  },
+  {
+   "formula": "(-8)^(1/3)",
+   "expected": {
+    "type": "number",
+    "value": -1.9999999999999998
+   }
+  },
+  {
+   "formula": "2^0.5",
+   "expected": {
+    "type": "number",
+    "value": 1.4142135623730951
+   }
+  },
+  {
+   "formula": "\"3\"+1",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "\"3\"*\"4\"",
+   "expected": {
+    "type": "number",
+    "value": 12
+   }
+  },
+  {
+   "formula": "TRUE+1",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "TRUE*TRUE",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "\"abc\"+1",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "\" 12 \"+0",
+   "expected": {
+    "type": "number",
+    "value": 12
+   }
+  },
+  {
+   "formula": "\"1,234\"+0",
+   "expected": {
+    "type": "number",
+    "value": 1234
+   }
+  },
+  {
+   "formula": "\"$12\"+0",
+   "expected": {
+    "type": "number",
+    "value": 12
+   }
+  },
+  {
+   "formula": "\"50%\"+0",
+   "expected": {
+    "type": "number",
+    "value": 0.5
+   }
+  },
+  {
+   "formula": "\"1e3\"+0",
+   "expected": {
+    "type": "number",
+    "value": 1000
+   }
+  },
+  {
+   "formula": "\"(5)\"+0",
+   "expected": {
+    "type": "number",
+    "value": -5
+   }
+  },
+  {
+   "formula": "\"2024-01-15\"+0",
+   "expected": {
+    "type": "number",
+    "value": 45306
+   }
+  },
+  {
+   "formula": "\"1/15/2024\"+0",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "\"12:30\"+0",
+   "expected": {
+    "type": "number",
+    "value": 0.5208333333333334
+   }
+  },
+  {
+   "formula": "\"12:30 PM\"+0",
+   "expected": {
+    "type": "number",
+    "value": 0.5208333333333334
+   }
+  },
+  {
+   "formula": "1&2",
+   "expected": {
+    "type": "string",
+    "value": "12"
+   }
+  },
+  {
+   "formula": "\"a\"&TRUE",
+   "expected": {
+    "type": "string",
+    "value": "aTRUE"
+   }
+  },
+  {
+   "formula": "0.1+0.2",
+   "expected": {
+    "type": "number",
+    "value": 0.30000000000000004
+   }
+  },
+  {
+   "formula": "0.1+0.2=0.3",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "1/3",
+   "expected": {
+    "type": "number",
+    "value": 0.3333333333333333
+   }
+  },
+  {
+   "formula": "1/3&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "0.333333333333333"
+   }
+  },
+  {
+   "formula": "2/3&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "0.666666666666667"
+   }
+  },
+  {
+   "formula": "1E15&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "1000000000000000"
+   }
+  },
+  {
+   "formula": "123456789012345&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "123456789012345"
+   }
+  },
+  {
+   "formula": "1234567890123456&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "1234567890123450"
+   }
+  },
+  {
+   "formula": "0.0001&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "0.0001"
+   }
+  },
+  {
+   "formula": "1E-9&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "0.000000001"
+   }
+  },
+  {
+   "formula": "1E-10&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "0.0000000001"
+   }
+  },
+  {
+   "formula": "1E16&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "10000000000000000"
+   }
+  },
+  {
+   "formula": "1E19&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "10000000000000000000"
+   }
+  },
+  {
+   "formula": "1E20&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "1E+20"
+   }
+  },
+  {
+   "formula": "1E21&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "1E+21"
+   }
+  },
+  {
+   "formula": "1.5E21&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "1.5E+21"
+   }
+  },
+  {
+   "formula": "-1E21&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "-1E+21"
+   }
+  },
+  {
+   "formula": "2^70&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "1.18059162071741E+21"
+   }
+  },
+  {
+   "formula": "123456789012345678901&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "1.23456789012345E+20"
+   }
+  },
+  {
+   "formula": "1E-11&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "0.00000000001"
+   }
+  },
+  {
+   "formula": "1E-15&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "0.000000000000001"
+   }
+  },
+  {
+   "formula": "1E-19&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "1E-19"
+   }
+  },
+  {
+   "formula": "1E-20&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "1E-20"
+   }
+  },
+  {
+   "formula": "1.234E-12&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "0.000000000001234"
+   }
+  },
+  {
+   "formula": "-1.5E-20&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "-1.5E-20"
+   }
+  },
+  {
+   "formula": "(0.1+0.2)&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "0.3"
+   }
+  },
+  {
+   "formula": "(1/3)&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "0.333333333333333"
+   }
+  },
+  {
+   "formula": "(2/3*1E-5)&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "6.66666666666667E-06"
+   }
+  },
+  {
+   "formula": "(2/3*1E20)&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "66666666666666700000"
+   }
+  },
+  {
+   "formula": "1E100&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "1E+100"
+   }
+  },
+  {
+   "formula": "1.23456789012345E-7&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "1.23456789012345E-07"
+   }
+  },
+  {
+   "formula": "0.000000123&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "0.000000123"
+   }
+  },
+  {
+   "formula": "1E20&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "1E+20"
+   }
+  },
+  {
+   "formula": "-1.5E-7&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "-0.00000015"
+   }
+  },
+  {
+   "formula": "100000&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "100000"
+   }
+  },
+  {
+   "formula": "12345678.9&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "12345678.9"
+   }
+  },
+  {
+   "formula": "(0.1+0.2)&\"\"",
+   "expected": {
+    "type": "string",
+    "value": "0.3"
+   }
+  },
+  {
+   "formula": "1=1",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "\"a\"=\"A\"",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "\"a\"<\"b\"",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "\"B\">\"a\"",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "1<\"a\"",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "\"a\"<TRUE",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "TRUE>1",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "Data!I1=0",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "Data!I1=\"\"",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "Data!I1=FALSE",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "\"10\"<\"9\"",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "10<9",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "\"abc\"<>\"ABC\"",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "1=1.0000000000000002",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "0.3=0.1*3",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "Data!A1+Data!A2",
+   "expected": {
+    "type": "number",
+    "value": 30
+   }
+  },
+  {
+   "formula": "Data!A1:A3*2",
+   "expected": {
+    "type": "number",
+    "value": 20
+   }
+  },
+  {
+   "formula": "SUM(Data!A1:A3*Data!E1:E3)",
+   "expected": {
+    "type": "number",
+    "value": 140
+   }
+  },
+  {
+   "formula": "Data!A1:A3=10",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "{1,2,3}+{10;20}",
+   "expected": {
+    "type": "number",
+    "value": 11
+   }
+  },
+  {
+   "formula": "{1,2}+{1,2,3}",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "SUM({1,2;3,4})",
+   "expected": {
+    "type": "number",
+    "value": 10
+   }
+  },
+  {
+   "formula": "Data!A1&\"x\"",
+   "expected": {
+    "type": "string",
+    "value": "10x"
+   }
+  },
+  {
+   "formula": "-Data!A6",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "--\"5\"",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "SUM(Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 255.5
+   }
+  },
+  {
+   "formula": "SUM(Data!A:A)",
+   "expected": {
+    "type": "number",
+    "value": 255.5
+   }
+  },
+  {
+   "formula": "SUM(Data!B1:B10)",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "SUM(\"3\",TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "SUM(1,\"x\")",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "SUM(Data!H1:H5)",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "SUM(Data!H2,Data!H5)",
+   "expected": {
+    "type": "number",
+    "value": 7.5
+   }
+  },
+  {
+   "formula": "SUM((Data!A1,Data!A3))",
+   "expected": {
+    "type": "number",
+    "value": 40
+   }
+  },
+  {
+   "formula": "SUM(Data!A1:B2 Data!B1:C3)",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "SUM(Data!A1:A3:Data!B5)",
+   "expected": {
+    "type": "number",
+    "value": 150
+   }
+  },
+  {
+   "formula": "PRODUCT(Data!E1:E5)",
+   "expected": {
+    "type": "number",
+    "value": 120
+   }
+  },
+  {
+   "formula": "SUMSQ(1,2,3)",
+   "expected": {
+    "type": "number",
+    "value": 14
+   }
+  },
+  {
+   "formula": "SUMPRODUCT(Data!A1:A5,Data!E1:E5)",
+   "expected": {
+    "type": "number",
+    "value": 550
+   }
+  },
+  {
+   "formula": "SUMPRODUCT((Data!D1:D10=\"x\")*Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 45.5
+   }
+  },
+  {
+   "formula": "SUMPRODUCT(Data!A1:A3,Data!E1:E4)",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "SUMPRODUCT(--(Data!A1:A10>20))",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "ROUND(2.675,2)",
+   "expected": {
+    "type": "number",
+    "value": 2.68
+   }
+  },
+  {
+   "formula": "ROUND(1.005,2)",
+   "expected": {
+    "type": "number",
+    "value": 1.01
+   }
+  },
+  {
+   "formula": "ROUND(-2.5,0)",
+   "expected": {
+    "type": "number",
+    "value": -3
+   }
+  },
+  {
+   "formula": "ROUND(1234.567,-2)",
+   "expected": {
+    "type": "number",
+    "value": 1200
+   }
+  },
+  {
+   "formula": "ROUND(0.5,0)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "ROUND(1.45,1)",
+   "expected": {
+    "type": "number",
+    "value": 1.5
+   }
+  },
+  {
+   "formula": "ROUNDUP(3.2,0)",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "ROUNDUP(-3.2,0)",
+   "expected": {
+    "type": "number",
+    "value": -4
+   }
+  },
+  {
+   "formula": "ROUNDUP(0.1+0.2,1)",
+   "expected": {
+    "type": "number",
+    "value": 0.3
+   }
+  },
+  {
+   "formula": "ROUNDDOWN(3.99,1)",
+   "expected": {
+    "type": "number",
+    "value": 3.9
+   }
+  },
+  {
+   "formula": "ROUNDDOWN(-3.99,0)",
+   "expected": {
+    "type": "number",
+    "value": -3
+   }
+  },
+  {
+   "formula": "MROUND(10,3)",
+   "expected": {
+    "type": "number",
+    "value": 9
+   }
+  },
+  {
+   "formula": "MROUND(-10,-3)",
+   "expected": {
+    "type": "number",
+    "value": -9
+   }
+  },
+  {
+   "formula": "MROUND(10,-3)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "MROUND(1.3,0.2)",
+   "expected": {
+    "type": "number",
+    "value": 1.4000000000000001
+   }
+  },
+  {
+   "formula": "CEILING(2.5,1)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "CEILING(-2.5,2)",
+   "expected": {
+    "type": "number",
+    "value": -2
+   }
+  },
+  {
+   "formula": "CEILING(-2.5,-2)",
+   "expected": {
+    "type": "number",
+    "value": -4
+   }
+  },
+  {
+   "formula": "CEILING(2.5,-2)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "CEILING(0.234,0.01)",
+   "expected": {
+    "type": "number",
+    "value": 0.24
+   }
+  },
+  {
+   "formula": "CEILING.MATH(-2.5)",
+   "expected": {
+    "type": "number",
+    "value": -2
+   }
+  },
+  {
+   "formula": "CEILING.MATH(-2.5,2,1)",
+   "expected": {
+    "type": "number",
+    "value": -4
+   }
+  },
+  {
+   "formula": "CEILING.MATH(6.7,2)",
+   "expected": {
+    "type": "number",
+    "value": 8
+   }
+  },
+  {
+   "formula": "FLOOR(2.5,1)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "FLOOR(-2.5,2)",
+   "expected": {
+    "type": "number",
+    "value": -4
+   }
+  },
+  {
+   "formula": "FLOOR(-2.5,-2)",
+   "expected": {
+    "type": "number",
+    "value": -2
+   }
+  },
+  {
+   "formula": "FLOOR(2.5,0)",
+   "expected": {
+    "type": "error",
+    "value": "#DIV/0!"
+   }
+  },
+  {
+   "formula": "FLOOR.MATH(-2.5)",
+   "expected": {
+    "type": "number",
+    "value": -3
+   }
+  },
+  {
+   "formula": "FLOOR.MATH(-2.5,2,1)",
+   "expected": {
+    "type": "number",
+    "value": -2
+   }
+  },
+  {
+   "formula": "FLOOR.MATH(7.9,3)",
+   "expected": {
+    "type": "number",
+    "value": 6
+   }
+  },
+  {
+   "formula": "INT(-1.5)",
+   "expected": {
+    "type": "number",
+    "value": -2
+   }
+  },
+  {
+   "formula": "INT(2.9999999999999996)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "INT(0.7*10)",
+   "expected": {
+    "type": "number",
+    "value": 7
+   }
+  },
+  {
+   "formula": "TRUNC(-1.57,1)",
+   "expected": {
+    "type": "number",
+    "value": -1.5
+   }
+  },
+  {
+   "formula": "TRUNC(123.456,-1)",
+   "expected": {
+    "type": "number",
+    "value": 120
+   }
+  },
+  {
+   "formula": "ABS(-3)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "SIGN(-0.5)",
+   "expected": {
+    "type": "number",
+    "value": -1
+   }
+  },
+  {
+   "formula": "MOD(10,3)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "MOD(-3,2)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "MOD(3,-2)",
+   "expected": {
+    "type": "number",
+    "value": -1
+   }
+  },
+  {
+   "formula": "MOD(10.1,1)",
+   "expected": {
+    "type": "number",
+    "value": 0.09999999999999964
+   }
+  },
+  {
+   "formula": "MOD(5,0)",
+   "expected": {
+    "type": "error",
+    "value": "#DIV/0!"
+   }
+  },
+  {
+   "formula": "QUOTIENT(-7,2)",
+   "expected": {
+    "type": "number",
+    "value": -3
+   }
+  },
+  {
+   "formula": "POWER(2,10)",
+   "expected": {
+    "type": "number",
+    "value": 1024
+   }
+  },
+  {
+   "formula": "POWER(-8,1/3)",
+   "expected": {
+    "type": "number",
+    "value": -1.9999999999999998
+   }
+  },
+  {
+   "formula": "SQRT(16)",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "SQRT(-1)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "EXP(1)",
+   "expected": {
+    "type": "number",
+    "value": 2.718281828459045
+   }
+  },
+  {
+   "formula": "LN(10)",
+   "expected": {
+    "type": "number",
+    "value": 2.302585092994046
+   }
+  },
+  {
+   "formula": "LN(0)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "LOG(1000)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "LOG(8,2)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "LOG(10,1)",
+   "expected": {
+    "type": "error",
+    "value": "#DIV/0!"
+   }
+  },
+  {
+   "formula": "LOG10(0.001)",
+   "expected": {
+    "type": "number",
+    "value": -3
+   }
+  },
+  {
+   "formula": "PI()",
+   "expected": {
+    "type": "number",
+    "value": 3.141592653589793
+   }
+  },
+  {
+   "formula": "GCD(24,36,48)",
+   "expected": {
+    "type": "number",
+    "value": 12
+   }
+  },
+  {
+   "formula": "GCD(7.9,3.1)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "LCM(4,6,10)",
+   "expected": {
+    "type": "number",
+    "value": 60
+   }
+  },
+  {
+   "formula": "FACT(5)",
+   "expected": {
+    "type": "number",
+    "value": 120
+   }
+  },
+  {
+   "formula": "FACT(3.9)",
+   "expected": {
+    "type": "number",
+    "value": 6
+   }
+  },
+  {
+   "formula": "FACT(-1)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "FACTDOUBLE(7)",
+   "expected": {
+    "type": "number",
+    "value": 105
+   }
+  },
+  {
+   "formula": "COMBIN(10,3)",
+   "expected": {
+    "type": "number",
+    "value": 120
+   }
+  },
+  {
+   "formula": "COMBIN(3,5)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "COMBINA(4,3)",
+   "expected": {
+    "type": "number",
+    "value": 20
+   }
+  },
+  {
+   "formula": "PERMUT(10,3)",
+   "expected": {
+    "type": "number",
+    "value": 720
+   }
+  },
+  {
+   "formula": "MULTINOMIAL(2,3,4)",
+   "expected": {
+    "type": "number",
+    "value": 1259.999999999999
+   }
+  },
+  {
+   "formula": "EVEN(1.5)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "EVEN(-1.5)",
+   "expected": {
+    "type": "number",
+    "value": -2
+   }
+  },
+  {
+   "formula": "ODD(2)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "ODD(-2.1)",
+   "expected": {
+    "type": "number",
+    "value": -3
+   }
+  },
+  {
+   "formula": "SIN(PI()/6)",
+   "expected": {
+    "type": "number",
+    "value": 0.49999999999999994
+   }
+  },
+  {
+   "formula": "COS(0)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "TAN(PI()/4)",
+   "expected": {
+    "type": "number",
+    "value": 0.9999999999999999
+   }
+  },
+  {
+   "formula": "ASIN(1)",
+   "expected": {
+    "type": "number",
+    "value": 1.5707963267948966
+   }
+  },
+  {
+   "formula": "ACOS(2)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "ATAN(1)",
+   "expected": {
+    "type": "number",
+    "value": 0.7853981633974483
+   }
+  },
+  {
+   "formula": "ATAN2(1,1)",
+   "expected": {
+    "type": "number",
+    "value": 0.7853981633974483
+   }
+  },
+  {
+   "formula": "ATAN2(0,0)",
+   "expected": {
+    "type": "error",
+    "value": "#DIV/0!"
+   }
+  },
+  {
+   "formula": "SINH(1)",
+   "expected": {
+    "type": "number",
+    "value": 1.1752011936438014
+   }
+  },
+  {
+   "formula": "COSH(1)",
+   "expected": {
+    "type": "number",
+    "value": 1.5430806348152437
+   }
+  },
+  {
+   "formula": "TANH(0.5)",
+   "expected": {
+    "type": "number",
+    "value": 0.4621171572600098
+   }
+  },
+  {
+   "formula": "ASINH(1)",
+   "expected": {
+    "type": "number",
+    "value": 0.8813735870195429
+   }
+  },
+  {
+   "formula": "ACOSH(1)",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "ATANH(0.5)",
+   "expected": {
+    "type": "number",
+    "value": 0.5493061443340549
+   }
+  },
+  {
+   "formula": "DEGREES(PI())",
+   "expected": {
+    "type": "number",
+    "value": 180
+   }
+  },
+  {
+   "formula": "RADIANS(180)",
+   "expected": {
+    "type": "number",
+    "value": 3.141592653589793
+   }
+  },
+  {
+   "formula": "COT(1)",
+   "expected": {
+    "type": "number",
+    "value": 0.6420926159343308
+   }
+  },
+  {
+   "formula": "SEC(1)",
+   "expected": {
+    "type": "number",
+    "value": 1.8508157176809255
+   }
+  },
+  {
+   "formula": "CSC(1)",
+   "expected": {
+    "type": "number",
+    "value": 1.1883951057781212
+   }
+  },
+  {
+   "formula": "SUM(SEQUENCE(4))",
+   "expected": {
+    "type": "number",
+    "value": 10
+   }
+  },
+  {
+   "formula": "SUM(SEQUENCE(2,3,10,5))",
+   "expected": {
+    "type": "number",
+    "value": 135
+   }
+  },
+  {
+   "formula": "ROWS(SEQUENCE(5,2))",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "INDEX(SEQUENCE(3,3),2,3)",
+   "expected": {
+    "type": "number",
+    "value": 6
+   }
+  },
+  {
+   "formula": "SUBTOTAL(9,Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 255.5
+   }
+  },
+  {
+   "formula": "SUBTOTAL(1,Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 25.55
+   }
+  },
+  {
+   "formula": "SUBTOTAL(3,Data!B1:B10)",
+   "expected": {
+    "type": "number",
+    "value": 9
+   }
+  },
+  {
+   "formula": "SUBTOTAL(109,Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 255.5
+   }
+  },
+  {
+   "formula": "AGGREGATE(9,6,Data!H1:H5)",
+   "expected": {
+    "type": "number",
+    "value": 7.5
+   }
+  },
+  {
+   "formula": "AGGREGATE(14,6,Data!H1:H5,1)",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "AGGREGATE(4,0,Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 100
+   }
+  },
+  {
+   "formula": "SUMIF(Data!A1:A10,\">20\")",
+   "expected": {
+    "type": "number",
+    "value": 220
+   }
+  },
+  {
+   "formula": "SUMIF(Data!D1:D10,\"x\",Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 45.5
+   }
+  },
+  {
+   "formula": "SUMIF(Data!B1:B10,\"apple\",Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 50
+   }
+  },
+  {
+   "formula": "SUMIF(Data!B1:B10,\"a*\",Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 57
+   }
+  },
+  {
+   "formula": "SUMIF(Data!B1:B10,\"?????\",Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 50
+   }
+  },
+  {
+   "formula": "SUMIF(Data!B1:B10,\"<>apple\",Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 205.5
+   }
+  },
+  {
+   "formula": "SUMIF(Data!A1:A10,\"<>0\")",
+   "expected": {
+    "type": "number",
+    "value": 255.5
+   }
+  },
+  {
+   "formula": "SUMIF(Data!A:A,\">=40\")",
+   "expected": {
+    "type": "number",
+    "value": 190
+   }
+  },
+  {
+   "formula": "SUMIF(Data!D1:D10,\"x\",Data!A1)",
+   "expected": {
+    "type": "number",
+    "value": 45.5
+   }
+  },
+  {
+   "formula": "SUMIFS(Data!A1:A10,Data!D1:D10,\"x\",Data!A1:A10,\">5\")",
+   "expected": {
+    "type": "number",
+    "value": 47
+   }
+  },
+  {
+   "formula": "SUMIFS(Data!A1:A10,Data!D1:D10,\"x\",Data!B1:B10,\"a*\")",
+   "expected": {
+    "type": "number",
+    "value": 17
+   }
+  },
+  {
+   "formula": "SUMIFS(Data!A:A,Data!D:D,\"y\")",
+   "expected": {
+    "type": "number",
+    "value": 170
+   }
+  },
+  {
+   "formula": "MMULT({1,2;3,4},{5;6})",
+   "expected": {
+    "type": "number",
+    "value": 17
+   }
+  },
+  {
+   "formula": "INDEX(MMULT({1,2;3,4},{5;6}),2)",
+   "expected": {
+    "type": "number",
+    "value": 39
+   }
+  },
+  {
+   "formula": "MDETERM({1,2;3,4})",
+   "expected": {
+    "type": "number",
+    "value": -2
+   }
+  },
+  {
+   "formula": "INDEX(MINVERSE({4,7;2,6}),1,1)",
+   "expected": {
+    "type": "number",
+    "value": 0.6000000000000001
+   }
+  },
+  {
+   "formula": "ROMAN(1999)",
+   "expected": {
+    "type": "string",
+    "value": "MCMXCIX"
+   }
+  },
+  {
+   "formula": "ARABIC(\"MCMXCIX\")",
+   "expected": {
+    "type": "number",
+    "value": 1999
+   }
+  },
+  {
+   "formula": "BASE(255,16,4)",
+   "expected": {
+    "type": "string",
+    "value": "00FF"
+   }
+  },
+  {
+   "formula": "DECIMAL(\"FF\",16)",
+   "expected": {
+    "type": "number",
+    "value": 255
+   }
+  },
+  {
+   "formula": "SUMX2MY2({1,2},{3,4})",
+   "expected": {
+    "type": "number",
+    "value": -20
+   }
+  },
+  {
+   "formula": "SQRTPI(2)",
+   "expected": {
+    "type": "number",
+    "value": 2.5066282746310002
+   }
+  },
+  {
+   "formula": "AVERAGE(Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 25.55
+   }
+  },
+  {
+   "formula": "AVERAGE(Data!B1:B10)",
+   "expected": {
+    "type": "error",
+    "value": "#DIV/0!"
+   }
+  },
+  {
+   "formula": "AVERAGEA(Data!B1:B10)",
+   "expected": {
+    "type": "number",
+    "value": 0.1111111111111111
+   }
+  },
+  {
+   "formula": "AVERAGE(1,\"2\",TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 1.3333333333333333
+   }
+  },
+  {
+   "formula": "COUNT(Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 10
+   }
+  },
+  {
+   "formula": "COUNT(Data!B1:B10)",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "COUNT(1,\"2\",\"x\",TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "COUNTA(Data!B1:B10)",
+   "expected": {
+    "type": "number",
+    "value": 9
+   }
+  },
+  {
+   "formula": "COUNTBLANK(Data!B1:B10)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "COUNTBLANK(Data!A1:J20)",
+   "expected": {
+    "type": "number",
+    "value": 115
+   }
+  },
+  {
+   "formula": "MAX(Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 100
+   }
+  },
+  {
+   "formula": "MIN(Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": -5
+   }
+  },
+  {
+   "formula": "MAX(Data!B1:B10)",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "MAXA(Data!B1:B10)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "MEDIAN(Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 15
+   }
+  },
+  {
+   "formula": "MEDIAN(1,2,3,4)",
+   "expected": {
+    "type": "number",
+    "value": 2.5
+   }
+  },
+  {
+   "formula": "MODE.SNGL(1,2,2,3,3)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "MODE({1,2,3})",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "STDEV(Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 31.72490259156747
+   }
+  },
+  {
+   "formula": "STDEV.P(Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 30.09688522089952
+   }
+  },
+  {
+   "formula": "VAR.S(Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 1006.4694444444444
+   }
+  },
+  {
+   "formula": "VARP(Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 905.8225
+   }
+  },
+  {
+   "formula": "STDEV(1)",
+   "expected": {
+    "type": "error",
+    "value": "#DIV/0!"
+   }
+  },
+  {
+   "formula": "LARGE(Data!A1:A10,2)",
+   "expected": {
+    "type": "number",
+    "value": 50
+   }
+  },
+  {
+   "formula": "LARGE(Data!A1:A10,1.5)",
+   "expected": {
+    "type": "number",
+    "value": 50
+   }
+  },
+  {
+   "formula": "SMALL(Data!A1:A10,3)",
+   "expected": {
+    "type": "number",
+    "value": 3.5
+   }
+  },
+  {
+   "formula": "SMALL(Data!A1:A10,11)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "RANK(30,Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "RANK.EQ(30,Data!A1:A10,1)",
+   "expected": {
+    "type": "number",
+    "value": 7
+   }
+  },
+  {
+   "formula": "RANK.AVG(30,Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "RANK(31,Data!A1:A10)",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "PERCENTILE(Data!A1:A10,0.3)",
+   "expected": {
+    "type": "number",
+    "value": 5.949999999999999
+   }
+  },
+  {
+   "formula": "PERCENTILE.EXC(Data!A1:A10,0.3)",
+   "expected": {
+    "type": "number",
+    "value": 4.549999999999999
+   }
+  },
+  {
+   "formula": "PERCENTILE.EXC(Data!A1:A10,0.05)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "QUARTILE(Data!A1:A10,1)",
+   "expected": {
+    "type": "number",
+    "value": 4.375
+   }
+  },
+  {
+   "formula": "QUARTILE.EXC(Data!A1:A10,3)",
+   "expected": {
+    "type": "number",
+    "value": 42.5
+   }
+  },
+  {
+   "formula": "PERCENTRANK.INC(Data!A1:A10,30)",
+   "expected": {
+    "type": "number",
+    "value": 0.666
+   }
+  },
+  {
+   "formula": "PERCENTRANK.EXC(Data!A1:A10,30)",
+   "expected": {
+    "type": "number",
+    "value": 0.636
+   }
+  },
+  {
+   "formula": "CORREL(Data!A1:A10,Data!E1:E10)",
+   "expected": {
+    "type": "number",
+    "value": 0.13042715593290433
+   }
+  },
+  {
+   "formula": "PEARSON(Data!A1:A5,Data!E1:E5)",
+   "expected": {
+    "type": "number",
+    "value": 0.9999999999999998
+   }
+  },
+  {
+   "formula": "RSQ(Data!A1:A10,Data!E1:E10)",
+   "expected": {
+    "type": "number",
+    "value": 0.01701124300474614
+   }
+  },
+  {
+   "formula": "SLOPE(Data!A1:A10,Data!E1:E10)",
+   "expected": {
+    "type": "number",
+    "value": 1.3666666666666665
+   }
+  },
+  {
+   "formula": "INTERCEPT(Data!A1:A10,Data!E1:E10)",
+   "expected": {
+    "type": "number",
+    "value": 18.033333333333335
+   }
+  },
+  {
+   "formula": "FORECAST(11,Data!A1:A10,Data!E1:E10)",
+   "expected": {
+    "type": "number",
+    "value": 33.06666666666666
+   }
+  },
+  {
+   "formula": "FORECAST.LINEAR(11,Data!A1:A10,Data!E1:E10)",
+   "expected": {
+    "type": "number",
+    "value": 33.06666666666666
+   }
+  },
+  {
+   "formula": "STEYX(Data!A1:A10,Data!E1:E10)",
+   "expected": {
+    "type": "number",
+    "value": 33.36190442206001
+   }
+  },
+  {
+   "formula": "COVARIANCE.S(Data!A1:A10,Data!E1:E10)",
+   "expected": {
+    "type": "number",
+    "value": 12.527777777777777
+   }
+  },
+  {
+   "formula": "COVAR(Data!A1:A10,Data!E1:E10)",
+   "expected": {
+    "type": "number",
+    "value": 11.274999999999999
+   }
+  },
+  {
+   "formula": "INDEX(TREND(Data!A1:A5,Data!E1:E5,{6;7}),2)",
+   "expected": {
+    "type": "number",
+    "value": 69.99999999999999
+   }
+  },
+  {
+   "formula": "INDEX(LINEST(Data!A1:A5,Data!E1:E5),1)",
+   "expected": {
+    "type": "number",
+    "value": 9.999999999999996
+   }
+  },
+  {
+   "formula": "GEOMEAN(1,2,4)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "HARMEAN(1,2,4)",
+   "expected": {
+    "type": "number",
+    "value": 1.7142857142857142
+   }
+  },
+  {
+   "formula": "AVEDEV(1,2,3,4)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "DEVSQ(1,2,3,4)",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "SKEW(1,2,3,10)",
+   "expected": {
+    "type": "number",
+    "value": 1.7636326148038877
+   }
+  },
+  {
+   "formula": "KURT(1,2,3,10,4)",
+   "expected": {
+    "type": "number",
+    "value": 3.1519999999999992
+   }
+  },
+  {
+   "formula": "TRIMMEAN(Data!A1:A10,0.2)",
+   "expected": {
+    "type": "number",
+    "value": 20.0625
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!A1:A10,\">20\")",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!B1:B10,\"apple\")",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!B1:B10,\"APPLE\")",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!B1:B10,\"a*\")",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!B1:B10,\"*\")",
+   "expected": {
+    "type": "number",
+    "value": 8
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!B1:B10,\"\")",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!B1:B10,\"<>\")",
+   "expected": {
+    "type": "number",
+    "value": 9
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!B1:B10,\"=\")",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!B1:B10,3)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!B1:B10,\"3\")",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!B1:B10,TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!B1:B10,\"<c\")",
+   "expected": {
+    "type": "number",
+    "value": 6
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!A1:A10,10)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!H1:H5,\"#N/A\")",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!C1:C10,\">\"&DATE(2024,3,1))",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!C1:C10,\">3/1/2024\")",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!A:A,\"\")",
+   "expected": {
+    "type": "number",
+    "value": 1048566
+   }
+  },
+  {
+   "formula": "COUNTIF(Data!B1:B10,\"~*\")",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "COUNTIFS(Data!D1:D10,\"x\",Data!A1:A10,\">5\")",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "COUNTIFS(Data!D1:D10,\"x\",Data!E1:E10,\"<5\")",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "AVERAGEIF(Data!D1:D10,\"x\",Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 9.1
+   }
+  },
+  {
+   "formula": "AVERAGEIF(Data!D1:D10,\"q\",Data!A1:A10)",
+   "expected": {
+    "type": "error",
+    "value": "#DIV/0!"
+   }
+  },
+  {
+   "formula": "AVERAGEIFS(Data!A1:A10,Data!D1:D10,\"y\",Data!E1:E10,\">2\")",
+   "expected": {
+    "type": "number",
+    "value": 75
+   }
+  },
+  {
+   "formula": "MAXIFS(Data!A1:A10,Data!D1:D10,\"x\")",
+   "expected": {
+    "type": "number",
+    "value": 30
+   }
+  },
+  {
+   "formula": "MINIFS(Data!A1:A10,Data!D1:D10,\"y\")",
+   "expected": {
+    "type": "number",
+    "value": 20
+   }
+  },
+  {
+   "formula": "MAXIFS(Data!A1:A10,Data!D1:D10,\"q\")",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "NORM.DIST(1,0,1,TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 0.841344746068543
+   }
+  },
+  {
+   "formula": "NORM.DIST(1,0,1,FALSE)",
+   "expected": {
+    "type": "number",
+    "value": 0.24197072451914337
+   }
+  },
+  {
+   "formula": "NORM.S.DIST(-1.5,TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 0.06680720126885806
+   }
+  },
+  {
+   "formula": "NORM.INV(0.9,10,2)",
+   "expected": {
+    "type": "number",
+    "value": 12.563103131089202
+   }
+  },
+  {
+   "formula": "NORM.S.INV(0.975)",
+   "expected": {
+    "type": "number",
+    "value": 1.9599639845400536
+   }
+  },
+  {
+   "formula": "NORMSDIST(2)",
+   "expected": {
+    "type": "number",
+    "value": 0.9772498680518208
+   }
+  },
+  {
+   "formula": "EXPON.DIST(1,2,TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 0.8646647167633873
+   }
+  },
+  {
+   "formula": "BINOM.DIST(3,10,0.3,FALSE)",
+   "expected": {
+    "type": "number",
+    "value": 0.26682793200000005
+   }
+  },
+  {
+   "formula": "BINOM.DIST(3,10,0.3,TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 0.6496107184
+   }
+  },
+  {
+   "formula": "POISSON.DIST(2,3,TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 0.4231900811268434
+   }
+  },
+  {
+   "formula": "GAMMA(5.5)",
+   "expected": {
+    "type": "number",
+    "value": 52.34277778455352
+   }
+  },
+  {
+   "formula": "GAMMALN(10)",
+   "expected": {
+    "type": "number",
+    "value": 12.80182748008147
+   }
+  },
+  {
+   "formula": "FISHER(0.5)",
+   "expected": {
+    "type": "number",
+    "value": 0.5493061443340549
+   }
+  },
+  {
+   "formula": "FISHERINV(0.5)",
+   "expected": {
+    "type": "number",
+    "value": 0.46211715726000974
+   }
+  },
+  {
+   "formula": "CONFIDENCE.NORM(0.05,2.5,50)",
+   "expected": {
+    "type": "number",
+    "value": 0.6929519121748386
+   }
+  },
+  {
+   "formula": "STANDARDIZE(42,40,1.5)",
+   "expected": {
+    "type": "number",
+    "value": 1.3333333333333333
+   }
+  },
+  {
+   "formula": "INDEX(FREQUENCY(Data!A1:A10,{10,40}),2)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "IF(1,\"y\",\"n\")",
+   "expected": {
+    "type": "string",
+    "value": "y"
+   }
+  },
+  {
+   "formula": "IF(0,\"y\")",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "IF(\"TRUE\",1,2)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "IF(\"x\",1,2)",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "IF(Data!H1,1,2)",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "IF(TRUE,,2)",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "IFS(1>2,\"a\",2>1,\"b\")",
+   "expected": {
+    "type": "string",
+    "value": "b"
+   }
+  },
+  {
+   "formula": "IFS(FALSE,1)",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "IFERROR(1/0,\"err\")",
+   "expected": {
+    "type": "string",
+    "value": "err"
+   }
+  },
+  {
+   "formula": "IFERROR(5,\"err\")",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "IFNA(Data!H1,\"na\")",
+   "expected": {
+    "type": "string",
+    "value": "na"
+   }
+  },
+  {
+   "formula": "IFNA(1/0,\"na\")",
+   "expected": {
+    "type": "error",
+    "value": "#DIV/0!"
+   }
+  },
+  {
+   "formula": "AND(TRUE,1)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "AND(Data!B1:B10)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "OR(0,FALSE)",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "OR(Data!A1:A3>25)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "XOR(TRUE,TRUE,TRUE)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "NOT(0)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "NOT(\"a\")",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "SWITCH(2,1,\"a\",2,\"b\",\"z\")",
+   "expected": {
+    "type": "string",
+    "value": "b"
+   }
+  },
+  {
+   "formula": "SWITCH(9,1,\"a\",\"z\")",
+   "expected": {
+    "type": "string",
+    "value": "z"
+   }
+  },
+  {
+   "formula": "SWITCH(9,1,\"a\")",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "CHOOSE(2,\"a\",\"b\",\"c\")",
+   "expected": {
+    "type": "string",
+    "value": "b"
+   }
+  },
+  {
+   "formula": "CHOOSE(4,\"a\",\"b\")",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "SUM(CHOOSE(2,Data!A1:A2,Data!E1:E2))",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "LET(x,2,y,x*3,x+y)",
+   "expected": {
+    "type": "number",
+    "value": 8
+   }
+  },
+  {
+   "formula": "LAMBDA(x,x*2)(21)",
+   "expected": {
+    "type": "number",
+    "value": 42
+   }
+  },
+  {
+   "formula": "LET(f,LAMBDA(a,b,a-b),f(10,3))",
+   "expected": {
+    "type": "number",
+    "value": 7
+   }
+  },
+  {
+   "formula": "SUM(MAP({1,2,3},LAMBDA(v,v*v)))",
+   "expected": {
+    "type": "number",
+    "value": 14
+   }
+  },
+  {
+   "formula": "REDUCE(0,{1,2,3},LAMBDA(a,v,a+v))",
+   "expected": {
+    "type": "number",
+    "value": 6
+   }
+  },
+  {
+   "formula": "INDEX(SCAN(0,{1,2,3},LAMBDA(a,v,a+v)),3)",
+   "expected": {
+    "type": "number",
+    "value": 6
+   }
+  },
+  {
+   "formula": "SUM(BYROW({1,2;3,4},LAMBDA(r,MAX(r))))",
+   "expected": {
+    "type": "number",
+    "value": 6
+   }
+  },
+  {
+   "formula": "SUM(MAKEARRAY(2,2,LAMBDA(r,c,r*c)))",
+   "expected": {
+    "type": "number",
+    "value": 9
+   }
+  },
+  {
+   "formula": "VLOOKUP(7,Data!F1:G10,2,FALSE)",
+   "expected": {
+    "type": "string",
+    "value": "seven"
+   }
+  },
+  {
+   "formula": "VLOOKUP(8,Data!F1:G10,2)",
+   "expected": {
+    "type": "string",
+    "value": "seven"
+   }
+  },
+  {
+   "formula": "VLOOKUP(8,Data!F1:G10,2,FALSE)",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "VLOOKUP(0,Data!F1:G10,2)",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "VLOOKUP(100,Data!F1:G10,2,TRUE)",
+   "expected": {
+    "type": "string",
+    "value": "nineteen"
+   }
+  },
+  {
+   "formula": "VLOOKUP(\"APPLE\",Data!B1:C10,2,FALSE)",
+   "expected": {
+    "type": "number",
+    "value": 45292
+   }
+  },
+  {
+   "formula": "VLOOKUP(\"ch*\",Data!B1:C10,2,FALSE)",
+   "expected": {
+    "type": "number",
+    "value": 45351
+   }
+  },
+  {
+   "formula": "VLOOKUP(7,Data!F1:G10,3,FALSE)",
+   "expected": {
+    "type": "error",
+    "value": "#REF!"
+   }
+  },
+  {
+   "formula": "VLOOKUP(7,Data!F1:G10,0,FALSE)",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "HLOOKUP(3,{1,2,3;\"a\",\"b\",\"c\"},2,FALSE)",
+   "expected": {
+    "type": "string",
+    "value": "c"
+   }
+  },
+  {
+   "formula": "HLOOKUP(2.5,{1,2,3;\"a\",\"b\",\"c\"},2)",
+   "expected": {
+    "type": "string",
+    "value": "b"
+   }
+  },
+  {
+   "formula": "LOOKUP(8,Data!F1:F10,Data!G1:G10)",
+   "expected": {
+    "type": "string",
+    "value": "seven"
+   }
+  },
+  {
+   "formula": "LOOKUP(2,1/(Data!D1:D10=\"y\"),Data!A1:A10)",
+   "expected": {
+    "type": "number",
+    "value": 100
+   }
+  },
+  {
+   "formula": "LOOKUP(\"c\",{\"a\",\"b\",\"d\"},{1,2,3})",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "MATCH(9,Data!F1:F10,0)",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "MATCH(10,Data!F1:F10)",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "MATCH(10,Data!F1:F10,0)",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "MATCH(\"b*\",Data!B1:B10,0)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "MATCH(25,{50,40,30,20},-1)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "MATCH(\"APPLE\",Data!B1:B10,0)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "XLOOKUP(7,Data!F1:F10,Data!G1:G10)",
+   "expected": {
+    "type": "string",
+    "value": "seven"
+   }
+  },
+  {
+   "formula": "XLOOKUP(8,Data!F1:F10,Data!G1:G10,\"none\")",
+   "expected": {
+    "type": "string",
+    "value": "none"
+   }
+  },
+  {
+   "formula": "XLOOKUP(8,Data!F1:F10,Data!G1:G10,,-1)",
+   "expected": {
+    "type": "string",
+    "value": "seven"
+   }
+  },
+  {
+   "formula": "XLOOKUP(8,Data!F1:F10,Data!G1:G10,,1)",
+   "expected": {
+    "type": "string",
+    "value": "nine"
+   }
+  },
+  {
+   "formula": "XLOOKUP(\"x\",Data!D1:D10,Data!A1:A10,,0,-1)",
+   "expected": {
+    "type": "number",
+    "value": 7
+   }
+  },
+  {
+   "formula": "XLOOKUP(\"a?ple\",Data!B1:B10,Data!A1:A10,,2)",
+   "expected": {
+    "type": "number",
+    "value": 10
+   }
+  },
+  {
+   "formula": "XLOOKUP(9,Data!F1:F10,Data!F1:F10,,0,2)",
+   "expected": {
+    "type": "number",
+    "value": 9
+   }
+  },
+  {
+   "formula": "XMATCH(9,Data!F1:F10)",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "XMATCH(10,Data!F1:F10,1)",
+   "expected": {
+    "type": "number",
+    "value": 6
+   }
+  },
+  {
+   "formula": "XMATCH(\"x\",Data!D1:D10,0,-1)",
+   "expected": {
+    "type": "number",
+    "value": 10
+   }
+  },
+  {
+   "formula": "SUM(XLOOKUP(5,Data!F1:F10,Data!E1:F10))",
+   "expected": {
+    "type": "number",
+    "value": 8
+   }
+  },
+  {
+   "formula": "INDEX(Data!A1:C10,3,2)",
+   "expected": {
+    "type": "string",
+    "value": "cherry"
+   }
+  },
+  {
+   "formula": "INDEX(Data!A1:A10,4)",
+   "expected": {
+    "type": "number",
+    "value": 40
+   }
+  },
+  {
+   "formula": "INDEX(Data!A1:J1,3)",
+   "expected": {
+    "type": "number",
+    "value": 45292
+   }
+  },
+  {
+   "formula": "SUM(INDEX(Data!A1:C10,0,1))",
+   "expected": {
+    "type": "number",
+    "value": 255.5
+   }
+  },
+  {
+   "formula": "SUM(INDEX(Data!A1:C10,2,0))",
+   "expected": {
+    "type": "number",
+    "value": 45343
+   }
+  },
+  {
+   "formula": "INDEX(Data!A1:C10,11,1)",
+   "expected": {
+    "type": "error",
+    "value": "#REF!"
+   }
+  },
+  {
+   "formula": "INDEX({1,2;3,4},2,1)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "INDEX((Data!A1:A3,Data!E1:E3),2,1,2)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "SUM(Data!A1:INDEX(Data!A1:A10,3))",
+   "expected": {
+    "type": "number",
+    "value": 60
+   }
+  },
+  {
+   "formula": "SUM(OFFSET(Data!A1,1,0,3,1))",
+   "expected": {
+    "type": "number",
+    "value": 90
+   }
+  },
+  {
+   "formula": "OFFSET(Data!A1,2,1)",
+   "expected": {
+    "type": "string",
+    "value": "cherry"
+   }
+  },
+  {
+   "formula": "ROWS(OFFSET(Data!A1,0,0,4,2))",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "INDIRECT(\"Data!A3\")",
+   "expected": {
+    "type": "number",
+    "value": 30
+   }
+  },
+  {
+   "formula": "SUM(INDIRECT(\"Data!A1:A3\"))",
+   "expected": {
+    "type": "number",
+    "value": 60
+   }
+  },
+  {
+   "formula": "INDIRECT(\"Data!R2C1\",FALSE)",
+   "expected": {
+    "type": "number",
+    "value": 20
+   }
+  },
+  {
+   "formula": "INDIRECT(\"nope!A1\")",
+   "expected": {
+    "type": "error",
+    "value": "#REF!"
+   }
+  },
+  {
+   "formula": "ROW(Data!C5)",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "COLUMN(Data!C5)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "ROW()",
+   "expected": {
+    "type": "number",
+    "value": 416
+   }
+  },
+  {
+   "formula": "COLUMN()",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "ROWS(Data!A1:C10)",
+   "expected": {
+    "type": "number",
+    "value": 10
+   }
+  },
+  {
+   "formula": "COLUMNS(Data!A1:C10)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "ROWS({1,2;3,4;5,6})",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "COLUMNS(Data!A:C)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "ROWS(Data!1:3)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "AREAS((Data!A1,Data!B2:C3))",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "ADDRESS(2,3)",
+   "expected": {
+    "type": "string",
+    "value": "$C$2"
+   }
+  },
+  {
+   "formula": "ADDRESS(2,3,2)",
+   "expected": {
+    "type": "string",
+    "value": "C$2"
+   }
+  },
+  {
+   "formula": "ADDRESS(2,3,4)",
+   "expected": {
+    "type": "string",
+    "value": "C2"
+   }
+  },
+  {
+   "formula": "ADDRESS(2,3,1,FALSE)",
+   "expected": {
+    "type": "string",
+    "value": "R2C3"
+   }
+  },
+  {
+   "formula": "ADDRESS(2,3,1,TRUE,\"My Sheet\")",
+   "expected": {
+    "type": "string",
+    "value": "'My Sheet'!$C$2"
+   }
+  },
+  {
+   "formula": "ADDRESS(2,28)",
+   "expected": {
+    "type": "string",
+    "value": "$AB$2"
+   }
+  },
+  {
+   "formula": "SUM(TRANSPOSE({1,2,3}))",
+   "expected": {
+    "type": "number",
+    "value": 6
+   }
+  },
+  {
+   "formula": "INDEX(TRANSPOSE({1,2,3}),2,1)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "HYPERLINK(\"http://x.com\",\"Go\")",
+   "expected": {
+    "type": "string",
+    "value": "Go"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",TRUE,FILTER(Data!A1:A10,Data!D1:D10=\"x\"))",
+   "expected": {
+    "type": "string",
+    "value": "10,30,-5,3.5,7"
+   }
+  },
+  {
+   "formula": "FILTER(Data!A1:A10,Data!D1:D10=\"q\",\"none\")",
+   "expected": {
+    "type": "string",
+    "value": "none"
+   }
+  },
+  {
+   "formula": "ROWS(FILTER(Data!A1:A10,Data!A1:A10>15))",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,SORT(Data!A1:A10))",
+   "expected": {
+    "type": "string",
+    "value": "-5,0,3.5,7,10,20,30,40,50,100"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,SORT(Data!A1:A10,1,-1))",
+   "expected": {
+    "type": "string",
+    "value": "100,50,40,30,20,10,7,3.5,0,-5"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,SORT(Data!B1:B5))",
+   "expected": {
+    "type": "string",
+    "value": "apple,apple,Banana,cherry,date"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,SORTBY(Data!G1:G5,Data!A1:A5,-1))",
+   "expected": {
+    "type": "string",
+    "value": "nine,seven,five,three,one"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,UNIQUE(Data!D1:D10))",
+   "expected": {
+    "type": "string",
+    "value": "x,y,z"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,UNIQUE(Data!D1:D10,,TRUE))",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "UNIQUE(Data!D1:D10,,TRUE)",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "ERROR.TYPE(UNIQUE(Data!D1:D10,,TRUE))",
+   "expected": {
+    "type": "number",
+    "value": 14
+   }
+  },
+  {
+   "formula": "FILTER(Data!A1:A10,Data!A1:A10>1000)",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,FILTER(Data!A1:A10,Data!A1:A10>1000))",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "IFERROR(UNIQUE(Data!D1:D10,,TRUE),\"none\")",
+   "expected": {
+    "type": "string",
+    "value": "none"
+   }
+  },
+  {
+   "formula": "ROWS(UNIQUE(Data!D1:D10,,TRUE))",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,UNIQUE({\"a\";\"A\";\"b\"}))",
+   "expected": {
+    "type": "string",
+    "value": "a,b"
+   }
+  },
+  {
+   "formula": "ROWS(UNIQUE(Data!B1:B10))",
+   "expected": {
+    "type": "number",
+    "value": 9
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,TAKE(Data!A1:A10,3))",
+   "expected": {
+    "type": "string",
+    "value": "10,20,30"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,TAKE(Data!A1:A10,-2))",
+   "expected": {
+    "type": "string",
+    "value": "100,7"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,DROP(Data!A1:A10,8))",
+   "expected": {
+    "type": "string",
+    "value": "100,7"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,CHOOSECOLS({1,2,3;4,5,6},3,1))",
+   "expected": {
+    "type": "string",
+    "value": "3,1,6,4"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,CHOOSEROWS({1,2;3,4;5,6},-1))",
+   "expected": {
+    "type": "string",
+    "value": "5,6"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,VSTACK({1,2},{3}))",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,HSTACK({1;2},{3;4}))",
+   "expected": {
+    "type": "string",
+    "value": "1,3,2,4"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,TOCOL({1,2;3,4}))",
+   "expected": {
+    "type": "string",
+    "value": "1,2,3,4"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,TOROW({1,2;3,4},,TRUE))",
+   "expected": {
+    "type": "string",
+    "value": "1,3,2,4"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\",\",,WRAPROWS({1,2,3,4,5},2,0))",
+   "expected": {
+    "type": "string",
+    "value": "1,2,3,4,5,0"
+   }
+  },
+  {
+   "formula": "ROWS(EXPAND({1,2},3,3))",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "LEFT(\"hello\",2)",
+   "expected": {
+    "type": "string",
+    "value": "he"
+   }
+  },
+  {
+   "formula": "LEFT(\"hello\")",
+   "expected": {
+    "type": "string",
+    "value": "h"
+   }
+  },
+  {
+   "formula": "LEFT(\"hi\",10)",
+   "expected": {
+    "type": "string",
+    "value": "hi"
+   }
+  },
+  {
+   "formula": "RIGHT(\"hello\",3)",
+   "expected": {
+    "type": "string",
+    "value": "llo"
+   }
+  },
+  {
+   "formula": "MID(\"hello\",2,3)",
+   "expected": {
+    "type": "string",
+    "value": "ell"
+   }
+  },
+  {
+   "formula": "MID(\"hello\",10,2)",
+   "expected": {
+    "type": "string",
+    "value": ""
+   }
+  },
+  {
+   "formula": "MID(\"hello\",0,2)",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "LEN(\"héllo\")",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "LEN(123.45)",
+   "expected": {
+    "type": "number",
+    "value": 6
+   }
+  },
+  {
+   "formula": "LEN(1/3)",
+   "expected": {
+    "type": "number",
+    "value": 17
+   }
+  },
+  {
+   "formula": "LEN(TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "FIND(\"l\",\"hello\")",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "FIND(\"L\",\"hello\")",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "FIND(\"l\",\"hello\",4)",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "FIND(\"\",\"abc\")",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "SEARCH(\"L\",\"hello\")",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "SEARCH(\"l?o\",\"hello\")",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "SEARCH(\"*l\",\"hello\")",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "SEARCH(\"z\",\"hello\")",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "SUBSTITUTE(\"a-b-c\",\"-\",\"+\")",
+   "expected": {
+    "type": "string",
+    "value": "a+b+c"
+   }
+  },
+  {
+   "formula": "SUBSTITUTE(\"a-b-c\",\"-\",\"+\",2)",
+   "expected": {
+    "type": "string",
+    "value": "a-b+c"
+   }
+  },
+  {
+   "formula": "SUBSTITUTE(\"aaa\",\"a\",\"bb\")",
+   "expected": {
+    "type": "string",
+    "value": "bbbbbb"
+   }
+  },
+  {
+   "formula": "REPLACE(\"abcdef\",2,3,\"X\")",
+   "expected": {
+    "type": "string",
+    "value": "aXef"
+   }
+  },
+  {
+   "formula": "UPPER(\"abc\")",
+   "expected": {
+    "type": "string",
+    "value": "ABC"
+   }
+  },
+  {
+   "formula": "LOWER(\"ABC\")",
+   "expected": {
+    "type": "string",
+    "value": "abc"
+   }
+  },
+  {
+   "formula": "PROPER(\"hello wORLD o'neil\")",
+   "expected": {
+    "type": "string",
+    "value": "Hello World O'Neil"
+   }
+  },
+  {
+   "formula": "TRIM(\"  a   b  \")",
+   "expected": {
+    "type": "string",
+    "value": "a b"
+   }
+  },
+  {
+   "formula": "CLEAN(\"a\"&CHAR(7)&\"b\")",
+   "expected": {
+    "type": "string",
+    "value": "ab"
+   }
+  },
+  {
+   "formula": "CONCAT(Data!G1:G3)",
+   "expected": {
+    "type": "string",
+    "value": "onethreefive"
+   }
+  },
+  {
+   "formula": "CONCAT(\"a\",1,TRUE)",
+   "expected": {
+    "type": "string",
+    "value": "a1TRUE"
+   }
+  },
+  {
+   "formula": "CONCATENATE(\"a\",\"b\",1)",
+   "expected": {
+    "type": "string",
+    "value": "ab1"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\"-\",TRUE,\"a\",\"\",\"b\")",
+   "expected": {
+    "type": "string",
+    "value": "a-b"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\"-\",FALSE,\"a\",\"\",\"b\")",
+   "expected": {
+    "type": "string",
+    "value": "a--b"
+   }
+  },
+  {
+   "formula": "TEXTJOIN({\",\",\";\"},TRUE,\"a\",\"b\",\"c\",\"d\")",
+   "expected": {
+    "type": "string",
+    "value": "a,b;c,d"
+   }
+  },
+  {
+   "formula": "TEXT(1234.567,\"#,##0.00\")",
+   "expected": {
+    "type": "string",
+    "value": "1,234.57"
+   }
+  },
+  {
+   "formula": "TEXT(0.256,\"0.0%\")",
+   "expected": {
+    "type": "string",
+    "value": "25.6%"
+   }
+  },
+  {
+   "formula": "TEXT(45292,\"yyyy-mm-dd\")",
+   "expected": {
+    "type": "string",
+    "value": "2024-01-01"
+   }
+  },
+  {
+   "formula": "TEXT(45292,\"dddd, mmmm d, yyyy\")",
+   "expected": {
+    "type": "string",
+    "value": "Monday, January 1, 2024"
+   }
+  },
+  {
+   "formula": "TEXT(45292.75,\"h:mm AM/PM\")",
+   "expected": {
+    "type": "string",
+    "value": "6:00 PM"
+   }
+  },
+  {
+   "formula": "TEXT(-5,\"0.00;(0.00)\")",
+   "expected": {
+    "type": "string",
+    "value": "(5.00)"
+   }
+  },
+  {
+   "formula": "TEXT(0,\"0;-0;\"\"zero\"\"\")",
+   "expected": {
+    "type": "string",
+    "value": "zero"
+   }
+  },
+  {
+   "formula": "TEXT(1234567,\"0.00E+00\")",
+   "expected": {
+    "type": "string",
+    "value": "1.23E+06"
+   }
+  },
+  {
+   "formula": "TEXT(3.5,\"0\")",
+   "expected": {
+    "type": "string",
+    "value": "4"
+   }
+  },
+  {
+   "formula": "TEXT(2.5,\"0\")",
+   "expected": {
+    "type": "string",
+    "value": "3"
+   }
+  },
+  {
+   "formula": "TEXT(\"12\",\"0.00\")",
+   "expected": {
+    "type": "string",
+    "value": "12.00"
+   }
+  },
+  {
+   "formula": "TEXT(\"abc\",\"0\")",
+   "expected": {
+    "type": "string",
+    "value": "abc"
+   }
+  },
+  {
+   "formula": "TEXT(1.5,\"[h]:mm\")",
+   "expected": {
+    "type": "string",
+    "value": "36:00"
+   }
+  },
+  {
+   "formula": "TEXT(0.333333,\"# ?/?\")",
+   "expected": {
+    "type": "string",
+    "value": " 1/3"
+   }
+  },
+  {
+   "formula": "TEXT(1234.5,\"$#,##0\")",
+   "expected": {
+    "type": "string",
+    "value": "$1,235"
+   }
+  },
+  {
+   "formula": "TEXT(42,\"000000\")",
+   "expected": {
+    "type": "string",
+    "value": "000042"
+   }
+  },
+  {
+   "formula": "VALUE(\"1,234.5\")",
+   "expected": {
+    "type": "number",
+    "value": 1234.5
+   }
+  },
+  {
+   "formula": "VALUE(\"abc\")",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "VALUE(\"10%\")",
+   "expected": {
+    "type": "number",
+    "value": 0.1
+   }
+  },
+  {
+   "formula": "VALUE(\"\")",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "VALUE(TRUE)",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "NUMBERVALUE(\"1.234,5\",\",\",\".\")",
+   "expected": {
+    "type": "number",
+    "value": 1234.5
+   }
+  },
+  {
+   "formula": "NUMBERVALUE(\"50%\")",
+   "expected": {
+    "type": "number",
+    "value": 0.5
+   }
+  },
+  {
+   "formula": "REPT(\"ab\",3)",
+   "expected": {
+    "type": "string",
+    "value": "ababab"
+   }
+  },
+  {
+   "formula": "REPT(\"x\",0)",
+   "expected": {
+    "type": "string",
+    "value": ""
+   }
+  },
+  {
+   "formula": "EXACT(\"a\",\"A\")",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "EXACT(\"a\",\"a\")",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "CHAR(65)",
+   "expected": {
+    "type": "string",
+    "value": "A"
+   }
+  },
+  {
+   "formula": "CHAR(128)",
+   "expected": {
+    "type": "string",
+    "value": ""
+   }
+  },
+  {
+   "formula": "CHAR(0)",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "CODE(\"A\")",
+   "expected": {
+    "type": "number",
+    "value": 65
+   }
+  },
+  {
+   "formula": "CODE(\"€\")",
+   "expected": {
+    "type": "number",
+    "value": 219
+   }
+  },
+  {
+   "formula": "UNICHAR(9731)",
+   "expected": {
+    "type": "string",
+    "value": "☃"
+   }
+  },
+  {
+   "formula": "UNICODE(\"☃\")",
+   "expected": {
+    "type": "number",
+    "value": 9731
+   }
+  },
+  {
+   "formula": "T(\"a\")",
+   "expected": {
+    "type": "string",
+    "value": "a"
+   }
+  },
+  {
+   "formula": "T(1)",
+   "expected": {
+    "type": "string",
+    "value": ""
+   }
+  },
+  {
+   "formula": "N(\"a\")",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "N(TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "N(5)",
+   "expected": {
+    "type": "number",
+    "value": 5
+   }
+  },
+  {
+   "formula": "DOLLAR(1234.567)",
+   "expected": {
+    "type": "string",
+    "value": "¥1,235"
+   }
+  },
+  {
+   "formula": "DOLLAR(-1234.567,1)",
+   "expected": {
+    "type": "string",
+    "value": "(¥1,234.6)"
+   }
+  },
+  {
+   "formula": "DOLLAR(1234.567,-2)",
+   "expected": {
+    "type": "string",
+    "value": "¥1,200"
+   }
+  },
+  {
+   "formula": "FIXED(1234.567,1)",
+   "expected": {
+    "type": "string",
+    "value": "1,234.6"
+   }
+  },
+  {
+   "formula": "FIXED(1234.567,1,TRUE)",
+   "expected": {
+    "type": "string",
+    "value": "1234.6"
+   }
+  },
+  {
+   "formula": "FIXED(-0.5,0)",
+   "expected": {
+    "type": "string",
+    "value": "-1"
+   }
+  },
+  {
+   "formula": "TEXTBEFORE(\"a-b-c\",\"-\")",
+   "expected": {
+    "type": "string",
+    "value": "a"
+   }
+  },
+  {
+   "formula": "TEXTBEFORE(\"a-b-c\",\"-\",-1)",
+   "expected": {
+    "type": "string",
+    "value": "a-b"
+   }
+  },
+  {
+   "formula": "TEXTAFTER(\"a-b-c\",\"-\",2)",
+   "expected": {
+    "type": "string",
+    "value": "c"
+   }
+  },
+  {
+   "formula": "TEXTAFTER(\"a-b-c\",\"x\")",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "TEXTAFTER(\"a-b-c\",\"x\",,,,\"nf\")",
+   "expected": {
+    "type": "string",
+    "value": "nf"
+   }
+  },
+  {
+   "formula": "TEXTBEFORE(\"aXbxc\",\"x\",1,1)",
+   "expected": {
+    "type": "string",
+    "value": "a"
+   }
+  },
+  {
+   "formula": "TEXTJOIN(\"|\",,TEXTSPLIT(\"a,b;c,d\",\",\",\";\"))",
+   "expected": {
+    "type": "string",
+    "value": "a|b|c|d"
+   }
+  },
+  {
+   "formula": "COLUMNS(TEXTSPLIT(\"a,,b\",\",\"))",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "COLUMNS(TEXTSPLIT(\"a,,b\",\",\",,TRUE))",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "VALUETOTEXT(\"a\",1)",
+   "expected": {
+    "type": "string",
+    "value": "\"a\""
+   }
+  },
+  {
+   "formula": "DATE(2024,1,15)",
+   "expected": {
+    "type": "number",
+    "value": 45306
+   }
+  },
+  {
+   "formula": "DATE(2024,14,1)",
+   "expected": {
+    "type": "number",
+    "value": 45689
+   }
+  },
+  {
+   "formula": "DATE(2024,1,0)",
+   "expected": {
+    "type": "number",
+    "value": 45291
+   }
+  },
+  {
+   "formula": "DATE(1900,2,29)",
+   "expected": {
+    "type": "number",
+    "value": 60
+   }
+  },
+  {
+   "formula": "DATE(1900,3,0)",
+   "expected": {
+    "type": "number",
+    "value": 60
+   }
+  },
+  {
+   "formula": "DATE(99,1,1)",
+   "expected": {
+    "type": "number",
+    "value": 36161
+   }
+  },
+  {
+   "formula": "DATE(-1,1,1)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "DATE(10000,1,1)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "DATE(2024,-1,1)",
+   "expected": {
+    "type": "number",
+    "value": 45231
+   }
+  },
+  {
+   "formula": "TIME(12,30,0)",
+   "expected": {
+    "type": "number",
+    "value": 0.5208333333333334
+   }
+  },
+  {
+   "formula": "TIME(25,0,0)",
+   "expected": {
+    "type": "number",
+    "value": 0.04166666666666674
+   }
+  },
+  {
+   "formula": "TIME(0,-1,0)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "TIME(1,90,30)",
+   "expected": {
+    "type": "number",
+    "value": 0.10451388888888889
+   }
+  },
+  {
+   "formula": "YEAR(45292)",
+   "expected": {
+    "type": "number",
+    "value": 2024
+   }
+  },
+  {
+   "formula": "MONTH(45292)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "DAY(45292)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "YEAR(0)",
+   "expected": {
+    "type": "number",
+    "value": 1900
+   }
+  },
+  {
+   "formula": "MONTH(0)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "DAY(0)",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "DAY(60)",
+   "expected": {
+    "type": "number",
+    "value": 29
+   }
+  },
+  {
+   "formula": "MONTH(60)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "DAY(61)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "YEAR(-1)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "YEAR(\"2024-03-05\")",
+   "expected": {
+    "type": "number",
+    "value": 2024
+   }
+  },
+  {
+   "formula": "HOUR(0.75)",
+   "expected": {
+    "type": "number",
+    "value": 18
+   }
+  },
+  {
+   "formula": "MINUTE(0.7555)",
+   "expected": {
+    "type": "number",
+    "value": 7
+   }
+  },
+  {
+   "formula": "SECOND(0.7555)",
+   "expected": {
+    "type": "number",
+    "value": 55
+   }
+  },
+  {
+   "formula": "HOUR(1.5)",
+   "expected": {
+    "type": "number",
+    "value": 12
+   }
+  },
+  {
+   "formula": "SECOND(0.999999999)",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "HOUR(\"3:45 PM\")",
+   "expected": {
+    "type": "number",
+    "value": 15
+   }
+  },
+  {
+   "formula": "WEEKDAY(45292)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "WEEKDAY(45292,2)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "WEEKDAY(45292,3)",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "WEEKDAY(45292,11)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "WEEKDAY(45292,16)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "WEEKDAY(1)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "WEEKDAY(0)",
+   "expected": {
+    "type": "number",
+    "value": 7
+   }
+  },
+  {
+   "formula": "WEEKDAY(45292,4)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "WEEKNUM(45292)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "WEEKNUM(45300,2)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "WEEKNUM(45657)",
+   "expected": {
+    "type": "number",
+    "value": 53
+   }
+  },
+  {
+   "formula": "WEEKNUM(45657,21)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "ISOWEEKNUM(45292)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "ISOWEEKNUM(DATE(2021,1,3))",
+   "expected": {
+    "type": "number",
+    "value": 53
+   }
+  },
+  {
+   "formula": "ISOWEEKNUM(DATE(2020,12,31))",
+   "expected": {
+    "type": "number",
+    "value": 53
+   }
+  },
+  {
+   "formula": "EDATE(DATE(2024,1,31),1)",
+   "expected": {
+    "type": "number",
+    "value": 45351
+   }
+  },
+  {
+   "formula": "EDATE(DATE(2024,3,31),-1)",
+   "expected": {
+    "type": "number",
+    "value": 45351
+   }
+  },
+  {
+   "formula": "EDATE(45292,12)",
+   "expected": {
+    "type": "number",
+    "value": 45658
+   }
+  },
+  {
+   "formula": "EOMONTH(DATE(2024,1,15),1)",
+   "expected": {
+    "type": "number",
+    "value": 45351
+   }
+  },
+  {
+   "formula": "EOMONTH(DATE(2024,1,15),-1)",
+   "expected": {
+    "type": "number",
+    "value": 45291
+   }
+  },
+  {
+   "formula": "EOMONTH(DATE(2023,11,30),3)",
+   "expected": {
+    "type": "number",
+    "value": 45351
+   }
+  },
+  {
+   "formula": "DATEDIF(DATE(2020,1,15),DATE(2024,3,10),\"Y\")",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "DATEDIF(DATE(2020,1,15),DATE(2024,3,10),\"M\")",
+   "expected": {
+    "type": "number",
+    "value": 49
+   }
+  },
+  {
+   "formula": "DATEDIF(DATE(2020,1,15),DATE(2024,3,10),\"D\")",
+   "expected": {
+    "type": "number",
+    "value": 1516
+   }
+  },
+  {
+   "formula": "DATEDIF(DATE(2020,1,15),DATE(2024,3,10),\"MD\")",
+   "expected": {
+    "type": "number",
+    "value": 24
+   }
+  },
+  {
+   "formula": "DATEDIF(DATE(2020,1,15),DATE(2024,3,10),\"YM\")",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "DATEDIF(DATE(2020,1,15),DATE(2024,3,10),\"YD\")",
+   "expected": {
+    "type": "number",
+    "value": 55
+   }
+  },
+  {
+   "formula": "DATEDIF(DATE(2024,1,31),DATE(2024,3,1),\"MD\")",
+   "expected": {
+    "type": "number",
+    "value": -1
+   }
+  },
+  {
+   "formula": "DATEDIF(DATE(2024,3,10),DATE(2020,1,15),\"Y\")",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "DAYS(DATE(2024,3,1),DATE(2024,1,1))",
+   "expected": {
+    "type": "number",
+    "value": 60
+   }
+  },
+  {
+   "formula": "DAYS360(DATE(2024,1,31),DATE(2024,3,31))",
+   "expected": {
+    "type": "number",
+    "value": 60
+   }
+  },
+  {
+   "formula": "DAYS360(DATE(2024,1,30),DATE(2024,2,29))",
+   "expected": {
+    "type": "number",
+    "value": 29
+   }
+  },
+  {
+   "formula": "DAYS360(DATE(2024,2,29),DATE(2024,3,31))",
+   "expected": {
+    "type": "number",
+    "value": 30
+   }
+  },
+  {
+   "formula": "DAYS360(DATE(2024,1,31),DATE(2024,3,31),TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 60
+   }
+  },
+  {
+   "formula": "DAYS360(DATE(2023,2,28),DATE(2023,3,31))",
+   "expected": {
+    "type": "number",
+    "value": 30
+   }
+  },
+  {
+   "formula": "NETWORKDAYS(DATE(2024,1,1),DATE(2024,1,31))",
+   "expected": {
+    "type": "number",
+    "value": 23
+   }
+  },
+  {
+   "formula": "NETWORKDAYS(DATE(2024,1,31),DATE(2024,1,1))",
+   "expected": {
+    "type": "number",
+    "value": -23
+   }
+  },
+  {
+   "formula": "NETWORKDAYS(DATE(2024,1,1),DATE(2024,1,31),{45292,45306})",
+   "expected": {
+    "type": "number",
+    "value": 21
+   }
+  },
+  {
+   "formula": "NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,31),11)",
+   "expected": {
+    "type": "number",
+    "value": 27
+   }
+  },
+  {
+   "formula": "NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,31),\"0000110\")",
+   "expected": {
+    "type": "number",
+    "value": 23
+   }
+  },
+  {
+   "formula": "WORKDAY(DATE(2024,1,5),1)",
+   "expected": {
+    "type": "number",
+    "value": 45299
+   }
+  },
+  {
+   "formula": "WORKDAY(DATE(2024,1,5),-5)",
+   "expected": {
+    "type": "number",
+    "value": 45289
+   }
+  },
+  {
+   "formula": "WORKDAY(DATE(2024,1,1),10,{45293})",
+   "expected": {
+    "type": "number",
+    "value": 45307
+   }
+  },
+  {
+   "formula": "WORKDAY.INTL(DATE(2024,1,5),3,7)",
+   "expected": {
+    "type": "number",
+    "value": 45300
+   }
+  },
+  {
+   "formula": "WORKDAY.INTL(DATE(2024,1,5),3,\"1111100\")",
+   "expected": {
+    "type": "number",
+    "value": 45304
+   }
+  },
+  {
+   "formula": "YEARFRAC(DATE(2024,1,1),DATE(2024,7,1))",
+   "expected": {
+    "type": "number",
+    "value": 0.5
+   }
+  },
+  {
+   "formula": "YEARFRAC(DATE(2024,1,1),DATE(2024,7,1),1)",
+   "expected": {
+    "type": "number",
+    "value": 0.4972677595628415
+   }
+  },
+  {
+   "formula": "YEARFRAC(DATE(2023,1,1),DATE(2024,7,1),1)",
+   "expected": {
+    "type": "number",
+    "value": 1.4965800273597811
+   }
+  },
+  {
+   "formula": "YEARFRAC(DATE(2023,6,1),DATE(2024,3,1),1)",
+   "expected": {
+    "type": "number",
+    "value": 0.7486338797814208
+   }
+  },
+  {
+   "formula": "YEARFRAC(DATE(2024,1,31),DATE(2024,2,29),0)",
+   "expected": {
+    "type": "number",
+    "value": 0.08055555555555556
+   }
+  },
+  {
+   "formula": "YEARFRAC(DATE(2024,1,1),DATE(2024,7,1),2)",
+   "expected": {
+    "type": "number",
+    "value": 0.5055555555555555
+   }
+  },
+  {
+   "formula": "YEARFRAC(DATE(2024,1,1),DATE(2024,7,1),3)",
+   "expected": {
+    "type": "number",
+    "value": 0.4986301369863014
+   }
+  },
+  {
+   "formula": "YEARFRAC(DATE(2024,1,31),DATE(2024,3,31),4)",
+   "expected": {
+    "type": "number",
+    "value": 0.16666666666666666
+   }
+  },
+  {
+   "formula": "YEARFRAC(DATE(2023,2,28),DATE(2024,2,29),0)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "DATEVALUE(\"2024-01-15\")",
+   "expected": {
+    "type": "number",
+    "value": 45306
+   }
+  },
+  {
+   "formula": "DATEVALUE(\"1/15/2024\")",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "DATEVALUE(\"15-Jan-2024\")",
+   "expected": {
+    "type": "number",
+    "value": 45306
+   }
+  },
+  {
+   "formula": "DATEVALUE(\"Jan 15, 2024\")",
+   "expected": {
+    "type": "number",
+    "value": 45306
+   }
+  },
+  {
+   "formula": "DATEVALUE(\"January 15 2024\")",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "DATEVALUE(\"2024-01-15 10:30\")",
+   "expected": {
+    "type": "number",
+    "value": 45306
+   }
+  },
+  {
+   "formula": "DATEVALUE(\"abc\")",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "DATEVALUE(\"2/30/2024\")",
+   "expected": {
+    "type": "error",
+    "value": "#VALUE!"
+   }
+  },
+  {
+   "formula": "DATEVALUE(\"1/1/29\")",
+   "expected": {
+    "type": "number",
+    "value": 36920
+   }
+  },
+  {
+   "formula": "DATEVALUE(\"1/1/30\")",
+   "expected": {
+    "type": "number",
+    "value": 36921
+   }
+  },
+  {
+   "formula": "TIMEVALUE(\"12:30\")",
+   "expected": {
+    "type": "number",
+    "value": 0.5208333333333334
+   }
+  },
+  {
+   "formula": "TIMEVALUE(\"6:45:30 PM\")",
+   "expected": {
+    "type": "number",
+    "value": 0.7815972222222223
+   }
+  },
+  {
+   "formula": "TIMEVALUE(\"2024-01-15 06:00\")",
+   "expected": {
+    "type": "number",
+    "value": 0.25
+   }
+  },
+  {
+   "formula": "TIMEVALUE(\"25:00\")",
+   "expected": {
+    "type": "number",
+    "value": 0.04166666666666674
+   }
+  },
+  {
+   "formula": "ISBLANK(Data!B9)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "ISBLANK(Data!B6)",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "ISNUMBER(Data!A1)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "ISNUMBER(\"1\")",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "ISTEXT(Data!B1)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "ISNONTEXT(1)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "ISLOGICAL(Data!B8)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "ISERROR(Data!H1)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "ISERR(Data!H1)",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "ISERR(Data!H3)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "ISNA(Data!H1)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "ISEVEN(-2.5)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "ISODD(3.9)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "ISREF(Data!A1)",
+   "expected": {
+    "type": "boolean",
+    "value": true
+   }
+  },
+  {
+   "formula": "ISREF(1)",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "ISFORMULA(Data!A1)",
+   "expected": {
+    "type": "boolean",
+    "value": false
+   }
+  },
+  {
+   "formula": "NA()",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "ERROR.TYPE(Data!H3)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "ERROR.TYPE(1)",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "ERROR.TYPE(#NULL!)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "TYPE(1)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "TYPE(\"a\")",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "TYPE(TRUE)",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "TYPE(#N/A)",
+   "expected": {
+    "type": "number",
+    "value": 16
+   }
+  },
+  {
+   "formula": "TYPE({1,2})",
+   "expected": {
+    "type": "number",
+    "value": 64
+   }
+  },
+  {
+   "formula": "TYPE(Data!I9)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "CELL(\"row\",Data!B7)",
+   "expected": {
+    "type": "number",
+    "value": 7
+   }
+  },
+  {
+   "formula": "CELL(\"col\",Data!B7)",
+   "expected": {
+    "type": "number",
+    "value": 2
+   }
+  },
+  {
+   "formula": "CELL(\"address\",Data!B7)",
+   "expected": {
+    "type": "string",
+    "value": "'[oracle-in.xlsx]Data'!$B$7"
+   }
+  },
+  {
+   "formula": "CELL(\"contents\",Data!A2)",
+   "expected": {
+    "type": "number",
+    "value": 20
+   }
+  },
+  {
+   "formula": "CELL(\"type\",Data!B1)",
+   "expected": {
+    "type": "string",
+    "value": "l"
+   }
+  },
+  {
+   "formula": "CELL(\"type\",Data!A1)",
+   "expected": {
+    "type": "string",
+    "value": "v"
+   }
+  },
+  {
+   "formula": "CELL(\"type\",Data!I9)",
+   "expected": {
+    "type": "string",
+    "value": "b"
+   }
+  },
+  {
+   "formula": "PMT(0.05/12,360,200000)",
+   "expected": {
+    "type": "number",
+    "value": -1073.6432460242781
+   }
+  },
+  {
+   "formula": "PMT(0,12,1200)",
+   "expected": {
+    "type": "number",
+    "value": -100
+   }
+  },
+  {
+   "formula": "PMT(0.06/12,60,-20000,0,1)",
+   "expected": {
+    "type": "number",
+    "value": 384.7323687448341
+   }
+  },
+  {
+   "formula": "FV(0.06/12,10,-200,-500,1)",
+   "expected": {
+    "type": "number",
+    "value": 2581.4033740601185
+   }
+  },
+  {
+   "formula": "FV(0,10,-100)",
+   "expected": {
+    "type": "number",
+    "value": 1000
+   }
+  },
+  {
+   "formula": "PV(0.08/12,240,500)",
+   "expected": {
+    "type": "number",
+    "value": -59777.14585118782
+   }
+  },
+  {
+   "formula": "PV(0.05,10,0,10000)",
+   "expected": {
+    "type": "number",
+    "value": -6139.132535407593
+   }
+  },
+  {
+   "formula": "NPER(0.12/12,-100,-1000,10000,1)",
+   "expected": {
+    "type": "number",
+    "value": 59.67386567429457
+   }
+  },
+  {
+   "formula": "NPER(0,-100,1000)",
+   "expected": {
+    "type": "number",
+    "value": 10
+   }
+  },
+  {
+   "formula": "IPMT(0.1/12,1,36,8000)",
+   "expected": {
+    "type": "number",
+    "value": -66.66666666666667
+   }
+  },
+  {
+   "formula": "IPMT(0.1,3,3,8000)",
+   "expected": {
+    "type": "number",
+    "value": -292.44712990936563
+   }
+  },
+  {
+   "formula": "PPMT(0.1/12,1,24,2000)",
+   "expected": {
+    "type": "number",
+    "value": -75.62318600836633
+   }
+  },
+  {
+   "formula": "IPMT(0.1/12,1,36,8000,0,1)",
+   "expected": {
+    "type": "number",
+    "value": 0
+   }
+  },
+  {
+   "formula": "CUMIPMT(0.09/12,360,125000,13,24,0)",
+   "expected": {
+    "type": "number",
+    "value": -11135.232130750841
+   }
+  },
+  {
+   "formula": "CUMPRINC(0.09/12,360,125000,13,24,0)",
+   "expected": {
+    "type": "number",
+    "value": -934.1071234208979
+   }
+  },
+  {
+   "formula": "RATE(48,-200,8000)",
+   "expected": {
+    "type": "number",
+    "value": 0.007701472488201368
+   }
+  },
+  {
+   "formula": "RATE(10,-100,1000,0,0,0.1)",
+   "expected": {
+    "type": "number",
+    "value": -1.963351707292562e-10
+   }
+  },
+  {
+   "formula": "NPV(0.1,-10000,3000,4200,6800)",
+   "expected": {
+    "type": "number",
+    "value": 1188.4434123352207
+   }
+  },
+  {
+   "formula": "NPV(0.08,Data!I2:I6)+Data!I1",
+   "expected": {
+    "type": "number",
+    "value": 56.643429356675
+   }
+  },
+  {
+   "formula": "IRR(Data!I1:I6)",
+   "expected": {
+    "type": "number",
+    "value": 0.25751613621871017
+   }
+  },
+  {
+   "formula": "IRR({-100,10,10})",
+   "expected": {
+    "type": "number",
+    "value": -0.6298437881283676
+   }
+  },
+  {
+   "formula": "IRR({100,10})",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "MIRR(Data!I1:I6,0.1,0.12)",
+   "expected": {
+    "type": "number",
+    "value": 0.19818322324203663
+   }
+  },
+  {
+   "formula": "XNPV(0.09,Data!I1:I6,Data!J1:J6)",
+   "expected": {
+    "type": "number",
+    "value": 92.28790738399562
+   }
+  },
+  {
+   "formula": "XIRR(Data!I1:I6,Data!J1:J6)",
+   "expected": {
+    "type": "number",
+    "value": 4.35882124900818
+   }
+  },
+  {
+   "formula": "SLN(30000,7500,10)",
+   "expected": {
+    "type": "number",
+    "value": 2250
+   }
+  },
+  {
+   "formula": "SYD(30000,7500,10,1)",
+   "expected": {
+    "type": "number",
+    "value": 4090.909090909091
+   }
+  },
+  {
+   "formula": "DB(1000000,100000,6,1,7)",
+   "expected": {
+    "type": "number",
+    "value": 186083.33333333334
+   }
+  },
+  {
+   "formula": "DB(1000000,100000,6,7,7)",
+   "expected": {
+    "type": "number",
+    "value": 15845.098473848073
+   }
+  },
+  {
+   "formula": "DB(1000000,100000,6,3)",
+   "expected": {
+    "type": "number",
+    "value": 147939.759
+   }
+  },
+  {
+   "formula": "DDB(2400,300,10,1)",
+   "expected": {
+    "type": "number",
+    "value": 480
+   }
+  },
+  {
+   "formula": "DDB(2400,300,10,10)",
+   "expected": {
+    "type": "number",
+    "value": 22.12254720000027
+   }
+  },
+  {
+   "formula": "DDB(2400,300,120,1,1.5)",
+   "expected": {
+    "type": "number",
+    "value": 30
+   }
+  },
+  {
+   "formula": "EFFECT(0.0525,4)",
+   "expected": {
+    "type": "number",
+    "value": 0.05354266737075841
+   }
+  },
+  {
+   "formula": "NOMINAL(0.053543,4)",
+   "expected": {
+    "type": "number",
+    "value": 0.052500319868356016
+   }
+  },
+  {
+   "formula": "DEC2BIN(9)",
+   "expected": {
+    "type": "string",
+    "value": "1001"
+   }
+  },
+  {
+   "formula": "DEC2BIN(-1)",
+   "expected": {
+    "type": "string",
+    "value": "1111111111"
+   }
+  },
+  {
+   "formula": "DEC2BIN(9,8)",
+   "expected": {
+    "type": "string",
+    "value": "00001001"
+   }
+  },
+  {
+   "formula": "DEC2BIN(512)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "DEC2HEX(255)",
+   "expected": {
+    "type": "string",
+    "value": "FF"
+   }
+  },
+  {
+   "formula": "DEC2HEX(-1)",
+   "expected": {
+    "type": "string",
+    "value": "FFFFFFFFFF"
+   }
+  },
+  {
+   "formula": "DEC2OCT(58,4)",
+   "expected": {
+    "type": "string",
+    "value": "0072"
+   }
+  },
+  {
+   "formula": "BIN2DEC(\"1111111111\")",
+   "expected": {
+    "type": "number",
+    "value": -1
+   }
+  },
+  {
+   "formula": "BIN2DEC(\"1010\")",
+   "expected": {
+    "type": "number",
+    "value": 10
+   }
+  },
+  {
+   "formula": "HEX2DEC(\"FFFFFFFFFF\")",
+   "expected": {
+    "type": "number",
+    "value": -1
+   }
+  },
+  {
+   "formula": "HEX2DEC(\"a5\")",
+   "expected": {
+    "type": "number",
+    "value": 165
+   }
+  },
+  {
+   "formula": "OCT2DEC(\"777\")",
+   "expected": {
+    "type": "number",
+    "value": 511
+   }
+  },
+  {
+   "formula": "BIN2HEX(\"1110\")",
+   "expected": {
+    "type": "string",
+    "value": "E"
+   }
+  },
+  {
+   "formula": "HEX2BIN(\"F\",8)",
+   "expected": {
+    "type": "string",
+    "value": "00001111"
+   }
+  },
+  {
+   "formula": "HEX2OCT(\"1F\")",
+   "expected": {
+    "type": "string",
+    "value": "37"
+   }
+  },
+  {
+   "formula": "OCT2BIN(\"7\")",
+   "expected": {
+    "type": "string",
+    "value": "111"
+   }
+  },
+  {
+   "formula": "BIN2DEC(\"2\")",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "CONVERT(1,\"mi\",\"km\")",
+   "expected": {
+    "type": "number",
+    "value": 1.609344
+   }
+  },
+  {
+   "formula": "CONVERT(68,\"F\",\"C\")",
+   "expected": {
+    "type": "number",
+    "value": 20
+   }
+  },
+  {
+   "formula": "CONVERT(1,\"lbm\",\"kg\")",
+   "expected": {
+    "type": "number",
+    "value": 0.45359237
+   }
+  },
+  {
+   "formula": "CONVERT(2.5,\"ft\",\"m\")",
+   "expected": {
+    "type": "number",
+    "value": 0.762
+   }
+  },
+  {
+   "formula": "CONVERT(1,\"hr\",\"mn\")",
+   "expected": {
+    "type": "number",
+    "value": 60
+   }
+  },
+  {
+   "formula": "CONVERT(1,\"gal\",\"l\")",
+   "expected": {
+    "type": "number",
+    "value": 3.785411784
+   }
+  },
+  {
+   "formula": "CONVERT(100,\"C\",\"K\")",
+   "expected": {
+    "type": "number",
+    "value": 373.15
+   }
+  },
+  {
+   "formula": "CONVERT(1,\"m\",\"lbm\")",
+   "expected": {
+    "type": "error",
+    "value": "#N/A"
+   }
+  },
+  {
+   "formula": "CONVERT(1,\"m2\",\"ft2\")",
+   "expected": {
+    "type": "number",
+    "value": 10.763910416709722
+   }
+  },
+  {
+   "formula": "DELTA(5,5)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "GESTEP(5,4)",
+   "expected": {
+    "type": "number",
+    "value": 1
+   }
+  },
+  {
+   "formula": "BITAND(13,25)",
+   "expected": {
+    "type": "number",
+    "value": 9
+   }
+  },
+  {
+   "formula": "BITOR(13,25)",
+   "expected": {
+    "type": "number",
+    "value": 29
+   }
+  },
+  {
+   "formula": "BITXOR(13,25)",
+   "expected": {
+    "type": "number",
+    "value": 20
+   }
+  },
+  {
+   "formula": "BITLSHIFT(4,2)",
+   "expected": {
+    "type": "number",
+    "value": 16
+   }
+  },
+  {
+   "formula": "BITRSHIFT(13,2)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "DSUM(Db!A1:D7,\"Yield\",Db!A9:B11)",
+   "expected": {
+    "type": "number",
+    "value": 42
+   }
+  },
+  {
+   "formula": "DSUM(Db!A1:D7,4,Db!A9:A10)",
+   "expected": {
+    "type": "number",
+    "value": 30
+   }
+  },
+  {
+   "formula": "DCOUNT(Db!A1:D7,\"Age\",Db!A9:B11)",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "DCOUNTA(Db!A1:D7,,Db!A9:A10)",
+   "expected": {
+    "type": "number",
+    "value": 3
+   }
+  },
+  {
+   "formula": "DAVERAGE(Db!A1:D7,\"Yield\",Db!A9:B10)",
+   "expected": {
+    "type": "number",
+    "value": 12
+   }
+  },
+  {
+   "formula": "DMAX(Db!A1:D7,\"Height\",Db!A9:A11)",
+   "expected": {
+    "type": "number",
+    "value": 18
+   }
+  },
+  {
+   "formula": "DMIN(Db!A1:D7,\"Height\",Db!A9:A11)",
+   "expected": {
+    "type": "number",
+    "value": 8
+   }
+  },
+  {
+   "formula": "DGET(Db!A1:D7,\"Age\",Db!A9:B10)",
+   "expected": {
+    "type": "error",
+    "value": "#NUM!"
+   }
+  },
+  {
+   "formula": "DPRODUCT(Db!A1:D7,\"Yield\",Db!A9:A10)",
+   "expected": {
+    "type": "number",
+    "value": 840
+   }
+  },
+  {
+   "formula": "DSTDEV(Db!A1:D7,\"Yield\",Db!A9:A10)",
+   "expected": {
+    "type": "number",
+    "value": 4
+   }
+  },
+  {
+   "formula": "DVARP(Db!A1:D7,\"Yield\",Db!A9:A10)",
+   "expected": {
+    "type": "number",
+    "value": 10.666666666666666
+   }
+  }
+ ]
+}

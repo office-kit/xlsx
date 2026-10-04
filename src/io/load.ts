@@ -9,6 +9,7 @@
 // the workbook rels first and only then at their conventional path, because a
 // legal package may put them anywhere.
 
+import { resolveRelTarget } from '../packaging/part-name.js';
 import { normalizeStrictArchive } from './strict.js';
 import { findUserShapesRId, parseChartXml } from '../chart/chart-xml.js';
 import { isChartExBytes, parseChartExXml } from '../chart/cx/chartex-xml.js';
@@ -39,11 +40,19 @@ import { parseSharedStringsXml, type SharedStringsTable } from '../workbook/shar
 import { createWorkbook, type SheetRef, type SheetState, type Workbook } from '../workbook/workbook.js';
 import { parseCommentsXml } from '../worksheet/comments-xml.js';
 import {
+  PERSON_REL,
+  parsePersonsXml,
+  parseThreadedCommentsXml,
+  THREADED_COMMENT_REL,
+  threadPlaceholderAuthor,
+} from '../worksheet/threaded-comments-xml.js';
+import {
   type ContentLimits,
   makeContentBudget,
   resolveContentLimits,
   type ResolvedContentLimits,
 } from '../worksheet/content-budget.js';
+import { liftPivotTables } from '../worksheet/pivot-reader.js';
 import { parseWorksheetXml } from '../worksheet/reader.js';
 import { parseTableXml } from '../worksheet/table-xml.js';
 import {
@@ -126,21 +135,6 @@ export const OFFICE_DOC_REL_TYPE = `${REL_NS}/officeDocument`;
 export const WORKBOOK_TAG = `{${SHEET_MAIN_NS}}workbook`;
 
 /**
- * Resolve an OPC relationship target against its source part path.
- *
- * - Targets starting with `/` are package-absolute.
- * - Otherwise the target is relative to the source part's parent directory.
- * - `..` segments collapse normally.
- */
-export function resolveRelTarget(sourcePartPath: string, target: string): string {
-  if (target.startsWith('/')) return target.slice(1);
-  const lastSlash = sourcePartPath.lastIndexOf('/');
-  const parentDir = lastSlash >= 0 ? sourcePartPath.slice(0, lastSlash + 1) : '';
-  const joined = parentDir + target;
-  return normalizePath(joined);
-}
-
-/**
  * Some producers store literal spaces in ZIP entry names. Decode only as a
  * fallback after looking for the exact package name, so encoded names retain
  * their identity and existing relationship resolution stays compatible.
@@ -154,25 +148,6 @@ function decodeTarget(target: string): string {
   }
 }
 
-function normalizePath(path: string): string {
-  const segments = path.split('/');
-  const out: string[] = [];
-  for (const seg of segments) {
-    if (seg === '' || seg === '.') continue;
-    if (seg === '..') {
-      // Pop the last accumulated segment when one exists; when `out` is
-      // empty (a relative target with more `..` than ancestors) the pop is
-      // a no-op so the climb is silently absorbed at the package root. The
-      // archive.has() check on the resolved path catches any escape attempt
-      // because the entry simply won't exist outside the package — there's
-      // no filesystem traversal to worry about, only a missing-entry error.
-      out.pop();
-      continue;
-    }
-    out.push(seg);
-  }
-  return out.join('/');
-}
 
 /** A workbook-level part a package carries at most one of. */
 interface OptionalWorkbookPart {
@@ -200,6 +175,12 @@ const THEME_PART: OptionalWorkbookPart = {
   name: 'theme',
   relType: `${REL_NS}/theme`,
   conventionalPath: ARC_THEME,
+};
+
+const PERSONS_PART: OptionalWorkbookPart = {
+  name: 'persons',
+  relType: PERSON_REL,
+  conventionalPath: 'xl/persons/person.xml',
 };
 
 /**
@@ -487,6 +468,9 @@ function loadWorkbookFromArchive(archive: ZipArchive, contentLimits: ResolvedCon
   // payload; round-tripping the bytes avoids drift.
   const themeXml = readOptionalWorkbookPart(archive, workbookPath, wbRels, THEME_PART);
 
+  // 4f. xl/persons/person.xml — threaded-comment authors.
+  const personsBytes = readOptionalWorkbookPart(archive, workbookPath, wbRels, PERSONS_PART);
+
   // 5. Build the Workbook. We bypass `addWorksheet` because that allocates
   // sheetIds via `allocateSheetId`; load preserves the IDs from XML.
   const wb = createWorkbook({ date1904: parseDate1904(wbRoot) });
@@ -495,6 +479,7 @@ function loadWorkbookFromArchive(archive: ZipArchive, contentLimits: ResolvedCon
   if (appProperties) wb.appProperties = appProperties;
   if (customProperties) wb.customProperties = customProperties;
   if (themeXml) wb.themeXml = themeXml;
+  if (personsBytes) wb.persons = parsePersonsXml(personsBytes);
   if (definedNamesFromXml.length > 0) wb.definedNames = definedNamesFromXml;
   const seenTitles = new Set<string>();
   const passthroughRoots: string[] = [];
@@ -660,6 +645,19 @@ function loadWorkbookFromArchive(archive: ZipArchive, contentLimits: ResolvedCon
       ...(loadDrawing ? { loadDrawing } : {}),
     });
     if (sheetRels) {
+      for (const tcRel of sheetRels.rels) {
+        if (tcRel.type !== THREADED_COMMENT_REL) continue;
+        const tcPath = resolveRelTarget(sheetPath, tcRel.target);
+        if (archive.has(tcPath)) (ws.threadedComments ??= []).push(...parseThreadedCommentsXml(archive.read(tcPath)));
+      }
+    }
+    if (ws.threadedComments && ws.threadedComments.length > 0) {
+      // The writer regenerates each thread's legacy placeholder, so keeping
+      // them as notes too would write every thread twice.
+      const placeholders = new Set(ws.threadedComments.map((c) => threadPlaceholderAuthor(c.id)));
+      ws.legacyComments = ws.legacyComments.filter((c) => !placeholders.has(c.author));
+    }
+    if (sheetRels) {
       const extras = captureSheetRelsExtras(sheetRels, sheetPath, vml);
       if (extras.length > 0) {
         ws.relsExtras = extras;
@@ -693,6 +691,7 @@ function loadWorkbookFromArchive(archive: ZipArchive, contentLimits: ResolvedCon
   // Pass-through: capture parts we don't model (VBA / pivot / activeX / OLE /
   // customUI / customXml / etc.) so re-saving doesn't drop them.
   capturePassthrough(archive, manifest, wb, passthroughRoots, vml);
+  liftPivotTables(wb);
   return wb;
 }
 
@@ -701,6 +700,7 @@ const SHEET_MODELED_REL_TYPES: ReadonlySet<string> = new Set([
   `${REL_NS}/table`,
   `${REL_NS}/comments`,
   `${REL_NS}/drawing`,
+  THREADED_COMMENT_REL,
 ]);
 const VML_DRAWING_REL = `${REL_NS}/vmlDrawing`;
 
@@ -708,7 +708,7 @@ const VML_DRAWING_REL = `${REL_NS}/vmlDrawing`;
  * Capture per-sheet rels entries that don't match a modeled type. The writer
  * re-emits these verbatim alongside the freshly allocated modeled rels so
  * captured passthrough parts (pivotTable / queryTable / slicer /
- * printerSettings / oleObject / customProperty / threadedComment) remain
+ * printerSettings / oleObject / customProperty) remain
  * reachable from the worksheet after a round-trip.
  *
  * `vmlDrawing` rels are split by part content rather than by type: only the
@@ -1267,6 +1267,7 @@ function captureWorkbookRelsExtras(
       original.vbaProject = rel.id;
       continue;
     }
+    if (rel.type === PERSON_REL) continue;
     extras.push({ id: rel.id, type: rel.type, target: rel.target });
   }
   if (Object.keys(original).length > 0) wb.workbookRelOriginalIds = original;
@@ -1280,7 +1281,6 @@ const PASSTHROUGH_PREFIXES: ReadonlyArray<string> = [
   'xl/externalLinks/',
   // xl/model/ — Power Pivot data model (`xl/model/item.data` etc.).
   'xl/model/',
-  'xl/persons/',
   'xl/pivotCache/',
   'xl/pivotTables/',
   'xl/printerSettings/',
@@ -1288,7 +1288,6 @@ const PASSTHROUGH_PREFIXES: ReadonlyArray<string> = [
   'xl/richData/',
   'xl/slicerCaches/',
   'xl/slicers/',
-  'xl/threadedComments/',
   'xl/timelineCaches/',
   'xl/timelines/',
   'xl/workbookCache/',
@@ -1358,8 +1357,6 @@ const makeVmlPartCache = (archive: ZipArchive): VmlPartCache => {
  * - `xl/calcChain.xml`     — calculation order hint (Excel rebuilds
  * it on first open if missing, but losing it forces a full recalc).
  * - `xl/connections.xml`   — external data connection metadata.
- * - `xl/persons/`          — threaded-comment author registry
- * (Excel 365). Captured under the prefix list below.
  * - `xl/metadata.xml`      — Excel 365 dynamic-array cell metadata.
  * - `xl/SheetMetadata.xml` — variant casing of the same.
  */
