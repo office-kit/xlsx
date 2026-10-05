@@ -31,7 +31,8 @@ export function goToReference(ctl: EditorController, text: string): boolean {
   if (!target) return false;
   if (ctl.edit && !ctl.commitEdit()) return true;
   ctl.doc.activateSheet(target.sheetIndex);
-  ctl.doc.setSelection(selectRange(target.range));
+  // As with the mouse, a range that cuts through a merged cell grows to take all of it.
+  ctl.doc.setSelection(selectRange(ctl.doc.merges.expand(target.range)));
   ctl.reveal(target.range.r1, target.range.c1);
   return true;
 }

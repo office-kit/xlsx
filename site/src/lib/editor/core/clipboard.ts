@@ -75,7 +75,11 @@ function snapshotSelection(ctl: EditorController, cut: boolean): ClipPayload | n
   const ws = ctl.doc.ws;
   const cells: ClipCell[] = [];
   forEachCellInRange(ws, range, (c) => cells.push({ dr: c.row - range.r1, dc: c.col - range.c1, value: c.value, styleId: c.styleId }));
-  const merges = ctl.doc.merges.intersecting(range).map((m) => ({ r1: m.r1 - range.r1, c1: m.c1 - range.c1, r2: m.r2 - range.r1, c2: m.c2 - range.c1 }));
+  // Only merges wholly inside the block travel with it; one sticking out cannot be rebuilt at the destination.
+  const merges = ctl.doc.merges
+    .intersecting(range)
+    .filter((m) => m.r1 >= range.r1 && m.c1 >= range.c1 && m.r2 <= range.r2 && m.c2 <= range.c2)
+    .map((m) => ({ r1: m.r1 - range.r1, c1: m.c1 - range.c1, r2: m.r2 - range.r1, c2: m.c2 - range.c1 }));
   const colWidths = new Map<number, number>();
   for (let c = range.c1; c <= range.c2 && c - range.c1 < 256; c++) colWidths.set(c - range.c1, ctl.doc.cols.sizeOf(c));
   return {
