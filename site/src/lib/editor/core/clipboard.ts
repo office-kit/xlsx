@@ -263,11 +263,42 @@ function destination(ctl: EditorController, rows: number, cols: number): { origi
   return { origin, tilesR, tilesC };
 }
 
+const OP_SYMBOLS = { add: '+', subtract: '-', multiply: '*', divide: '/' } as const;
+const NUMERIC_TEXT = /^\s*[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?\s*$/;
+
+/** A number, or text that reads as one ('5): Paste Special operations convert it. */
+function asNumber(v: CellValue): number | undefined {
+  if (v === null) return 0;
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string' && NUMERIC_TEXT.test(v)) return Number(v);
+  return undefined;
+}
+
+function formulaText(v: CellValue): string | undefined {
+  return v !== null && typeof v === 'object' && !(v instanceof Date) && v.kind === 'formula' && v.formula ? v.formula : undefined;
+}
+
+/**
+ * Paste Special ▸ Add / Subtract / Multiply / Divide, as Excel does it: numbers
+ * and numeric text combine into a number, a formula on either side becomes
+ * `=(target)+source` / `=target+(source)`, and other text, booleans and errors
+ * in the paste area are left as they are.
+ */
 function numericOp(op: PasteSpecialOptions['operation'], target: CellValue, source: CellValue): CellValue {
   if (op === 'none') return source;
-  const a = typeof target === 'number' ? target : target === null ? 0 : undefined;
-  const b = typeof source === 'number' ? source : source === null ? 0 : undefined;
-  if (a === undefined || b === undefined) return source;
+  const sym = OP_SYMBOLS[op];
+  const targetFormula = formulaText(target);
+  const sourceFormula = formulaText(source);
+  const a = asNumber(target);
+  const b = asNumber(source);
+  if (targetFormula !== undefined || (sourceFormula !== undefined && target !== null)) {
+    const left = targetFormula !== undefined ? `(${targetFormula})` : a !== undefined ? String(a) : undefined;
+    const right = sourceFormula !== undefined ? `(${sourceFormula})` : b !== undefined ? String(b) : undefined;
+    if (left === undefined || right === undefined) return target;
+    return { kind: 'formula', t: 'normal', formula: `${left}${sym}${right}` };
+  }
+  if (a === undefined) return target;
+  if (b === undefined) return source;
   switch (op) {
     case 'add':
       return a + b;
