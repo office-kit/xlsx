@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { addWorksheet, createWorkbook, makeDefinedName } from '@office-kit/xlsx/workbook';
 import { addExcelTable, setCell } from '@office-kit/xlsx/worksheet';
 import { MAX_ROW } from './address.ts';
+import { EditorController } from './controller.svelte.ts';
 import { currentRegion, dataEdge, lastUsedCell, navigationTree } from './navigation.ts';
 
 describe('navigation pane', () => {
@@ -94,5 +95,31 @@ describe('keyboard navigation over cell data', () => {
 
   test('Ctrl+End goes to the last used row and the last used column, even when that cell is empty', () => {
     expect(lastUsedCell(sheet())).toEqual({ row: 12, col: 6 });
+  });
+});
+
+describe('navigation skips hidden rows and columns', () => {
+  test('Ctrl+Arrow stops at the last shown cell of a block', () => {
+    const wb = createWorkbook();
+    const ws = addWorksheet(wb, 'Data');
+    for (let r = 1; r <= 10; r++) setCell(ws, r, 1, r);
+    const hidden = (r: number) => r >= 6 && r <= 10;
+    expect(dataEdge(ws, { row: 1, col: 1 }, 1, 0, hidden)).toEqual({ row: 5, col: 1 });
+    // A hidden gap inside a block does not split it.
+    expect(dataEdge(ws, { row: 1, col: 1 }, 1, 0, (r) => r === 3)).toEqual({ row: 10, col: 1 });
+    // Jumping from the block end over hidden data lands on the sheet edge.
+    expect(dataEdge(ws, { row: 5, col: 1 }, 1, 0, hidden)).toEqual({ row: MAX_ROW, col: 1 });
+  });
+
+  test('Home and Ctrl+Home land on the first shown column and row', () => {
+    const ctl = new EditorController();
+    ctl.doc.ws.columnDimensions.set(1, { min: 1, max: 1, hidden: true });
+    ctl.doc.ws.rowDimensions.set(1, { hidden: true });
+    ctl.doc.layoutVersion++;
+    ctl.selectCell({ row: 3, col: 4 });
+    ctl.home(false, false);
+    expect(ctl.doc.selection.active).toEqual({ row: 3, col: 2 });
+    ctl.home(true, false);
+    expect(ctl.doc.selection.active).toEqual({ row: 2, col: 2 });
   });
 });
