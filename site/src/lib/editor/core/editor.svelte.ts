@@ -138,7 +138,8 @@ export class SpreadsheetEditor {
     this.wb.activeSheetIndex = this.activeSheetIndex;
     syncTableHeaders(this.wb, (ws, row, col) => {
       const cell = getCellAt(ws, row, col);
-      return cell && !isBlank(cell) ? getCellDisplayText(this.wb, cell).trim() : '';
+      // Not trimmed: Excel keeps a header's spaces in the column name.
+      return cell && !isBlank(cell) ? getCellDisplayText(this.wb, cell) : '';
     });
     return workbookToBytes(this.wb);
   }

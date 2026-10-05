@@ -348,7 +348,11 @@ export class CalcEngine implements EvalHost {
     const totalRows = def.totalsRowCount ?? 0;
     const dataR1 = bounds.r1 + headerRows;
     const dataR2 = bounds.r2 - totalRows;
-    const columnIndex = (name: string): number => def.columns.findIndex((c) => c.name.toLowerCase() === name.trim().toLowerCase());
+    const columnIndex = (name: string): number => {
+      const lower = name.toLowerCase();
+      const exact = def.columns.findIndex((c) => c.name.toLowerCase() === lower);
+      return exact >= 0 ? exact : def.columns.findIndex((c) => c.name.toLowerCase() === lower.trim());
+    };
     let c1 = bounds.c1;
     let c2 = bounds.c2;
     if (spec.col1 !== undefined) {
