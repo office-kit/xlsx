@@ -7,6 +7,7 @@ export const dialogsEn = {
   mergeInTable: "Merging cells in a table isn't supported.",
   shiftTable: 'This operation is not allowed. The operation is attempting to shift cells in a table on your worksheet.',
   shiftMerge: "We can't do that to a merged cell.",
+  partOfArray: "You can't change part of an array.",
   mergeDiscardsValues: 'Merging cells only keeps the upper-left value and discards other values.',
   lastSheet: 'A workbook must contain at least one visible worksheet.',
   invalidSheetName: "That sheet name isn't valid. Names can't be blank, longer than 31 characters, or contain : \\ / ? * [ ].",

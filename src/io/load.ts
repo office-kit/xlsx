@@ -68,12 +68,23 @@ import {
   MARKUP_COMPAT_NS,
   REL_NS,
   SHEET_MAIN_NS,
+  XLSM_TYPE,
+  XLSX_TYPE,
+  XLTM_TYPE,
+  XLTX_TYPE,
 } from '../xml/namespaces.js';
 import { type ParsedDocument, parseXmlDocument } from '../xml/parser.js';
 import { assertNotStrictRelTypes, assertNotStrictRoot } from '../xml/strict-package.js';
 import { findChild, findChildren, type XmlNode } from '../xml/tree.js';
 import type { DecompressionLimits } from '../zip/decompression-guard.js';
 import { openZip, type ZipArchive } from '../zip/reader.js';
+
+const FILE_FORMAT_BY_TYPE: ReadonlyMap<string, NonNullable<Workbook['fileFormat']>> = new Map([
+  [XLSX_TYPE, 'xlsx'],
+  [XLSM_TYPE, 'xlsm'],
+  [XLTX_TYPE, 'xltx'],
+  [XLTM_TYPE, 'xltm'],
+]);
 
 /**
  * Options for {@link loadWorkbook}. Earlier drafts exposed `readOnly` /
@@ -474,6 +485,8 @@ function loadWorkbookFromArchive(archive: ZipArchive, contentLimits: ResolvedCon
   // 5. Build the Workbook. We bypass `addWorksheet` because that allocates
   // sheetIds via `allocateSheetId`; load preserves the IDs from XML.
   const wb = createWorkbook({ date1904: parseDate1904(wbRoot) });
+  const fileFormat = FILE_FORMAT_BY_TYPE.get(manifest.overrides.find((o) => o.partName.replace(/^\//, '') === workbookPath)?.contentType ?? '');
+  if (fileFormat !== undefined && fileFormat !== 'xlsx') wb.fileFormat = fileFormat;
   if (styles) wb.styles = styles;
   if (properties) wb.properties = properties;
   if (appProperties) wb.appProperties = appProperties;
