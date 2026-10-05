@@ -1,4 +1,4 @@
-import { getCell, addExcelTable } from '@office-kit/xlsx/worksheet';
+import { addExcelTable, getCell, setCell } from '@office-kit/xlsx/worksheet';
 import { describe, expect, it } from 'vitest';
 import * as A from './actions.ts';
 import { EditorController } from './controller.svelte.ts';
@@ -118,7 +118,8 @@ describe('total row', () => {
 
   it('inserts cells below the table when the next row is taken', () => {
     const ctl = salesTable();
-    type(ctl, 5, 2, 'note');
+    // Set directly: typing it would grow the table to take it in.
+    setCell(ctl.doc.ws, 5, 2, 'note');
     setTotalRow(ctl, table(ctl), true, 'Total');
     expect(value(ctl, 6, 2)).toBe('note');
     expect(formula(ctl, 5, 2)).toBe('SUBTOTAL(109,Sales[Sales])');
@@ -174,7 +175,7 @@ describe('resize and convert', () => {
 describe('Delete Table Rows', () => {
   it('shifts only the table columns up and shrinks the ref and filter', () => {
     const ctl = salesTable();
-    type(ctl, 3, 3, 'outside');
+    setCell(ctl.doc.ws, 3, 3, 'outside');
     ctl.selectCell({ row: 2, col: 1 });
     deleteTableRows(ctl, { r1: 2, c1: 1, r2: 2, c2: 1 });
     expect(table(ctl).ref).toBe('A1:B3');
