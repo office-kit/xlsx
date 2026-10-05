@@ -16,6 +16,14 @@
 
 import { escapeXmlAttr, escapeXmlText } from '../utils/escape.js';
 import { chartToBytes } from '../chart/chart-xml.js';
+import {
+  CHART_COLOR_STYLE_REL,
+  CHART_COLOR_STYLE_TYPE,
+  CHART_STYLE_REL,
+  CHART_STYLE_TYPE,
+  CX_CHART_COLORS_XML,
+  CX_CHART_STYLE_XML,
+} from '../chart/cx/chart-style.js';
 import { chartExToBytes } from '../chart/cx/chartex-xml.js';
 import { userShapesToBytes } from '../chart/user-shapes-xml.js';
 import { chartsheetToBytes } from '../chartsheet/chartsheet-xml.js';
@@ -334,7 +342,7 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
     id: number;
     bytes: Uint8Array;
     isCx: boolean;
-    /** Per-chart rels file (only emitted when chart.userShapes is set). */
+    /** Per-chart rels file: user shapes, or a cx chart's style and colors. */
     rels?: Relationships;
   }> = [];
   let nextChartId = 1;
@@ -571,10 +579,16 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
             target: `../charts/chart${chartId}.xml`,
           });
           if (item.content.chart.cxSpace) {
+            const rels = makeRelationships();
+            rels.rels.push(
+              { id: 'rId1', type: CHART_STYLE_REL, target: `style${chartId}.xml` },
+              { id: 'rId2', type: CHART_COLOR_STYLE_REL, target: `colors${chartId}.xml` },
+            );
             chartEmits.push({
               id: chartId,
               bytes: chartExToBytes(item.content.chart.cxSpace),
               isCx: true,
+              rels,
             });
           } else if (item.content.chart.space) {
             const space = item.content.chart.space;
@@ -798,6 +812,10 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
     if (c.rels) {
       await writer.addEntry(`xl/charts/_rels/chart${c.id}.xml.rels`, relsToBytes(c.rels));
     }
+    if (c.isCx) {
+      await writer.addEntry(`xl/charts/style${c.id}.xml`, new TextEncoder().encode(CX_CHART_STYLE_XML));
+      await writer.addEntry(`xl/charts/colors${c.id}.xml`, new TextEncoder().encode(CX_CHART_COLORS_XML));
+    }
   }
 
   // ---- 4f. user-shape drawings (xl/drawings/chartDrawingN.xml) ----------
@@ -925,6 +943,10 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
   }
   for (const c of chartEmits) {
     addOverride(manifest, `/xl/charts/chart${c.id}.xml`, c.isCx ? CHARTEX_TYPE : CHART_TYPE);
+    if (c.isCx) {
+      addOverride(manifest, `/xl/charts/style${c.id}.xml`, CHART_STYLE_TYPE);
+      addOverride(manifest, `/xl/charts/colors${c.id}.xml`, CHART_COLOR_STYLE_TYPE);
+    }
   }
   for (const us of userShapeEmits) {
     addOverride(manifest, `/xl/drawings/chartDrawing${us.id}.xml`, DRAWING_TYPE);

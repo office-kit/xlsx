@@ -50,6 +50,31 @@ describe('chartex workbook integration', () => {
     }
   });
 
+  // Excel asks to repair a workbook whose cx chart has no chartStyle /
+  // chartColorStyle parts, and a stub style part is refused as well.
+  it('gives every cx chart its own style and color parts', async () => {
+    const wb = createWorkbook();
+    const ws = addWorksheet(wb, 'Sheet1');
+    const cxSpace = makeWaterfallChart({ catRef: 'Sheet1!$A$1:$A$5', valRef: 'Sheet1!$B$1:$B$5' });
+    ws.drawing = makeDrawing([makeChartDrawingItem(makeTwoCellAnchor({ from: 'D2', to: 'J20' }), { cxSpace })]);
+
+    const { unzipSync } = await import('fflate');
+    const entries = unzipSync(await workbookToBytes(wb));
+    const text = (path: string): string => new TextDecoder().decode(entries[path]);
+    const rels = text('xl/charts/_rels/chart1.xml.rels');
+    expect(rels).toContain('Type="http://schemas.microsoft.com/office/2011/relationships/chartStyle" Target="style1.xml"');
+    expect(rels).toContain('Type="http://schemas.microsoft.com/office/2011/relationships/chartColorStyle" Target="colors1.xml"');
+    expect(text('xl/charts/style1.xml')).toContain('<cs:chartStyle ');
+    expect(text('xl/charts/colors1.xml')).toContain('<cs:colorStyle ');
+    const ct = text('[Content_Types].xml');
+    expect(ct).toContain('<Override PartName="/xl/charts/style1.xml" ContentType="application/vnd.ms-office.chartstyle+xml"/>');
+    expect(ct).toContain('<Override PartName="/xl/charts/colors1.xml" ContentType="application/vnd.ms-office.chartcolorstyle+xml"/>');
+
+    // Reloading and saving again writes the parts once, not twice.
+    const again = unzipSync(await workbookToBytes(await loadWorkbook(fromBuffer(await workbookToBytes(wb)))));
+    expect(Object.keys(again).filter((p) => p.startsWith('xl/charts/style'))).toEqual(['xl/charts/style1.xml']);
+  });
+
   it('mixed legacy + chartex on different sheets get distinct content types', async () => {
     const wb = createWorkbook();
     const sheetA = addWorksheet(wb, 'A');

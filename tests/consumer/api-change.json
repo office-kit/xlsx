@@ -1,6 +1,6 @@
 {
   "kind": "additive",
   "reason": "Adds the optional Workbook.fileFormat ('xlsx' | 'xlsm' | 'xltx' | 'xltm'), set by loadWorkbook, so a macro-enabled workbook without macros or a template keeps its content type on save.",
-  "baselineSha256": "a016e0d99973aa7bcb1ce96879491252381724fd9f70ed74e2b7908046d5a5e5",
+  "baselineSha256": "2ad9f8b679cb4d0309954dbce2a6186020fbab25766a1d6f09bc7659b4542d24",
   "changeset": ".changeset/keep-workbook-file-format.md"
 }
