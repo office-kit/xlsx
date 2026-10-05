@@ -16,7 +16,8 @@ import {
   unmergeCells,
 } from '@office-kit/xlsx/worksheet';
 import type { CellPos, Range } from './address.ts';
-import { MAX_COL, MAX_ROW, parseRangeAddress, rangesIntersect, toBoundaries } from './address.ts';
+import { fromBoundaries, MAX_COL, MAX_ROW, parseRangeAddress, rangesIntersect, toBoundaries } from './address.ts';
+import { subtractRange } from './conditional-format.ts';
 import { deleteCellsInRange, forEachCellInRange, getCellAt } from './cells.ts';
 import type { SpreadsheetEditor } from './editor.svelte.ts';
 import type { Transaction } from './history.ts';
@@ -127,6 +128,10 @@ export function clearRanges(editor: SpreadsheetEditor, ranges: readonly Range[],
   editor.transact(kind === 'contents' ? 'Clear Contents' : 'Clear', (tx) => {
     for (const range of ranges.flatMap((r) => visibleParts(ws, r))) {
       tx.cells(ws, range);
+      if (kind === 'all' || kind === 'formats') {
+        tx.sheet(ws, 'mergedCells', 'conditionalFormatting');
+        removeRangeFormatting(ws, range);
+      }
       if (kind === 'all') {
         tx.sheet(ws, 'hyperlinks', 'legacyComments', 'threadedComments');
         deleteCellsInRange(ws, range);
@@ -165,6 +170,20 @@ export function clearRanges(editor: SpreadsheetEditor, ranges: readonly Range[],
         if (rowMap?.size === 0) ws.rows.delete(row);
       }
     }
+  });
+}
+
+/**
+ * The formatting Clear Formats / Clear All take off a range beyond cell styles,
+ * as Excel does: merges touching it come apart, and conditional formatting no
+ * longer covers it.
+ */
+function removeRangeFormatting(ws: Worksheet, range: Range): void {
+  ws.mergedCells = ws.mergedCells.filter((m) => !rangesIntersect(fromBoundaries(m), range));
+  ws.conditionalFormatting = ws.conditionalFormatting.flatMap((cf) => {
+    if (!cf.sqref.ranges.some((m) => rangesIntersect(fromBoundaries(m), range))) return [cf];
+    const ranges = cf.sqref.ranges.flatMap((m) => subtractRange(fromBoundaries(m), range).map(toBoundaries));
+    return ranges.length > 0 ? [{ ...cf, sqref: { ranges } }] : [];
   });
 }
 
