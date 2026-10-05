@@ -52,6 +52,8 @@ function printRanges(ctl: EditorController): Range[] {
 }
 
 /** Rows and columns from _xlnm.Print_Titles: whole-row and whole-column ranges to repeat on every page. */
+const PRINT_HASHES = '########';
+
 export function printTitles(ctl: EditorController): { rows?: [number, number]; cols?: [number, number] } {
   const out: { rows?: [number, number]; cols?: [number, number] } = {};
   for (const r of namedRanges(ctl, '_xlnm.Print_Titles')) {
@@ -125,7 +127,9 @@ export function printHtml(ctl: EditorController): string {
       if (style.hAlign === 'general' && shown?.kind === 'number') css += ';text-align:right';
       if (style.hAlign === 'general' && (shown?.kind === 'bool' || shown?.kind === 'error')) css += ';text-align:center';
       const span = merge ? ` rowspan="${merge.r2 - merge.r1 + 1}" colspan="${visibleCols.filter((c) => c >= merge.c1 && c <= merge.c2).length}"` : '';
-      tds.push(`<td style="${escapeHtml(css)}"${span}>${escapeHtml(shown?.text ?? '')}</td>`);
+      // A date with no reading prints as #s; the page has no column width to fill exactly.
+      const text = shown?.hashes ? PRINT_HASHES : (shown?.text ?? '');
+      tds.push(`<td style="${escapeHtml(css)}"${span}>${escapeHtml(text)}</td>`);
     }
     const head = headings ? `<th>${row}</th>` : '';
     return `<tr style="height:${doc.rows.sizeOf(row)}px">${head}${tds.join('')}</tr>`;

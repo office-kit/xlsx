@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { fitGeneralNumber, generalText } from './display.ts';
+import { setCell } from '@office-kit/xlsx/worksheet';
+import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
+import { displayCell, fitGeneralNumber, generalText } from './display.ts';
 
 describe('General number display', () => {
   // Read from Excel 16 for Mac in a 40-character-wide column.
@@ -32,5 +34,21 @@ describe('General number display', () => {
     const measure = (s: string) => s.length * 7;
     expect(fitGeneralNumber(1e15, 5 * 7, measure)).toBe('1E+15');
     expect(fitGeneralNumber(123456789, 7 * 7, measure)).toBe('1.2E+08');
+  });
+});
+
+// Excel for Mac fills these cells with # (checked with string value of the cell).
+describe('dates with no reading', () => {
+  test.each([
+    [-1, 'm/d/yyyy', true],
+    [-0.5, '[h]:mm', true],
+    [2958466, 'm/d/yyyy', true],
+    [2958465, 'm/d/yyyy', false],
+    [-1, '0.00', false],
+  ])('%s as %s fills with #: %s', (value, numFmt, hashes) => {
+    const wb = createWorkbook();
+    const ws = addWorksheet(wb, 'S');
+    const cell = setCell(ws, 1, 1, value);
+    expect(displayCell(wb, cell, numFmt).hashes === true).toBe(hashes);
   });
 });
