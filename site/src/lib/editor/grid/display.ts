@@ -2,7 +2,7 @@
 // format (`[Red]`), and the alignment Excel uses for General alignment.
 
 import type { Cell, CellValue } from '@office-kit/xlsx/cell';
-import { getCellDisplayText } from '@office-kit/xlsx/styles';
+import { getCellDisplayText, isDateFormat } from '@office-kit/xlsx/styles';
 import type { Workbook } from '@office-kit/xlsx/workbook';
 
 export type ValueKind = 'number' | 'text' | 'bool' | 'error' | 'empty';
@@ -14,7 +14,12 @@ export interface CellDisplay {
   readonly color?: string;
   /** Raw number, for General-format width fitting. */
   readonly number?: number;
+  /** A date or time format has no reading for this number, so Excel fills the cell with `#`. */
+  readonly hashes?: boolean;
 }
+
+/** The last day the 1900 date system can show: 12/31/9999. */
+const MAX_DATE_SERIAL = 2_958_465;
 
 function effectiveValue(value: CellValue): CellValue | number | string | boolean {
   if (value !== null && typeof value === 'object' && !(value instanceof Date) && value.kind === 'formula') {
@@ -114,6 +119,7 @@ export function displayCell(wb: Workbook, cell: Cell, numFmt: string): CellDispl
   // The library's General keeps all 15 stored digits; a cell shows Excel's 11.
   const text = typeof v === 'number' && numFmt === 'General' ? generalText(v) : getCellDisplayText(wb, cell);
   if (typeof v === 'number') {
+    if (isDateFormat(numFmt) && (v < 0 || v > MAX_DATE_SERIAL)) return { text, kind, number: v, hashes: true };
     const color = formatColor(numFmt, v);
     return color ? { text, kind, number: v, color } : { text, kind, number: v };
   }
