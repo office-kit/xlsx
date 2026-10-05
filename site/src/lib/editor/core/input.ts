@@ -22,8 +22,15 @@ const EPOCH_1904_SHIFT = 1_462;
 
 export function dateToSerial(year: number, month: number, day: number, date1904 = false): number {
   const serial = Date.UTC(year, month - 1, day) / MS_PER_DAY + EPOCH_1900_OFFSET;
-  return date1904 ? serial - EPOCH_1904_SHIFT : serial;
+  if (date1904) return serial - EPOCH_1904_SHIFT;
+  // The 1900 system counts a 29 February 1900 (Lotus's leap-year bug, serial
+  // 60), so 1 January 1900 is 1 and only dates from 1 March on line up with
+  // the calendar.
+  if (year === 1900 && month <= 2) return month === 2 && day === 29 ? LEAP_BUG_SERIAL : serial - 1;
+  return serial;
 }
+
+const LEAP_BUG_SERIAL = 60;
 
 export function serialToDate(serial: number, date1904 = false): Date {
   const s = date1904 ? serial + EPOCH_1904_SHIFT : serial;
@@ -39,6 +46,7 @@ function monthFromName(name: string): number | undefined {
 
 function validDate(y: number, m: number, d: number): boolean {
   if (m < 1 || m > 12 || d < 1 || y < 1900 || y > 9999) return false;
+  if (y === 1900 && m === 2 && d === 29) return true; // see dateToSerial
   const dt = new Date(Date.UTC(y, m - 1, d));
   return dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }
@@ -180,6 +188,24 @@ export interface ParseOptions {
   readonly today?: Date;
 }
 
+// A General cell takes the format of what its formula's leading function
+// returns: =TODAY() reads as a date, =NOW() as a date and time (Excel 16).
+const LEADING_FUNCTION_FORMATS: ReadonlyMap<string, string> = new Map([
+  ['DATE', 'm/d/yy'],
+  ['TODAY', 'm/d/yy'],
+  ['DATEVALUE', 'm/d/yy'],
+  ['NOW', 'm/d/yy h:mm'],
+  ['TIME', 'h:mm AM/PM'],
+  ['TIMEVALUE', 'h:mm AM/PM'],
+]);
+
+function formulaInput(body: string): ParsedInput {
+  const fn = /^[+-]*([A-Za-z.]+)\(/.exec(body)?.[1]?.toUpperCase();
+  const impliedFormat = fn === undefined ? undefined : LEADING_FUNCTION_FORMATS.get(fn);
+  const value = makeFormula(toStorageFormula(body));
+  return impliedFormat === undefined ? { value } : { value, impliedFormat };
+}
+
 /**
  * Interpret typed text. Formula text keeps the user's spelling (after the `=`)
  * apart from the `_xlfn.` / `_xlpm.` prefixes Excel needs in a file; the
@@ -189,10 +215,11 @@ export interface ParseOptions {
 export function parseInput(input: string, opts: ParseOptions = {}): ParsedInput {
   if (input === '') return { value: null };
   if (input.startsWith("'")) return { value: input.slice(1) };
-  if (input.startsWith('=') && input.length > 1) return { value: makeFormula(toStorageFormula(input.slice(1))) };
-  // Excel turns "+A1" / "-A1*2" into formulas, but keeps "+5" / "-5" numbers.
-  if ((input.startsWith('+') || input.startsWith('-')) && input.length > 1 && parseNumber(input) === undefined && /^[+-][A-Za-z($]/.test(input)) {
-    return { value: makeFormula(toStorageFormula(input)) };
+  if (input.startsWith('=') && input.length > 1) return formulaInput(input.slice(1));
+  // Excel turns "+A1", "-A1*2" and "+1+2" into formulas, but keeps "+5" / "-5"
+  // numbers and "- item" text.
+  if ((input.startsWith('+') || input.startsWith('-')) && input.length > 1 && parseNumber(input) === undefined && /^[+-][A-Za-z0-9($.+-]/.test(input)) {
+    return formulaInput(input);
   }
   const text = input.trim();
   const upper = text.toUpperCase();
