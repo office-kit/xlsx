@@ -131,7 +131,7 @@ export class EditorController {
   dialog = $state<DialogState | null>(null);
   menu = $state<MenuState | null>(null);
   /** Source of the last Copy/Cut, shown with marching ants until consumed. */
-  clipboard = $state.raw<{ sheetIndex: number; range: Range; cut: boolean } | null>(null);
+  clipboard = $state.raw<{ sheet: Worksheet; range: Range; cut: boolean } | null>(null);
   toast = $state<MessageKey | null>(null);
   /** Column a run of Tab presses started from; Enter returns there. */
   tabStartCol: number | null = null;
