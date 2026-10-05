@@ -166,8 +166,16 @@ type FormatSection =
   | FractionFormatSection
   | TextFormatSection;
 
+/** A `[>=100]`-style comparison that picks a section by value instead of by sign. */
+interface SectionCondition {
+  readonly op: '<' | '<=' | '>' | '>=' | '=' | '<>';
+  readonly operand: number;
+}
+
 export interface ParsedFormat {
   readonly sections: readonly FormatSection[];
+  /** Per section; present only when the code has at least one comparison. */
+  readonly conditions?: readonly (SectionCondition | undefined)[];
 }
 
 // ---- decimal arithmetic ----------------------------------------------------
@@ -677,16 +685,40 @@ const PARSE_CACHE_LIMIT = 256;
 const MAX_CACHED_CODE_LENGTH = 255;
 const parseCache = new Map<string, { readonly format: ParsedFormat | undefined }>();
 
+const CONDITION_RE = /^\[(<=|>=|<>|<|>|=)\s*(-?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)\]/;
+const LEADING_BRACKET_RE = /^\[[^\]]*\]/;
+
+/** Pull a comparison out of the brackets leading a section (`[Red][<0]0`). */
+const takeCondition = (src: string): { src: string; condition?: SectionCondition } => {
+  let rest = src;
+  let kept = '';
+  while (rest.startsWith('[')) {
+    const cond = CONDITION_RE.exec(rest);
+    if (cond) {
+      const op = cond[1] as SectionCondition['op'];
+      return { src: kept + rest.slice(cond[0].length), condition: { op, operand: Number(cond[2]) } };
+    }
+    const bracket = LEADING_BRACKET_RE.exec(rest);
+    if (!bracket) break;
+    kept += bracket[0];
+    rest = rest.slice(bracket[0].length);
+  }
+  return { src };
+};
+
 const buildFormat = (code: string): ParsedFormat | undefined => {
   const raw = splitSections(code);
   if (raw === undefined || raw.length > MAX_SECTIONS) return undefined;
   const sections: FormatSection[] = [];
-  for (const src of raw) {
+  const conditions: (SectionCondition | undefined)[] = [];
+  for (const piece of raw) {
+    const { src, condition } = takeCondition(piece);
     const section = parseSection(src);
     if (section === undefined) return undefined;
     sections.push(section);
+    conditions.push(condition);
   }
-  return { sections };
+  return conditions.some((c) => c !== undefined) ? { sections, conditions } : { sections };
 };
 
 /** Parse a `numFmt` format code, or `undefined` when it is out of scope. */
@@ -709,7 +741,7 @@ export function parseFormatCode(code: string): ParsedFormat | undefined {
  * (`[h]:mm`) or a numeric layout. The section selected for the value decides.
  */
 export function hasCalendarDate(format: ParsedFormat, value: number): boolean {
-  const first = pickSection(format.sections, value)?.section;
+  const first = pickSection(format, value)?.section;
   return first?.kind === 'date' && first.calendar;
 }
 
@@ -1043,6 +1075,13 @@ interface DateFields {
   readonly subsecond: string;
 }
 
+const PHANTOM_YEAR = 1900;
+/** Serial → the fields Excel prints for it (weekday 0 = Sunday, as WEEKDAY() - 1 reports). */
+const PHANTOM_DAYS: ReadonlyMap<number, { month: number; day: number; weekday: number }> = new Map([
+  [0, { month: 1, day: 0, weekday: 6 }],
+  [60, { month: 2, day: 29, weekday: 3 }],
+]);
+
 const twoDigits = (value: number, width: number): string => (width === 1 ? String(value) : String(value).padStart(2, '0'));
 
 const renderDatePart = (token: DatePartToken, fields: DateFields, hasMeridiem: boolean): string => {
@@ -1150,11 +1189,16 @@ const renderDateSection = (section: DateFormatSection, serial: number, epoch: Ex
   // A serial can be a safe integer of sub-second units and still land outside
   // the range a `Date` covers, which would print NaN into every field.
   if (Number.isNaN(date.getTime())) return undefined;
+  // Excel's 1900 system shows two days no calendar has: serial 0 as 1/0/1900
+  // and serial 60 as the phantom 2/29/1900. `excelToDate` folds both onto real
+  // days, so the displayed fields are put back here.
+  const wholeDay = Math.floor(units / unitsPerDay);
+  const phantom = epoch === 'mac' ? undefined : PHANTOM_DAYS.get(wholeDay);
   return renderDateTokens(section, {
-    year: date.getUTCFullYear(),
-    month: date.getUTCMonth() + 1,
-    day: date.getUTCDate(),
-    weekday: date.getUTCDay(),
+    year: phantom ? PHANTOM_YEAR : date.getUTCFullYear(),
+    month: phantom ? phantom.month : date.getUTCMonth() + 1,
+    day: phantom ? phantom.day : date.getUTCDate(),
+    weekday: phantom ? phantom.weekday : date.getUTCDay(),
     hour: date.getUTCHours(),
     minute: date.getUTCMinutes(),
     second: date.getUTCSeconds(),
@@ -1176,7 +1220,9 @@ interface PickedSection {
  * at zero, three or four add a dedicated zero branch. Only a lone section has
  * to be handed the sign, because the others spell their own.
  */
-const pickSection = (sections: readonly FormatSection[], value: number): PickedSection | undefined => {
+const pickSection = (format: ParsedFormat, value: number): PickedSection | undefined => {
+  if (format.conditions) return pickConditional(format.sections, format.conditions, value);
+  const { sections } = format;
   const first = sections[0];
   if (first === undefined) return undefined;
   if (sections.length === 1) return { section: first, signed: value < 0 };
@@ -1189,6 +1235,53 @@ const pickSection = (sections: readonly FormatSection[], value: number): PickedS
     return zero === undefined ? undefined : { section: zero, signed: false };
   }
   return { section: first, signed: false };
+};
+
+const holds = (c: SectionCondition, value: number): boolean => {
+  switch (c.op) {
+    case '<':
+      return value < c.operand;
+    case '<=':
+      return value <= c.operand;
+    case '>':
+      return value > c.operand;
+    case '>=':
+      return value >= c.operand;
+    case '=':
+      return value === c.operand;
+    case '<>':
+      return value !== c.operand;
+  }
+};
+
+/** A comparison that only negative values can meet: such a section spells its own sign. */
+const negativeOnly = (c: SectionCondition): boolean =>
+  (c.op === '<' && c.operand <= 0) || (c.op === '<=' && c.operand < 0) || (c.op === '=' && c.operand < 0);
+
+/**
+ * Comparison sections, as Excel for Mac reads them: the first two sections are
+ * tried in order (a second section without its own comparison means `[<0]`
+ * when a third follows, and "everything else" when it is the last), then the
+ * third catches the rest. A value no section takes has no reading (`####`).
+ */
+const pickConditional = (
+  sections: readonly FormatSection[],
+  conditions: readonly (SectionCondition | undefined)[],
+  value: number,
+): PickedSection | undefined => {
+  const numeric = sections.length === MAX_SECTIONS ? sections.slice(0, -1) : sections;
+  for (let i = 0; i < numeric.length; i++) {
+    const section = numeric[i];
+    if (section === undefined) continue;
+    const isLast = i === numeric.length - 1;
+    const condition = conditions[i] ?? (isLast ? undefined : i === 0 ? { op: '>=', operand: 0 } : { op: '<', operand: 0 });
+    if (condition === undefined || holds(condition, value)) {
+      return { section, signed: value < 0 && !(condition !== undefined && negativeOnly(condition)) };
+    }
+    // Only the first two sections carry comparisons; a third is the catch-all.
+    if (i >= 1 && isLast) return undefined;
+  }
+  return undefined;
 };
 
 const renderSection = (section: FormatSection, magnitude: number, epoch: ExcelEpoch): RenderedSection | undefined => {
@@ -1219,7 +1312,7 @@ const renderSection = (section: FormatSection, magnitude: number, epoch: ExcelEp
  */
 export function renderNumericValue(format: ParsedFormat, value: number, epoch: ExcelEpoch): string | undefined {
   if (!Number.isFinite(value)) return undefined;
-  const picked = pickSection(format.sections, value);
+  const picked = pickSection(format, value);
   if (picked === undefined) return undefined;
   // A negative serial is not a calendar date. Excel fills the cell with `#`
   // characters, and how many depends on the column width, so there is nothing
