@@ -462,8 +462,8 @@ function drawPie(out: string[], data: ChartData, palette: ThemePalette, box: Box
     const vals = s.values.map((v) => Math.max(0, v ?? 0));
     const total = vals.reduce((a, b) => a + b, 0);
     if (total <= 0) return;
-    // Excel starts the first slice at 12 o'clock and goes clockwise.
-    let angle = -Math.PI / 2;
+    // Excel starts the first slice at 12 o'clock, turned by firstSliceAng, and goes clockwise.
+    let angle = -Math.PI / 2 + (data.firstSliceAng * Math.PI) / 180;
     vals.forEach((v, i) => {
       if (v === 0) return;
       const sweep = (v / total) * Math.PI * 2;

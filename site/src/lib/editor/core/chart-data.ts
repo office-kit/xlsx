@@ -72,6 +72,8 @@ export interface ChartData {
   readonly legend: LegendPosition | undefined;
   readonly varyColors: boolean;
   readonly holeSize: number;
+  /** Pie / doughnut rotation in degrees, clockwise from 12 o'clock. */
+  readonly firstSliceAng: number;
   readonly gapWidth: number;
   readonly overlap: number;
   readonly valMin: number | undefined;
@@ -263,6 +265,7 @@ function classicData(space: ChartSpace, calc: ChartCalc, worksheets: ReadonlyMap
     legend: space.legend?.position,
     varyColors,
     holeSize: chart.kind === 'doughnut' ? (chart.holeSize ?? 50) : 0,
+    firstSliceAng: (chart.kind === 'pie' || chart.kind === 'doughnut') && chart.firstSliceAng !== undefined ? chart.firstSliceAng : 0,
     gapWidth: 'gapWidth' in chart && chart.gapWidth !== undefined ? chart.gapWidth : 150,
     overlap: 'overlap' in chart && chart.overlap !== undefined ? chart.overlap : 0,
     valMin: valAx?.scaling?.min,
@@ -414,6 +417,7 @@ function cxData(space: CxChartSpace, calc: ChartCalc, worksheets: ReadonlyMap<st
     legend: legendPos,
     varyColors: kind === 'treemap' || kind === 'sunburst',
     holeSize: 0,
+    firstSliceAng: 0,
     gapWidth: kind === 'histogram' || kind === 'pareto' ? 0 : 50,
     overlap: 0,
     valMin: valAxis?.valScaling?.min,
