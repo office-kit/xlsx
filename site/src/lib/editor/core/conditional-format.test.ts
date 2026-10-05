@@ -203,6 +203,18 @@ describe('visual rule XML', () => {
     expect(at(1, 1, undefined)?.bar?.end).toBeCloseTo(0.5);
     expect(at(2, 1, undefined)?.bar?.end).toBeCloseTo(1);
   });
+
+  it('draws an Excel 2010 bar over only negatives leftward from an axis at the right edge', () => {
+    column([-10, -5, -1]);
+    pushRule('A1:A3', { type: 'dataBar', priority: 1, innerXml: '<dataBar><cfvo type="min"/><cfvo type="max"/><color rgb="FF638EC6"/></dataBar><extLst><ext uri="{B025F937-C7B1-47D3-B67F-A62EFF666E3E}"><x14:id>{1}</x14:id></ext></extLst>' });
+    const at = overlay();
+    // The most negative value gets the longest red bar, all ending at the axis.
+    expect([1, 2, 3].map((r) => at(r, 1, undefined)?.bar)).toEqual([
+      { start: 0, end: 1, color: '#FF0000' },
+      { start: 0.5, end: 1, color: '#FF0000' },
+      { start: 0.9, end: 1, color: '#FF0000' },
+    ]);
+  });
 });
 
 describe('range helpers', () => {

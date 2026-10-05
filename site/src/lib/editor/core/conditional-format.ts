@@ -710,10 +710,11 @@ function compileRule(ctx: Context, rule: ConditionalFormattingRule, ranges: read
         }
         const [lo, hi] = bounds;
         const hide = visual.showValue ? {} : { hideValue: true };
-        if (lo < 0 && hi > 0) {
-          // Mixed signs: bars grow from an axis placed at zero, negatives in red.
+        // Mixed signs (or an Excel 2010 bar over only negatives, whose axis sits at the
+        // right edge): bars grow from an axis placed at zero, negatives in red.
+        if (lo < 0 && (hi > 0 || (visual.extended && hi === 0))) {
           const axis = -lo / (hi - lo);
-          if (v >= 0) return { bar: { start: axis, end: axis + (1 - axis) * Math.min(1, v / hi), color }, ...hide };
+          if (v >= 0) return { bar: { start: axis, end: hi > 0 ? axis + (1 - axis) * Math.min(1, v / hi) : axis, color }, ...hide };
           return { bar: { start: axis - axis * Math.min(1, v / lo), end: axis, color: '#FF0000' }, ...hide };
         }
         const t = hi === lo ? 1 : Math.min(1, Math.max(0, (v - lo) / (hi - lo)));
