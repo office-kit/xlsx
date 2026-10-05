@@ -44,6 +44,8 @@ function defaultStyleAt(ws: Worksheet, row: number, col: number): number {
  * for Ctrl/Cmd+Enter). Formulas are re-anchored per target by `translate`,
  * which the formula engine provides.
  */
+const ALL_EDGES = { top: true, bottom: true, left: true, right: true };
+
 export function commitInput(
   editor: SpreadsheetEditor,
   at: CellPos,
@@ -66,6 +68,11 @@ export function commitInput(
             value = { kind: 'formula', t: 'normal', formula };
           }
           writeValue(editor, ws, r, c, value, parsed.impliedFormat);
+          // Typing a line break (Alt+Enter) turns on Wrap Text, as in Excel.
+          if (typeof value === 'string' && value.includes('\n')) {
+            const cell = getCellAt(ws, r, c);
+            if (cell && !editor.styles.get(cell.styleId).wrap) cell.styleId = transformStyle(wb, cell.styleId, { alignment: { wrapText: true } }, ALL_EDGES);
+          }
         }
       }
     }
@@ -105,7 +112,7 @@ function writeValue(editor: SpreadsheetEditor, ws: Worksheet, row: number, col: 
     // Only a General cell picks up the format implied by the typed text.
     const current = editor.styles.get(cell.styleId).numFmt;
     if (current === 'General') {
-      cell.styleId = transformStyle(wb, cell.styleId, { numFmt: impliedFormat }, { top: true, bottom: true, left: true, right: true });
+      cell.styleId = transformStyle(wb, cell.styleId, { numFmt: impliedFormat }, ALL_EDGES);
     }
   }
 }
