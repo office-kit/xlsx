@@ -315,6 +315,7 @@ const core: Partial<Record<MessageKey, string>> = {
   gotoSpecialEllipsis: '条件を選択してジャンプ…',
   notFound: '検索条件に一致するデータが見つかりません。',
   noCellsFound: '該当するセルが見つかりません。',
+  mergedCellsSameSize: 'この操作を行うには、結合セルをすべて同じサイズにする必要があります。',
   mergedCellConflict: '結合されたセルに対してこの操作は実行できません。',
   invalidReference: '参照が正しくありません。',
 
