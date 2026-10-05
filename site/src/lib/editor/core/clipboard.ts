@@ -17,6 +17,7 @@ import { MAX_COL, MAX_ROW, rangesIntersect, toBoundaries } from './address.ts';
 import { deleteCellsInRange, forEachCellInRange, getCellAt, usedRange } from './cells.ts';
 import type { EditorController } from './controller.svelte.ts';
 import { isRowFiltered } from './filter.ts';
+import { writeValue } from './commands.ts';
 import { parseInput } from './input.ts';
 import { pxToColWidth } from './metrics.ts';
 import { selectRange } from './selection.ts';
@@ -219,7 +220,7 @@ function pasteData(ctl: EditorController, html: string, text: string, mode: Past
     pasteInternal(ctl, payload, specialFor(mode));
     return;
   }
-  const grid = html.includes('<table') ? parseHtmlTable(html) : parseTsv(text);
+  const grid = html.includes('<table') ? parseHtmlTable(html) : parseTsv(text).map((line) => line.map((t) => ({ text: t })));
   if (grid.length === 0) return;
   pasteGrid(ctl, grid);
 }
@@ -495,7 +496,13 @@ function writePasted(
 }
 
 /** Paste external data (TSV / HTML table) as values, inferring numbers and dates like typing. */
-function pasteGrid(ctl: EditorController, grid: string[][]): void {
+/** A cell pasted from outside: its shown text and, from Excel's HTML, its number format. */
+interface PastedCell {
+  readonly text: string;
+  readonly numFmt?: string;
+}
+
+function pasteGrid(ctl: EditorController, grid: readonly (readonly PastedCell[])[]): void {
   const rows = grid.length;
   const cols = Math.max(...grid.map((r) => r.length));
   const { origin } = destination(ctl, rows, cols);
@@ -504,18 +511,20 @@ function pasteGrid(ctl: EditorController, grid: string[][]): void {
   ctl.doc.transact('Paste', (tx) => {
     tx.cells(ws, dest);
     grid.forEach((line, r) => {
-      line.forEach((text, c) => {
+      line.forEach(({ text, numFmt }, c) => {
         const row = origin.row + r;
         const col = origin.col + c;
         if (row > MAX_ROW || col > MAX_COL) return;
-        const parsed = parseInput(text, { dateOrder: ctl.dateOrder(), date1904: ctl.doc.wb.date1904 });
-        const existing = getCellAt(ws, row, col);
-        if (parsed.value === null) {
-          if (existing) existing.value = null;
+        // A Text-formatted source cell ("007") pastes as the text it shows.
+        if (numFmt === TEXT_FORMAT) {
+          writeValue(ctl.doc, ws, row, col, text === '' ? null : text, TEXT_FORMAT);
           return;
         }
-        if (existing) existing.value = parsed.value;
-        else putCell(ws, row, col, parsed.value, ctl.defaultStyleAt(row, col));
+        const parsed = parseInput(text, { dateOrder: ctl.dateOrder(), date1904: ctl.doc.wb.date1904 });
+        // Like typing, the text's own format (a date, 12.5%) applies to a General cell;
+        // Excel's HTML names the source format, which wins.
+        const format = numFmt !== undefined && typeof parsed.value === 'number' ? numFmt : parsed.impliedFormat;
+        writeValue(ctl.doc, ws, row, col, parsed.value, format);
       });
     });
   });
@@ -570,25 +579,68 @@ export function parseTsv(text: string): string[][] {
   return out;
 }
 
-export function parseHtmlTable(html: string): string[][] {
+const TEXT_FORMAT = '@';
+const GENERAL_FORMAT = 'General';
+const MSO_NUMBER_FORMAT_RE = /mso-number-format\s*:\s*(?:"([^"]*)"|([^;"]+))/i;
+const CLASS_RULE_RE = /\.([\w-]+)\s*\{([^}]*)\}/g;
+
+/**
+ * Excel writes `mso-number-format` CSS-escaped, with a quote as `\0022`:
+ * `"\0022¥\0022\#\,\#\#0\.00"` is `"¥"#,##0.00`. It always writes four hex
+ * digits, so a following hex letter is not part of the escape.
+ */
+export function unescapeMsoFormat(raw: string): string {
+  return raw.replace(/\\([0-9a-fA-F]{4}|[\s\S])/g, (_, esc: string) => (esc.length === 4 ? String.fromCharCode(Number.parseInt(esc, 16)) : esc));
+}
+
+/** `mso-number-format` out of a style declaration block, or undefined for General / none. */
+export function msoNumberFormat(declarations: string): string | undefined {
+  const m = MSO_NUMBER_FORMAT_RE.exec(declarations);
+  if (!m) return undefined;
+  const format = unescapeMsoFormat((m[1] ?? m[2] ?? '').trim());
+  return format === '' || format === GENERAL_FORMAT ? undefined : format;
+}
+
+/** Class name → number format, from the `<style>` Excel puts in its clipboard HTML. */
+export function msoClassFormats(css: string): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const [, name, body] of css.matchAll(CLASS_RULE_RE)) {
+    const format = msoNumberFormat(body ?? '');
+    if (name && format !== undefined) out.set(name, format);
+  }
+  return out;
+}
+
+function parseHtmlTable(html: string): PastedCell[][] {
   if (typeof DOMParser === 'undefined') return [];
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const table = doc.querySelector('table');
   if (!table) return [];
-  const out: string[][] = [];
+  const classFormats = msoClassFormats(Array.from(doc.querySelectorAll('style'), (el) => el.textContent ?? '').join('\n'));
+  const formatOf = (td: HTMLTableCellElement): string | undefined => {
+    const inline = msoNumberFormat(td.getAttribute('style') ?? '');
+    if (inline !== undefined) return inline;
+    for (const name of Array.from(td.classList)) {
+      const format = classFormats.get(name);
+      if (format !== undefined) return format;
+    }
+    return undefined;
+  };
+  const out: PastedCell[][] = [];
   // rowspan/colspan occupy following positions; track cells claimed from above.
   const claimed = new Map<string, true>();
   Array.from(table.rows).forEach((tr, r) => {
-    const line: string[] = out[r] ?? [];
+    const line: PastedCell[] = out[r] ?? [];
     out[r] = line;
     let c = 0;
     for (const td of Array.from(tr.cells)) {
       while (claimed.has(`${r},${c}`)) c++;
       const text = (td.innerText || td.textContent || '').replace(/ /g, ' ');
-      line[c] = text.replace(/\n$/, '');
+      const format = formatOf(td);
+      line[c] = format === undefined ? { text: text.replace(/\n$/, '') } : { text: text.replace(/\n$/, ''), numFmt: format };
       for (let dr = 0; dr < td.rowSpan; dr++) for (let dc = 0; dc < td.colSpan; dc++) if (dr || dc) claimed.set(`${r + dr},${c + dc}`, true);
       c += td.colSpan;
     }
   });
-  return out.map((line) => Array.from(line, (v) => v ?? ''));
+  return out.map((line) => Array.from(line, (v) => v ?? { text: '' }));
 }
