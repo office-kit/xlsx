@@ -92,6 +92,10 @@ describe('isDateFormat heuristic', () => {
     ['"date" 0', false],
     // With locale tag — still date.
     ['[$-409]m/d/yyyy', true],
+    // Japanese era and weekday names.
+    ['[$-411]gge', true],
+    ['aaaa', true],
+    ['general', false],
   ])('isDateFormat(%j) === %s', (code, expected) => {
     expect(isDateFormat(code as string | null | undefined)).toBe(expected);
   });
@@ -118,6 +122,9 @@ describe('classifyDateFormat', () => {
     ['mm-dd-yy', 'date'],
     ['h:mm:ss', 'time'],
     ['mm:ss', 'time'],
+    ['[$-411]gge', 'date'],
+    ['aaa', 'date'],
+    ['h:mm AM/PM', 'time'],
     ['yyyy-mm-dd h:mm:ss', 'datetime'],
     ['m/d/yy h:mm', 'datetime'],
     ['0%', undefined],

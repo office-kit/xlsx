@@ -104,7 +104,8 @@ const LITERAL_GROUP = '"[^"]*"';
 const LOCALE_GROUP = '\\[(?!hh?\\]|mm?\\]|ss?\\])[^\\]]*\\]';
 
 const STRIP_RE = new RegExp(`${COLORS_GROUP}|${LITERAL_GROUP}|${LOCALE_GROUP}`, 'g');
-const DATE_TOKEN_RE = /(?<![_\\])[dmhysDMHYS]/;
+// `g` is the Japanese era and `aaa` a weekday name; the `g` of `General` is not.
+const DATE_TOKEN_RE = /(?<![_\\])(?:[dmhysDMHYS]|g(?!eneral)|[aA]{3})/;
 const TIMEDELTA_RE = /\[hh?\](:mm(:ss(\.0*)?)?)?|\[mm?\](:ss(\.0*)?)?|\[ss?\](\.0*)?/i;
 
 /**
@@ -134,10 +135,11 @@ export function classifyDateFormat(code: string | undefined | null): 'date' | 't
   const head = (code as string).split(';')[0] ?? '';
   // Same locale / literal stripping the date detector applies.
   const stripped = head.replace(STRIP_RE, '');
-  let date = false;
+  // `aaa` is a weekday name; a lone `a` belongs to AM/PM.
+  let date = /[aA]{3}/.test(stripped);
   let time = false;
   for (const ch of stripped) {
-    if (ch === 'd' || ch === 'D' || ch === 'y' || ch === 'Y') date = true;
+    if (ch === 'd' || ch === 'D' || ch === 'y' || ch === 'Y' || ch === 'g') date = true;
     else if (ch === 'h' || ch === 'H' || ch === 's' || ch === 'S') time = true;
     if (date && time) break;
   }
