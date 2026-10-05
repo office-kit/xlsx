@@ -269,19 +269,31 @@ export class History<V> {
  * dependents still need recalculating.
  */
 export function changedCells<V>(step: HistoryStep<V>): Array<{ ws: Worksheet; row: number; col: number }> {
+  // Only value changes count: a format applied over a spilled range must not
+  // read as the user overwriting the spill.
+  const before = new Map<string, { ws: Worksheet; row: number; col: number; value: CellValue }>();
+  for (const snap of step.before) {
+    if (snap.part.kind !== 'cells') continue;
+    const ws = snap.part.ws;
+    for (const c of snap.data as CellSnap[]) before.set(`${ws.title}\u0000${c.row}\u0000${c.col}`, { ws, row: c.row, col: c.col, value: c.value });
+  }
   const out: Array<{ ws: Worksheet; row: number; col: number }> = [];
-  const seen = new Set<string>();
-  for (const list of [step.before, step.after]) {
-    for (const snap of list) {
-      if (snap.part.kind !== 'cells') continue;
-      const ws = snap.part.ws;
-      for (const c of snap.data as CellSnap[]) {
-        const key = `${ws.title}\u0000${c.row}\u0000${c.col}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        out.push({ ws, row: c.row, col: c.col });
-      }
+  for (const snap of step.after) {
+    if (snap.part.kind !== 'cells') continue;
+    const ws = snap.part.ws;
+    for (const c of snap.data as CellSnap[]) {
+      const key = `${ws.title}\u0000${c.row}\u0000${c.col}`;
+      const was = before.get(key);
+      before.delete(key);
+      if (!sameValue(was?.value ?? null, c.value)) out.push({ ws, row: c.row, col: c.col });
     }
   }
+  // Cells that existed before and are gone after.
+  for (const was of before.values()) if (was.value !== null) out.push({ ws: was.ws, row: was.row, col: was.col });
   return out;
+}
+
+function sameValue(a: CellValue, b: CellValue): boolean {
+  if (a === b) return true;
+  return a instanceof Date && b instanceof Date && a.getTime() === b.getTime();
 }
