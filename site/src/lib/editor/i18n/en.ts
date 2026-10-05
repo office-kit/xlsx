@@ -325,6 +325,7 @@ const core = {
   gotoSpecialEllipsis: 'Go To Special…',
   notFound: "We couldn't find what you were looking for.",
   noCellsFound: 'No cells were found.',
+  mergedCellConflict: "We can't do that to a merged cell.",
   invalidReference: "The reference isn't valid.",
 
   // insert
