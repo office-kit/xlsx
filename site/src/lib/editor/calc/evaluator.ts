@@ -10,7 +10,7 @@ import { compareScalars, round15, toNumber, toText } from './coerce.ts';
 import type { ArgKind, EagerSpec, FnContext, FunctionSpec, Thunk } from './function-spec.ts';
 import type { EvalHost } from './host.ts';
 import { CalcParseError } from './lexer.ts';
-import { parseFormula } from './parser.ts';
+import { normalizeLocalName, parseFormula } from './parser.ts';
 import {
   type Area,
   type CalcArray,
@@ -237,7 +237,8 @@ export class Evaluator {
     const spec = this.functions.get(name);
     if (spec === undefined) {
       // Not a built-in: a LET / LAMBDA variable or a defined name holding a LAMBDA.
-      const target = this.name(name, undefined, frame);
+      // A call to a variable is stored with its `_xlpm.` prefix too (`_xlpm.f(4)`).
+      const target = this.name(normalizeLocalName(name), undefined, frame);
       if (isLambda(target)) return this.invokeLambda(target, argNodes.map((a) => this.evaluate(a, frame)), frame);
       return ERRORS.NAME;
     }
