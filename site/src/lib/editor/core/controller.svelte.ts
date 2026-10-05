@@ -543,7 +543,7 @@ export class EditorController {
       const cell = this.cell(row, col);
       const style = this.doc.styles.get(cell?.styleId ?? this.defaultStyleAt(row, col));
       const formatted = cell ? this.displayText(cell) : '';
-      text = cell ? editTextFor(cell.value, formatted, isDateFormat(style.numFmt)) : '';
+      text = cell ? editTextFor(cell.value, formatted, isDateFormat(style.numFmt), { dateOrder: this.dateOrder(), date1904: this.doc.wb.date1904 }) : '';
       mode = 'edit';
     }
     this.edit = { row, col, sheetIndex: this.doc.activeSheetIndex, text, selStart: text.length, selEnd: text.length, mode, source, point: null };

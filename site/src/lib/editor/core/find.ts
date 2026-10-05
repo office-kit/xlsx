@@ -1,7 +1,7 @@
 // Find & Replace and Go To Special over the sparse cell store.
 
 import type { Cell } from '@office-kit/xlsx/cell';
-import { getCellDisplayText } from '@office-kit/xlsx/styles';
+import { getCellDisplayText, isDateFormat } from '@office-kit/xlsx/styles';
 import type { Worksheet } from '@office-kit/xlsx/worksheet';
 import { parseFormula } from '../calc/index.ts';
 import type { CellPos } from './address.ts';
@@ -20,7 +20,9 @@ export interface FindOptions {
 
 function cellText(ctl: EditorController, cell: Cell, lookIn: 'formulas' | 'values'): string {
   if (lookIn === 'values') return getCellDisplayText(ctl.doc.wb, cell);
-  return editTextFor(cell.value, getCellDisplayText(ctl.doc.wb, cell), false);
+  // "Formulas" searches what the formula bar shows, so 2024 finds a date in 2024.
+  const date = isDateFormat(ctl.doc.styles.get(cell.styleId).numFmt);
+  return editTextFor(cell.value, getCellDisplayText(ctl.doc.wb, cell), date, { dateOrder: ctl.dateOrder(), date1904: ctl.doc.wb.date1904 });
 }
 
 /** Regex source for an Excel wildcard pattern: `*` any run, `?` one character, `~` escapes. */
