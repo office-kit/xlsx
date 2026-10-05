@@ -233,8 +233,9 @@ export class SpreadsheetEditor {
       result = fn(tx);
       fitAutoRows(this, tx);
     } catch (err) {
-      if (!(err instanceof EditRefusedError)) throw err;
+      // Put back what the step changed before failing, so no half-done edit is left without an undo step.
       tx.rollback();
+      if (!(err instanceof EditRefusedError)) throw err;
       this.onRefused?.(err.reason);
       return undefined;
     }
