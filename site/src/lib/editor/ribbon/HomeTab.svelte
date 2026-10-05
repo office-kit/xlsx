@@ -198,9 +198,9 @@
       <button class="xl-btn" title={t('alignRight')} aria-pressed={style.hAlign === 'right'} onclick={() => A.setHAlign(ctl, 'right')}><Icon name="align-right" /></button>
       <button class="xl-btn" title={t('decreaseIndent')} onclick={() => A.stepIndent(ctl, -1)}><Icon name="indent-out" /></button>
       <button class="xl-btn" title={t('increaseIndent')} onclick={() => A.stepIndent(ctl, 1)}><Icon name="indent-in" /></button>
-      <MenuButton split icon="merge" title={t('mergeCenter')} onmain={() => A.merge(ctl, 'mergeCenter')}>
+      <MenuButton split icon="merge" title={t('mergeCenter')} onmain={() => A.toggleMergeCenter(ctl)}>
         {#snippet menu(close)}
-          <button class="xl-menu-item" onclick={() => { A.merge(ctl, 'mergeCenter'); close(); }}>{t('mergeCenter')}</button>
+          <button class="xl-menu-item" onclick={() => { A.toggleMergeCenter(ctl); close(); }}>{t('mergeCenter')}</button>
           <button class="xl-menu-item" onclick={() => { A.merge(ctl, 'mergeAcross'); close(); }}>{t('mergeAcross')}</button>
           <button class="xl-menu-item" onclick={() => { A.merge(ctl, 'merge'); close(); }}>{t('mergeCells')}</button>
           <button class="xl-menu-item" onclick={() => { A.merge(ctl, 'unmerge'); close(); }}>{t('unmergeCells')}</button>

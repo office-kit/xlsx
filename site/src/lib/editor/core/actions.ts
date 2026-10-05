@@ -191,6 +191,13 @@ export function applyBorder(ctl: EditorController, preset: BorderPreset, side: S
   format(ctl, { border: borderPatch(preset, side) }, 'Borders');
 }
 
+/** The Merge & Center button: on a merged cell it unmerges, as Excel's toggle does. */
+export function toggleMergeCenter(ctl: EditorController): void {
+  const { row, col } = ctl.doc.selection.active;
+  const merged = ctl.doc.ws.mergedCells.some((m) => row >= m.minRow && row <= m.maxRow && col >= m.minCol && col <= m.maxCol);
+  merge(ctl, merged ? 'unmerge' : 'mergeCenter');
+}
+
 export function merge(ctl: EditorController, mode: MergeMode): void {
   const ws = ctl.doc.ws;
   if (mode !== 'unmerge' && ctl.doc.selection.ranges.some((r) => ws.tables.some((t) => intersectsTable(t, r)))) {
