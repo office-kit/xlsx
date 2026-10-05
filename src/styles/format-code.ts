@@ -837,7 +837,7 @@ const assembleNumber = (section: NumberFormatSection, parts: DecimalParts, expon
     const token = section.tokens[i];
     if (token === undefined) continue;
     if (token.kind === 'point') {
-      tail.push(fracText.length > 0 ? '.' : '');
+      tail.push('.');
       continue;
     }
     if (token.kind === 'exponent') {
