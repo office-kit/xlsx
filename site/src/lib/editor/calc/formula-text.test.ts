@@ -186,3 +186,9 @@ describe('entry normalisation', () => {
     expect(toStorageFormula(typed)).toBe(stored);
   });
 });
+
+test('a typed sheet name takes the real sheet name\'s case', () => {
+  expect(toStorageFormula("sheet1!a1+'my data'!b2+'SHEET1'!C3", ['Sheet1', 'My Data'])).toBe("Sheet1!A1+'My Data'!B2+Sheet1!C3");
+  // An unknown sheet stays as typed (Excel asks for the file instead).
+  expect(toStorageFormula('other!a1', ['Sheet1'])).toBe('other!A1');
+});

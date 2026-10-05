@@ -210,6 +210,8 @@ export interface ParseOptions {
   readonly dateOrder?: DateOrder;
   readonly date1904?: boolean;
   readonly today?: Date;
+  /** The workbook's sheet names, so a typed reference takes the real name's case. */
+  readonly sheetTitles?: readonly string[];
 }
 
 // A General cell takes the format of what its formula's leading function
@@ -223,10 +225,10 @@ const LEADING_FUNCTION_FORMATS: ReadonlyMap<string, string> = new Map([
   ['TIMEVALUE', 'h:mm AM/PM'],
 ]);
 
-function formulaInput(body: string): ParsedInput {
+function formulaInput(body: string, sheetTitles: readonly string[] | undefined): ParsedInput {
   const fn = /^[+-]*([A-Za-z.]+)\(/.exec(body)?.[1]?.toUpperCase();
   const impliedFormat = fn === undefined ? undefined : LEADING_FUNCTION_FORMATS.get(fn);
-  const value = makeFormula(toStorageFormula(body));
+  const value = makeFormula(toStorageFormula(body, sheetTitles));
   return impliedFormat === undefined ? { value } : { value, impliedFormat };
 }
 
@@ -239,7 +241,7 @@ function formulaInput(body: string): ParsedInput {
 export function parseInput(input: string, opts: ParseOptions = {}): ParsedInput {
   if (input === '') return { value: null };
   if (input.startsWith("'")) return { value: input.slice(1) };
-  if (input.startsWith('=') && input.length > 1) return formulaInput(input.slice(1));
+  if (input.startsWith('=') && input.length > 1) return formulaInput(input.slice(1), opts.sheetTitles);
   // Excel turns "+A1", "-A1*2" and "+1+2" into formulas, but keeps "+5" / "-5"
   // numbers and "- item" text.
   if (
@@ -249,7 +251,7 @@ export function parseInput(input: string, opts: ParseOptions = {}): ParsedInput 
     parseFraction(input.trim()) === undefined &&
     /^[+-][A-Za-z0-9($.+-]/.test(input)
   ) {
-    return formulaInput(input);
+    return formulaInput(input, opts.sheetTitles);
   }
   const text = input.trim();
   const upper = text.toUpperCase();
