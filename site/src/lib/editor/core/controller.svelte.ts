@@ -30,6 +30,7 @@ import { GridGeometry } from '../grid/geometry.ts';
 import { sparklineIndex } from './sparklines.ts';
 import { pivotAt } from './pivot.ts';
 import type { ShapeTool } from './shapes.ts';
+import { autoExpandTable } from './tables.ts';
 
 export type EditMode = 'enter' | 'edit' | 'point';
 
@@ -668,6 +669,7 @@ export class EditorController {
     if (this.splitsArray(fill?.ranges ?? [{ r1: at.row, c1: at.col, r2: at.row, c2: at.col }])) return false;
     this.edit = null;
     commitInput(this.doc, at, text, { dateOrder: this.dateOrder(), measure: (cell) => cellTextWidth(this, cell) }, fill);
+    if (!fill) autoExpandTable(this, at);
     if (!fill && !several) {
       // Re-selecting the edited cell must not end a Tab run: Enter returns to its first column.
       const tabStartCol = this.tabStartCol;
