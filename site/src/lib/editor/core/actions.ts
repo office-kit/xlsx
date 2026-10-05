@@ -6,7 +6,7 @@ import type { CellValue } from '@office-kit/xlsx/cell';
 import { makeCell } from '@office-kit/xlsx/cell';
 import type { Font, HorizontalAlignment, Side, VerticalAlignment } from '@office-kit/xlsx/styles';
 import { classifyDateFormat, getCellFont, getCellProtection, isDateFormat, makeColor } from '@office-kit/xlsx/styles';
-import { addWorksheet, moveSheet, removeSheet, renameSheet, setSheetState } from '@office-kit/xlsx/workbook';
+import { addWorksheet, moveSheet, removeSheet, renameSheet, setSheetState, type Workbook } from '@office-kit/xlsx/workbook';
 import type { TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
 import type { PageSetup } from '@office-kit/xlsx/worksheet';
 import {
@@ -560,13 +560,27 @@ export function deleteSheet(ctl: EditorController, index: number): void {
   doc.layoutVersion++;
 }
 
-export function renameSheetAt(ctl: EditorController, index: number, name: string): string | undefined {
+const MAX_SHEET_NAME = 31;
+/** Excel keeps this name for its change-history sheet, in any case. */
+const RESERVED_SHEET_NAME = 'history';
+
+export type SheetNameError = 'invalidSheetName' | 'reservedSheetName' | 'duplicateSheetName';
+
+/** Why Excel would refuse `name` for the sheet at `index` (or a new sheet), if it would. */
+export function sheetNameError(wb: Workbook, name: string, index = -1): SheetNameError | undefined {
+  if (!name || name.length > MAX_SHEET_NAME || /[\\/?*[\]:]/.test(name) || name.startsWith("'") || name.endsWith("'")) return 'invalidSheetName';
+  if (name.toLowerCase() === RESERVED_SHEET_NAME) return 'reservedSheetName';
+  if (wb.sheets.some((s, i) => i !== index && s.sheet.title.toLowerCase() === name.toLowerCase())) return 'duplicateSheetName';
+  return undefined;
+}
+
+export function renameSheetAt(ctl: EditorController, index: number, name: string): SheetNameError | undefined {
   const doc = ctl.doc;
   const ref = doc.wb.sheets[index];
   if (!ref) return undefined;
   const trimmed = name.trim();
-  if (!trimmed || trimmed.length > 31 || /[\\/?*[\]:]/.test(trimmed) || trimmed.startsWith("'") || trimmed.endsWith("'")) return 'invalidSheetName';
-  if (doc.wb.sheets.some((s, i) => i !== index && s.sheet.title.toLowerCase() === trimmed.toLowerCase())) return 'duplicateSheetName';
+  const error = sheetNameError(doc.wb, trimmed, index);
+  if (error) return error;
   const old = ref.sheet.title;
   if (old === trimmed) return undefined;
   doc.transact('Rename Sheet', (tx) => {

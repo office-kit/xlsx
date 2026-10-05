@@ -13,6 +13,7 @@ export const dialogsJa: Partial<Record<keyof typeof dialogsEn, string>> = {
   lastSheet: 'ブックには、少なくとも 1 つの表示されたワークシートが必要です。',
   invalidSheetName: 'このシート名は使用できません。空白にしたり、31 文字を超えたり、: \\ / ? * [ ] を含めたりすることはできません。',
   duplicateSheetName: 'この名前は既に使用されています。別の名前を入力してください。',
+  reservedSheetName: '「History」は予約された名前のため使用できません。別の名前を入力してください。',
   invalidName: '入力した名前は正しくありません。',
   duplicateName: 'この名前は既に存在します。名前は一意である必要があります。',
   statistics: 'シート数 / データのあるセル数 / 数式の数',
