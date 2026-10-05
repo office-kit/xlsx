@@ -55,6 +55,43 @@ describe('keyboard navigation over cell data', () => {
     expect(currentRegion(ws, { row: 6, col: 1 })).toEqual({ r1: 6, c1: 1, r2: 6, c2: 1 });
   });
 
+  test('the current region matches a full rescan on scattered data', () => {
+    // Reference: grow until the border ring is blank, rescanning everything each pass.
+    const naive = (ws: ReturnType<typeof addWorksheet>, row: number, col: number) => {
+      let [r1, r2, c1, c2] = [row, row, col, col];
+      const has = (r: number, c: number) => ws.rows.get(r)?.get(c) !== undefined;
+      for (let grew = true; grew; ) {
+        grew = false;
+        const ring = (a1: number, a2: number, b1: number, b2: number) => {
+          for (let r = a1; r <= a2; r++) for (let c = b1; c <= b2; c++) if (r >= 1 && c >= 1 && has(r, c)) return true;
+          return false;
+        };
+        if (ring(r1 - 1, r1 - 1, c1 - 1, c2 + 1)) [r1, grew] = [r1 - 1, true];
+        if (ring(r2 + 1, r2 + 1, c1 - 1, c2 + 1)) [r2, grew] = [r2 + 1, true];
+        if (ring(r1 - 1, r2 + 1, c1 - 1, c1 - 1)) [c1, grew] = [c1 - 1, true];
+        if (ring(r1 - 1, r2 + 1, c2 + 1, c2 + 1)) [c2, grew] = [c2 + 1, true];
+      }
+      return { r1: Math.max(1, r1), c1: Math.max(1, c1), r2, c2 };
+    };
+    let seed = 7;
+    const rand = () => (seed = (seed * 48271) % 2147483647) / 2147483647;
+    for (let trial = 0; trial < 40; trial++) {
+      const ws = addWorksheet(createWorkbook(), 'S');
+      for (let i = 0; i < 60; i++) setCell(ws, 1 + Math.floor(rand() * 14), 1 + Math.floor(rand() * 14), 1);
+      for (let r = 1; r <= 15; r++) {
+        for (let c = 1; c <= 15; c++) expect(currentRegion(ws, { row: r, col: c })).toEqual(naive(ws, r, c));
+      }
+    }
+  });
+
+  test('the current region of a tall block is found in linear time', () => {
+    const ws = addWorksheet(createWorkbook(), 'S');
+    for (let r = 1; r <= 100_000; r++) for (let c = 1; c <= 5; c++) setCell(ws, r, c, r);
+    const t0 = performance.now();
+    expect(currentRegion(ws, { row: 1, col: 1 })).toEqual({ r1: 1, c1: 1, r2: 100_000, c2: 5 });
+    expect(performance.now() - t0).toBeLessThan(2000);
+  });
+
   test('Ctrl+End goes to the last used row and the last used column, even when that cell is empty', () => {
     expect(lastUsedCell(sheet())).toEqual({ row: 12, col: 6 });
   });
