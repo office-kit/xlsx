@@ -26,7 +26,7 @@ import { forEachCellInRange, getCellAt, isBlank } from './cells.ts';
 import { validateValue } from './validation.ts';
 import { flashFill } from './flash-fill.ts';
 import { groupLines, isCollapsed, toggleRun } from './outline.ts';
-import { clearRanges, formatRanges, freeze, mergeRanges, setHidden, type ClearKind, type MergeMode } from './commands.ts';
+import { clearRanges, formatRanges, freeze, mergeDiscardsValues, mergeRanges, setHidden, type ClearKind, type MergeMode } from './commands.ts';
 import { autofitColumns, autofitRows } from './autofit.ts';
 import { copyToSystem, pasteFromSystem, type PasteMode } from './clipboard.ts';
 import type { EditorController } from './controller.svelte.ts';
@@ -189,7 +189,12 @@ export function applyBorder(ctl: EditorController, preset: BorderPreset, side: S
 }
 
 export function merge(ctl: EditorController, mode: MergeMode): void {
-  repeatable(ctl, () => mergeRanges(ctl.doc, ctl.doc.selection.ranges, mode));
+  const run = () => repeatable(ctl, () => mergeRanges(ctl.doc, ctl.doc.selection.ranges, mode));
+  if (mergeDiscardsValues(ctl.doc.ws, ctl.doc.selection.ranges, mode)) {
+    ctl.dialog = { kind: 'alert', props: { message: 'mergeDiscardsValues', onConfirm: run } };
+    return;
+  }
+  run();
 }
 
 // ---- fill -------------------------------------------------------------------------
