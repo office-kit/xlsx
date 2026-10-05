@@ -467,6 +467,12 @@ export function deleteSheet(ctl: EditorController, index: number): void {
     tx.structural = true;
     tx.workbook('sheets', 'activeSheetIndex', 'definedNames');
     removeSheet(doc.wb, title);
+    // A PivotTable reading from the deleted sheet can no longer be rebuilt; its values stay as plain cells.
+    for (const s of doc.wb.sheets) {
+      if (s.kind !== 'worksheet' || !s.sheet.pivotTables?.some((pt) => pt.source.sheet.toLowerCase() === title.toLowerCase())) continue;
+      tx.sheet(s.sheet, 'pivotTables');
+      s.sheet.pivotTables = s.sheet.pivotTables.filter((pt) => pt.source.sheet.toLowerCase() !== title.toLowerCase());
+    }
   });
   doc.activeSheetIndex = Math.min(next, doc.wb.sheets.length - 1);
   doc.layoutVersion++;
