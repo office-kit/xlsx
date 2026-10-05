@@ -212,6 +212,8 @@ export interface ParseOptions {
   readonly today?: Date;
   /** The workbook's sheet names, so a typed reference takes the real name's case. */
   readonly sheetTitles?: readonly string[];
+  /** The table holding the cell, which unqualified structured references point at. */
+  readonly table?: string | undefined;
 }
 
 // A General cell takes the format of what its formula's leading function
@@ -225,10 +227,10 @@ const LEADING_FUNCTION_FORMATS: ReadonlyMap<string, string> = new Map([
   ['TIMEVALUE', 'h:mm AM/PM'],
 ]);
 
-function formulaInput(body: string, sheetTitles: readonly string[] | undefined): ParsedInput {
+function formulaInput(body: string, opts: ParseOptions): ParsedInput {
   const fn = /^[+-]*([A-Za-z.]+)\(/.exec(body)?.[1]?.toUpperCase();
   const impliedFormat = fn === undefined ? undefined : LEADING_FUNCTION_FORMATS.get(fn);
-  const value = makeFormula(toStorageFormula(body, sheetTitles));
+  const value = makeFormula(toStorageFormula(body, opts.sheetTitles, opts.table));
   return impliedFormat === undefined ? { value } : { value, impliedFormat };
 }
 
@@ -241,7 +243,7 @@ function formulaInput(body: string, sheetTitles: readonly string[] | undefined):
 export function parseInput(input: string, opts: ParseOptions = {}): ParsedInput {
   if (input === '') return { value: null };
   if (input.startsWith("'")) return { value: input.slice(1) };
-  if (input.startsWith('=') && input.length > 1) return formulaInput(input.slice(1), opts.sheetTitles);
+  if (input.startsWith('=') && input.length > 1) return formulaInput(input.slice(1), opts);
   // Excel turns "+A1", "-A1*2" and "+1+2" into formulas, but keeps "+5" / "-5"
   // numbers and "- item" text.
   if (
@@ -251,7 +253,7 @@ export function parseInput(input: string, opts: ParseOptions = {}): ParsedInput 
     parseFraction(input.trim()) === undefined &&
     /^[+-][A-Za-z0-9($.+-]/.test(input)
   ) {
-    return formulaInput(input, opts.sheetTitles);
+    return formulaInput(input, opts);
   }
   const text = input.trim();
   const upper = text.toUpperCase();
@@ -296,10 +298,10 @@ const SECONDS_PER_DAY = 86_400;
  * second, and a percentage shows every digit — so committing it unchanged
  * keeps the value.
  */
-export function editTextFor(value: CellValue, formatted: string, isDateFormat: boolean, opts: { dateOrder: DateOrder; date1904: boolean }): string {
+export function editTextFor(value: CellValue, formatted: string, isDateFormat: boolean, opts: { dateOrder: DateOrder; date1904: boolean; table?: string | undefined }): string {
   if (value === null) return '';
   if (typeof value === 'object' && !(value instanceof Date)) {
-    if (value.kind === 'formula') return `=${fromStorageFormula(value.formula)}`;
+    if (value.kind === 'formula') return `=${fromStorageFormula(value.formula, opts.table)}`;
     if (value.kind === 'error') return value.code;
     if (value.kind === 'rich-text') return value.runs.map((r) => r.text).join('');
   }

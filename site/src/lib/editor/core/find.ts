@@ -9,6 +9,7 @@ import { writeValue } from './commands.ts';
 import type { EditorController } from './controller.svelte.ts';
 import { editTextFor, parseInput } from './input.ts';
 import { selectRange } from './selection.ts';
+import { tableAt } from './tables.ts';
 
 export interface FindOptions {
   readonly query: string;
@@ -18,11 +19,11 @@ export interface FindOptions {
   readonly lookIn: 'formulas' | 'values';
 }
 
-function cellText(ctl: EditorController, cell: Cell, lookIn: 'formulas' | 'values'): string {
+function cellText(ctl: EditorController, ws: Worksheet, cell: Cell, lookIn: 'formulas' | 'values'): string {
   if (lookIn === 'values') return getCellDisplayText(ctl.doc.wb, cell);
   // "Formulas" searches what the formula bar shows, so 2024 finds a date in 2024.
   const date = isDateFormat(ctl.doc.styles.get(cell.styleId).numFmt);
-  return editTextFor(cell.value, getCellDisplayText(ctl.doc.wb, cell), date, { dateOrder: ctl.dateOrder(), date1904: ctl.doc.wb.date1904 });
+  return editTextFor(cell.value, getCellDisplayText(ctl.doc.wb, cell), date, { dateOrder: ctl.dateOrder(), date1904: ctl.doc.wb.date1904, table: tableAt(ws, cell.row, cell.col)?.def.displayName });
 }
 
 /** Regex source for an Excel wildcard pattern: `*` any run, `?` one character, `~` escapes. */
@@ -57,7 +58,7 @@ export function findAll(ctl: EditorController, opts: FindOptions, sheets: readon
   const out: Array<{ ws: Worksheet; cell: Cell; text: string }> = [];
   for (const ws of sheets) {
     for (const cell of sortedCells(ws, opts.byColumns)) {
-      const text = cellText(ctl, cell, opts.lookIn);
+      const text = cellText(ctl, ws, cell, opts.lookIn);
       if (match(text)) out.push({ ws, cell, text });
     }
   }
@@ -96,9 +97,9 @@ function replaceIn(ctl: EditorController, opts: FindOptions, replacement: string
   const re = buildReplaceRegex(opts);
   const inputOpts = { dateOrder: ctl.dateOrder(), date1904: ctl.doc.wb.date1904 };
   const parsed = targets.map(({ ws, cell }) => {
-    const text = cellText(ctl, cell, 'formulas');
+    const text = cellText(ctl, ws, cell, 'formulas');
     const next = opts.wholeCell ? replacement : text.replace(re, replacement.replaceAll('$', '$$$$'));
-    return { ws, cell, text: next, input: parseInput(next, inputOpts) };
+    return { ws, cell, text: next, input: parseInput(next, { ...inputOpts, table: tableAt(ws, cell.row, cell.col)?.def.displayName }) };
   });
   for (const p of parsed) {
     if (!p.text.startsWith('=') || p.text.length < 2) continue;
@@ -138,7 +139,7 @@ export function replaceCurrent(ctl: EditorController, opts: FindOptions, replace
   const { row, col } = ctl.doc.selection.active;
   const ws = ctl.doc.ws;
   const cell = ws.rows.get(row)?.get(col);
-  const result = cell && toMatcher({ ...opts, lookIn: 'formulas' })(cellText(ctl, cell, 'formulas')) ? replaceIn(ctl, opts, replacement, [{ ws, cell }]) : { replaced: 0 };
+  const result = cell && toMatcher({ ...opts, lookIn: 'formulas' })(cellText(ctl, ws, cell, 'formulas')) ? replaceIn(ctl, opts, replacement, [{ ws, cell }]) : { replaced: 0 };
   if (result.invalidFormula === undefined) findNext(ctl, 1);
   return result;
 }

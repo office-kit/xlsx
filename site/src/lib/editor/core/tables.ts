@@ -11,6 +11,7 @@ import { getCellAt, isBlank, setValueAt } from './cells.ts';
 import type { EditorController } from './controller.svelte.ts';
 import type { Transaction } from './history.ts';
 import { transformStyle } from './format.ts';
+import { toStorageFormula, translateFormula } from '../calc/index.ts';
 import { structuralEdit } from './structure.ts';
 import { hasBuiltInStyle, placeOf, rawLookAt, tableOptions, type Line, type ThemeRef } from './table-style.ts';
 
@@ -621,7 +622,7 @@ export function totalCellAt(ws: Worksheet, row: number, col: number): { def: Tab
  * overlap the old one. Columns keep their identity by position; new ones take
  * their header text (or ColumnN).
  */
-export function resizeTable(ctl: EditorController, def: TableDefinition, next: Range): MessageKey | undefined {
+export function resizeTable(ctl: EditorController, def: TableDefinition, next: Range, then?: (tx: Transaction) => void): MessageKey | undefined {
   const doc = ctl.doc;
   const ws = doc.ws;
   const range = tableRange(def);
@@ -665,6 +666,7 @@ export function resizeTable(ctl: EditorController, def: TableDefinition, next: R
     def.columns = columns;
     def.ref = rangeAddress(next);
     if (def.autoFilter) def.autoFilter = { ...def.autoFilter, ref: rangeAddress(filterRange(def, next)), filterColumns: [] };
+    then?.(tx);
   });
   return undefined;
 }
@@ -684,9 +686,54 @@ export function autoExpandTable(ctl: EditorController, at: CellPos): void {
     const below = totalRows(def) === 0 && at.row === range.r2 + 1 && at.col >= range.c1 && at.col <= range.c2;
     const right = at.col === range.c2 + 1 && at.row >= range.r1 && at.row <= range.r2;
     if (!below && !right) continue;
-    resizeTable(ctl, def, below ? { ...range, r2: at.row } : { ...range, c2: at.col });
+    // A new row picks up the table's calculated columns, as in Excel.
+    const fillNewRow = (tx: Transaction) => {
+      tx.cells(ws, { r1: at.row, c1: range.c1, r2: at.row, c2: range.c2 });
+      def.columns.forEach((column, i) => {
+        const col = range.c1 + i;
+        if (column.calculatedColumnFormula === undefined || !isBlank(getCellAt(ws, at.row, col))) return;
+        const dRow = at.row - (range.r1 + headerRows(def));
+        setValueAt(ws, at.row, col, { kind: 'formula', t: 'normal', formula: translateFormula(column.calculatedColumnFormula, dRow, 0) }, getCellAt(ws, at.row - 1, col)?.styleId ?? 0);
+      });
+    };
+    resizeTable(ctl, def, below ? { ...range, r2: at.row } : { ...range, c2: at.col }, below ? fillNewRow : undefined);
     return;
   }
+}
+
+/**
+ * After typing into a table cell: a formula whose structured references were
+ * typed before the cell joined the table (just right of it) takes the table's
+ * name, and Excel's calculated column fills the formula down a column whose
+ * other data cells are all empty, the table remembering it as the column's
+ * formula. Its own undo step, like Excel's AutoCorrect.
+ */
+export function fillCalculatedColumn(ctl: EditorController, at: CellPos): void {
+  const ws = ctl.doc.ws;
+  const hit = tableAt(ws, at.row, at.col);
+  if (!hit) return;
+  const { def, range } = hit;
+  const first = range.r1 + headerRows(def);
+  const last = range.r2 - totalRows(def);
+  if (at.row < first || at.row > last) return;
+  const typed = getCellAt(ws, at.row, at.col);
+  const value = typed?.value;
+  if (!typed || value === null || typeof value !== 'object' || value instanceof Date || value.kind !== 'formula') return;
+  const formula = toStorageFormula(value.formula, [], def.displayName);
+  let fill = first !== last;
+  for (let r = first; r <= last && fill; r++) if (r !== at.row && !isBlank(getCellAt(ws, r, at.col))) fill = false;
+  const column = def.columns[at.col - range.c1];
+  if (!column || (!fill && formula === value.formula)) return;
+  ctl.doc.transact('Calculated Column', (tx) => {
+    tx.cells(ws, fill ? { r1: first, c1: at.col, r2: last, c2: at.col } : { r1: at.row, c1: at.col, r2: at.row, c2: at.col });
+    if (formula !== value.formula) typed.value = { ...value, formula };
+    if (!fill) return;
+    tx.sheet(ws, 'tables');
+    for (let r = first; r <= last; r++) {
+      if (r !== at.row) setValueAt(ws, r, at.col, { kind: 'formula', t: 'normal', formula: translateFormula(formula, r - at.row, 0) }, typed.styleId);
+    }
+    column.calculatedColumnFormula = translateFormula(formula, first - at.row, 0);
+  });
 }
 
 function themeColor(r: ThemeRef) {
