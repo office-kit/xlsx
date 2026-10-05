@@ -76,7 +76,7 @@
     const cell = ctl.cell(row, col);
     if (!cell) return '';
     const style = doc.styles.get(cell.styleId);
-    return editTextFor(cell.value, getCellDisplayText(doc.wb, cell), isDateFormat(style.numFmt));
+    return editTextFor(cell.value, getCellDisplayText(doc.wb, cell), isDateFormat(style.numFmt), { dateOrder: ctl.dateOrder(), date1904: doc.wb.date1904 });
   });
 
   $effect(() => {

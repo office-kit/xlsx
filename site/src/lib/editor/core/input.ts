@@ -6,6 +6,7 @@
 import type { CellValue, ExcelErrorCode } from '@office-kit/xlsx/cell';
 import { makeFormula } from '@office-kit/xlsx/cell';
 import { ERROR_CODES } from '@office-kit/xlsx/utils';
+import { hmsFromSerial, ymdFromSerial } from '../calc/dates.ts';
 import { fromStorageFormula, toStorageFormula } from '../calc/index.ts';
 
 export type DateOrder = 'mdy' | 'ymd' | 'dmy';
@@ -281,11 +282,19 @@ export function parseInput(input: string, opts: ParseOptions = {}): ParsedInput 
   return { value: input };
 }
 
+/** Largest serial Excel shows as a date (12/31/9999); anything past it, or below 0, shows as a number. */
+const MAX_DATE_SERIAL = 2958465;
+const SECONDS_PER_DAY = 86_400;
+
 /**
  * The text the cell editor starts with when the user presses F2 or
  * double-clicks: the formula with its `=`, or the value in an editable form.
+ * Like Excel's formula bar, it never drops precision the cell's format hides:
+ * a date shows its four-digit year and, when it has one, its time to the
+ * second, and a percentage shows every digit — so committing it unchanged
+ * keeps the value.
  */
-export function editTextFor(value: CellValue, formatted: string, isDateFormat: boolean): string {
+export function editTextFor(value: CellValue, formatted: string, isDateFormat: boolean, opts: { dateOrder: DateOrder; date1904: boolean }): string {
   if (value === null) return '';
   if (typeof value === 'object' && !(value instanceof Date)) {
     if (value.kind === 'formula') return `=${fromStorageFormula(value.formula)}`;
@@ -294,9 +303,26 @@ export function editTextFor(value: CellValue, formatted: string, isDateFormat: b
   }
   if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
   if (typeof value === 'number') {
-    // Dates and percentages edit in their displayed form, like Excel.
-    if (isDateFormat || formatted.endsWith('%')) return formatted;
+    if (isDateFormat && value >= 0 && value < MAX_DATE_SERIAL + 1) return dateEditText(value, opts);
+    if (formatted.endsWith('%')) return `${Number((value * 100).toPrecision(15))}%`;
     return String(Number(value.toPrecision(15)));
   }
   return String(value);
+}
+
+function dateEditText(serial: number, { dateOrder, date1904 }: { dateOrder: DateOrder; date1904: boolean }): string {
+  // Round to the second first, so 23:59:59.7 carries into the next day.
+  const rounded = Math.round(serial * SECONDS_PER_DAY) / SECONDS_PER_DAY;
+  const day = Math.floor(rounded);
+  let time = '';
+  if (rounded !== day) {
+    const { h, mi, s } = hmsFromSerial(rounded);
+    const mmss = `${String(mi).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    time = dateOrder === 'mdy' ? `${h % 12 || 12}:${mmss} ${h < 12 ? 'AM' : 'PM'}` : `${h}:${mmss}`;
+  }
+  // A time with no date part shows on its own.
+  if (day === 0 && time) return time;
+  const { y, m, d } = ymdFromSerial(day, date1904);
+  const date = dateOrder === 'ymd' ? `${y}/${m}/${d}` : dateOrder === 'dmy' ? `${d}/${m}/${y}` : `${m}/${d}/${y}`;
+  return time ? `${date} ${time}` : date;
 }
