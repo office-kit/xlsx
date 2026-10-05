@@ -1,6 +1,6 @@
 {
-  "kind": "breaking",
-  "reason": "SheetView.selection becomes SheetView.selections (one per pane) so frozen / split views keep every pane's selection; activeSelection() is added to read the active pane's. Breaking because SheetView.selection is removed.",
-  "baselineSha256": "bab503589247511e4be3d22feb6edc318b5fb7f846d42ad415898990b6cdaa5b",
-  "changeset": ".changeset/sheetview-pane-selections.md"
+  "kind": "additive",
+  "reason": "PieChart gains optional firstSliceAng (and makePieChart accepts it) so a rotated pie keeps its rotation.",
+  "baselineSha256": "f4a8fbd623e1ac41a57350f42bb0d7e592c6ce50515ce0af9eb3cc000dfeabf5",
+  "changeset": ".changeset/pie-first-slice-angle.md"
 }
