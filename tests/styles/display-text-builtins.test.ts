@@ -50,16 +50,10 @@ const EXPECTED: Record<number, [string, string]> = {
   41: [' 1,235 ', ' 45,366 '],
   42: [' $1,235 ', ' $45,366 '],
   43: [' 1,234.50 ', ' 45,365.50 '],
-  // Excel's own built-in 44 separates its four sections with `;`. The catalogue
-  // in src/styles/numbers.ts mirrors openpyxl, which drops them, so the stored
-  // code is a single section carrying both digit placeholders and `@`. It reads
-  // as a text layout and falls back to General; it is the one entry in the
-  // catalogue whose stored form cannot render as the accounting format Excel
-  // means by numFmtId 44.
-  44: ['1234.5', '45365.5'],
+  44: [' $1,234.50 ', ' $45,365.50 '],
   45: ['00:00', '00:00'],
   46: ['29628:00:00', '1088772:00:00'],
-  47: ['0000.0', '0000.0'],
+  47: ['00:00.0', '00:00.0'],
   48: ['1.2E+3', '45.4E+3'],
   49: ['1234.5', '45365.5'],
 };
@@ -76,12 +70,9 @@ describe('getCellDisplayText over the built-in format catalogue', () => {
     expect([display(code, NUMBER), display(code, SERIAL)]).toEqual(expected);
   });
 
-  it('renders numFmtId 44 as the accounting format once its sections are separated', () => {
-    // The same code with Excel's `;` separators restored, to show the renderer
-    // handles the format and only the catalogue entry is off.
-    const excelCode = '_("$"* #,##0.00_);_("$"* \\(#,##0.00\\);_("$"* "-"??_);_(@_)';
-    expect(display(excelCode, NUMBER)).toBe(' $1,234.50 ');
-    expect(display(excelCode, -NUMBER)).toBe(' $(1,234.50)');
-    expect(display(excelCode, 0)).toBe(' $-   ');
+  it('renders numFmtId 44 like Excel for negatives and zero too', () => {
+    const code = BUILTIN_FORMATS[44] ?? '';
+    expect(display(code, -NUMBER)).toBe(' $(1,234.50)');
+    expect(display(code, 0)).toBe(' $-   ');
   });
 });

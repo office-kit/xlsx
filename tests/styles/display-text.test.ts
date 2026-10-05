@@ -213,7 +213,7 @@ describe('getCellDisplayText: dates and times', () => {
     // `m` is a minute next to an hour or a second, a month everywhere else.
     ['mm:ss', 0.5 + 61 / 86_400, '01:01'],
     ['h"h" mm"m"', 45_365.5, '12h 00m'],
-    ['mmss.0', 0.5 + 61.4 / 86_400, '0101.4'],
+    ['mm:ss.0', 0.5 + 61.4 / 86_400, '01:01.4'],
   ])('%s + %j => %j', (code, value, expected) => {
     expect(display(code, value)).toBe(expected);
   });
