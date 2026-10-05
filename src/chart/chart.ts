@@ -263,6 +263,8 @@ export interface PieChart {
   varyColors?: boolean;
   /** Pie / Doughnut have a single ring of slices — but Excel allows multiple series; we mirror that. */
   series: BarSeries[];
+  /** First-slice rotation angle in degrees (Format Data Series ▸ Angle of first slice). */
+  firstSliceAng?: number;
 }
 
 export interface DoughnutChart {
@@ -790,11 +792,12 @@ export function makeAreaChart(opts: {
   };
 }
 
-export function makePieChart(opts: { series?: BarSeries[]; varyColors?: boolean }): PieChart {
+export function makePieChart(opts: { series?: BarSeries[]; varyColors?: boolean; firstSliceAng?: number }): PieChart {
   return {
     kind: 'pie',
     series: opts.series ?? [],
     ...(opts.varyColors !== undefined ? { varyColors: opts.varyColors } : {}),
+    ...(opts.firstSliceAng !== undefined ? { firstSliceAng: opts.firstSliceAng } : {}),
   };
 }
 

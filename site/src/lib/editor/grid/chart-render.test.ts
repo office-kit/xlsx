@@ -15,6 +15,7 @@ const base: ChartData = {
   legend: 'b',
   varyColors: false,
   holeSize: 0,
+  firstSliceAng: 0,
   gapWidth: 150,
   overlap: 0,
   valMin: undefined,
@@ -52,6 +53,16 @@ describe('renderChartSvg', () => {
   it('draws pie slices for each positive value', () => {
     const svg = renderChartSvg({ ...base, kind: 'pie', series: [{ ...EAST, values: [1, 1, 2] }], categories: ['a', 'b', 'c'] }, 300, 300, OFFICE_PALETTE);
     expect(svg.match(/<path d="M[^"]*A/g)).toHaveLength(3);
+  });
+
+  it('turns the first slice by firstSliceAng', () => {
+    const pie = (firstSliceAng: number) => renderChartSvg({ ...base, kind: 'pie', firstSliceAng, series: [{ ...EAST, values: [1, 1] }], categories: ['a', 'b'] }, 300, 300, OFFICE_PALETTE);
+    // The first arc starts at the slice's start angle: straight up at 0°, to the right at 90°.
+    const start = (svg: string) => /<path d="M[^"]*?L\s*([\d.]+)[ ,]([\d.]+)/.exec(svg)?.slice(1).map(Number);
+    const [x0 = Number.NaN, y0 = Number.NaN] = start(pie(0)) ?? [];
+    const [x90 = Number.NaN, y90 = Number.NaN] = start(pie(90)) ?? [];
+    expect(x90).toBeGreaterThan(x0);
+    expect(y90).toBeGreaterThan(y0);
   });
 
   it('draws data labels, axis titles and the chart frame', () => {

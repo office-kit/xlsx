@@ -869,9 +869,11 @@ const parseAreaChart = (areaEl: XmlNode): AreaChart => {
 
 const parsePieChart = (pieEl: XmlNode): PieChart => {
   const varyColors = boolVal(findChild(pieEl, VARY_COLORS_TAG));
+  const firstSliceAng = intVal(findChild(pieEl, FIRST_SLICE_ANG_TAG));
   return makePieChart({
     series: parseBarSeriesList(pieEl),
     ...(varyColors !== undefined ? { varyColors } : {}),
+    ...(firstSliceAng !== undefined ? { firstSliceAng } : {}),
   });
 };
 
@@ -1697,6 +1699,7 @@ const serializeAreaChart = (chart: AreaChart): string => {
 const serializePieChart = (chart: PieChart): string => {
   const parts: string[] = ['<c:pieChart>', `<c:varyColors val="${(chart.varyColors ?? true) ? '1' : '0'}"/>`];
   for (const s of chart.series) parts.push(serializeSeries(s));
+  parts.push(`<c:firstSliceAng val="${chart.firstSliceAng ?? 0}"/>`);
   parts.push('</c:pieChart>');
   return parts.join('');
 };

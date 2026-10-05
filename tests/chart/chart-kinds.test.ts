@@ -86,6 +86,14 @@ describe('PieChart round-trip', () => {
   });
 });
 
+describe('PieChart rotation', () => {
+  it('preserves firstSliceAng', () => {
+    const chart = makePieChart({ firstSliceAng: 90, series: [makeBarSeries({ idx: 0, val: { ref: 'A1:A2' } })] });
+    const back = parseChartXml(chartToBytes(wrap<ReturnType<typeof makeChartSpace>>(chart, false)));
+    expect(back.plotArea.chart).toMatchObject({ kind: 'pie', firstSliceAng: 90 });
+  });
+});
+
 describe('DoughnutChart round-trip', () => {
   it('preserves holeSize + firstSliceAng', () => {
     const chart = makeDoughnutChart({
