@@ -68,4 +68,18 @@ describe('formula entry, compared with Excel', () => {
     expect(parseInput('2/29/1900').value).toBe(60);
     expect(parseInput('3/1/1900').value).toBe(61);
   });
+
+  // Each expectation was checked by entering the text in Excel for Mac (en-US).
+  test('typed dates, date-times, month-years, mixed fractions and long numbers parse like Excel', () => {
+    const today = new Date(2024, 5, 1);
+    expect(parseInput('1/31/2024', { today })).toEqual({ value: 45322, impliedFormat: 'm/d/yy' });
+    expect(parseInput('2024-01-31', { today })).toEqual({ value: 45322, impliedFormat: 'm/d/yy' });
+    expect(parseInput('1/31/2024 1:30 PM', { today })).toEqual({ value: 45322.5625, impliedFormat: 'm/d/yy h:mm' });
+    expect(parseInput('Jan 2024', { today })).toEqual({ value: 45292, impliedFormat: 'mmm-yy' });
+    expect(parseInput('1/2024', { today })).toEqual({ value: 45292, impliedFormat: 'mmm-yy' });
+    expect(parseInput('-1 1/2', { today })).toEqual({ value: -1.5, impliedFormat: '# ?/?' });
+    expect(parseInput('1234567890123456789', { today }).value).toBe(1234567890123450000);
+    expect(parseInput('0.12345678901234567', { today }).value).toBe(0.123456789012345);
+  });
 });
+
