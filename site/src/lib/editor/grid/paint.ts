@@ -452,7 +452,10 @@ function paintText(input: PaintInput, job: TextJob, mergeAt: (r: number, c: numb
   }
 
   const isNumber = display.kind === 'number' && !input.showFormulas;
-  if (isNumber && measure(text) > innerW && !style.wrap && !style.shrink) {
+  if (isNumber && display.hashes) {
+    text = hashes(innerW, measure);
+    h = 'left';
+  } else if (isNumber && measure(text) > innerW && !style.wrap && !style.shrink) {
     text = style.numFmt === 'General' && display.number !== undefined ? fitGeneralNumber(display.number, innerW, measure) : hashes(innerW, measure);
   }
 
