@@ -6,6 +6,7 @@
   import { cellAddress, rangeAddress, rangeOf } from '../core/address.ts';
   import { currentRange } from '../core/selection.ts';
   import { editTextFor } from '../core/input.ts';
+  import { tableAt } from '../core/tables.ts';
   import { isDateFormat, getCellDisplayText } from '@office-kit/xlsx/styles';
   import { t } from '../i18n/i18n.svelte.ts';
   import Icon from './Icon.svelte';
@@ -76,7 +77,7 @@
     const cell = ctl.cell(row, col);
     if (!cell) return '';
     const style = doc.styles.get(cell.styleId);
-    return editTextFor(cell.value, getCellDisplayText(doc.wb, cell), isDateFormat(style.numFmt), { dateOrder: ctl.dateOrder(), date1904: doc.wb.date1904 });
+    return editTextFor(cell.value, getCellDisplayText(doc.wb, cell), isDateFormat(style.numFmt), { dateOrder: ctl.dateOrder(), date1904: doc.wb.date1904, table: tableAt(doc.ws, row, col)?.def.displayName });
   });
 
   $effect(() => {

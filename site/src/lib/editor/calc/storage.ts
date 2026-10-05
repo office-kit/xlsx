@@ -128,7 +128,7 @@ function numberLiteral(value: number): string {
  * `sheetTitles`, when given, corrects a typed sheet name's case to the real
  * sheet's (`=sheet1!a1` → `=Sheet1!A1`), as Excel does.
  */
-export function toStorageFormula(text: string, sheetTitles: readonly string[] = []): string {
+export function toStorageFormula(text: string, sheetTitles: readonly string[] = [], hostTable?: string): string {
   const titles = new Map(sheetTitles.map((t) => [t.toLowerCase(), t]));
   const realTitle = (name: string): string => titles.get(name.toLowerCase()) ?? name;
   const tokens = tokenize(text, true);
@@ -160,6 +160,9 @@ export function toStorageFormula(text: string, sheetTitles: readonly string[] = 
         : '';
       const ref = prefix + renderArea(orderArea(t.area));
       if (ref !== text.slice(t.start, t.end)) edits.push({ start: t.start, end: t.end, text: ref });
+    } else if (t.kind === 'struct') {
+      const full = fileStructuredRef(t.table ?? hostTable, t.body);
+      if (full !== undefined && full !== text.slice(t.start, t.end)) edits.push({ start: t.start, end: t.end, text: full });
     } else if (t.kind === 'bool') {
       const word = t.value ? 'TRUE' : 'FALSE';
       if (text.slice(t.start, t.end) !== word) edits.push({ start: t.start, end: t.end, text: word });
@@ -171,10 +174,42 @@ export function toStorageFormula(text: string, sheetTitles: readonly string[] = 
   return apply(text, edits);
 }
 
-/** Strip storage prefixes so the formula reads the way Excel's formula bar shows it. */
-export function fromStorageFormula(text: string): string {
+/**
+ * A structured reference the way a file must hold it. Excel shows `[@Sales]`
+ * but refuses to open a file containing it: the file form names the table and
+ * spells the row out, `Sales[[#This Row],[Sales]]`. Undefined without a table
+ * (an unqualified reference outside any table), which is left as typed.
+ */
+function fileStructuredRef(table: string | undefined, body: string): string | undefined {
+  if (table === undefined) return undefined;
+  const trimmed = body.trim();
+  if (!trimmed.startsWith('@')) return `${table}[${body}]`;
+  const rest = trimmed.slice(1).trim();
+  if (rest === '') return `${table}[#This Row]`;
+  return `${table}[[#This Row],${rest.startsWith('[') ? rest : `[${rest}]`}]`;
+}
+
+const THIS_ROW = /^\[#this row\](?:,(.*))?$/is;
+// A column name Excel writes after `@` without brackets.
+const PLAIN_COLUMN = /^\[([A-Za-z_\u00C0-\uFFFF][\w.\u00C0-\uFFFF]*)\]$/u;
+
+/**
+ * Strip storage prefixes so the formula reads the way Excel's formula bar shows
+ * it. With `hostTable`, the table holding the cell, this-row references take
+ * Excel's short form: `Sales[[#This Row],[Sales]]` reads `[@Sales]`.
+ */
+export function fromStorageFormula(text: string, hostTable?: string): string {
   const edits: Edit[] = [];
   for (const t of tokenize(text, true)) {
+    if (t.kind === 'struct' && t.table !== undefined) {
+      const m = THIS_ROW.exec(t.body.trim());
+      if (!m) continue;
+      const rest = (m[1] ?? '').trim();
+      const short = rest === '' ? '@' : `@${PLAIN_COLUMN.exec(rest)?.[1] ?? rest}`;
+      const own = hostTable !== undefined && t.table.toLowerCase() === hostTable.toLowerCase();
+      edits.push({ start: t.start, end: t.end, text: `${own ? '' : t.table}[${short}]` });
+      continue;
+    }
     if (t.kind !== 'func' && t.kind !== 'name') continue;
     const raw = t.kind === 'func' ? t.name : t.prefix === undefined ? t.name : '';
     const m = /^(?:_xlfn\.|_xlws\.|_xlpm\.)+/i.exec(raw);

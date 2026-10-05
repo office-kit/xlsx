@@ -25,6 +25,7 @@ import { applyStyle, transformStyle, type StylePatch } from './format.ts';
 import { isRowFiltered, visibleParts } from './filter.ts';
 import { parseInput, type DateOrder } from './input.ts';
 import { selectRange } from './selection.ts';
+import { tableAt } from './tables.ts';
 
 export interface InputOptions {
   readonly dateOrder: DateOrder;
@@ -56,7 +57,7 @@ export function commitInput(
 ): void {
   const ws = editor.ws;
   const wb = editor.wb;
-  const parsed = parseInput(text, { dateOrder: opts.dateOrder, date1904: wb.date1904, sheetTitles: wb.sheets.map((s) => s.sheet.title) });
+  const parsed = parseInput(text, { dateOrder: opts.dateOrder, date1904: wb.date1904, sheetTitles: wb.sheets.map((s) => s.sheet.title), table: tableAt(ws, at.row, at.col)?.def.displayName });
   const targets: Range[] = fill ? fill.ranges.slice() : [{ r1: at.row, c1: at.col, r2: at.row, c2: at.col }];
   editor.transact('Typing', (tx) => {
     for (const range of targets) {
