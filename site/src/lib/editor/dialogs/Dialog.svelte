@@ -73,13 +73,24 @@
       box.querySelector<HTMLElement>('.body [data-autofocus]') ??
       box.querySelector<HTMLElement>('.body input:not([disabled]):not([type="hidden"]), .body select:not([disabled]), .body textarea:not([disabled]), .body button:not([disabled])');
     // A message-only dialog focuses its default button so Enter and Escape still work.
-    (first ?? box.querySelector<HTMLElement>('.footer .primary') ?? box).focus();
+    // A disabled button cannot take focus; fall back to the dialog itself so Escape still reaches it.
+    (first ?? box.querySelector<HTMLElement>('.footer button:not([disabled])') ?? box).focus();
     if (first instanceof HTMLInputElement && first.type === 'text') first.select();
   });
 
+  // Where the keyboard was when the notice opened; it goes back there when the notice closes.
+  let beforeNotice: HTMLElement | null = null;
   $effect(() => {
-    if (notice) void tick().then(() => noticeButton?.focus());
+    if (!notice) return;
+    const active = document.activeElement;
+    beforeNotice = active instanceof HTMLElement && box.contains(active) && active !== noticeButton ? active : null;
+    void tick().then(() => noticeButton?.focus());
   });
+
+  function dismissNotice(): void {
+    notice = null;
+    void tick().then(() => (beforeNotice?.isConnected ? beforeNotice : box).focus());
+  }
 
   function onkeydown(e: KeyboardEvent): void {
     // Keys typed in a dialog never reach the grid's shortcuts.
@@ -87,7 +98,7 @@
     if (e.isComposing) return;
     if (e.key === 'Escape') {
       e.preventDefault();
-      if (notice) notice = null;
+      if (notice) dismissNotice();
       else cancel();
       return;
     }
@@ -97,7 +108,7 @@
     if (target instanceof HTMLTextAreaElement && !(e.metaKey || e.ctrlKey)) return;
     if (target instanceof HTMLButtonElement || (target instanceof HTMLSelectElement && target.multiple)) return;
     e.preventDefault();
-    if (notice) notice = null;
+    if (notice) dismissNotice();
     else ok();
   }
 
@@ -158,7 +169,7 @@
       <div class="notice" role="alertdialog" aria-label={notice}>
         <div class="notice-icon" aria-hidden="true">!</div>
         <p>{notice}</p>
-        <button class="xl-btn primary" bind:this={noticeButton} onclick={() => (notice = null)}>{t('dlgOk')}</button>
+        <button class="xl-btn primary" bind:this={noticeButton} onclick={dismissNotice}>{t('dlgOk')}</button>
       </div>
     </div>
   {/if}

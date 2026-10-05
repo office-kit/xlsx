@@ -25,7 +25,7 @@ import { applyCompletion, completionAt, rewriteReference, type Completion } from
 import { SpreadsheetEditor } from './editor.svelte.ts';
 import { editTextFor, parseInput } from './input.ts';
 import { currentRegion, dataEdge, lastUsedCell } from './navigation.ts';
-import { addRange, currentRange, cycleActive, extendTo, isMultiCell, selectRange, singleCell, wholeColumns, wholeRows } from './selection.ts';
+import { addRange, currentRange, cycleActive, extendTo, isMultiCell, selectRange, singleCell, wholeColumns, wholeRows, type Selection } from './selection.ts';
 import { GridGeometry } from '../grid/geometry.ts';
 import { sparklineIndex } from './sparklines.ts';
 import { pivotAt } from './pivot.ts';
@@ -123,6 +123,12 @@ const REF_COLORS = ['#3B6FD8', '#D13438', '#7A43B6', '#0F8A3B', '#B05E00', '#C23
 /** Characters after which arrow keys/clicks insert a reference instead of committing. */
 const POINTABLE = /[=(,+\-*/^&<>:;%{ ]$/;
 
+/** The corner of the active range opposite the anchor: what Shift+arrow / Shift+Page move. */
+function farCorner(sel: Selection): CellPos {
+  const range = currentRange(sel);
+  return { row: sel.anchor.row === range.r1 ? range.r2 : range.r1, col: sel.anchor.col === range.c1 ? range.c2 : range.c1 };
+}
+
 export class EditorController {
   readonly doc: SpreadsheetEditor;
   edit = $state<EditState | null>(null);
@@ -131,7 +137,7 @@ export class EditorController {
   dialog = $state<DialogState | null>(null);
   menu = $state<MenuState | null>(null);
   /** Source of the last Copy/Cut, shown with marching ants until consumed. */
-  clipboard = $state.raw<{ sheetIndex: number; range: Range; cut: boolean } | null>(null);
+  clipboard = $state.raw<{ sheet: Worksheet; range: Range; cut: boolean } | null>(null);
   toast = $state<MessageKey | null>(null);
   /** Column a run of Tab presses started from; Enter returns there. */
   tabStartCol: number | null = null;
@@ -384,14 +390,7 @@ export class EditorController {
   /** Arrow-key movement, with Shift extending and Ctrl/Cmd jumping to data edges. */
   move(dRow: -1 | 0 | 1, dCol: -1 | 0 | 1, opts: { extend?: boolean; jump?: boolean } = {}): void {
     const sel = this.doc.selection;
-    // Shift moves the far corner of the selection, not the active cell.
-    const range = currentRange(sel);
-    const from: CellPos = opts.extend
-      ? {
-          row: sel.anchor.row === range.r1 ? range.r2 : range.r1,
-          col: sel.anchor.col === range.c1 ? range.c2 : range.c1,
-        }
-      : sel.active;
+    const from: CellPos = opts.extend ? farCorner(sel) : sel.active;
     let to: CellPos;
     if (opts.jump) {
       to = dataEdge(this.doc.ws, from, dRow, dCol);
@@ -410,11 +409,25 @@ export class EditorController {
     this.reveal(to.row, to.col);
   }
 
+  /** More than one cell is selected; a selected merged cell counts as one. */
+  #spansSeveralCells(sel: Selection): boolean {
+    if (!isMultiCell(sel)) return false;
+    const merge = this.doc.merges.at(sel.active.row, sel.active.col);
+    const r = sel.ranges[0];
+    return !(sel.ranges.length === 1 && merge && r && merge.r1 === r.r1 && merge.c1 === r.c1 && merge.r2 === r.r2 && merge.c2 === r.c2);
+  }
+
   /** Enter / Tab movement: cycles within a multi-cell selection, otherwise moves one cell. */
   advance(direction: 'down' | 'up' | 'right' | 'left'): void {
     const sel = this.doc.selection;
-    if (isMultiCell(sel)) {
-      const next = cycleActive(sel, direction);
+    if (this.#spansSeveralCells(sel)) {
+      let next = cycleActive(sel, direction);
+      // Excel stops only on a merged cell's top-left cell, never inside it.
+      for (let guard = 0; guard < 16_384; guard++) {
+        const merge = this.doc.merges.at(next.active.row, next.active.col);
+        if (!merge || (merge.r1 === next.active.row && merge.c1 === next.active.col)) break;
+        next = cycleActive(next, direction);
+      }
       this.doc.setSelection(next);
       this.reveal(next.active.row, next.active.col);
       return;
@@ -438,20 +451,21 @@ export class EditorController {
 
   pageMove(direction: 1 | -1, horizontal: boolean, extend: boolean): void {
     const geo = this.geometry;
-    const sel = this.doc.selection;
+    // Shift+Page keeps extending from the moving corner, page after page.
+    const from = extend ? farCorner(this.doc.selection) : this.doc.selection.active;
     if (horizontal) {
       const [c1, c2] = geo.mainCols();
       const span = Math.max(1, c2 - c1);
-      const col = Math.min(MAX_COL, Math.max(1, sel.active.col + direction * span));
+      const col = Math.min(MAX_COL, Math.max(1, from.col + direction * span));
       this.doc.setScroll(Math.max(0, this.doc.scrollX + direction * (geo.colX(c2) - geo.colX(c1))), this.doc.scrollY);
-      this.selectCell({ row: sel.active.row, col }, { extend });
+      this.selectCell({ row: from.row, col }, { extend });
       return;
     }
     const [r1, r2] = geo.mainRows();
     const span = Math.max(1, r2 - r1);
-    const row = Math.min(MAX_ROW, Math.max(1, sel.active.row + direction * span));
+    const row = Math.min(MAX_ROW, Math.max(1, from.row + direction * span));
     this.doc.setScroll(this.doc.scrollX, Math.max(0, this.doc.scrollY + direction * (geo.rowY(r2) - geo.rowY(r1))));
-    this.selectCell({ row, col: sel.active.col }, { extend });
+    this.selectCell({ row, col: from.col }, { extend });
   }
 
   home(ctrl: boolean, extend: boolean): void {
@@ -642,17 +656,21 @@ export class EditorController {
     if (e.sheetIndex !== this.doc.activeSheetIndex) this.doc.activateSheet(e.sheetIndex);
     const at = { row: e.row, col: e.col };
     const selection = this.doc.selection;
-    const fill = opts.fillSelection && isMultiCell(selection) ? { ranges: selection.ranges, translate: translateFormula } : undefined;
+    const several = this.#spansSeveralCells(selection);
+    const fill = opts.fillSelection && several ? { ranges: selection.ranges, translate: translateFormula } : undefined;
     if (this.splitsArray(fill?.ranges ?? [{ r1: at.row, c1: at.col, r2: at.row, c2: at.col }])) return false;
     this.edit = null;
     commitInput(this.doc, at, text, { dateOrder: this.dateOrder(), measure: (cell) => cellTextWidth(this, cell) }, fill);
-    if (!fill && !isMultiCell(selection)) {
+    if (!fill && !several) {
       // Re-selecting the edited cell must not end a Tab run: Enter returns to its first column.
       const tabStartCol = this.tabStartCol;
       this.selectCell(at);
       this.tabStartCol = tabStartCol;
     }
-    this.repeatable = null;
+    // F4 / Ctrl+Y repeats the entry into the active cell (Excel's "Repeat Typing").
+    this.repeatable = fill
+      ? null
+      : () => commitInput(this.doc, this.doc.selection.active, text, { dateOrder: this.dateOrder(), measure: (cell) => cellTextWidth(this, cell) });
     return true;
   }
 

@@ -30,6 +30,8 @@ export interface EvalHost {
   /** Whether the cell holds a SUBTOTAL / AGGREGATE formula, which those functions skip to avoid double counting. */
   isSubtotalCell(sheet: string, row: number, col: number): boolean;
   isRowHidden(sheet: string, row: number): boolean;
+  /** Hidden by an AutoFilter (or a table's filter) rather than by hand; SUBTOTAL 1-11 skips these too. */
+  isRowFiltered(sheet: string, row: number): boolean;
   /** Number format code of a cell, for CELL("format"). */
   numberFormat(sheet: string, row: number, col: number): string;
   /** Current moment as a serial (for NOW / TODAY). */

@@ -5,6 +5,7 @@ export const dialogsEn = {
   // alert messages (shared with the core strings; repeated so dialogs own their wording)
   formulaError: "There's a problem with this formula.",
   partOfArray: "You can't change part of an array.",
+  mergeDiscardsValues: 'Merging cells only keeps the upper-left value and discards other values.',
   lastSheet: 'A workbook must contain at least one visible worksheet.',
   invalidSheetName: "That sheet name isn't valid. Names can't be blank, longer than 31 characters, or contain : \\ / ? * [ ].",
   duplicateSheetName: 'That name is already taken. Try a different one.',
