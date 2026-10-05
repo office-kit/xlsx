@@ -4,7 +4,8 @@
   import { t, type MessageKey } from '../../i18n/i18n.svelte.ts';
   import { getEditor } from '../../core/context.ts';
   import ColorPicker from '../ColorPicker.svelte';
-  import { FONT_NAMES, FONT_SIZES, normalFontState, sameFont, type FontState, type FontStyle } from '../format-cells.ts';
+  import { FONT_NAMES } from '../../core/fonts.ts';
+  import { FONT_SIZES, normalFontState, sameFont, type FontState, type FontStyle } from '../format-cells.ts';
 
   let { model = $bindable() }: { model: FontState } = $props();
 

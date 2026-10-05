@@ -5,7 +5,7 @@
 import { insertArgumentNames } from '../core/formula-assist.ts';
 import { formatPainter } from '../core/format-painter.svelte.ts';
 import type { EditorController } from '../core/controller.svelte.ts';
-import { runShortcut } from '../core/shortcuts.ts';
+import { IS_MAC, runShortcut } from '../core/shortcuts.ts';
 
 type Dir = -1 | 0 | 1;
 
@@ -72,8 +72,10 @@ export function handleGridKey(ctl: EditorController, ev: KeyboardEvent, input: H
       return;
     case 'Backspace':
       ev.preventDefault();
-      // Mac's delete key and Windows' Backspace clear the active cell and start editing it.
-      ctl.startEdit('');
+      // Excel for Mac's delete key clears the whole selection and stays in
+      // Ready; Windows' Backspace clears only the active cell and edits it.
+      if (IS_MAC) ctl.clearSelection('contents');
+      else ctl.startEdit('');
       return;
     case 'Escape':
       if (formatPainter.active) formatPainter.cancel();

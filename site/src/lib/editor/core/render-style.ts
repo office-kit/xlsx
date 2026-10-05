@@ -8,7 +8,7 @@
 import type { Workbook } from '@office-kit/xlsx/workbook';
 import type { Border, Fill, HorizontalAlignment, Side, SideStyle, VerticalAlignment } from '@office-kit/xlsx/styles';
 import { builtinFormatCode, DEFAULT_FONT } from '@office-kit/xlsx/styles';
-import { paletteFromThemeXml, resolveColor, type ThemePalette } from './theme.ts';
+import { paletteFromThemeXml, resolveColor, themeFontsFromXml, type ThemeFonts, type ThemePalette } from './theme.ts';
 
 export interface StrokeStyle {
   readonly width: number;
@@ -122,11 +122,13 @@ const PX_PER_PT = 96 / 72;
 export class StyleResolver {
   readonly #wb: Workbook;
   readonly palette: ThemePalette;
+  readonly themeFonts: ThemeFonts;
   readonly #cache = new Map<number, RenderStyle>();
 
   constructor(wb: Workbook) {
     this.#wb = wb;
     this.palette = paletteFromThemeXml(wb.themeXml);
+    this.themeFonts = themeFontsFromXml(wb.themeXml);
   }
 
   get(styleId: number): RenderStyle {

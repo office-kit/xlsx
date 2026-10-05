@@ -23,7 +23,7 @@ interface Binding {
   readonly run: Handler;
 }
 
-const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
 const open = (kind: Parameters<EditorController['openDialog']>[0]): Handler => (ctl) => ctl.openDialog(kind);
 

@@ -91,6 +91,10 @@ const core = {
 
   // font
   fontName: 'Font',
+  themeFonts: 'Theme Fonts',
+  allFonts: 'All Fonts',
+  fontHeadings: '(Headings)',
+  fontBody: '(Body)',
   fontSize: 'Font Size',
   increaseFontSize: 'Increase Font Size',
   decreaseFontSize: 'Decrease Font Size',

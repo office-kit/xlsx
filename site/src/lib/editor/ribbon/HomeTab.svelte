@@ -7,6 +7,9 @@
   import Icon from '../ui/Icon.svelte';
   import MenuButton from '../ui/MenuButton.svelte';
   import ColorGrid from '../ui/ColorGrid.svelte';
+  import ComboBox, { type ComboItem } from '../ui/ComboBox.svelte';
+  import { FONT_NAMES } from '../core/fonts.ts';
+  import { cssFontFamily } from '../core/render-style.ts';
   import Group from './Group.svelte';
   import { formatPainter } from '../core/format-painter.svelte.ts';
   import { NUMBER_FORMAT_PRESETS, numberFormatCategory } from '../core/number-formats.ts';
@@ -30,8 +33,20 @@
     return A.activeStyle(ctl);
   });
 
-  const FONTS = ['Aptos Narrow', 'Aptos', 'Arial', 'Calibri', 'Cambria', 'Courier New', 'Georgia', 'Helvetica', 'Meiryo', 'MS PGothic', 'Segoe UI', 'Tahoma', 'Times New Roman', 'Verdana', 'Yu Gothic', '游ゴシック', 'ヒラギノ角ゴシック'];
   const SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
+
+  // Excel's font list: the theme's heading and body fonts, then every font.
+  const fontItems: ComboItem[] = $derived.by(() => {
+    const { major, minor } = doc.styles.themeFonts;
+    return [
+      { heading: t('themeFonts') },
+      { value: major, label: `${major} ${t('fontHeadings')}`, font: cssFontFamily(major) },
+      { value: minor, label: `${minor} ${t('fontBody')}`, font: cssFontFamily(minor) },
+      { heading: t('allFonts') },
+      ...FONT_NAMES.map((name) => ({ value: name, font: cssFontFamily(name) })),
+    ];
+  });
+  const sizeItems: ComboItem[] = SIZES.map((n) => ({ value: String(n) }));
 
   let fontName = $state('');
   let fontSize = $state('');
@@ -90,28 +105,30 @@
 <Group label={t('groupFont')}>
   <div class="col">
     <div class="row">
-      <input
-        class="xl-input font-name"
-        list="xl-font-list"
+      <ComboBox
         bind:value={fontName}
-        aria-label={t('fontName')}
-        onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); A.setFontName(ctl, fontName); (e.currentTarget as HTMLInputElement).blur(); ctl.gridFocusRequest++; } }}
-        onchange={() => A.setFontName(ctl, fontName)}
+        items={fontItems}
+        label={t('fontName')}
+        width={118}
+        oncommit={(name) => {
+          A.setFontName(ctl, name);
+          ctl.gridFocusRequest++;
+        }}
       />
-      <datalist id="xl-font-list">
-        {#each FONTS as f (f)}<option value={f}></option>{/each}
-      </datalist>
-      <input
-        class="xl-input font-size"
-        list="xl-size-list"
-        bind:value={fontSize}
-        aria-label={t('fontSize')}
-        onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const n = Number(fontSize); if (n > 0 && n <= 409) A.setFontSize(ctl, n); (e.currentTarget as HTMLInputElement).blur(); ctl.gridFocusRequest++; } }}
-        onchange={() => { const n = Number(fontSize); if (n > 0 && n <= 409) A.setFontSize(ctl, n); }}
-      />
-      <datalist id="xl-size-list">
-        {#each SIZES as s (s)}<option value={s}></option>{/each}
-      </datalist>
+      <span class="size">
+        <ComboBox
+          bind:value={fontSize}
+          items={sizeItems}
+          label={t('fontSize')}
+          width={52}
+          oncommit={(text) => {
+            const n = Number(text);
+            if (n > 0 && n <= 409) A.setFontSize(ctl, n);
+            else fontSize = String(font.size ?? 11);
+            ctl.gridFocusRequest++;
+          }}
+        />
+      </span>
       <button class="xl-btn" title={t('increaseFontSize')} onclick={() => A.stepFontSize(ctl, 1)}><Icon name="font-grow" /></button>
       <button class="xl-btn" title={t('decreaseFontSize')} onclick={() => A.stepFontSize(ctl, -1)}><Icon name="font-shrink" /></button>
     </div>
@@ -364,11 +381,7 @@
     align-items: center;
     gap: 1px;
   }
-  .font-name {
-    width: 118px;
-  }
-  .font-size {
-    width: 52px;
+  .size {
     margin-left: 2px;
   }
   .numfmt {

@@ -86,6 +86,10 @@ const core: Partial<Record<MessageKey, string>> = {
   selectDestination: '貼り付け先を選択し、Enter キーを押すか、[貼り付け] を選択します',
 
   fontName: 'フォント',
+  themeFonts: 'テーマのフォント',
+  allFonts: 'すべてのフォント',
+  fontHeadings: '(見出し)',
+  fontBody: '(本文)',
   fontSize: 'フォント サイズ',
   increaseFontSize: 'フォント サイズの拡大',
   decreaseFontSize: 'フォント サイズの縮小',

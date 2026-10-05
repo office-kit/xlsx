@@ -40,6 +40,22 @@ export function paletteFromThemeXml(xml: Uint8Array | undefined): ThemePalette {
   });
 }
 
+/** The theme's Latin heading and body fonts, which head Excel's font list as "(Headings)" and "(Body)". */
+export interface ThemeFonts {
+  readonly major: string;
+  readonly minor: string;
+}
+
+/** Office 2013–2022 theme fonts, matching {@link OFFICE_PALETTE}. */
+const OFFICE_FONTS: ThemeFonts = { major: 'Calibri Light', minor: 'Calibri' };
+
+export function themeFontsFromXml(xml: Uint8Array | undefined): ThemeFonts {
+  if (!xml) return OFFICE_FONTS;
+  const text = new TextDecoder().decode(xml);
+  const latin = (tag: string) => new RegExp(`<a:${tag}>[\\s\\S]*?<a:latin typeface="([^"]*)"`).exec(text)?.[1];
+  return { major: latin('majorFont') || OFFICE_FONTS.major, minor: latin('minorFont') || OFFICE_FONTS.minor };
+}
+
 export function rgbToHsl(hex: string): [number, number, number] {
   const r = Number.parseInt(hex.slice(0, 2), 16) / 255;
   const g = Number.parseInt(hex.slice(2, 4), 16) / 255;

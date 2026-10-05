@@ -165,7 +165,6 @@ export interface FontState {
   subscript: boolean;
 }
 
-export const FONT_NAMES = ['Aptos', 'Aptos Narrow', 'Aptos Display', 'Calibri', 'Calibri Light', 'Arial', 'Helvetica', 'Times New Roman', 'Cambria', 'Georgia', 'Verdana', 'Courier New', 'Consolas', '游ゴシック', '游明朝', 'メイリオ', 'ＭＳ Ｐゴシック', 'ヒラギノ角ゴシック'];
 export const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
 
 // ---- Border ------------------------------------------------------------------
