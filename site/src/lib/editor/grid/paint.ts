@@ -530,7 +530,10 @@ function paintText(input: PaintInput, job: TextJob, mergeAt: (r: number, c: numb
   const blockH = lines.length * lineH;
   const ascent = fontPx * 0.8;
   let top: number;
-  switch (style.vAlign) {
+  // Wrapped text taller than its row starts at the top whatever the vertical
+  // alignment, so Excel shows the first lines and cuts off the last.
+  const overflows = style.wrap && blockH > job.h;
+  switch (overflows ? 'top' : style.vAlign) {
     case 'top':
       top = job.y + 2 * zoom;
       break;
