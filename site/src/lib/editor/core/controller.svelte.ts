@@ -393,7 +393,7 @@ export class EditorController {
     const from: CellPos = opts.extend ? farCorner(sel) : sel.active;
     let to: CellPos;
     if (opts.jump) {
-      to = dataEdge(this.doc.ws, from, dRow, dCol);
+      to = dataEdge(this.doc.ws, from, dRow, dCol, (i) => (dRow !== 0 ? this.doc.rows : this.doc.cols).isHidden(i));
     } else {
       // Step out of a merged block from its far side.
       const merge = this.doc.merges.at(from.row, from.col);
@@ -470,7 +470,14 @@ export class EditorController {
 
   home(ctrl: boolean, extend: boolean): void {
     const sel = this.doc.selection;
-    const target = ctrl ? { row: this.frozen.rows + 1, col: this.frozen.cols + 1 } : { row: sel.active.row, col: 1 };
+    // Home lands on the first column (and Ctrl+Home the first row) that is shown, as in Excel.
+    const firstShown = (axis: { isHidden(i: number): boolean }, from: number, limit: number): number => {
+      let i = from;
+      while (i < limit && axis.isHidden(i)) i++;
+      return i;
+    };
+    const col = firstShown(this.doc.cols, ctrl ? this.frozen.cols + 1 : 1, MAX_COL);
+    const target = ctrl ? { row: firstShown(this.doc.rows, this.frozen.rows + 1, MAX_ROW), col } : { row: sel.active.row, col };
     this.selectCell(target, { extend });
     this.reveal(target.row, target.col);
   }

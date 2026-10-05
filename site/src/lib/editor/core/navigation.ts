@@ -39,37 +39,43 @@ function lowerBound(sorted: readonly number[], v: number): number {
  * Where Ctrl/Cmd+Arrow lands from `from`. Excel's rule: if the current and the
  * next cell both hold data, run to the last filled cell before a gap;
  * otherwise jump to the next filled cell, or to the sheet edge when none.
+ * Hidden rows / columns (`hidden`) are skipped as if they were not there.
  */
-export function dataEdge(ws: Worksheet, from: CellPos, dRow: -1 | 0 | 1, dCol: -1 | 0 | 1): CellPos {
+export function dataEdge(ws: Worksheet, from: CellPos, dRow: -1 | 0 | 1, dCol: -1 | 0 | 1, hidden: (index: number) => boolean = () => false): CellPos {
   const vertical = dRow !== 0;
   const step = vertical ? dRow : dCol;
   const pos = vertical ? from.row : from.col;
   const limit = vertical ? MAX_ROW : MAX_COL;
-  const filled = filledAlong(ws, vertical ? from.col : from.row, vertical);
-  const has = (i: number): boolean => {
-    const k = lowerBound(filled, i);
-    return filled[k] === i;
-  };
+  const filled = filledAlong(ws, vertical ? from.col : from.row, vertical).filter((i) => !hidden(i));
+  const has = (i: number): boolean => filled[lowerBound(filled, i)] === i;
   const make = (i: number): CellPos => (vertical ? { row: i, col: from.col } : { row: from.row, col: i });
-  const next = pos + step;
-  if (next < 1 || next > limit) return from;
+  // The next shown index past `i`, or undefined at the sheet edge.
+  const nextShown = (i: number): number | undefined => {
+    let n = i + step;
+    while (n >= 1 && n <= limit && hidden(n)) n += step;
+    return n >= 1 && n <= limit ? n : undefined;
+  };
+  const next = nextShown(pos);
+  if (next === undefined) return from;
 
   if (has(pos) && has(next)) {
-    // Walk the contiguous block; `filled` is sorted so consecutive entries differ by 1 inside it.
-    let k = lowerBound(filled, next);
-    if (step === 1) {
-      while (filled[k + 1] === (filled[k] ?? 0) + 1) k++;
-    } else {
-      while (k > 0 && filled[k - 1] === (filled[k] ?? 0) - 1) k--;
-    }
-    return make(filled[k] ?? pos);
+    let end = next;
+    for (let n = nextShown(end); n !== undefined && has(n); n = nextShown(end)) end = n;
+    return make(end);
   }
   if (step === 1) {
     const k = lowerBound(filled, next);
-    return make(filled[k] ?? limit);
+    return make(filled[k] ?? lastShown(limit, -1));
   }
   const k = lowerBound(filled, next + 1) - 1;
-  return make(k >= 0 ? (filled[k] ?? 1) : 1);
+  return make(k >= 0 ? (filled[k] ?? 1) : lastShown(1, 1));
+
+  // The sheet edge nearest `edge` that is shown, walking inward by `inward`.
+  function lastShown(edge: number, inward: 1 | -1): number {
+    let i = edge;
+    while (hidden(i) && i !== pos) i += inward;
+    return i;
+  }
 }
 
 /**
