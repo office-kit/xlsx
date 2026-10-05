@@ -46,20 +46,45 @@ export interface RenderStyle {
 }
 
 const FONT_FALLBACK = "'Segoe UI', 'Helvetica Neue', Arial, sans-serif";
-// Fonts named in files are often Windows/Office-only; list metric-compatible
-// substitutes so text widths stay close to Excel's on other systems.
+const YU_GOTHIC = "'Yu Gothic', YuGothic, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif";
+const YU_MINCHO = "'Yu Mincho', YuMincho, 'Hiragino Mincho ProN', 'MS PMincho', serif";
+const P_GOTHIC = "'MS PGothic', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif";
+const P_MINCHO = "'MS PMincho', 'Hiragino Mincho ProN', YuMincho, serif";
+const MS_GOTHIC = "'MS Gothic', Osaka-Mono, 'Hiragino Kaku Gothic ProN', monospace";
+const MS_MINCHO = "'MS Mincho', 'Hiragino Mincho ProN', YuMincho, serif";
+const MEIRYO = "Meiryo, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif";
+// Fonts named in files are often Windows/Office-only, and a browser can only
+// draw fonts installed where it runs. List metric-compatible substitutes so
+// text keeps its look (serif, monospace, Japanese mincho) and widths stay close
+// to Excel's on other systems. Japanese fonts are listed under the English and
+// the Japanese name, since files carry either.
 const FONT_SUBSTITUTES: Readonly<Record<string, string>> = {
   calibri: "Calibri, Carlito, 'Segoe UI', Arial, sans-serif",
+  'calibri light': "'Calibri Light', Calibri, Carlito, 'Segoe UI', Arial, sans-serif",
   'aptos narrow': "'Aptos Narrow', 'Arial Narrow', Calibri, Arial, sans-serif",
   aptos: "Aptos, Calibri, 'Segoe UI', Arial, sans-serif",
+  'aptos display': "'Aptos Display', Aptos, Calibri, 'Segoe UI', Arial, sans-serif",
   arial: 'Arial, Helvetica, sans-serif',
   cambria: "Cambria, Caladea, Georgia, serif",
+  consolas: "Consolas, Menlo, Monaco, 'Courier New', monospace",
+  'segoe ui': "'Segoe UI', -apple-system, 'Helvetica Neue', Arial, sans-serif",
+  tahoma: 'Tahoma, Verdana, sans-serif',
   'times new roman': "'Times New Roman', Times, serif",
-  'yu gothic': "'Yu Gothic', YuGothic, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
-  '游ゴシック': "'Yu Gothic', YuGothic, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
-  'ms pgothic': "'MS PGothic', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
-  'ｍｓ ｐゴシック': "'MS PGothic', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
-  meiryo: "Meiryo, 'Hiragino Sans', sans-serif",
+  'yu gothic': YU_GOTHIC,
+  '游ゴシック': YU_GOTHIC,
+  'yu mincho': YU_MINCHO,
+  '游明朝': YU_MINCHO,
+  'ms pgothic': P_GOTHIC,
+  'ｍｓ ｐゴシック': P_GOTHIC,
+  'ms pmincho': P_MINCHO,
+  'ｍｓ ｐ明朝': P_MINCHO,
+  'ms gothic': MS_GOTHIC,
+  'ｍｓ ゴシック': MS_GOTHIC,
+  'ms mincho': MS_MINCHO,
+  'ｍｓ 明朝': MS_MINCHO,
+  meiryo: MEIRYO,
+  'メイリオ': MEIRYO,
+  'ヒラギノ角ゴシック': "'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif",
 };
 
 export function cssFontFamily(name: string | undefined): string {
