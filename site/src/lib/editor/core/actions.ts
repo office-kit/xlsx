@@ -707,8 +707,26 @@ export function autoSum(ctl: EditorController, fn = 'SUM'): void {
     }
     return;
   }
-  // A multi-cell selection gets totals below each column (or right of each row when one row).
   const doc = ctl.doc;
+  // A selection ending in an empty row and/or column gets its totals there, as
+  // in Excel: column totals in the row, row totals in the column, and the
+  // grand total in the corner.
+  let blankRow = true;
+  for (let c = r.c1; c <= r.c2 && blankRow; c++) blankRow = isBlank(getCellAt(ws, r.r2, c));
+  let blankCol = true;
+  for (let row = r.r1; row <= r.r2 && blankCol; row++) blankCol = isBlank(getCellAt(ws, row, r.c2));
+  if (blankRow || blankCol) {
+    const dataR2 = blankRow ? r.r2 - 1 : r.r2;
+    const dataC2 = blankCol ? r.c2 - 1 : r.c2;
+    if (dataR2 < r.r1 || dataC2 < r.c1) return;
+    doc.transact('AutoSum', (tx) => {
+      tx.cells(ws, r);
+      if (blankCol) for (let row = r.r1; row <= dataR2; row++) putFormula(ws, row, r.c2, `${fn}(${rangeAddress({ r1: row, c1: r.c1, r2: row, c2: dataC2 })})`);
+      if (blankRow) for (let c = r.c1; c <= r.c2; c++) putFormula(ws, r.r2, c, `${fn}(${rangeAddress({ r1: r.r1, c1: c, r2: dataR2, c2: c })})`);
+    });
+    return;
+  }
+  // Otherwise totals go below each column (or right of each row when one row).
   const vertical = r.r2 > r.r1 || r.c1 === r.c2;
   doc.transact('AutoSum', (tx) => {
     if (vertical) {
