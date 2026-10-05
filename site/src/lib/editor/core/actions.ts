@@ -257,6 +257,15 @@ export function autoFill(ctl: EditorController, source: Range, target: Range, mo
     ctl.selectRange(target);
     return;
   }
+  // Excel refuses to fill over part of a merged cell.
+  const straddled = ws.mergedCells.some((m) => {
+    const r = { r1: m.minRow, c1: m.minCol, r2: m.maxRow, c2: m.maxCol };
+    return rangesIntersect(r, target) && !(r.r1 >= target.r1 && r.r2 <= target.r2 && r.c1 >= target.c1 && r.c2 <= target.c2);
+  });
+  if (straddled) {
+    ctl.dialog = { kind: 'alert', props: { message: 'mergedCellsSameSize' } };
+    return;
+  }
   const isDate = (styleId: number) => isDateFormat(doc.styles.get(styleId).numFmt);
   const isTime = (styleId: number) => classifyDateFormat(doc.styles.get(styleId).numFmt) === 'time';
   const fillCtx = { translate: translateFormula, isDate, isTime, date1904: doc.wb.date1904 };
