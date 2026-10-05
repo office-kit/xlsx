@@ -1085,12 +1085,13 @@ export function ensureCellByCoord(ws: Worksheet, coord: string): Cell {
  */
 export function mergeCells(ws: Worksheet, refOrRange: RangeRef): CellRange {
   const range = parseRange(refOrRange);
-  const ref = rangeToString(range);
+  // Compared as numbers, not strings: this runs once per existing merge, and
+  // a sheet can carry thousands of them.
   for (const existing of ws.mergedCells) {
-    if (rangeToString(existing) === ref) return existing;
+    if (sameRange(existing, range)) return existing;
     if (rangesOverlap(existing, range)) {
       throw new OpenXmlSchemaError(
-        `mergeCells: range ${ref} overlaps existing merged range ${rangeToString(existing)}`,
+        `mergeCells: range ${rangeToString(range)} overlaps existing merged range ${rangeToString(existing)}`,
       );
     }
   }
@@ -1100,10 +1101,14 @@ export function mergeCells(ws: Worksheet, refOrRange: RangeRef): CellRange {
   return range;
 }
 
+function sameRange(a: CellRange, b: CellRange): boolean {
+  return a.minRow === b.minRow && a.minCol === b.minCol && a.maxRow === b.maxRow && a.maxCol === b.maxCol;
+}
+
 /** Drop a previously-merged range. No-op if the range isn't registered. */
 export function unmergeCells(ws: Worksheet, refOrRange: RangeRef): boolean {
-  const target = rangeToString(parseRange(refOrRange));
-  const idx = ws.mergedCells.findIndex((r) => rangeToString(r) === target);
+  const target = parseRange(refOrRange);
+  const idx = ws.mergedCells.findIndex((r) => sameRange(r, target));
   if (idx < 0) return false;
   ws.mergedCells.splice(idx, 1);
   return true;
