@@ -48,12 +48,12 @@
   /** Paste Link: formulas pointing back at each copied cell (absolute for a single cell, as Excel does). */
   function pasteLink(): void {
     const clip = ctl.clipboard;
-    const sourceRef = clip ? ctl.doc.wb.sheets[clip.sheetIndex] : undefined;
-    if (!clip || sourceRef?.kind !== 'worksheet') {
+    const source = clip && ctl.doc.wb.sheets.some((s) => s.sheet === clip.sheet) ? clip.sheet : undefined;
+    if (!clip || !source) {
       notice = t('dlgNothingToPaste');
       return;
     }
-    const used = usedRange(sourceRef.sheet);
+    const used = usedRange(source);
     const src = clip.range;
     const r2 = src.r2 === MAX_ROW ? Math.max(src.r1, Math.min(src.r2, used?.r2 ?? src.r1)) : src.r2;
     const c2 = src.c2 === MAX_COL ? Math.max(src.c1, Math.min(src.c2, used?.c2 ?? src.c1)) : src.c2;
@@ -62,7 +62,7 @@
     const origin = currentRange(doc.selection);
     const rows = Math.min(r2 - src.r1 + 1, MAX_ROW - origin.r1 + 1);
     const cols = Math.min(c2 - src.c1 + 1, MAX_COL - origin.c1 + 1);
-    const prefix = clip.sheetIndex === doc.activeSheetIndex ? '' : `${quoteSheetName(sourceRef.sheet.title)}!`;
+    const prefix = source === doc.ws ? '' : `${quoteSheetName(source.title)}!`;
     const single = rows === 1 && cols === 1;
     doc.transact('Paste Link', (tx) => {
       tx.cells(ws, { r1: origin.r1, c1: origin.c1, r2: origin.r1 + rows - 1, c2: origin.c1 + cols - 1 });

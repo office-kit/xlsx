@@ -67,27 +67,24 @@ describe('Waterfall round-trip', () => {
 });
 
 describe('Histogram round-trip', () => {
-  it('preserves binning attributes', () => {
+  // CT_Binning holds the bin count or size as a child element (a choice), and
+  // Excel asks to repair a histogram that carries them as attributes.
+  it('preserves the binning bounds and the bin size', () => {
     const back = roundTrip(
-      makeHistogramChart({
-        valRef: 'A1:A100',
-        binCount: 20,
-        binSize: 5,
-        intervalClosed: 'l',
-        underflow: 0,
-        overflow: 100,
-      }),
+      makeHistogramChart({ valRef: 'A1:A100', binSize: 5, intervalClosed: 'l', underflow: 0, overflow: 100 }),
     );
     const series = back.chart.plotArea.series[0];
     expect(series?.layoutId).toBe('clusteredColumn');
-    expect(series?.layoutPr).toEqual({
-      kind: 'binning',
-      binCount: 20,
-      binSize: 5,
-      intervalClosed: 'l',
-      underflow: 0,
-      overflow: 100,
-    });
+    expect(series?.layoutPr).toEqual({ kind: 'binning', binSize: 5, intervalClosed: 'l', underflow: 0, overflow: 100 });
+  });
+
+  it('writes the bin count as a child element, and nothing for automatic binning', () => {
+    const fixed = new TextDecoder().decode(chartExToBytes(makeHistogramChart({ binCount: 20 })));
+    expect(fixed).toContain('<cx:binning><cx:binCount val="20"/></cx:binning>');
+    expect(roundTrip(makeHistogramChart({ binCount: 20 })).chart.plotArea.series[0]?.layoutPr).toEqual({ kind: 'binning', binCount: 20 });
+    const auto = new TextDecoder().decode(chartExToBytes(makeHistogramChart({ binCountAuto: true })));
+    // Excel refuses an empty `<cx:binCount/>`; automatic is the default.
+    expect(auto).toContain('<cx:binning/>');
   });
 });
 
@@ -132,6 +129,14 @@ describe('BoxWhisker round-trip', () => {
       nonoutliers: true,
       quartileMethod: 'exclusive',
     });
+  });
+
+  // Excel reads the quartile method from `<cx:statistics>`; a
+  // `<cx:quartileMethod>` element makes it ask to repair the workbook.
+  it('writes the quartile method on cx:statistics', () => {
+    const xml = new TextDecoder().decode(chartExToBytes(makeBoxWhiskerChart({ quartileMethod: 'inclusive' })));
+    expect(xml).toContain('<cx:statistics quartileMethod="inclusive"/>');
+    expect(xml).not.toContain('<cx:quartileMethod');
   });
 });
 

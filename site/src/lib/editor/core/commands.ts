@@ -44,6 +44,8 @@ function defaultStyleAt(ws: Worksheet, row: number, col: number): number {
  * for Ctrl/Cmd+Enter). Formulas are re-anchored per target by `translate`,
  * which the formula engine provides.
  */
+const ALL_EDGES = { top: true, bottom: true, left: true, right: true };
+
 export function commitInput(
   editor: SpreadsheetEditor,
   at: CellPos,
@@ -66,6 +68,11 @@ export function commitInput(
             value = { kind: 'formula', t: 'normal', formula };
           }
           writeValue(editor, ws, r, c, value, parsed.impliedFormat);
+          // Typing a line break (Alt+Enter) turns on Wrap Text, as in Excel.
+          if (typeof value === 'string' && value.includes('\n')) {
+            const cell = getCellAt(ws, r, c);
+            if (cell && !editor.styles.get(cell.styleId).wrap) cell.styleId = transformStyle(wb, cell.styleId, { alignment: { wrapText: true } }, ALL_EDGES);
+          }
         }
       }
     }
@@ -84,7 +91,7 @@ function widenToFit(editor: SpreadsheetEditor, tx: Transaction, at: CellPos, mea
   setColumnDimension(ws, at.col, { width: pxToColWidth(Math.ceil(need)) });
 }
 
-function writeValue(editor: SpreadsheetEditor, ws: Worksheet, row: number, col: number, value: CellValue, impliedFormat: string | undefined): void {
+export function writeValue(editor: SpreadsheetEditor, ws: Worksheet, row: number, col: number, value: CellValue, impliedFormat: string | undefined): void {
   const wb = editor.wb;
   let cell = getCellAt(ws, row, col);
   if (value === null) {
@@ -105,7 +112,7 @@ function writeValue(editor: SpreadsheetEditor, ws: Worksheet, row: number, col: 
     // Only a General cell picks up the format implied by the typed text.
     const current = editor.styles.get(cell.styleId).numFmt;
     if (current === 'General') {
-      cell.styleId = transformStyle(wb, cell.styleId, { numFmt: impliedFormat }, { top: true, bottom: true, left: true, right: true });
+      cell.styleId = transformStyle(wb, cell.styleId, { numFmt: impliedFormat }, ALL_EDGES);
     }
   }
 }
@@ -191,6 +198,24 @@ export function formatRanges(editor: SpreadsheetEditor, ranges: readonly Range[]
 
 export type MergeMode = 'mergeCenter' | 'mergeAcross' | 'merge' | 'unmerge';
 
+function mergeParts(range: Range, mode: MergeMode): Range[] {
+  return mode === 'mergeAcross' ? Array.from({ length: range.r2 - range.r1 + 1 }, (_, i) => ({ ...range, r1: range.r1 + i, r2: range.r1 + i })) : [range];
+}
+
+/** Whether merging would discard a value: some merged block holds more than one. */
+export function mergeDiscardsValues(ws: Worksheet, ranges: readonly Range[], mode: MergeMode): boolean {
+  if (mode === 'unmerge') return false;
+  return ranges.some((range) =>
+    mergeParts(range, mode).some((part) => {
+      let filled = 0;
+      forEachCellInRange(ws, part, (cell) => {
+        if (cell.value !== null && cell.value !== '') filled++;
+      });
+      return filled > 1;
+    }),
+  );
+}
+
 export function mergeRanges(editor: SpreadsheetEditor, ranges: readonly Range[], mode: MergeMode): void {
   const ws = editor.ws;
   editor.transact(mode === 'unmerge' ? 'Unmerge Cells' : 'Merge Cells', (tx) => {
@@ -203,13 +228,13 @@ export function mergeRanges(editor: SpreadsheetEditor, ranges: readonly Range[],
         if (rangesIntersect(r, range)) unmergeCells(ws, existing);
       }
       if (mode === 'unmerge') continue;
-      const parts: Range[] = mode === 'mergeAcross' ? Array.from({ length: range.r2 - range.r1 + 1 }, (_, i) => ({ ...range, r1: range.r1 + i, r2: range.r1 + i })) : [range];
-      for (const part of parts) {
+      for (const part of mergeParts(range, mode)) {
         if (part.r1 === part.r2 && part.c1 === part.c2) continue;
-        // Excel keeps the upper-left-most value; move the first non-empty value there.
+        // Excel keeps the upper-left-most value, moved into the anchor, and discards the rest.
         let first: CellValue = null;
         forEachCellInRange(ws, part, (cell) => {
           if (first === null && cell.value !== null) first = cell.value;
+          cell.value = null;
         });
         const anchor = getCellAt(ws, part.r1, part.c1);
         if (first !== null) {

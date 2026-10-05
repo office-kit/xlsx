@@ -8,6 +8,7 @@
 // the value semantics are the same.
 
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
+import { assertExcelName } from '../utils/excel-name.js';
 import { normalizeFormulaText } from '../utils/formula-text.js';
 
 export interface DefinedName {
@@ -40,6 +41,8 @@ import type { Worksheet } from '../worksheet/worksheet.js';
 import { getRangeAddress } from '../worksheet/worksheet.js';
 import type { Workbook } from './workbook.js';
 
+const BUILTIN_PREFIX = '_xlnm.';
+
 /**
  * One parsed leg of a defined name's value. Defined-name values can be
  * comma-separated multi-range expressions (e.g. `_xlnm.Print_Titles` sets
@@ -61,6 +64,8 @@ export const addDefinedName = (
   wb: Workbook,
   opts: Partial<DefinedName> & { name: string; value: string },
 ): DefinedName => {
+  // Built-in names (_xlnm.Print_Area, …) are written by the library itself.
+  if (!opts.name.startsWith(BUILTIN_PREFIX)) assertExcelName(opts.name, 'addDefinedName: name');
   const dn = makeDefinedName(opts);
   // Replace any existing entry with the same name + scope.
   const idx = wb.definedNames.findIndex((d) => d.name === dn.name && d.scope === dn.scope);
@@ -241,6 +246,7 @@ export const renameDefinedName = (
 ): boolean => {
   const idx = wb.definedNames.findIndex((d) => d.name === oldName && d.scope === scope);
   if (idx < 0) return false;
+  assertExcelName(newName, 'renameDefinedName: name');
   const conflict = wb.definedNames.findIndex((d, i) => i !== idx && d.name === newName && d.scope === scope);
   if (conflict >= 0) {
     throw new OpenXmlSchemaError(`renameDefinedName: "${newName}" is already in use at the same scope`);
