@@ -218,7 +218,7 @@ export function autoFill(ctl: EditorController, source: Range, target: Range, mo
     return;
   }
   const isDate = (styleId: number) => isDateFormat(doc.styles.get(styleId).numFmt);
-  const fillCtx = { translate: translateFormula, isDate };
+  const fillCtx = { translate: translateFormula, isDate, date1904: doc.wb.date1904 };
   const seriesMode: SeriesMode = mode === 'formats' ? 'copy' : mode === 'values' ? 'auto' : mode;
   doc.transact('AutoFill', (tx) => {
     tx.cells(ws, target);

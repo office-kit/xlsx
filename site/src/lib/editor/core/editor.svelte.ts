@@ -259,6 +259,7 @@ export class SpreadsheetEditor {
     } else {
       const changed: CellRef[] = changedCells(step).map(({ ws, row, col }) => ({ sheet: ws.title, row, col }));
       if (changed.length > 0) this.calc.update(changed);
+      if (step.before.some((s) => s.part.kind === 'sheet' && s.part.fields.includes('rowDimensions'))) this.calc.recalculateSubtotals();
     }
     if (step.structural || step.before.some((s) => s.part.kind === 'sheet' && s.part.fields.some((f) => LAYOUT_FIELDS.has(f) || f === 'mergedCells'))) {
       this.layoutVersion++;
