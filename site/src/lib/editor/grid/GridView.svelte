@@ -46,6 +46,10 @@
   let dpr = $state(typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1);
   let antsPhase = $state(0);
   let composing = false;
+  // The textarea's text while an IME composes. The model is not updated until
+  // the composition ends (rewriting the textarea would cancel it), but the
+  // overlay must show what is being typed, as Excel does.
+  let composingText: string | null = $state(null);
 
   const geo = $derived(ctl.geometry);
 
@@ -298,7 +302,10 @@
   });
 
   function onInput() {
-    if (composing) return;
+    if (composing) {
+      composingText = input.value;
+      return;
+    }
     const value = input.value;
     if (!ctl.edit) {
       if (value === '') return;
@@ -315,6 +322,7 @@
 
   function onCompositionEnd() {
     composing = false;
+    composingText = null;
     onInput();
   }
 
@@ -780,7 +788,7 @@
     style:text-align={editStyle?.hAlign === 'right' ? 'right' : editStyle?.hAlign === 'center' ? 'center' : 'left'}
   >
     {#if editorVisible && ctl.edit}
-      <CellEditorText text={ctl.edit.text} refs={ctl.editRefs} />
+      <CellEditorText text={composingText ?? ctl.edit.text} refs={composingText === null ? ctl.editRefs : []} />
     {/if}
     <textarea
       bind:this={input}
