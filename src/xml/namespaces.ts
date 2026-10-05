@@ -68,6 +68,30 @@ export const C16_NS = 'http://schemas.microsoft.com/office/drawing/2017/03/chart
 export const CX_NS = 'http://schemas.microsoft.com/office/drawing/2014/chartex';
 export const THREADED_COMMENTS_NS = 'http://schemas.microsoft.com/office/spreadsheetml/2018/threadedcomments';
 
+const EXCEL_EXTENSION_PREFIXES: Readonly<Record<string, string>> = {
+  'http://schemas.microsoft.com/office/drawing/2010/main': 'a14',
+  'http://schemas.microsoft.com/office/drawing/2014/main': 'a16',
+  'http://schemas.microsoft.com/office/drawing/2014/chart': 'c16',
+  'http://schemas.microsoft.com/office/drawing/2015/06/chart': 'c16r2',
+  'http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac': 'x14ac',
+  'http://schemas.microsoft.com/office/spreadsheetml/2011/1/ac': 'x12ac',
+  'http://schemas.microsoft.com/office/spreadsheetml/2014/11/main': 'x16',
+  'http://schemas.microsoft.com/office/spreadsheetml/2015/02/main': 'x16r2',
+  'http://schemas.microsoft.com/office/spreadsheetml/2015/revision2': 'xr2',
+  'http://schemas.microsoft.com/office/spreadsheetml/2016/revision3': 'xr3',
+  'http://schemas.microsoft.com/office/spreadsheetml/2016/revision6': 'xr6',
+  'http://schemas.microsoft.com/office/spreadsheetml/2016/revision10': 'xr10',
+  'http://schemas.microsoft.com/office/spreadsheetml/2017/richdata': 'xlrd',
+  'http://schemas.microsoft.com/office/spreadsheetml/2017/richdata2': 'xlrd2',
+  'http://schemas.microsoft.com/office/spreadsheetml/2017/dynamicarray': 'xda',
+  'http://schemas.microsoft.com/office/spreadsheetml/2018/calcfeatures': 'xcalcf',
+  'http://schemas.microsoft.com/office/spreadsheetml/2020/richdatawebimage': 'xlrdwi',
+  'http://schemas.microsoft.com/office/excel/2006/main': 'xne',
+  'urn:schemas-microsoft-com:office:office': 'o',
+  'urn:schemas-microsoft-com:vml': 'v',
+  'urn:schemas-microsoft-com:office:excel': 'x',
+};
+
 // ---- Default prefix map -----------------------------------------------------
 //
 // Used when serialising XmlNode trees back to text: prefer these prefixes for
@@ -102,10 +126,15 @@ export const DEFAULT_PREFIXES: Readonly<Record<string, string>> = Object.freeze(
   [X14_NS]: 'x14',
   [X15_NS]: 'x15',
   [X15AC_NS]: 'x15ac',
-  [X16_NS]: 'x16',
+  [X16_NS]: 'xr',
   [C14_NS]: 'c14',
   [C15_NS]: 'c15',
-  [C16_NS]: 'c16',
+  [C16_NS]: 'c16r3',
+  // The prefixes Excel writes for its other extension namespaces. They are
+  // referenced by name from `mc:Ignorable` / `mc:Choice Requires`, so a
+  // generated `ns0` would leave those references unbound and Excel would
+  // repair the part.
+  ...EXCEL_EXTENSION_PREFIXES,
   [CX_NS]: 'cx',
   [THREADED_COMMENTS_NS]: 'tc',
 });
