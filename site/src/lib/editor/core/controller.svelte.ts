@@ -642,8 +642,9 @@ export class EditorController {
     if (e.sheetIndex !== this.doc.activeSheetIndex) this.doc.activateSheet(e.sheetIndex);
     const at = { row: e.row, col: e.col };
     const selection = this.doc.selection;
-    this.edit = null;
     const fill = opts.fillSelection && isMultiCell(selection) ? { ranges: selection.ranges, translate: translateFormula } : undefined;
+    if (this.splitsArray(fill?.ranges ?? [{ r1: at.row, c1: at.col, r2: at.row, c2: at.col }])) return false;
+    this.edit = null;
     commitInput(this.doc, at, text, { dateOrder: this.dateOrder(), measure: (cell) => cellTextWidth(this, cell) }, fill);
     if (!fill && !isMultiCell(selection)) {
       // Re-selecting the edited cell must not end a Tab run: Enter returns to its first column.
@@ -652,6 +653,14 @@ export class EditorController {
       this.tabStartCol = tabStartCol;
     }
     this.repeatable = null;
+    return true;
+  }
+
+  /** Excel refuses to change part of a legacy array; says so and returns true when `ranges` would. */
+  splitsArray(ranges: readonly Range[]): boolean {
+    const sheet = this.doc.ws.title;
+    if (!ranges.some((r) => this.doc.calc.splitsFixedArray(sheet, r))) return false;
+    this.dialog = { kind: 'alert', props: { message: 'partOfArray' } };
     return true;
   }
 

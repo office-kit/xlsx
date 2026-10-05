@@ -5,6 +5,7 @@ import type { dialogsEn } from './dialogs.en.ts';
 
 export const dialogsJa: Partial<Record<keyof typeof dialogsEn, string>> = {
   formulaError: 'この数式には問題があります。',
+  partOfArray: '配列の一部を変更することはできません。',
   lastSheet: 'ブックには、少なくとも 1 つの表示されたワークシートが必要です。',
   invalidSheetName: 'このシート名は使用できません。空白にしたり、31 文字を超えたり、: \\ / ? * [ ] を含めたりすることはできません。',
   duplicateSheetName: 'この名前は既に使用されています。別の名前を入力してください。',

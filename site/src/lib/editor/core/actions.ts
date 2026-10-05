@@ -73,6 +73,7 @@ export function paste(ctl: EditorController, mode: PasteMode = 'all'): void {
 // ---- clearing & formatting --------------------------------------------------------
 
 export function clear(ctl: EditorController, kind: ClearKind): void {
+  if ((kind === 'contents' || kind === 'all') && ctl.splitsArray(ctl.doc.selection.ranges)) return;
   clearRanges(ctl.doc, ctl.doc.selection.ranges, kind);
 }
 

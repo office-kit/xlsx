@@ -105,6 +105,14 @@ interface FormulaNode {
   spill: Rect | undefined;
   /** Area a blocked anchor wanted (#SPILL!). */
   wanted: Rect | undefined;
+  /** A loaded multi-cell CSE array: its result fills exactly this area, clipped or padded with #N/A. */
+  readonly fixed: Rect | undefined;
+  /**
+   * The formula needs something this engine cannot compute (a macro function,
+   * an external link, CELL("filename"), …): the result Excel saved is kept
+   * instead of being replaced with an error.
+   */
+  readonly keepsLoaded: boolean;
 }
 
 // Cell keys: row * 2^14 + col fits in 34 bits; the sheet id goes above that.
@@ -126,6 +134,7 @@ export class CalcEngine implements EvalHost {
   private sheetsByName = new Map<string, SheetInfo>();
   private nodes = new Map<number, FormulaNode>();
   private volatileNodes = new Set<FormulaNode>();
+  private fixedNodes = new Set<FormulaNode>();
   private spillOwner = new Map<number, FormulaNode>();
   private blocked = new Set<FormulaNode>();
   private names = new Map<string, AstNode | null>();
@@ -373,6 +382,19 @@ export class CalcEngine implements EvalHost {
     return { sheet: info.name, r1, c1, r2, c2 };
   }
 
+  /** Whether `rect` covers part, but not all, of a legacy array: Excel refuses to change part of one. */
+  splitsFixedArray(sheet: string, rect: Rect): boolean {
+    this.ensureBuilt();
+    for (const node of this.fixedNodes) {
+      const f = node.fixed;
+      if (f === undefined || node.sheet.name !== sheet) continue;
+      const overlaps = rect.r1 <= f.r2 && rect.r2 >= f.r1 && rect.c1 <= f.c2 && rect.c2 >= f.c1;
+      const covers = rect.r1 <= f.r1 && rect.r2 >= f.r2 && rect.c1 <= f.c1 && rect.c2 >= f.c2;
+      if (overlaps && !covers) return true;
+    }
+    return false;
+  }
+
   spillArea(sheet: string, row: number, col: number): Area | undefined {
     const info = this.sheetInfo(sheet);
     if (info === undefined) return undefined;
@@ -432,6 +454,7 @@ export class CalcEngine implements EvalHost {
     this.sheetsByName = new Map();
     this.nodes = new Map();
     this.volatileNodes = new Set();
+    this.fixedNodes = new Set();
     this.spillOwner = new Map();
     this.blocked = new Set();
     this.names = new Map();
@@ -481,8 +504,10 @@ export class CalcEngine implements EvalHost {
     }
     const frame = { sheet: info.name, row: cell.row, col: cell.col, dRow, dCol };
     const deps: Dependency[] = [];
-    const flags = { volatile: false, subtotal: false };
-    this.collectDependencies(ast, frame, deps, flags, 0);
+    const flags = { volatile: false, subtotal: false, opaque: false };
+    this.collectDependencies(ast, frame, deps, flags, 0, boundNames(ast));
+    const loadedRect = fv.t === 'array' && fv.ref !== undefined ? parseA1Range(fv.ref) : undefined;
+    const ownsRect = loadedRect !== undefined && loadedRect.r1 === cell.row && loadedRect.c1 === cell.col;
     const node: FormulaNode = {
       key: info.id * SHEET_SPAN + cellKey(cell.row, cell.col),
       sheet: info,
@@ -498,9 +523,12 @@ export class CalcEngine implements EvalHost {
       state: State.Clean,
       spill: undefined,
       wanted: undefined,
+      fixed: ownsRect && (loadedRect.r2 > loadedRect.r1 || loadedRect.c2 > loadedRect.c1) ? loadedRect : undefined,
+      keepsLoaded: flags.opaque && fv.cachedValue !== undefined,
     };
     this.nodes.set(node.key, node);
     if (node.volatile) this.volatileNodes.add(node);
+    if (node.fixed !== undefined) this.fixedNodes.add(node);
     for (const d of deps) {
       if (d.rect.r1 === d.rect.r2 && d.rect.c1 === d.rect.c2) {
         const k = cellKey(d.rect.r1, d.rect.c1);
@@ -515,13 +543,10 @@ export class CalcEngine implements EvalHost {
       }
     }
     // A loaded array formula already owns the cells of its `ref`.
-    if (fv.t === 'array' && fv.ref !== undefined) {
-      const rect = parseA1Range(fv.ref);
-      if (rect !== undefined && rect.r1 === cell.row && rect.c1 === cell.col) {
-        node.spill = rect;
-        for (let r = rect.r1; r <= rect.r2; r++) {
-          for (let c = rect.c1; c <= rect.c2; c++) if (r !== cell.row || c !== cell.col) this.spillOwner.set(info.id * SHEET_SPAN + cellKey(r, c), node);
-        }
+    if (ownsRect) {
+      node.spill = loadedRect;
+      for (let r = loadedRect.r1; r <= loadedRect.r2; r++) {
+        for (let c = loadedRect.c1; c <= loadedRect.c2; c++) if (r !== cell.row || c !== cell.col) this.spillOwner.set(info.id * SHEET_SPAN + cellKey(r, c), node);
       }
     }
     return node;
@@ -560,20 +585,23 @@ export class CalcEngine implements EvalHost {
     node: AstNode,
     frame: { sheet: string; row: number; col: number; dRow: number; dCol: number },
     out: Dependency[],
-    flags: { volatile: boolean; subtotal: boolean },
+    flags: { volatile: boolean; subtotal: boolean; opaque: boolean },
     depth: number,
+    bound: ReadonlySet<string>,
   ): void {
     switch (node.type) {
       case 'ref': {
+        if (node.prefix?.external !== undefined) flags.opaque = true;
         const rect = resolveRect(node.area, frame.dRow, frame.dCol);
         for (const s of this.prefixSheets(node.prefix, frame.sheet)) out.push({ sheet: s, rect });
         return;
       }
       case 'name': {
+        if (node.prefix?.external !== undefined) flags.opaque = true;
         if (depth > 32) return;
         const sheet = node.prefix === undefined ? frame.sheet : (this.sheetInfo(node.prefix.sheet)?.name ?? frame.sheet);
         const body = this.definedName(node.name, sheet);
-        if (body !== undefined) this.collectDependencies(body, { ...frame, dRow: frame.row - 1, dCol: frame.col - 1 }, out, flags, depth + 1);
+        if (body !== undefined) this.collectDependencies(body, { ...frame, dRow: frame.row - 1, dCol: frame.col - 1 }, out, flags, depth + 1, boundNames(body));
         return;
       }
       case 'structured': {
@@ -584,26 +612,30 @@ export class CalcEngine implements EvalHost {
       }
       case 'unary':
       case 'postfix':
-        this.collectDependencies(node.operand, frame, out, flags, depth);
+        this.collectDependencies(node.operand, frame, out, flags, depth, bound);
         return;
       case 'binary':
-        this.collectDependencies(node.left, frame, out, flags, depth);
-        this.collectDependencies(node.right, frame, out, flags, depth);
+        this.collectDependencies(node.left, frame, out, flags, depth, bound);
+        this.collectDependencies(node.right, frame, out, flags, depth, bound);
         return;
       case 'call': {
         const spec = FUNCTIONS.get(node.name);
         if (spec?.volatile === true || VOLATILE_EXTRA.has(node.name)) flags.volatile = true;
         if (node.name === 'SUBTOTAL' || node.name === 'AGGREGATE') flags.subtotal = true;
+        if (isEnvironmentCall(node)) flags.opaque = true;
         if (spec === undefined) {
-          // A call to a name: a LAMBDA held in a defined name.
-          this.collectDependencies({ type: 'name', name: node.name, prefix: undefined }, frame, out, flags, depth);
+          // A call to a name: a LAMBDA held in a defined name or bound by LET / LAMBDA,
+          // else a macro or add-in function this engine does not have.
+          const lambda = this.definedName(node.name, frame.sheet);
+          if (lambda !== undefined && depth <= 32) this.collectDependencies(lambda, { ...frame, dRow: frame.row - 1, dCol: frame.col - 1 }, out, flags, depth + 1, boundNames(lambda));
+          else if (!bound.has(node.name)) flags.opaque = true;
         }
-        for (const a of node.args) this.collectDependencies(a, frame, out, flags, depth);
+        for (const a of node.args) this.collectDependencies(a, frame, out, flags, depth, bound);
         return;
       }
       case 'invoke':
-        this.collectDependencies(node.callee, frame, out, flags, depth);
-        for (const a of node.args) this.collectDependencies(a, frame, out, flags, depth);
+        this.collectDependencies(node.callee, frame, out, flags, depth, bound);
+        for (const a of node.args) this.collectDependencies(a, frame, out, flags, depth, bound);
     }
   }
 
@@ -623,6 +655,7 @@ export class CalcEngine implements EvalHost {
   private removeNode(node: FormulaNode, seeds: Array<{ sheet: SheetInfo; rect: Rect }>): void {
     this.nodes.delete(node.key);
     this.volatileNodes.delete(node);
+    this.fixedNodes.delete(node);
     this.blocked.delete(node);
     for (const d of node.deps) {
       if (d.rect.r1 === d.rect.r2 && d.rect.c1 === d.rect.c2) {
@@ -816,12 +849,46 @@ export class CalcEngine implements EvalHost {
   // ---- evaluation and write-back -------------------------------------------------
 
   private computeNode(node: FormulaNode): void {
+    if (node.keepsLoaded) {
+      node.state = State.Clean;
+      return;
+    }
     node.state = State.Computing;
     const frame: Frame = { sheet: node.sheet.name, row: node.row, col: node.col, dRow: node.dRow, dCol: node.dCol, scope: undefined, depth: 0 };
     const result = this.evaluator.evaluateFormula(node.ast, frame);
     node.state = State.Clean;
-    if (isArray(result) && result.data.length > 1 && node.loadedKind !== 'shared') this.writeSpill(node, result);
+    if (node.fixed !== undefined) this.writeFixed(node, node.fixed, result);
+    else if (isArray(result) && result.data.length > 1 && node.loadedKind !== 'shared') this.writeSpill(node, result);
     else this.writeScalar(node, topLeft(result));
+  }
+
+  /**
+   * A legacy (Ctrl+Shift+Enter) array keeps the size it was entered with: a
+   * larger result is clipped, a smaller one pads with #N/A, and a single row
+   * or column repeats across the area, as in Excel.
+   */
+  private writeFixed(node: FormulaNode, rect: Rect, result: CalcScalar | CalcArray): void {
+    const at = (dr: number, dc: number): CalcScalar => {
+      if (!isArray(result)) return topLeft(result);
+      const r = result.rows === 1 ? 0 : dr;
+      const c = result.cols === 1 ? 0 : dc;
+      if (r >= result.rows || c >= result.cols) return ERRORS.NA;
+      return result.data[r * result.cols + c] ?? null;
+    };
+    const ws = node.sheet.ws;
+    for (let r = rect.r1; r <= rect.r2; r++) {
+      for (let c = rect.c1; c <= rect.c2; c++) {
+        if (r === node.row && c === node.col) continue;
+        const next = scalarToModel(at(r - rect.r1, c - rect.c1));
+        const cell = ws.rows.get(r)?.get(c);
+        if (cell === undefined || !sameModelValue(cell.value, next)) {
+          setCell(ws, r, c, next);
+          this.markChanged(node.sheet, r, c);
+        }
+      }
+    }
+    this.areaCache.clear();
+    this.setFormulaResult(node, at(0, 0), 'array', `${cellAddress(rect.r1, rect.c1)}:${cellAddress(rect.r2, rect.c2)}`);
   }
 
   private readCell(info: SheetInfo, cell: Cell): CalcScalar {
@@ -1022,4 +1089,38 @@ function parseA1Range(ref: string): Rect | undefined {
   const c2 = m[3] === undefined ? c1 : col(m[3]);
   const r2 = m[4] === undefined ? r1 : Number(m[4]);
   return { r1: Math.min(r1, r2), c1: Math.min(c1, c2), r2: Math.max(r1, r2), c2: Math.max(c1, c2) };
+}
+
+/** Names a formula binds itself with LET / LAMBDA, which calls may use as functions. */
+function boundNames(ast: AstNode): ReadonlySet<string> {
+  const out = new Set<string>();
+  const walk = (n: AstNode): void => {
+    switch (n.type) {
+      case 'call': {
+        const params = n.name === 'LET' ? n.args.filter((_, i) => i % 2 === 0 && i < n.args.length - 1) : n.name === 'LAMBDA' ? n.args.slice(0, -1) : [];
+        for (const p of params) if (p.type === 'name') out.add(p.name.toUpperCase());
+        n.args.forEach(walk);
+        return;
+      }
+      case 'unary':
+      case 'postfix':
+        walk(n.operand);
+        return;
+      case 'binary':
+        walk(n.left);
+        walk(n.right);
+        return;
+      case 'invoke':
+        walk(n.callee);
+        n.args.forEach(walk);
+    }
+  };
+  walk(ast);
+  return out;
+}
+
+/** Calls whose answer depends on the machine Excel ran on, so only the saved result is right. */
+function isEnvironmentCall(n: Extract<AstNode, { type: 'call' }>): boolean {
+  const first = n.args[0];
+  return n.name === 'CELL' && first?.type === 'string' && first.value.toLowerCase() === 'filename';
 }
