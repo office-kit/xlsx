@@ -10,6 +10,7 @@
 // mismatched table from an input file, and re-checking on save would make
 // saveWorkbook throw on a workbook it had just read.
 
+import { assertExcelName } from '../utils/excel-name.js';
 import { type CellValue, isErrorValue, isFormulaValue, isRichTextValue } from '../cell/cell.js';
 import { richTextToString } from '../cell/rich-text.js';
 import { rangeBoundaries, tupleToCoordinate } from '../utils/coordinate.js';
@@ -66,6 +67,7 @@ const NON_TEXT_REMEDY = 'Excel stores header text as a string, so the header cel
  * sheet underneath it.
  */
 export const validateTableAgainstSheet = (ws: Worksheet, table: TableDefinition): void => {
+  assertExcelName(table.displayName, 'table displayName');
   const where = `table "${table.displayName}"`;
   const ref = table.ref.trim();
   if (!TWO_CORNER_REF_RE.test(ref)) {
