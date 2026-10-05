@@ -22,6 +22,13 @@
 
   const m = $derived(ctl.menu);
 
+  // Each menu opens at its top level, however the last one was dismissed.
+  $effect.pre(() => {
+    void ctl.menu;
+    showTabColors = false;
+    sub = null;
+  });
+
   $effect(() => {
     const menu = ctl.menu;
     const node = el;
@@ -130,7 +137,7 @@
         <button class="xl-menu-item" onclick={() => (showTabColors = true)}>{t('tabColor')} ▸</button>
         <div class="xl-menu-sep"></div>
         <button class="xl-menu-item" onclick={() => run(() => A.setSheetHidden(ctl, i, true))}>{t('hide')}</button>
-        <button class="xl-menu-item" onclick={() => run(() => ctl.openDialog('unhideSheet'))}>{t('unhideEllipsis')}</button>
+        <button class="xl-menu-item" disabled={!doc.wb.sheets.some((s) => s.state !== 'visible')} onclick={() => run(() => ctl.openDialog('unhideSheet'))}>{t('unhideEllipsis')}</button>
       {/if}
     {:else}
       <button class="xl-menu-item" onclick={() => run(() => A.cut(ctl))}>{t('cut')}<span class="shortcut">⌘X</span></button>
