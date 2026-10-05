@@ -82,7 +82,10 @@ import {
   STYLES_TYPE,
   THEME_TYPE,
   WORKSHEET_TYPE,
+  XLSM_TYPE,
   XLSX_TYPE,
+  XLTM_TYPE,
+  XLTX_TYPE,
 } from '../xml/namespaces.js';
 import { type CompressionLevel, createZipWriter } from '../zip/writer.js';
 
@@ -909,10 +912,10 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
   if (wb.passthroughDefaults) {
     for (const [ext, ct] of wb.passthroughDefaults) addDefault(manifest, ext, ct);
   }
-  // VBA-bearing workbooks promote the workbook content type to xlsm.
-  const workbookContentType = wb.vbaProject
-    ? 'application/vnd.ms-excel.sheet.macroEnabled.main+xml'
-    : XLSX_TYPE;
+  // The loaded (or chosen) flavour is kept; VBA-bearing workbooks are promoted to the macro-enabled one.
+  const template = wb.fileFormat === 'xltx' || wb.fileFormat === 'xltm';
+  const macros = wb.vbaProject !== undefined || wb.fileFormat === 'xlsm' || wb.fileFormat === 'xltm';
+  const workbookContentType = template ? (macros ? XLTM_TYPE : XLTX_TYPE) : macros ? XLSM_TYPE : XLSX_TYPE;
   addOverride(manifest, `/${ARC_WORKBOOK}`, workbookContentType);
   for (const p of sheetPlans) {
     addOverride(manifest, `/${p.archivePath}`, p.contentType);

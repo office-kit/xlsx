@@ -28,6 +28,7 @@ import { flashFill } from './flash-fill.ts';
 import { groupLines, isCollapsed, toggleRun } from './outline.ts';
 import { clearRanges, formatRanges, freeze, mergeDiscardsValues, mergeRanges, setHidden, type ClearKind, type MergeMode } from './commands.ts';
 import { autofitColumns, autofitRows } from './autofit.ts';
+import { isRowFiltered } from './filter.ts';
 import { copyToSystem, pasteFromSystem, type PasteMode } from './clipboard.ts';
 import type { EditorController } from './controller.svelte.ts';
 import { extendSeries, type SeriesMode, type SeriesSeed } from './fill.ts';
@@ -73,6 +74,7 @@ export function paste(ctl: EditorController, mode: PasteMode = 'all'): void {
 // ---- clearing & formatting --------------------------------------------------------
 
 export function clear(ctl: EditorController, kind: ClearKind): void {
+  if ((kind === 'contents' || kind === 'all') && ctl.splitsArray(ctl.doc.selection.ranges)) return;
   clearRanges(ctl.doc, ctl.doc.selection.ranges, kind);
 }
 
@@ -228,6 +230,8 @@ export function autoFill(ctl: EditorController, source: Range, target: Range, mo
   doc.transact('AutoFill', (tx) => {
     tx.cells(ws, target);
     const write = (row: number, col: number, produced: SeriesSeed) => {
+      // Ctrl+D / Ctrl+R over a filtered list fill only the rows on show.
+      if (mode === 'copy' && isRowFiltered(ws, row)) return;
       const existing = getCellAt(ws, row, col);
       const seed: SeriesSeed =
         mode === 'formats'

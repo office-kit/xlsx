@@ -1,6 +1,6 @@
 {
   "kind": "additive",
-  "reason": "Adds the optional PlotArea.xValAx, which holds the X value axis of a scatter or bubble chart so both value axes survive load and save.",
-  "baselineSha256": "0215adc71ff20a46a5815d38df1eb5afb7ebdc21584eed44dda28cc3cd470b77",
-  "changeset": ".changeset/chart-scatter-axes-series-names.md"
+  "reason": "Adds the optional Workbook.fileFormat ('xlsx' | 'xlsm' | 'xltx' | 'xltm'), set by loadWorkbook, so a macro-enabled workbook without macros or a template keeps its content type on save.",
+  "baselineSha256": "2ad9f8b679cb4d0309954dbce2a6186020fbab25766a1d6f09bc7659b4542d24",
+  "changeset": ".changeset/keep-workbook-file-format.md"
 }

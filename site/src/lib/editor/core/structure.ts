@@ -10,11 +10,12 @@
 
 import type { Cell } from '@office-kit/xlsx/cell';
 import type { Workbook } from '@office-kit/xlsx/workbook';
-import type { PivotTable, Worksheet } from '@office-kit/xlsx/worksheet';
+import type { PivotTable, TableColumn, TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
 import { adjustFormulaForStructure } from '../calc/index.ts';
 import type { Range } from './address.ts';
-import { colLetter, MAX_COL, MAX_ROW } from './address.ts';
+import { colLetter, MAX_COL, MAX_ROW, parseRangeAddress } from './address.ts';
 import type { Transaction } from './history.ts';
+import { mapTableColumnsInFormula } from './tables.ts';
 
 export type Axis = 'row' | 'col';
 
@@ -187,7 +188,7 @@ function shiftDimensions(ws: Worksheet, e: Edit): void {
   ws.columnDimensions = new Map([...next].sort((a, b) => a[0] - b[0]));
 }
 
-function shiftSheetObjects(ws: Worksheet, e: Edit): void {
+function shiftSheetObjects(ws: Worksheet, e: Edit, dropped: DroppedColumns[]): void {
   ws.mergedCells = ws.mergedCells.flatMap((m) => {
     const r = mapRange({ r1: m.minRow, c1: m.minCol, r2: m.maxRow, c2: m.maxCol }, e);
     if (!r || (r.r1 === r.r2 && r.c1 === r.c2)) return [];
@@ -221,10 +222,14 @@ function shiftSheetObjects(ws: Worksheet, e: Edit): void {
   });
   ws.tables = ws.tables.flatMap((t) => {
     const ref = mapRefText(t.ref, e);
-    if (!ref) return [];
+    if (!ref) {
+      dropped.push({ table: t.displayName, columns: t.columns.map((c) => c.name) });
+      return [];
+    }
     // Mapped on its own: with a total row the filter stops one row short of the table.
     const autoFilter = t.autoFilter ? { ...t.autoFilter, ref: mapRefText(t.autoFilter.ref, e) ?? ref } : undefined;
-    return [{ ...t, ref, ...(autoFilter ? { autoFilter } : {}) }];
+    const columns = mapTableColumns(t, e, dropped);
+    return [{ ...t, ref, columns, ...(autoFilter ? { autoFilter } : {}) }];
   });
   if (ws.autoFilter) {
     const ref = mapRefText(ws.autoFilter.ref, e);
@@ -242,6 +247,61 @@ function shiftSheetObjects(ws: Worksheet, e: Edit): void {
       if (a.kind === 'twoCell') {
         const to = mapIndex(a.to[key] + 1, e);
         a.to[key] = (to ?? e.at) - 1;
+      }
+    }
+  }
+}
+
+/**
+ * A table's column list after whole columns were inserted or deleted through
+ * it: deleted columns go (their names are recorded so references to them can
+ * become #REF!), inserted ones get Excel's unused ColumnN names.
+ */
+function mapTableColumns(t: TableDefinition, e: Edit, dropped: DroppedColumns[]): TableColumn[] {
+  const range = parseRangeAddress(t.ref)?.range;
+  if (!range || e.axis !== 'col' || (e.band && (e.band.from > range.r1 || e.band.to < range.r2))) return t.columns;
+  if (e.count < 0) {
+    const last = e.at - e.count - 1;
+    const kept = t.columns.filter((_, i) => range.c1 + i < e.at || range.c1 + i > last);
+    if (kept.length !== t.columns.length && kept.length > 0) {
+      dropped.push({ table: t.displayName, columns: t.columns.filter((c) => !kept.includes(c)).map((c) => c.name) });
+    }
+    return kept.length > 0 ? kept : t.columns;
+  }
+  if (e.at <= range.c1 || e.at > range.c2) return t.columns;
+  const taken = new Set(t.columns.map((c) => c.name.toLowerCase()));
+  let nextId = Math.max(0, ...t.columns.map((c) => c.id)) + 1;
+  let n = 1;
+  const added: TableColumn[] = [];
+  for (let k = 0; k < e.count; k++) {
+    while (taken.has(`column${n}`)) n++;
+    taken.add(`column${n}`);
+    added.push({ id: nextId++, name: `Column${n}` });
+  }
+  const at = e.at - range.c1;
+  return [...t.columns.slice(0, at), ...added, ...t.columns.slice(at)];
+}
+
+interface DroppedColumns {
+  readonly table: string;
+  readonly columns: readonly string[];
+}
+
+/** References to deleted table columns (or a deleted table) become #REF!, as in Excel. */
+function dropTableColumnRefs(wb: Workbook, dropped: readonly DroppedColumns[]): void {
+  if (dropped.length === 0) return;
+  for (const ref of wb.sheets) {
+    if (ref.kind !== 'worksheet') continue;
+    for (const rowMap of ref.sheet.rows.values()) {
+      for (const cell of rowMap.values()) {
+        const v = cell.value;
+        if (v === null || typeof v !== 'object' || v instanceof Date || v.kind !== 'formula' || !v.formula.includes('[')) continue;
+        let next = v.formula;
+        for (const d of dropped) {
+          const gone = new Set(d.columns.map((c) => c.toLowerCase()));
+          next = mapTableColumnsInFormula(next, d.table, false, (name) => (gone.has(name.toLowerCase()) ? null : name));
+        }
+        if (next !== v.formula) cell.value = { ...v, formula: next };
       }
     }
   }
@@ -296,9 +356,11 @@ export function declareStructural(tx: Transaction, wb: Workbook, ws: Worksheet):
 export function applyStructuralEdit(wb: Workbook, ws: Worksheet, e: Edit): void {
   shiftCells(ws, e);
   shiftDimensions(ws, e);
-  shiftSheetObjects(ws, e);
+  const dropped: DroppedColumns[] = [];
+  shiftSheetObjects(ws, e, dropped);
   shiftPivotTables(wb, ws, e);
   adjustAllFormulas(wb, ws.title, e);
+  dropTableColumnRefs(wb, dropped);
 }
 
 /**
