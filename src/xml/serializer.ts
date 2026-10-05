@@ -177,13 +177,18 @@ const emit = (out: string[], node: XmlNode, allocation: Allocation, isRoot: bool
   const tag = buildElementPrefix(node.name, allocation.prefixOf);
   out.push('<', tag);
 
+  const declared = new Set<string>();
   if (isRoot) {
     for (const { prefix, ns } of allocation.declarations) {
       out.push(prefix === '' ? ` xmlns="${escapeXmlAttr(ns)}"` : ` xmlns:${prefix}="${escapeXmlAttr(ns)}"`);
+      declared.add(`xmlns:${prefix}`);
     }
   }
 
   for (const [name, value] of Object.entries(node.attrs)) {
+    // A literal `xmlns:*` the parser kept for a markup-compatibility attribute
+    // is already written when the root declares the same prefix.
+    if (declared.has(name)) continue;
     const attrName = buildAttrPrefix(name, allocation.prefixOf);
     out.push(' ', attrName, '="', escapeXmlAttr(value), '"');
   }

@@ -15,7 +15,7 @@
 // except the sheet list, whose entries must keep their identity.
 
 import type { CellValue } from '@office-kit/xlsx/cell';
-import type { Workbook } from '@office-kit/xlsx/workbook';
+import type { SheetRef, Workbook } from '@office-kit/xlsx/workbook';
 import type { Worksheet } from '@office-kit/xlsx/worksheet';
 import { makeCell } from '@office-kit/xlsx/cell';
 import type { Range } from './address.ts';
@@ -95,11 +95,14 @@ function take(part: Part, wb: Workbook): Snapshot {
       return { part, data: part.ws.title };
     case 'workbook': {
       const record: Record<string, unknown> = {};
-      for (const f of part.fields) record[f] = f === 'sheets' ? wb.sheets.slice() : structuredClone(wb[f]);
+      // Sheet entries are kept by identity (they hold the sheets); their visibility is copied, since Hide/Unhide changes it in place.
+      for (const f of part.fields) record[f] = f === 'sheets' ? wb.sheets.map((ref) => ({ ref, state: ref.state })) : structuredClone(wb[f]);
       return { part, data: record };
     }
   }
 }
+
+type SheetSnap = { readonly ref: SheetRef; readonly state: SheetRef['state'] };
 
 function restore(snapshot: Snapshot, wb: Workbook): void {
   const { part, data } = snapshot;
@@ -119,7 +122,12 @@ function restore(snapshot: Snapshot, wb: Workbook): void {
     case 'workbook': {
       const record = data as Record<string, unknown>;
       for (const f of part.fields) {
-        Object.assign(wb, { [f]: f === 'sheets' ? (record[f] as Workbook['sheets']).slice() : structuredClone(record[f]) });
+        if (f === 'sheets') {
+          wb.sheets = (record[f] as SheetSnap[]).map(({ ref, state }) => {
+            ref.state = state;
+            return ref;
+          });
+        } else Object.assign(wb, { [f]: structuredClone(record[f]) });
       }
     }
   }
@@ -268,17 +276,24 @@ export class History<V> {
  * declared — and it includes cells that were deleted, whose formula
  * dependents still need recalculating.
  */
+/** Larger than any column index, so `row * COL_KEY_SPAN + col` is unique. */
+const COL_KEY_SPAN = 16_385;
+
 export function changedCells<V>(step: HistoryStep<V>): Array<{ ws: Worksheet; row: number; col: number }> {
   const out: Array<{ ws: Worksheet; row: number; col: number }> = [];
-  const seen = new Set<string>();
+  // Numeric keys per sheet: a string key per cell made a 2M-cell sort spend
+  // seconds here.
+  const seen = new Map<Worksheet, Set<number>>();
   for (const list of [step.before, step.after]) {
     for (const snap of list) {
       if (snap.part.kind !== 'cells') continue;
       const ws = snap.part.ws;
+      let keys = seen.get(ws);
+      if (!keys) seen.set(ws, (keys = new Set()));
       for (const c of snap.data as CellSnap[]) {
-        const key = `${ws.title}\u0000${c.row}\u0000${c.col}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
+        const key = c.row * COL_KEY_SPAN + c.col;
+        if (keys.has(key)) continue;
+        keys.add(key);
         out.push({ ws, row: c.row, col: c.col });
       }
     }

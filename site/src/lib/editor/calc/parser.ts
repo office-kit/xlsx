@@ -66,7 +66,8 @@ export function parseStructuredBody(body: string, position: number): StructuredS
   }
   if (!trimmed.startsWith('[')) {
     const special = SPECIALS.get(trimmed.toUpperCase());
-    return special !== undefined ? { specials: [special] } : { specials: [], col1: unescapeColumn(trimmed) };
+    // A bare column name is taken as written: a header can end in a space.
+    return special !== undefined ? { specials: [special] } : { specials: [], col1: unescapeColumn(body) };
   }
   // A comma-separated list of `[item]` groups; columns may form a `[A]:[B]` span.
   const specials: StructuredSpecial[] = [];

@@ -9,6 +9,7 @@
 import type { CellValue } from '@office-kit/xlsx/cell';
 import { makeCell } from '@office-kit/xlsx/cell';
 import { cellStyleToCss, getCellDisplayText } from '@office-kit/xlsx/styles';
+import type { Worksheet } from '@office-kit/xlsx/worksheet';
 import { mergeCells, setColumnDimension, unmergeCells } from '@office-kit/xlsx/worksheet';
 import { adjustFormulaForMove, translateFormula } from '../calc/index.ts';
 import type { CellPos, Range } from './address.ts';
@@ -31,7 +32,8 @@ interface ClipCell {
 
 export interface ClipPayload {
   readonly id: string;
-  readonly sheetIndex: number;
+  /** The sheet itself, not its index: sheets can move or go between the cut and the paste. */
+  readonly sheet: Worksheet;
   readonly source: Range;
   readonly rows: number;
   readonly cols: number;
@@ -62,7 +64,7 @@ export function captureSelection(ctl: EditorController, cut: boolean): ClipPaylo
   const p = snapshotSelection(ctl, cut);
   if (!p) return null;
   payload = p;
-  ctl.clipboard = { sheetIndex: ctl.doc.activeSheetIndex, range: ctl.doc.selection.ranges[0] ?? p.source, cut };
+  ctl.clipboard = { sheet: ctl.doc.ws, range: ctl.doc.selection.ranges[0] ?? p.source, cut };
   return p;
 }
 
@@ -96,14 +98,18 @@ function snapshotSelection(ctl: EditorController, cut: boolean): ClipPayload | n
     const at = packedIndex.get(c.row);
     if (at !== undefined) cells.push({ dr: at, dc: c.col - range.c1, srcDr: dr, value: c.value, styleId: c.styleId });
   });
+  // Only merges wholly inside the block travel with it; one sticking out cannot be rebuilt at the destination.
   const merges = packedIndex
     ? []
-    : ctl.doc.merges.intersecting(range).map((m) => ({ r1: m.r1 - range.r1, c1: m.c1 - range.c1, r2: m.r2 - range.r1, c2: m.c2 - range.c1 }));
+    : ctl.doc.merges
+        .intersecting(range)
+        .filter((m) => m.r1 >= range.r1 && m.c1 >= range.c1 && m.r2 <= range.r2 && m.c2 <= range.c2)
+        .map((m) => ({ r1: m.r1 - range.r1, c1: m.c1 - range.c1, r2: m.r2 - range.r1, c2: m.c2 - range.c1 }));
   const colWidths = new Map<number, number>();
   for (let c = range.c1; c <= range.c2 && c - range.c1 < 256; c++) colWidths.set(c - range.c1, ctl.doc.cols.sizeOf(c));
   return {
     id: Math.random().toString(36).slice(2),
-    sheetIndex: ctl.doc.activeSheetIndex,
+    sheet: ctl.doc.ws,
     source: range,
     rows: packedIndex ? packed.length : range.r2 - range.r1 + 1,
     cols: range.c2 - range.c1 + 1,
@@ -286,8 +292,7 @@ function pasteInternal(ctl: EditorController, p: ClipPayload, opts: PasteSpecial
     r2: Math.min(MAX_ROW, origin.row + rows * tilesR - 1),
     c2: Math.min(MAX_COL, origin.col + cols * tilesC - 1),
   };
-  const sourceRef = doc.wb.sheets[p.sheetIndex];
-  const sourceSheet = sourceRef?.kind === 'worksheet' ? sourceRef.sheet : undefined;
+  const sourceSheet = doc.wb.sheets.some((s) => s.sheet === p.sheet) ? p.sheet : undefined;
   const sourceTitle = sourceSheet?.title ?? ws.title;
   const isMove = p.cut && opts.what === 'all' && !opts.transpose;
   // Excel refuses a paste that would cover part of a merged cell.

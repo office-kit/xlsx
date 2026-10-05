@@ -135,3 +135,25 @@ describe('serializeXml — round-trip with parseXml', () => {
     expect(a).toEqual(node);
   });
 });
+
+// `Requires` / `mc:Ignorable` name namespaces by prefix inside their value.
+// Excel asks to repair a drawing whose `<mc:Choice Requires="cx1">` lost the
+// `xmlns:cx1` declaration on a re-save.
+describe('markup-compatibility prefixes', () => {
+  const CX1 = 'http://schemas.microsoft.com/office/drawing/2015/9/8/chartex';
+  const MC = 'http://schemas.openxmlformats.org/markup-compatibility/2006';
+
+  it('keeps the declaration of a prefix named by Requires', () => {
+    const src = `<root xmlns:mc="${MC}"><mc:AlternateContent><mc:Choice xmlns:cx1="${CX1}" Requires="cx1"><a/></mc:Choice></mc:AlternateContent></root>`;
+    const out = new TextDecoder().decode(serializeXml(parseXml(src), { xmlDeclaration: false }));
+    expect(out).toContain(`<mc:Choice Requires="cx1" xmlns:cx1="${CX1}">`);
+  });
+
+  it('declares a prefix named by mc:Ignorable only once on the root', () => {
+    const X14AC = 'http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac';
+    const src = `<r xmlns:mc="${MC}" xmlns:x14ac="${X14AC}" mc:Ignorable="x14ac"><c x14ac:dyDescent="1"/></r>`;
+    const out = new TextDecoder().decode(serializeXml(parseXml(src), { xmlDeclaration: false }));
+    expect(out.match(/xmlns:x14ac=/g)).toHaveLength(1);
+    expect(parseXml(out).children[0]?.attrs[`{${X14AC}}dyDescent`]).toBe('1');
+  });
+});

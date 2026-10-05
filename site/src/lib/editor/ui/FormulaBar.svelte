@@ -3,13 +3,13 @@
   // input mirrors the in-cell editor: typing here starts (or continues) the
   // same edit session, so both stay in sync like Excel's.
   import { getEditor } from '../core/context.ts';
-  import { cellAddress, parseRangeAddress, rangeAddress, rangeOf } from '../core/address.ts';
-  import { currentRange, isMultiCell } from '../core/selection.ts';
+  import { cellAddress, rangeAddress, rangeOf } from '../core/address.ts';
+  import { currentRange } from '../core/selection.ts';
   import { editTextFor } from '../core/input.ts';
   import { isDateFormat, getCellDisplayText } from '@office-kit/xlsx/styles';
   import { t } from '../i18n/i18n.svelte.ts';
   import Icon from './Icon.svelte';
-  import { goToReference } from '../core/names.ts';
+  import { goToReference, validateName } from '../core/names.ts';
 
   const ctl = getEditor();
   const doc = ctl.doc;
@@ -18,6 +18,25 @@
   let nameText = $state('');
   let nameFocused = $state(false);
   let namesOpen = $state(false);
+  let namesMenu = $state<HTMLDivElement>();
+
+  // Like any menu, the defined-names list closes on Escape or a click elsewhere.
+  $effect(() => {
+    if (!namesOpen) return;
+    const down = (e: PointerEvent) => {
+      if (!(e.target instanceof Node) || namesMenu?.contains(e.target) || (e.target instanceof Element && e.target.closest('.nb-arrow'))) return;
+      namesOpen = false;
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') namesOpen = false;
+    };
+    window.addEventListener('pointerdown', down, true);
+    window.addEventListener('keydown', key, true);
+    return () => {
+      window.removeEventListener('pointerdown', down, true);
+      window.removeEventListener('keydown', key, true);
+    };
+  });
 
   const address = $derived.by(() => {
     const sel = doc.selection;
@@ -28,7 +47,7 @@
     }
     const r = currentRange(sel);
     // While dragging out a range Excel shows its size ("3R x 2C"); afterwards the active cell.
-    if (isMultiCell(sel) && sel.ranges.length === 1) {
+    if (sel.ranges.length === 1) {
       const name = definedNameFor(r);
       if (name) return name;
     }
@@ -141,8 +160,7 @@
     ctl.gridFocusRequest++;
     if (!text) return;
     if (!goToReference(ctl, text)) {
-      const parsed = parseRangeAddress(text);
-      if (!parsed && /^[A-Za-z_\\][\w.]*$/.test(text)) {
+      if (validateName(text) === undefined) {
         // Typing a new name into the Name Box defines it for the selection.
         ctl.defineNameForSelection(text);
       } else ctl.toast = 'invalidReference';
@@ -168,7 +186,7 @@
     />
     <button class="nb-arrow" aria-label={t('definedNames')} onclick={() => (namesOpen = !namesOpen)} onmousedown={(e) => e.preventDefault()}><Icon name="chevron-down" size={11} /></button>
     {#if namesOpen}
-      <div class="xl-menu names" role="menu">
+      <div class="xl-menu names" role="menu" bind:this={namesMenu}>
         {#each names as n (n)}
           <button class="xl-menu-item" onclick={() => { goToReference(ctl, n); namesOpen = false; ctl.gridFocusRequest++; }}>{n}</button>
         {:else}

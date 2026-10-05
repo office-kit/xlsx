@@ -4,7 +4,7 @@
 // and conditional, and we want minimum bundle weight. Pairs with the
 // loader/writer wiring in src/public/{load,save}.ts.
 
-import { escapeXmlAttr } from '../utils/escape.js';
+import { escapeCellString, escapeXmlAttr, escapeXmlText, unescapeCellString } from '../utils/escape.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
 import { SHEET_MAIN_NS } from '../xml/namespaces.js';
 import { parseXml } from '../xml/parser.js';
@@ -17,6 +17,8 @@ const TABLE_TAG = `{${SHEET_MAIN_NS}}table`;
 const TABLE_COLUMNS_TAG = `{${SHEET_MAIN_NS}}tableColumns`;
 const TABLE_COLUMN_TAG = `{${SHEET_MAIN_NS}}tableColumn`;
 const TABLE_STYLE_INFO_TAG = `{${SHEET_MAIN_NS}}tableStyleInfo`;
+const CALCULATED_COLUMN_FORMULA_TAG = `{${SHEET_MAIN_NS}}calculatedColumnFormula`;
+const TOTALS_ROW_FORMULA_TAG = `{${SHEET_MAIN_NS}}totalsRowFormula`;
 const AUTOFILTER_TAG = `{${SHEET_MAIN_NS}}autoFilter`;
 const FILTER_COLUMN_TAG = `{${SHEET_MAIN_NS}}filterColumn`;
 const FILTERS_TAG = `{${SHEET_MAIN_NS}}filters`;
@@ -92,14 +94,19 @@ export function parseTableXml(bytes: Uint8Array | string): TableDefinition {
 
 const parseTableColumn = (node: XmlNode): TableColumn => {
   const id = parseInteger(node.attrs['id']);
-  const name = node.attrs['name'];
-  if (id === undefined || !name) {
+  const rawName = node.attrs['name'];
+  if (id === undefined || !rawName) {
     throw new OpenXmlSchemaError('parseTableXml: <tableColumn> missing @id / @name');
   }
-  const col: TableColumn = makeTableColumn({ id, name });
+  // Excel writes a line break in a header as `_x000a_`; the name has to match the header cell's text.
+  const col: TableColumn = makeTableColumn({ id, name: unescapeCellString(rawName) });
   const fn = node.attrs['totalsRowFunction'];
   if (fn) col.totalsRowFunction = fn as NonNullable<TableColumn['totalsRowFunction']>;
-  if (node.attrs['totalsRowLabel']) col.totalsRowLabel = node.attrs['totalsRowLabel'];
+  if (node.attrs['totalsRowLabel']) col.totalsRowLabel = unescapeCellString(node.attrs['totalsRowLabel']);
+  const calculated = findChild(node, CALCULATED_COLUMN_FORMULA_TAG)?.text;
+  if (calculated) col.calculatedColumnFormula = calculated;
+  const totals = findChild(node, TOTALS_ROW_FORMULA_TAG)?.text;
+  if (totals) col.totalsRowFormula = totals;
   return col;
 };
 
@@ -164,10 +171,14 @@ function serializeTable(table: TableDefinition): string {
 }
 
 const serializeTableColumn = (col: TableColumn): string => {
-  let attrs = ` id="${col.id}" name="${escapeAttr(col.name)}"`;
+  let attrs = ` id="${col.id}" name="${escapeAttr(escapeCellString(col.name))}"`;
   if (col.totalsRowFunction) attrs += ` totalsRowFunction="${col.totalsRowFunction}"`;
-  if (col.totalsRowLabel !== undefined) attrs += ` totalsRowLabel="${escapeAttr(col.totalsRowLabel)}"`;
-  return `<tableColumn${attrs}/>`;
+  if (col.totalsRowLabel !== undefined) attrs += ` totalsRowLabel="${escapeAttr(escapeCellString(col.totalsRowLabel))}"`;
+  // CT_TableColumn sequence: calculatedColumnFormula, totalsRowFormula.
+  let children = '';
+  if (col.calculatedColumnFormula !== undefined) children += `<calculatedColumnFormula>${escapeXmlText(col.calculatedColumnFormula)}</calculatedColumnFormula>`;
+  if (col.totalsRowFormula !== undefined) children += `<totalsRowFormula>${escapeXmlText(col.totalsRowFormula)}</totalsRowFormula>`;
+  return children === '' ? `<tableColumn${attrs}/>` : `<tableColumn${attrs}>${children}</tableColumn>`;
 };
 
 const serializeTableStyleInfo = (info: TableStyleInfo): string => {

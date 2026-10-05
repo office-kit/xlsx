@@ -765,6 +765,21 @@ const parseCategoryRef = (parent: XmlNode): CategoryRef | undefined => {
   return undefined;
 };
 
+/** `<c:tx>` of a series: a cell reference, or a typed name (`<c:v>`, or a cache with no formula). */
+const parseSeriesTx = (serEl: XmlNode): BarSeries['tx'] => {
+  const txEl = findChild(serEl, TX_TAG);
+  if (!txEl) return undefined;
+  const literal = findChild(txEl, V_TAG)?.text;
+  if (literal !== undefined) return { kind: 'literal', value: literal };
+  const strRef = findChild(txEl, STR_REF_TAG);
+  if (!strRef) return undefined;
+  const ref = findChild(strRef, F_TAG)?.text ?? '';
+  if (ref !== '') return { kind: 'ref', ref };
+  const cacheEl = findChild(strRef, STR_CACHE_TAG);
+  const cached = cacheEl ? parseStrCache(cacheEl)[0] : undefined;
+  return cached === undefined ? undefined : { kind: 'literal', value: cached };
+};
+
 const parseSeries = (serEl: XmlNode): BarSeries | undefined => {
   const idx = intVal(findChild(serEl, IDX_TAG));
   const order = intVal(findChild(serEl, ORDER_TAG));
@@ -778,6 +793,8 @@ const parseSeries = (serEl: XmlNode): BarSeries | undefined => {
   if (order !== undefined) opts.order = order;
   const cat = parseCategoryRef(serEl);
   if (cat) opts.cat = cat;
+  const tx = parseSeriesTx(serEl);
+  if (tx) opts.tx = tx;
   const base = makeBarSeries(opts);
   const spPr = parseSpPrSlot(serEl);
   const invertIfNegative = boolVal(findChild(serEl, INVERT_IF_NEGATIVE_TAG));
@@ -902,6 +919,8 @@ const parseScatterSeries = (serEl: XmlNode): ScatterSeries | undefined => {
   const markerEl = findChild(serEl, MARKER_TAG);
   const marker = markerEl ? parseMarker(markerEl) : undefined;
   if (marker) opts.marker = marker;
+  const tx = parseSeriesTx(serEl);
+  if (tx) opts.tx = tx;
   const base = makeScatterSeries(opts);
   const spPr = parseSpPrSlot(serEl);
   const dPt = parseDataPointList(serEl);
@@ -954,6 +973,8 @@ const parseBubbleSeries = (serEl: XmlNode): BubbleSeries | undefined => {
   if (order !== undefined) opts.order = order;
   if (xVal) opts.xVal = xVal;
   if (bubble3D !== undefined) opts.bubble3D = bubble3D;
+  const tx = parseSeriesTx(serEl);
+  if (tx) opts.tx = tx;
   const base = makeBubbleSeries(opts);
   const spPr = parseSpPrSlot(serEl);
   const invertIfNegative = boolVal(findChild(serEl, INVERT_IF_NEGATIVE_TAG));
@@ -1499,12 +1520,17 @@ export function parseChartXml(bytes: Uint8Array | string): ChartSpace {
   if (!plotAreaEl) throw new OpenXmlSchemaError('parseChartXml: <chart> missing <plotArea>');
   const chart = parsePlotChart(plotAreaEl);
   const catAxEl = findChild(plotAreaEl, CAT_AX_TAG);
-  const valAxEl = findChild(plotAreaEl, VAL_AX_TAG);
+  // Scatter and bubble charts have two value axes; the X one is first in the chart's axId list.
+  const valAxEls = findChildren(plotAreaEl, VAL_AX_TAG);
+  const xAxId = 'axIds' in chart && (chart.kind === 'scatter' || chart.kind === 'bubble') ? chart.axIds?.[0] : undefined;
+  const xValAxEl = xAxId === undefined || valAxEls.length < 2 ? undefined : valAxEls.find((el) => intVal(findChild(el, AX_ID_TAG)) === xAxId);
+  const valAxEl = valAxEls.find((el) => el !== xValAxEl);
   const plotAreaSpPr = parseSpPrSlot(plotAreaEl);
   const plotArea: PlotArea = {
     chart,
     ...(catAxEl ? { catAx: parseCategoryAxis(catAxEl) } : {}),
     ...(valAxEl ? { valAx: parseValueAxis(valAxEl) } : {}),
+    ...(xValAxEl ? { xValAx: parseValueAxis(xValAxEl) } : {}),
     ...((): { dateAx?: DateAxis; serAx?: SeriesAxis; layout?: Layout } => {
       const out: { dateAx?: DateAxis; serAx?: SeriesAxis; layout?: Layout } = {};
       const dateAxEl = findChild(plotAreaEl, DATE_AX_TAG);
@@ -1614,7 +1640,7 @@ const serializeSeries = (s: BarSeries, marker?: Marker): string => {
   const parts: string[] = ['<c:ser>', `<c:idx val="${s.idx}"/>`, `<c:order val="${s.order}"/>`];
   if (s.tx) {
     if (s.tx.kind === 'literal') {
-      parts.push(`<c:tx><c:strRef><c:f></c:f>${serializeStrCache([s.tx.value])}</c:strRef></c:tx>`);
+      parts.push(`<c:tx><c:v>${escapeText(s.tx.value)}</c:v></c:tx>`);
     } else {
       parts.push(`<c:tx><c:strRef><c:f>${escapeText(s.tx.ref)}</c:f></c:strRef></c:tx>`);
     }
@@ -1714,7 +1740,7 @@ const serializeScatterSeries = (s: ScatterSeries): string => {
   const parts: string[] = ['<c:ser>', `<c:idx val="${s.idx}"/>`, `<c:order val="${s.order}"/>`];
   if (s.tx) {
     if (s.tx.kind === 'literal') {
-      parts.push(`<c:tx><c:strRef><c:f></c:f>${serializeStrCache([s.tx.value])}</c:strRef></c:tx>`);
+      parts.push(`<c:tx><c:v>${escapeText(s.tx.value)}</c:v></c:tx>`);
     } else {
       parts.push(`<c:tx><c:strRef><c:f>${escapeText(s.tx.ref)}</c:f></c:strRef></c:tx>`);
     }
@@ -1762,7 +1788,7 @@ const serializeBubbleSeries = (s: BubbleSeries): string => {
   const parts: string[] = ['<c:ser>', `<c:idx val="${s.idx}"/>`, `<c:order val="${s.order}"/>`];
   if (s.tx) {
     if (s.tx.kind === 'literal') {
-      parts.push(`<c:tx><c:strRef><c:f></c:f>${serializeStrCache([s.tx.value])}</c:strRef></c:tx>`);
+      parts.push(`<c:tx><c:v>${escapeText(s.tx.value)}</c:v></c:tx>`);
     } else {
       parts.push(`<c:tx><c:strRef><c:f>${escapeText(s.tx.ref)}</c:f></c:strRef></c:tx>`);
     }
@@ -2097,7 +2123,7 @@ const inferAxesForChart = (plotArea: PlotArea): string[] => {
   if (!ids || ids.length < 2) return [];
   // Scatter / bubble have two value axes (x and y are both numeric).
   const isXValueAxis = chart.kind === 'scatter' || chart.kind === 'bubble';
-  const cat = plotArea.catAx ?? { axId: ids[0], crossAx: ids[1], position: isXValueAxis ? ('b' as const) : ('b' as const) };
+  const cat = (isXValueAxis ? plotArea.xValAx : undefined) ?? plotArea.catAx ?? { axId: ids[0], crossAx: ids[1], position: 'b' as const };
   const val = plotArea.valAx ?? { axId: ids[1], crossAx: ids[0], position: 'l' as const };
   const out: string[] = [];
   out.push(serializeAxis(isXValueAxis ? 'valAx' : 'catAx', cat));
