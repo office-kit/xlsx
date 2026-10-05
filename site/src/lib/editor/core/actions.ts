@@ -5,7 +5,7 @@
 import type { CellValue } from '@office-kit/xlsx/cell';
 import { makeCell } from '@office-kit/xlsx/cell';
 import type { Font, HorizontalAlignment, Side, VerticalAlignment } from '@office-kit/xlsx/styles';
-import { getCellFont, getCellProtection, isDateFormat, makeColor } from '@office-kit/xlsx/styles';
+import { classifyDateFormat, getCellFont, getCellProtection, isDateFormat, makeColor } from '@office-kit/xlsx/styles';
 import { addWorksheet, moveSheet, removeSheet, renameSheet, setSheetState } from '@office-kit/xlsx/workbook';
 import type { Worksheet } from '@office-kit/xlsx/worksheet';
 import type { PageSetup } from '@office-kit/xlsx/worksheet';
@@ -225,7 +225,8 @@ export function autoFill(ctl: EditorController, source: Range, target: Range, mo
     return;
   }
   const isDate = (styleId: number) => isDateFormat(doc.styles.get(styleId).numFmt);
-  const fillCtx = { translate: translateFormula, isDate, date1904: doc.wb.date1904 };
+  const isTime = (styleId: number) => classifyDateFormat(doc.styles.get(styleId).numFmt) === 'time';
+  const fillCtx = { translate: translateFormula, isDate, isTime, date1904: doc.wb.date1904 };
   const seriesMode: SeriesMode = mode === 'formats' ? 'copy' : mode === 'values' ? 'auto' : mode;
   doc.transact('AutoFill', (tx) => {
     tx.cells(ws, target);
