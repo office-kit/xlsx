@@ -2,7 +2,7 @@
 // like the library model, and a Range is always normalised (r1 <= r2,
 // c1 <= c2) so consumers never re-check orientation.
 
-import { columnIndexFromLetter, columnLetterFromIndex, MAX_COL, MAX_ROW } from '@office-kit/xlsx/utils';
+import { columnLetterFromIndex, MAX_COL, MAX_ROW } from '@office-kit/xlsx/utils';
 
 export { MAX_COL, MAX_ROW };
 
@@ -58,10 +58,18 @@ const CELL_RE = /^\$?([A-Za-z]{1,3})\$?(\d{1,7})$/;
 const COLS_RE = /^\$?([A-Za-z]{1,3}):\$?([A-Za-z]{1,3})$/;
 const ROWS_RE = /^\$?(\d{1,7}):\$?(\d{1,7})$/;
 
+// The library's `columnIndexFromLetter` throws past XFD; typed input such as
+// `XFE1` is just not a reference.
+function letterIndex(letters: string): number {
+  let n = 0;
+  for (const ch of letters.toUpperCase()) n = n * 26 + (ch.charCodeAt(0) - 64);
+  return n;
+}
+
 function parseCell(text: string): CellPos | undefined {
   const m = CELL_RE.exec(text);
   if (!m?.[1] || !m[2]) return undefined;
-  const col = columnIndexFromLetter(m[1].toUpperCase());
+  const col = letterIndex(m[1]);
   const row = Number(m[2]);
   if (row < 1 || row > MAX_ROW || col < 1 || col > MAX_COL) return undefined;
   return { row, col };
@@ -85,8 +93,8 @@ export function parseRangeAddress(input: string): { sheet?: string; range: Range
   const withSheet = (range: Range) => (sheet === undefined ? { range } : { sheet, range });
   const cols = COLS_RE.exec(text);
   if (cols?.[1] && cols[2]) {
-    const a = columnIndexFromLetter(cols[1].toUpperCase());
-    const b = columnIndexFromLetter(cols[2].toUpperCase());
+    const a = letterIndex(cols[1]);
+    const b = letterIndex(cols[2]);
     if (a > MAX_COL || b > MAX_COL) return undefined;
     return withSheet({ r1: 1, r2: MAX_ROW, c1: Math.min(a, b), c2: Math.max(a, b) });
   }

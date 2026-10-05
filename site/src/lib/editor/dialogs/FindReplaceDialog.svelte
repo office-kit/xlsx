@@ -96,19 +96,21 @@
       notice = t('notFound');
       return;
     }
-    replaceCurrent(ctl, options(), fs.replace);
+    const result = replaceCurrent(ctl, options(), fs.replace);
+    if (result.invalidFormula !== undefined) notice = `${t('formulaError')} ${result.invalidFormula}`;
   }
 
   function replaceEverything(): void {
     if (!fs.query) return;
-    const n = replaceAll(
+    const result = replaceAll(
       ctl,
       options(),
       fs.replace,
       scope().map((s) => s.ws),
     );
     results = [];
-    notice = n === 0 ? t('notFound') : t('dlgReplacedCount', { n });
+    if (result.invalidFormula !== undefined) notice = `${t('formulaError')} ${result.invalidFormula}`;
+    else notice = result.replaced === 0 ? t('notFound') : t('dlgReplacedCount', { n: result.replaced });
   }
 </script>
 

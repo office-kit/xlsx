@@ -10,7 +10,7 @@
 
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
 import { ATTR_KEY, CDATA_KEY, lexXml, type RawAttrs, type RawEntry, TEXT_KEY } from './lex.js';
-import { qname } from './namespaces.js';
+import { MARKUP_COMPAT_NS, qname } from './namespaces.js';
 import { el, type XmlNode } from './tree.js';
 
 // ---- DOCTYPE / DTD prescan --------------------------------------------------
@@ -239,7 +239,29 @@ const filterAttrs = (rawAttrs: RawAttrs | undefined, stack: NamespaceStack): { r
     if (k === 'xmlns' || k.startsWith('xmlns:')) continue;
     resolved[resolveAttrName(k, stack)] = decodeXmlEntities(v);
   }
+  keepMcPrefixDeclarations(resolved, stack);
   return { resolved };
+};
+
+// Markup-compatibility attributes name namespaces by prefix inside their
+// value (`<mc:Choice Requires="cx1">`, `mc:Ignorable="x14ac"`), which Clark
+// notation cannot carry. Keep the declarations of those prefixes as literal
+// `xmlns:*` attributes so the serializer writes them back; without them Excel
+// cannot resolve the prefix and asks to repair the file.
+const MC_PREFIX_LIST_ATTRS = ['Requires', `{${MARKUP_COMPAT_NS}}Ignorable`, `{${MARKUP_COMPAT_NS}}MustUnderstand`, `{${MARKUP_COMPAT_NS}}ProcessContent`];
+
+const keepMcPrefixDeclarations = (resolved: Record<string, string>, stack: NamespaceStack): void => {
+  for (const attr of MC_PREFIX_LIST_ATTRS) {
+    const value = resolved[attr];
+    if (value === undefined) continue;
+    // ProcessContent lists qualified names (`w:p`); the others bare prefixes.
+    for (const token of value.split(/\s+/)) {
+      const prefix = token.split(':')[0];
+      if (!prefix) continue;
+      const ns = stack.byPrefix[prefix];
+      if (ns !== undefined) resolved[`xmlns:${prefix}`] = ns;
+    }
+  }
 };
 
 /**

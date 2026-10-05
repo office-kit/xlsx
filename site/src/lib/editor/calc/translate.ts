@@ -143,6 +143,38 @@ export function renameSheetInFormula(text: string, oldName: string, newName: str
   return splice(text, replacements);
 }
 
+/**
+ * Rewrite a formula after sheet `deleted` was removed from `order` (the sheet
+ * titles before the deletion). A reference to that sheet becomes #REF!, and a
+ * 3-D reference ending on it shrinks to the next sheet inward, as in Excel.
+ */
+export function deleteSheetInFormula(text: string, deleted: string, order: readonly string[]): string {
+  const gone = deleted.toLowerCase();
+  const indexOf = (title: string) => order.findIndex((o) => o.toLowerCase() === title.toLowerCase());
+  const replacements: Replacement[] = [];
+  for (const t of tokenize(text, true)) {
+    if ((t.kind !== 'ref' && t.kind !== 'name') || t.prefix === undefined || t.prefix.external !== undefined) continue;
+    const p = t.prefix;
+    const hitFirst = p.sheet.toLowerCase() === gone;
+    const hitSecond = p.sheet2?.toLowerCase() === gone;
+    if (!hitFirst && !hitSecond) continue;
+    if (p.sheet2 === undefined) {
+      replacements.push({ start: t.start, end: t.end, text: REF_ERROR });
+      continue;
+    }
+    const a = indexOf(p.sheet);
+    const b = indexOf(p.sheet2);
+    if (a < 0 || b < 0) continue;
+    const step = a < b ? 1 : -1;
+    const first = hitFirst ? a + step : a;
+    const last = hitSecond ? b - step : b;
+    const sheet = order[first] ?? p.sheet;
+    const sheet2 = order[last] ?? p.sheet2;
+    replacements.push({ start: t.start, end: t.prefixEnd, text: renderPrefix(first === last ? { sheet } : { sheet, sheet2 }) });
+  }
+  return splice(text, replacements);
+}
+
 export interface MoveEdit {
   /** Sheet the block was cut from. */
   readonly sheet: string;

@@ -126,7 +126,7 @@ export function fillSeries(ctl: EditorController, range: Range, byRows: boolean,
         seeds.push({ value: c.value, styleId: c.styleId });
       }
       offset = seeds.length;
-      produced = extendSeries(seeds, Math.max(0, count + 1 - seeds.length), 1, byRows ? 'col' : 'row', { translate: translateFormula, isDate });
+      produced = extendSeries(seeds, Math.max(0, count + 1 - seeds.length), 1, byRows ? 'col' : 'row', { translate: translateFormula, isDate, date1904: doc.wb.date1904 });
     } else {
       if (typeof first.value !== 'number') continue;
       offset = 1;

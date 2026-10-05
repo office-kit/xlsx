@@ -12,7 +12,7 @@ import { AxisIndex } from './axis.ts';
  * 96 dpi, the figure Excel uses for the default Normal style.
  */
 export const MAX_DIGIT_WIDTH = 7;
-const PX_PER_PT = 96 / 72;
+export const PX_PER_PT = 96 / 72;
 
 // Stored widths (`<col width>`, `defaultColWidth`) include 5 px of cell
 // padding; the "8.43" Excel shows in the Column Width dialog does not.
