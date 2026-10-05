@@ -49,9 +49,9 @@ describe('addExcelTable', () => {
     writeRange(ws1, 'A1', [['x', 'y']]);
     writeRange(ws1, 'D1', [['p', 'q']]);
     writeRange(ws2, 'A1', [['x', 'y']]);
-    const t1 = addExcelTable(wb, ws1, { name: 't1', ref: 'A1:B5', columns: ['x', 'y'] });
-    const t2 = addExcelTable(wb, ws2, { name: 't2', ref: 'A1:B5', columns: ['x', 'y'] });
-    const t3 = addExcelTable(wb, ws1, { name: 't3', ref: 'D1:E5', columns: ['p', 'q'] });
+    const t1 = addExcelTable(wb, ws1, { name: 'first', ref: 'A1:B5', columns: ['x', 'y'] });
+    const t2 = addExcelTable(wb, ws2, { name: 'second', ref: 'A1:B5', columns: ['x', 'y'] });
+    const t3 = addExcelTable(wb, ws1, { name: 'third', ref: 'D1:E5', columns: ['p', 'q'] });
     expect(t1.id).toBe(1);
     expect(t2.id).toBe(2);
     expect(t3.id).toBe(3);

@@ -110,8 +110,9 @@ function formatColor(code: string, value: number | string): string | undefined {
 export function displayCell(wb: Workbook, cell: Cell, numFmt: string): CellDisplay {
   const kind = valueKind(cell.value);
   if (kind === 'empty') return { text: '', kind };
-  const text = getCellDisplayText(wb, cell);
   const v = effectiveValue(cell.value);
+  // The library's General keeps all 15 stored digits; a cell shows Excel's 11.
+  const text = typeof v === 'number' && numFmt === 'General' ? generalText(v) : getCellDisplayText(wb, cell);
   if (typeof v === 'number') {
     const color = formatColor(numFmt, v);
     return color ? { text, kind, number: v, color } : { text, kind, number: v };
@@ -123,13 +124,52 @@ export function displayCell(wb: Workbook, cell: Cell, numFmt: string): CellDispl
   return { text, kind };
 }
 
+/** `1.42857e-5` → `1.42857E-05`: Excel's exponent has at least two digits, and no trailing zeros. */
+function excelExponential(n: number, digits: number): string {
+  const [mantissa = '', exp = ''] = n.toExponential(digits).split('e');
+  const m = mantissa.includes('.') ? mantissa.replace(/0+$/, '').replace(/\.$/, '') : mantissa;
+  const sign = exp.startsWith('-') ? '-' : '+';
+  return `${m}E${sign}${exp.replace(/^[+-]/, '').padStart(2, '0')}`;
+}
+
+const GENERAL_MAX_CHARS = 11;
+const GENERAL_MIN_SIGNIFICANT = 6;
+
+const significantDigits = (s: string): number => s.replace(/^[-0.]+/, '').replace(/\./, '').length;
+
+/**
+ * What General shows for `n` in a wide enough column: at most 11 characters
+ * besides the sign (`3.141592654`, `0.333333333`), and scientific with six
+ * significant digits once the fixed form would need 12 integer digits
+ * (`1.23457E+11`) or keep fewer than six digits of a tiny value
+ * (`1.42857E-05`). Measured in Excel 16 for Mac.
+ */
+export function generalText(n: number): string {
+  if (n === 0 || !Number.isFinite(n)) return String(n);
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  const stored = Number(abs.toPrecision(15));
+  const storedDigits = (abs.toExponential(14).split('e')[0] ?? '').replace('.', '').replace(/0+$/, '').length;
+  const intDigits = Math.max(1, Math.floor(Math.log10(abs)) + 1);
+  if (intDigits <= GENERAL_MAX_CHARS) {
+    const decimals = Math.max(0, GENERAL_MAX_CHARS - 1 - intDigits);
+    // Trim by hand: String(1e-7) would already be exponential.
+    const fixed = abs.toFixed(decimals).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    const fits = !fixed.includes('e') && fixed.replace('.', '').length <= GENERAL_MAX_CHARS;
+    if (fits && (Number(fixed) === stored || significantDigits(fixed) >= Math.min(GENERAL_MIN_SIGNIFICANT, storedDigits))) {
+      return sign + fixed;
+    }
+  }
+  return sign + excelExponential(abs, GENERAL_MIN_SIGNIFICANT - 1);
+}
+
 /**
  * Shorten a General-formatted number to fit `maxWidth`, the way Excel drops
  * decimals and then falls back to scientific notation before giving up with
  * `#`s. `measure` returns the pixel width of a string in the cell's font.
  */
 export function fitGeneralNumber(n: number, maxWidth: number, measure: (s: string) => number): string {
-  const full = String(Number(n.toPrecision(11)));
+  const full = generalText(n);
   if (measure(full) <= maxWidth) return full;
   const abs = Math.abs(n);
   if (abs >= 1e-4 && abs < 1e11) {
@@ -140,7 +180,7 @@ export function fitGeneralNumber(n: number, maxWidth: number, measure: (s: strin
     }
   }
   for (let digits = 5; digits >= 0; digits--) {
-    const s = n.toExponential(digits).replace(/e([+-])(\d)$/, 'E$10$2').replace('e', 'E');
+    const s = excelExponential(n, digits);
     if (measure(s) <= maxWidth) return s;
   }
   return hashes(maxWidth, measure);

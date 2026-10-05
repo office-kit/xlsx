@@ -4,11 +4,12 @@
 
 import type { Cell } from '@office-kit/xlsx/cell';
 import { getCellDisplayText } from '@office-kit/xlsx/styles';
-import type { AutoFilter, Worksheet } from '@office-kit/xlsx/worksheet';
+import type { AutoFilter, CustomFilterCondition, FilterColumn, Worksheet } from '@office-kit/xlsx/worksheet';
 import { parseRangeAddress, rangeAddress, type Range } from './address.ts';
 import { getCellAt, isBlank } from './cells.ts';
 import type { EditorController } from './controller.svelte.ts';
 import { dataRange } from './data.ts';
+import { setFilterButton, tableAt } from './tables.ts';
 
 /** A filter and the range it covers (header row first). */
 export interface FilterOwner {
@@ -37,6 +38,12 @@ export function filterOwners(ws: Worksheet): FilterOwner[] {
   return out;
 }
 
+/** Hidden by a filter with criteria, not by hand: copy and fill skip these rows. */
+export function isRowFiltered(ws: Worksheet, row: number): boolean {
+  if (ws.rowDimensions.get(row)?.hidden !== true) return false;
+  return filterOwners(ws).some((o) => o.autoFilter.filterColumns.length > 0 && row > o.range.r1 && row <= o.range.r2);
+}
+
 /** The filter whose header row holds (row, col), if any. */
 export function filterOwnerAt(ws: Worksheet, row: number, col: number): FilterOwner | undefined {
   return filterOwners(ws).find((o) => o.range.r1 === row && col >= o.range.c1 && col <= o.range.c2);
@@ -45,9 +52,15 @@ export function filterOwnerAt(ws: Worksheet, row: number, col: number): FilterOw
 export function toggleAutoFilter(ctl: EditorController): void {
   const doc = ctl.doc;
   const ws = doc.ws;
+  // Inside a table, Filter shows or hides the table's own buttons; a sheet filter would overlap it.
+  const { row, col } = doc.selection.active;
+  const table = tableAt(ws, row, col);
+  if (table) {
+    setFilterButton(ctl, table.def, table.def.autoFilter === undefined);
+    return;
+  }
   if (ws.autoFilter) {
     const range = autoFilterRange(ws);
-    criteria.delete(ws.autoFilter);
     doc.transact('Filter', (tx) => {
       tx.sheet(ws, 'autoFilter', 'rowDimensions');
       if (range) for (let r = range.r1 + 1; r <= range.r2; r++) unhideRow(ws, r);
@@ -91,32 +104,120 @@ export interface FilterCriterion {
   readonly test?: (cell: Cell | undefined, text: string) => boolean;
 }
 
-const criteria = new WeakMap<AutoFilter, Map<number, FilterCriterion>>();
+/** Criteria per sheet column, compiled from the filter's saved columns (compiled afresh: Top 10 and averages read the data). */
+export function activeCriteria(ctl: EditorController, owner: FilterOwner): ReadonlyMap<number, FilterCriterion> {
+  return new Map(owner.autoFilter.filterColumns.map((fc) => [owner.range.c1 + fc.colId, compileColumn(ctl, owner, fc)]));
+}
 
-/** Criteria per sheet column; value lists loaded from a file are picked up from the model. */
-export function activeCriteria(owner: FilterOwner): ReadonlyMap<number, FilterCriterion> {
-  let map = criteria.get(owner.autoFilter);
-  if (!map) {
-    map = new Map();
-    for (const fc of owner.autoFilter.filterColumns) {
+function numberOf(cell: Cell | undefined): number | undefined {
+  const v = cell?.value;
+  if (typeof v === 'number') return v;
+  if (v !== null && typeof v === 'object' && !(v instanceof Date) && v.kind === 'formula' && typeof v.cachedValue === 'number') return v.cachedValue;
+  return undefined;
+}
+
+/** Excel's `*` / `?` wildcards (`~` escapes) as a whole-text, case-insensitive pattern. */
+function wildcard(pattern: string): RegExp {
+  let source = '';
+  for (let i = 0; i < pattern.length; i++) {
+    const ch = pattern.charAt(i);
+    if (ch === '~' && i + 1 < pattern.length) source += pattern.charAt(++i).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    else if (ch === '*') source += '.*';
+    else if (ch === '?') source += '.';
+    else source += ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  return new RegExp(`^${source}$`, 'is');
+}
+
+function conditionTest(c: CustomFilterCondition): (cell: Cell | undefined, text: string) => boolean {
+  const op = c.operator ?? 'equal';
+  const target = c.val.trim() === '' ? Number.NaN : Number(c.val);
+  if (op === 'equal' || op === 'notEqual') {
+    const re = wildcard(c.val);
+    const match = (cell: Cell | undefined, text: string) => {
+      const n = numberOf(cell);
+      return Number.isFinite(target) && n !== undefined ? n === target : re.test(text);
+    };
+    return op === 'equal' ? match : (cell, text) => !match(cell, text);
+  }
+  return (cell, text) => {
+    const n = numberOf(cell);
+    const cmp = Number.isFinite(target) ? (n === undefined ? undefined : n - target) : text.localeCompare(c.val, undefined, { sensitivity: 'base' });
+    if (cmp === undefined) return false;
+    switch (op) {
+      case 'lessThan':
+        return cmp < 0;
+      case 'lessThanOrEqual':
+        return cmp <= 0;
+      case 'greaterThan':
+        return cmp > 0;
+      case 'greaterThanOrEqual':
+        return cmp >= 0;
+    }
+  };
+}
+
+function columnNumbers(ctl: EditorController, owner: FilterOwner, col: number): number[] {
+  const out: number[] = [];
+  for (let r = owner.range.r1 + 1; r <= owner.range.r2; r++) {
+    const n = numberOf(getCellAt(ctl.doc.ws, r, col));
+    if (n !== undefined) out.push(n);
+  }
+  return out;
+}
+
+/** What a saved filter column keeps visible. Criteria the editor cannot evaluate (colour, dates) keep every row. */
+function compileColumn(ctl: EditorController, owner: FilterOwner, fc: FilterColumn): FilterCriterion {
+  const col = owner.range.c1 + fc.colId;
+  switch (fc.kind) {
+    case 'filters': {
       const values = new Set(fc.values);
       if (fc.blank) values.add('');
-      map.set(owner.range.c1 + fc.colId, { values });
+      return { values };
     }
-    criteria.set(owner.autoFilter, map);
+    case 'custom': {
+      const tests = fc.conditions.map(conditionTest);
+      return { test: (cell, text) => (fc.and ? tests.every((t) => t(cell, text)) : tests.some((t) => t(cell, text))) };
+    }
+    case 'top10': {
+      const nums = columnNumbers(ctl, owner, col).sort((a, b) => (fc.top === false ? a - b : b - a));
+      const k = Math.max(1, fc.percent ? Math.floor((nums.length * fc.val) / 100) : Math.floor(fc.val));
+      const cut = nums[Math.min(k, nums.length) - 1];
+      if (cut === undefined) return {};
+      return { test: (cell) => {
+        const n = numberOf(cell);
+        return n !== undefined && (fc.top === false ? n <= cut : n >= cut);
+      } };
+    }
+    case 'dynamic': {
+      if (fc.type !== 'aboveAverage' && fc.type !== 'belowAverage') return {};
+      const nums = columnNumbers(ctl, owner, col);
+      const avg = nums.reduce((sum, n) => sum + n, 0) / Math.max(1, nums.length);
+      return { test: (cell) => {
+        const n = numberOf(cell);
+        return n !== undefined && (fc.type === 'aboveAverage' ? n > avg : n < avg);
+      } };
+    }
+    case 'raw':
+      return {};
   }
-  return map;
+}
+
+/** A value-list filter column keeping `values` ('' = blanks) of sheet column `col`. */
+export function valuesColumn(owner: FilterOwner, col: number, values: ReadonlySet<string>): FilterColumn {
+  const listed = [...values].filter((v) => v !== '');
+  return { kind: 'filters', colId: col - owner.range.c1, values: listed, ...(values.has('') ? { blank: true } : {}) };
 }
 
 /**
  * Apply (or clear, with `undefined`) a column's filter and re-evaluate row
  * visibility across all of the owner's filtered columns.
  */
-export function setColumnFilter(ctl: EditorController, owner: FilterOwner, col: number, criterion: FilterCriterion | undefined): void {
+export function setColumnFilter(ctl: EditorController, owner: FilterOwner, col: number, column: FilterColumn | undefined): void {
   const ws = ctl.doc.ws;
   ctl.doc.transact('Filter', (tx) => {
     tx.sheet(ws, 'autoFilter', 'tables', 'rowDimensions');
-    writeColumnFilter(ctl, owner, col, criterion);
+    writeColumnFilter(ctl, owner, col, column);
   });
 }
 
@@ -140,23 +241,15 @@ export function filterBySelectedValue(ctl: EditorController): void {
       ws.autoFilter = { ref: rangeAddress(range), filterColumns: [] };
       owner = { range, autoFilter: ws.autoFilter };
     }
-    writeColumnFilter(ctl, owner, col, { values });
+    writeColumnFilter(ctl, owner, col, valuesColumn(owner, col, values));
   });
 }
 
-function writeColumnFilter(ctl: EditorController, owner: FilterOwner, col: number, criterion: FilterCriterion | undefined): void {
-  const map = new Map(activeCriteria(owner));
-  if (criterion) map.set(col, criterion);
-  else map.delete(col);
-  criteria.set(owner.autoFilter, map);
+function writeColumnFilter(ctl: EditorController, owner: FilterOwner, col: number, column: FilterColumn | undefined): void {
   const af = owner.autoFilter;
   const colId = col - owner.range.c1;
-  af.filterColumns = af.filterColumns.filter((fc) => fc.colId !== colId);
-  if (criterion?.values) {
-    const values = [...criterion.values].filter((v) => v !== '');
-    af.filterColumns.push({ kind: 'filters', colId, values, ...(criterion.values.has('') ? { blank: true } : {}) });
-  }
-  applyCriteria(ctl, owner.range, map);
+  af.filterColumns = [...af.filterColumns.filter((fc) => fc.colId !== colId), ...(column ? [{ ...column, colId }] : [])];
+  applyCriteria(ctl, owner.range, activeCriteria(ctl, owner));
 }
 
 /** Data ▸ Reapply: re-run every filter after the data changed. */
@@ -166,7 +259,7 @@ export function reapplyFilters(ctl: EditorController): void {
   if (owners.length === 0) return;
   ctl.doc.transact('Reapply', (tx) => {
     tx.sheet(ws, 'rowDimensions');
-    for (const owner of owners) applyCriteria(ctl, owner.range, activeCriteria(owner));
+    for (const owner of owners) applyCriteria(ctl, owner.range, activeCriteria(ctl, owner));
   });
 }
 
@@ -195,7 +288,6 @@ export function clearAllFilters(ctl: EditorController): void {
   ctl.doc.transact('Clear Filter', (tx) => {
     tx.sheet(ws, 'autoFilter', 'tables', 'rowDimensions');
     for (const owner of owners) {
-      criteria.delete(owner.autoFilter);
       owner.autoFilter.filterColumns = [];
       for (let r = owner.range.r1 + 1; r <= owner.range.r2; r++) unhideRow(ws, r);
     }

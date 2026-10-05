@@ -39,43 +39,54 @@ function lowerBound(sorted: readonly number[], v: number): number {
  * Where Ctrl/Cmd+Arrow lands from `from`. Excel's rule: if the current and the
  * next cell both hold data, run to the last filled cell before a gap;
  * otherwise jump to the next filled cell, or to the sheet edge when none.
+ * Hidden rows / columns (`hidden`) are skipped as if they were not there.
  */
-export function dataEdge(ws: Worksheet, from: CellPos, dRow: -1 | 0 | 1, dCol: -1 | 0 | 1): CellPos {
+export function dataEdge(ws: Worksheet, from: CellPos, dRow: -1 | 0 | 1, dCol: -1 | 0 | 1, hidden: (index: number) => boolean = () => false): CellPos {
   const vertical = dRow !== 0;
   const step = vertical ? dRow : dCol;
   const pos = vertical ? from.row : from.col;
   const limit = vertical ? MAX_ROW : MAX_COL;
-  const filled = filledAlong(ws, vertical ? from.col : from.row, vertical);
-  const has = (i: number): boolean => {
-    const k = lowerBound(filled, i);
-    return filled[k] === i;
-  };
+  const filled = filledAlong(ws, vertical ? from.col : from.row, vertical).filter((i) => !hidden(i));
+  const has = (i: number): boolean => filled[lowerBound(filled, i)] === i;
   const make = (i: number): CellPos => (vertical ? { row: i, col: from.col } : { row: from.row, col: i });
-  const next = pos + step;
-  if (next < 1 || next > limit) return from;
+  // The next shown index past `i`, or undefined at the sheet edge.
+  const nextShown = (i: number): number | undefined => {
+    let n = i + step;
+    while (n >= 1 && n <= limit && hidden(n)) n += step;
+    return n >= 1 && n <= limit ? n : undefined;
+  };
+  const next = nextShown(pos);
+  if (next === undefined) return from;
 
   if (has(pos) && has(next)) {
-    // Walk the contiguous block; `filled` is sorted so consecutive entries differ by 1 inside it.
-    let k = lowerBound(filled, next);
-    if (step === 1) {
-      while (filled[k + 1] === (filled[k] ?? 0) + 1) k++;
-    } else {
-      while (k > 0 && filled[k - 1] === (filled[k] ?? 0) - 1) k--;
-    }
-    return make(filled[k] ?? pos);
+    let end = next;
+    for (let n = nextShown(end); n !== undefined && has(n); n = nextShown(end)) end = n;
+    return make(end);
   }
   if (step === 1) {
     const k = lowerBound(filled, next);
-    return make(filled[k] ?? limit);
+    return make(filled[k] ?? lastShown(limit, -1));
   }
   const k = lowerBound(filled, next + 1) - 1;
-  return make(k >= 0 ? (filled[k] ?? 1) : 1);
+  return make(k >= 0 ? (filled[k] ?? 1) : lastShown(1, 1));
+
+  // The sheet edge nearest `edge` that is shown, walking inward by `inward`.
+  function lastShown(edge: number, inward: 1 | -1): number {
+    let i = edge;
+    while (hidden(i) && i !== pos) i += inward;
+    return i;
+  }
 }
 
 /**
  * The block of non-blank cells around `pos` bounded by blank rows and columns
  * (Excel's CurrentRegion). Grows the rectangle until every cell on its border
  * ring is blank.
+ *
+ * Rows are tested through their sparse row map, but a column has no index, so
+ * each side column remembers the rows it has already found blank and only
+ * scans the rows the ring gained since. Rescanning the whole column on every
+ * step made Ctrl+A on a 20k-row table take seconds and 100k rows hang.
  */
 export function currentRegion(ws: Worksheet, pos: CellPos): Range {
   let r1 = pos.row;
@@ -88,10 +99,18 @@ export function currentRegion(ws: Worksheet, pos: CellPos): Range {
     for (const [c, cell] of rowMap) if (c >= a && c <= b && !isBlank(cell)) return true;
     return false;
   };
-  const colHasData = (c: number, a: number, b: number): boolean => {
-    for (let r = a; r <= b; r++) if (!isBlank(getCellAt(ws, r, c))) return true;
+  /** Rows `lo..hi` of `col` are known blank. */
+  type Scan = { col: number; lo: number; hi: number };
+  const colHasData = (scan: Scan, col: number, a: number, b: number): boolean => {
+    if (scan.col !== col) Object.assign(scan, { col, lo: a, hi: a - 1 });
+    for (let r = a; r < scan.lo; r++) if (!isBlank(getCellAt(ws, r, col))) return true;
+    scan.lo = Math.min(scan.lo, a);
+    for (let r = Math.max(scan.hi + 1, a); r <= b; r++) if (!isBlank(getCellAt(ws, r, col))) return true;
+    scan.hi = Math.max(scan.hi, b);
     return false;
   };
+  const left: Scan = { col: 0, lo: 1, hi: 0 };
+  const right: Scan = { col: 0, lo: 1, hi: 0 };
   for (;;) {
     let grew = false;
     if (r1 > 1 && rowHasData(r1 - 1, Math.max(1, c1 - 1), Math.min(MAX_COL, c2 + 1))) {
@@ -102,11 +121,11 @@ export function currentRegion(ws: Worksheet, pos: CellPos): Range {
       r2++;
       grew = true;
     }
-    if (c1 > 1 && colHasData(c1 - 1, Math.max(1, r1 - 1), Math.min(MAX_ROW, r2 + 1))) {
+    if (c1 > 1 && colHasData(left, c1 - 1, Math.max(1, r1 - 1), Math.min(MAX_ROW, r2 + 1))) {
       c1--;
       grew = true;
     }
-    if (c2 < MAX_COL && colHasData(c2 + 1, Math.max(1, r1 - 1), Math.min(MAX_ROW, r2 + 1))) {
+    if (c2 < MAX_COL && colHasData(right, c2 + 1, Math.max(1, r1 - 1), Math.min(MAX_ROW, r2 + 1))) {
       c2++;
       grew = true;
     }

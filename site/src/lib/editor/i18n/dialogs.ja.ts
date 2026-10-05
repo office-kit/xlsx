@@ -5,6 +5,11 @@ import type { dialogsEn } from './dialogs.en.ts';
 
 export const dialogsJa: Partial<Record<keyof typeof dialogsEn, string>> = {
   formulaError: 'この数式には問題があります。',
+  mergeInTable: 'テーブル内のセルは結合できません。',
+  shiftTable: 'この操作は許可されていません。この操作は、ワークシートのテーブルのセルをシフトしようとしています。',
+  shiftMerge: '結合したセルにこの操作を行うことはできません。',
+  partOfArray: '配列の一部を変更することはできません。',
+  mergeDiscardsValues: 'セルを結合すると、左上の端にあるセルの値のみが保持され、他のセルの値は破棄されます。',
   lastSheet: 'ブックには、少なくとも 1 つの表示されたワークシートが必要です。',
   invalidSheetName: 'このシート名は使用できません。空白にしたり、31 文字を超えたり、: \\ / ? * [ ] を含めたりすることはできません。',
   duplicateSheetName: 'この名前は既に使用されています。別の名前を入力してください。',

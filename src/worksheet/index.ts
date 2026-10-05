@@ -138,7 +138,7 @@ export type {
   SheetView,
   SheetViewMode,
 } from './views.js';
-export { freezePaneRef, makeFreezePane, makeSheetView } from './views.js';
+export { activeSelection, freezePaneRef, makeFreezePane, makeSheetView } from './views.js';
 export type { LegacyComment } from './comments.js';
 export { makeLegacyComment } from './comments.js';
 export type { ThreadedComment, ThreadedCommentMention } from './threaded-comments.js';
@@ -165,7 +165,7 @@ export type {
 export { makeCfRule, makeConditionalFormatting } from './conditional-formatting.js';
 export type { Hyperlink } from './hyperlinks.js';
 export { makeHyperlink } from './hyperlinks.js';
-export type { AutoFilter, FilterColumn } from './auto-filter.js';
+export type { AutoFilter, CustomFilterCondition, FilterColumn } from './auto-filter.js';
 export { makeAutoFilter, makeFilterColumn } from './auto-filter.js';
 export type { TableColumn, TableDefinition, TableStyleInfo } from './table.js';
 export { addExcelTable, makeTableColumn, makeTableDefinition } from './table.js';

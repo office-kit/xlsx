@@ -87,7 +87,7 @@ const factorial = (n: number): number => {
 const subtotalValues = (
   refs: readonly CalcValue[],
   ctx: FnContext,
-  opts: { hidden: boolean; nested: boolean; errors: boolean },
+  opts: { hidden: boolean; nested: boolean; errors: boolean; filtered?: boolean },
 ): CalcScalar[] | CalcError => {
   const out: CalcScalar[] = [];
   for (const ref of refs) {
@@ -107,6 +107,7 @@ const subtotalValues = (
         const row = area.r1 + Math.floor(i / values.cols);
         const col = area.c1 + (i % values.cols);
         if (opts.hidden && ctx.host.isRowHidden(area.sheet, row)) continue;
+        if (opts.filtered && ctx.host.isRowFiltered(area.sheet, row)) continue;
         if (opts.nested && ctx.host.isSubtotalCell(area.sheet, row, col)) continue;
         if (isError(v) && opts.errors) continue;
         out.push(v);
@@ -686,7 +687,7 @@ export const MATH_FUNCTIONS: FunctionSpec[] = [
     name: 'SUBTOTAL',
     category: C,
     syntax: 'SUBTOTAL(function_num, ref1, [ref2], ...)',
-    description: 'Returns a subtotal in a list, ignoring other subtotals (and hidden rows for codes 101-111).',
+    description: 'Returns a subtotal in a list, ignoring other subtotals and filtered-out rows (and hidden rows for codes 101-111).',
     minArgs: 2,
     maxArgs: 255,
     args: ['scalar', 'ref'],
@@ -696,7 +697,8 @@ export const MATH_FUNCTIONS: FunctionSpec[] = [
       const code = trunc(f);
       const base = code > 100 ? code - 100 : code;
       if (base < 1 || base > 11) return ERRORS.VALUE;
-      const values = subtotalValues(args.slice(1), ctx, { hidden: code > 100, nested: true, errors: false });
+      // Every SUBTOTAL skips rows a filter hid; 101-111 also skip rows hidden by hand.
+      const values = subtotalValues(args.slice(1), ctx, { hidden: code > 100, nested: true, errors: false, filtered: true });
       return isError(values) ? values : aggregateBy(base, values);
     },
   },

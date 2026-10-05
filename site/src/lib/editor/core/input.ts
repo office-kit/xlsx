@@ -22,8 +22,15 @@ const EPOCH_1904_SHIFT = 1_462;
 
 export function dateToSerial(year: number, month: number, day: number, date1904 = false): number {
   const serial = Date.UTC(year, month - 1, day) / MS_PER_DAY + EPOCH_1900_OFFSET;
-  return date1904 ? serial - EPOCH_1904_SHIFT : serial;
+  if (date1904) return serial - EPOCH_1904_SHIFT;
+  // The 1900 system counts a 29 February 1900 (Lotus's leap-year bug, serial
+  // 60), so 1 January 1900 is 1 and only dates from 1 March on line up with
+  // the calendar.
+  if (year === 1900 && month <= 2) return month === 2 && day === 29 ? LEAP_BUG_SERIAL : serial - 1;
+  return serial;
 }
+
+const LEAP_BUG_SERIAL = 60;
 
 export function serialToDate(serial: number, date1904 = false): Date {
   const s = date1904 ? serial + EPOCH_1904_SHIFT : serial;
@@ -39,6 +46,7 @@ function monthFromName(name: string): number | undefined {
 
 function validDate(y: number, m: number, d: number): boolean {
   if (m < 1 || m > 12 || d < 1 || y < 1900 || y > 9999) return false;
+  if (y === 1900 && m === 2 && d === 29) return true; // see dateToSerial
   const dt = new Date(Date.UTC(y, m - 1, d));
   return dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }
@@ -76,13 +84,22 @@ function parseDate(text: string, order: DateOrder, today: Date): { y: number; m:
       d = Number(b);
       y = fullYear(Number(c), c);
     }
-    return validDate(y, m, d) ? { y, m, d, fmt: order === 'ymd' || a.length === 4 ? 'yyyy/m/d' : 'm/d/yyyy' } : undefined;
+    // A typed date takes the locale's short date (numFmt 14, m/d/yy in Excel for Mac en-US), the
+    // same format =DATE() gets; an ISO date (2024-01-31) is no exception.
+    return validDate(y, m, d) ? { y, m, d, fmt: order === 'ymd' ? 'yyyy/m/d' : 'm/d/yy' } : undefined;
   }
   if (parts.length === 2 && parts.every((p) => /^\d{1,2}$/.test(p)) && /[/-]/.test(text)) {
     const [a = '', b = ''] = parts;
     const y = today.getFullYear();
     const [m, d] = order === 'dmy' ? [Number(b), Number(a)] : [Number(a), Number(b)];
     return validDate(y, m, d) ? { y, m, d, fmt: order === 'ymd' ? 'm"月"d"日"' : 'd-mmm' } : undefined;
+  }
+  // "1/2024", "Jan 2024", "January-24": the first of that month, shown as mmm-yy.
+  const my = /^(?:(\d{1,2})[/-](\d{4})|([A-Za-z]{3,9})[\s-](\d{4}))$/.exec(text);
+  if (my) {
+    const m = my[1] ? Number(my[1]) : monthFromName(my[3] ?? '');
+    const y = Number(my[2] ?? my[4]);
+    return m && validDate(y, m, 1) ? { y, m, d: 1, fmt: 'mmm-yy' } : undefined;
   }
   // "5-Jan", "5 Jan 2024", "Jan 5", "Jan 5, 2024"
   const dm = /^(\d{1,2})[\s-]([A-Za-z]{3,9})(?:[\s-](\d{2,4}))?$/.exec(text);
@@ -148,7 +165,7 @@ function parseNumber(raw: string): ParsedInput | undefined {
   if (grouped && !/^[+-]?\d{1,3}(,\d{3})*(\.\d*)?$/.test(text)) return undefined;
   const plain = text.replaceAll(',', '');
   if (!/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(plain)) return undefined;
-  let n = Number(plain);
+  let n = Number(truncateDigits(plain));
   if (!Number.isFinite(n)) return undefined;
   if (negative) n = -n;
   if (percent) {
@@ -163,6 +180,20 @@ function parseNumber(raw: string): ParsedInput | undefined {
   if (/[eE]/.test(plain)) return { value: n, impliedFormat: '0.00E+00' };
   if (grouped) return { value: n, impliedFormat: plain.includes('.') ? '#,##0.00' : '#,##0' };
   return { value: n };
+}
+
+const SIGNIFICANT_DIGITS = 15;
+
+/** Excel keeps 15 significant digits of typed input and zeroes the rest (no rounding). */
+function truncateDigits(plain: string): string {
+  const m = /^([+-]?)(\d*)(?:\.(\d*))?([eE][+-]?\d+)?$/.exec(plain);
+  if (!m) return plain;
+  const [, sign = '', int = '', frac = '', exp = ''] = m;
+  const digits = int + frac;
+  const first = digits.search(/[1-9]/);
+  if (first < 0 || digits.length - first <= SIGNIFICANT_DIGITS) return plain;
+  const kept = digits.slice(0, first + SIGNIFICANT_DIGITS).padEnd(digits.length, '0');
+  return `${sign}${kept.slice(0, int.length)}.${kept.slice(int.length)}${exp}`;
 }
 
 function parseFraction(text: string): ParsedInput | undefined {
@@ -180,6 +211,24 @@ export interface ParseOptions {
   readonly today?: Date;
 }
 
+// A General cell takes the format of what its formula's leading function
+// returns: =TODAY() reads as a date, =NOW() as a date and time (Excel 16).
+const LEADING_FUNCTION_FORMATS: ReadonlyMap<string, string> = new Map([
+  ['DATE', 'm/d/yy'],
+  ['TODAY', 'm/d/yy'],
+  ['DATEVALUE', 'm/d/yy'],
+  ['NOW', 'm/d/yy h:mm'],
+  ['TIME', 'h:mm AM/PM'],
+  ['TIMEVALUE', 'h:mm AM/PM'],
+]);
+
+function formulaInput(body: string): ParsedInput {
+  const fn = /^[+-]*([A-Za-z.]+)\(/.exec(body)?.[1]?.toUpperCase();
+  const impliedFormat = fn === undefined ? undefined : LEADING_FUNCTION_FORMATS.get(fn);
+  const value = makeFormula(toStorageFormula(body));
+  return impliedFormat === undefined ? { value } : { value, impliedFormat };
+}
+
 /**
  * Interpret typed text. Formula text keeps the user's spelling (after the `=`)
  * apart from the `_xlfn.` / `_xlpm.` prefixes Excel needs in a file; the
@@ -189,10 +238,17 @@ export interface ParseOptions {
 export function parseInput(input: string, opts: ParseOptions = {}): ParsedInput {
   if (input === '') return { value: null };
   if (input.startsWith("'")) return { value: input.slice(1) };
-  if (input.startsWith('=') && input.length > 1) return { value: makeFormula(toStorageFormula(input.slice(1))) };
-  // Excel turns "+A1" / "-A1*2" into formulas, but keeps "+5" / "-5" numbers.
-  if ((input.startsWith('+') || input.startsWith('-')) && input.length > 1 && parseNumber(input) === undefined && /^[+-][A-Za-z($]/.test(input)) {
-    return { value: makeFormula(toStorageFormula(input)) };
+  if (input.startsWith('=') && input.length > 1) return formulaInput(input.slice(1));
+  // Excel turns "+A1", "-A1*2" and "+1+2" into formulas, but keeps "+5" / "-5"
+  // numbers and "- item" text.
+  if (
+    (input.startsWith('+') || input.startsWith('-')) &&
+    input.length > 1 &&
+    parseNumber(input) === undefined &&
+    parseFraction(input.trim()) === undefined &&
+    /^[+-][A-Za-z0-9($.+-]/.test(input)
+  ) {
+    return formulaInput(input);
   }
   const text = input.trim();
   const upper = text.toUpperCase();
@@ -211,15 +267,14 @@ export function parseInput(input: string, opts: ParseOptions = {}): ParsedInput 
   if (time) return { value: time.fraction, impliedFormat: time.fmt };
   const date = parseDate(text, order, today);
   if (date) return { value: dateToSerial(date.y, date.m, date.d, opts.date1904), impliedFormat: date.fmt };
-  // "2024/1/5 13:30"
-  const space = text.lastIndexOf(' ');
-  if (space > 0) {
+  // "2024/1/5 13:30", "1/31/2024 1:30 PM": any space may separate the date from the time.
+  for (let space = text.indexOf(' '); space > 0; space = text.indexOf(' ', space + 1)) {
     const d = parseDate(text.slice(0, space).trim(), order, today);
-    const t = parseTime(text.slice(space + 1).trim());
+    const t = d && parseTime(text.slice(space + 1).trim());
     if (d && t) {
       return {
         value: dateToSerial(d.y, d.m, d.d, opts.date1904) + t.fraction,
-        impliedFormat: `${order === 'ymd' ? 'yyyy/m/d' : 'm/d/yyyy'} h:mm`,
+        impliedFormat: `${order === 'ymd' ? 'yyyy/m/d' : 'm/d/yy'} h:mm`,
       };
     }
   }

@@ -52,7 +52,7 @@ import { type Hyperlink, makeHyperlink } from './hyperlinks.js';
 import type { PivotTable } from './pivot-table.js';
 import type { TableDefinition } from './table.js';
 import { validateTableAgainstSheet } from './table-validate.js';
-import { type FreezeCounts, freezePaneRef, makeFreezePane, makeSheetView, type SheetView } from './views.js';
+import { activeSelection, type FreezeCounts, freezePaneRef, makeFreezePane, makeSheetView, type Selection, type SheetView } from './views.js';
 
 export interface Worksheet {
   title: string;
@@ -1342,8 +1342,7 @@ export function setSheetViewMode(ws: Worksheet, mode: 'normal' | 'pageBreakPrevi
  * existing Selection; creates one if missing. Pass an "A1"-style ref.
  */
 export function setActiveCell(ws: Worksheet, ref: string): void {
-  const view = ensurePrimaryView(ws);
-  const selection = view.selection ?? {};
+  const selection = primarySelection(ws);
   // Excel typically also sets sqref to the same cell when a single cell is the
   // active one. Only override sqref if it's missing or tracked the previous
   // activeCell, so explicit selections survive.
@@ -1352,7 +1351,6 @@ export function setActiveCell(ws: Worksheet, ref: string): void {
     selection.sqref = ref;
   }
   selection.activeCell = ref;
-  view.selection = selection;
 }
 
 /**
@@ -1362,14 +1360,23 @@ export function setActiveCell(ws: Worksheet, ref: string): void {
  * to the first ref of `sqref`.
  */
 export function setSelectedRange(ws: Worksheet, sqref: string): void {
-  const view = ensurePrimaryView(ws);
-  const selection = view.selection ?? {};
+  const selection = primarySelection(ws);
   selection.sqref = sqref;
   if (selection.activeCell === undefined) {
     const first = sqref.split(/\s+/)[0]?.split(':')[0];
     if (first) selection.activeCell = first;
   }
-  view.selection = selection;
+}
+
+/** The primary view's active-pane selection, created (for that pane) when missing. */
+function primarySelection(ws: Worksheet): Selection {
+  const view = ensurePrimaryView(ws);
+  const existing = activeSelection(view);
+  if (existing) return existing;
+  const pane = view.pane?.activePane;
+  const created: Selection = pane && pane !== 'topLeft' ? { pane } : {};
+  view.selections = [...(view.selections ?? []), created];
+  return created;
 }
 
 /**

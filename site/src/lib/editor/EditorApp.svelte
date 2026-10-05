@@ -177,11 +177,53 @@
     const file = e.dataTransfer?.files[0];
     if (file) void openFile(file);
   }
+
+  // Excel's toolbars never take the keyboard from the sheet: pressing a button
+  // must leave arrows and typing going to the grid. Dialogs keep their own focus.
+  function keepGridFocus(e: MouseEvent): void {
+    if (!(e.target instanceof Element)) return;
+    if (e.target.closest('input, textarea, select, [contenteditable], [role="dialog"]')) return;
+    if (e.target.closest('button, [role="menuitem"], [role="option"]')) e.preventDefault();
+  }
+
+  // A menu that closes takes its focused item with it; hand the keyboard back to the grid.
+  function regainFocus(e: FocusEvent): void {
+    if (e.relatedTarget !== null) return;
+    queueMicrotask(() => {
+      if (document.activeElement === document.body && !ctl.dialog) ctl.gridFocusRequest++;
+    });
+  }
+
+  // After a command runs, the grid takes the keyboard again (unless it opened a dialog or a drop-down).
+  function refocusAfterCommand(e: MouseEvent): void {
+    if (!(e.target instanceof Element)) return;
+    const button = e.target.closest('button, [role="menuitem"]');
+    if (!button || button.closest('[role="dialog"], input, textarea, select')) return;
+    if (button.hasAttribute('aria-expanded') || button.hasAttribute('aria-haspopup')) return;
+    queueMicrotask(() => {
+      if (!ctl.dialog && !ctl.menu) ctl.gridFocusRequest++;
+    });
+  }
+
+  let root = $state<HTMLDivElement>();
+  $effect(() => {
+    const node = root;
+    if (!node) return;
+    node.addEventListener('mousedown', keepGridFocus);
+    node.addEventListener('focusout', regainFocus);
+    node.addEventListener('click', refocusAfterCommand);
+    return () => {
+      node.removeEventListener('click', refocusAfterCommand);
+      node.removeEventListener('mousedown', keepGridFocus);
+      node.removeEventListener('focusout', regainFocus);
+    };
+  });
 </script>
 
 <div
   class="xl-editor app"
   role="application"
+  bind:this={root}
   ondragover={(e) => {
     if (e.dataTransfer?.types.includes('Files')) {
       e.preventDefault();

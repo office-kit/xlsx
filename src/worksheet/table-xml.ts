@@ -4,12 +4,13 @@
 // and conditional, and we want minimum bundle weight. Pairs with the
 // loader/writer wiring in src/public/{load,save}.ts.
 
-import { escapeXmlAttr } from '../utils/escape.js';
+import { escapeCellString, escapeXmlAttr, escapeXmlText, unescapeCellString } from '../utils/escape.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
 import { SHEET_MAIN_NS } from '../xml/namespaces.js';
 import { parseXml } from '../xml/parser.js';
 import { findChild, findChildren, type XmlNode } from '../xml/tree.js';
-import type { AutoFilter, FilterColumn } from './auto-filter.js';
+import { parseAutoFilterNode, serializeAutoFilterXml } from './auto-filter-xml.js';
+import { parseSortStateNode, serializeSortStateXml } from './sort-state-xml.js';
 import type { TableColumn, TableDefinition, TableStyleInfo } from './table.js';
 import { makeTableColumn, makeTableDefinition } from './table.js';
 
@@ -17,10 +18,10 @@ const TABLE_TAG = `{${SHEET_MAIN_NS}}table`;
 const TABLE_COLUMNS_TAG = `{${SHEET_MAIN_NS}}tableColumns`;
 const TABLE_COLUMN_TAG = `{${SHEET_MAIN_NS}}tableColumn`;
 const TABLE_STYLE_INFO_TAG = `{${SHEET_MAIN_NS}}tableStyleInfo`;
+const CALCULATED_COLUMN_FORMULA_TAG = `{${SHEET_MAIN_NS}}calculatedColumnFormula`;
+const TOTALS_ROW_FORMULA_TAG = `{${SHEET_MAIN_NS}}totalsRowFormula`;
 const AUTOFILTER_TAG = `{${SHEET_MAIN_NS}}autoFilter`;
-const FILTER_COLUMN_TAG = `{${SHEET_MAIN_NS}}filterColumn`;
-const FILTERS_TAG = `{${SHEET_MAIN_NS}}filters`;
-const FILTER_TAG = `{${SHEET_MAIN_NS}}filter`;
+const SORT_STATE_TAG = `{${SHEET_MAIN_NS}}sortState`;
 
 const XML_HEADER = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
 
@@ -84,22 +85,31 @@ export function parseTableXml(bytes: Uint8Array | string): TableDefinition {
     if (style) opts.styleInfo = style;
   }
   if (autoFilterEl) {
-    const af = parseTableAutoFilter(autoFilterEl);
+    const af = parseAutoFilterNode(autoFilterEl);
     if (af) opts.autoFilter = af;
   }
-  return makeTableDefinition(opts);
+  const table = makeTableDefinition(opts);
+  const sortEl = findChild(root, SORT_STATE_TAG);
+  const sortState = sortEl ? parseSortStateNode(sortEl) : undefined;
+  if (sortState) table.sortState = sortState;
+  return table;
 }
 
 const parseTableColumn = (node: XmlNode): TableColumn => {
   const id = parseInteger(node.attrs['id']);
-  const name = node.attrs['name'];
-  if (id === undefined || !name) {
+  const rawName = node.attrs['name'];
+  if (id === undefined || !rawName) {
     throw new OpenXmlSchemaError('parseTableXml: <tableColumn> missing @id / @name');
   }
-  const col: TableColumn = makeTableColumn({ id, name });
+  // Excel writes a line break in a header as `_x000a_`; the name has to match the header cell's text.
+  const col: TableColumn = makeTableColumn({ id, name: unescapeCellString(rawName) });
   const fn = node.attrs['totalsRowFunction'];
   if (fn) col.totalsRowFunction = fn as NonNullable<TableColumn['totalsRowFunction']>;
-  if (node.attrs['totalsRowLabel']) col.totalsRowLabel = node.attrs['totalsRowLabel'];
+  if (node.attrs['totalsRowLabel']) col.totalsRowLabel = unescapeCellString(node.attrs['totalsRowLabel']);
+  const calculated = findChild(node, CALCULATED_COLUMN_FORMULA_TAG)?.text;
+  if (calculated) col.calculatedColumnFormula = calculated;
+  const totals = findChild(node, TOTALS_ROW_FORMULA_TAG)?.text;
+  if (totals) col.totalsRowFormula = totals;
   return col;
 };
 
@@ -118,27 +128,6 @@ const parseTableStyleInfo = (node: XmlNode): TableStyleInfo | undefined => {
   return Object.keys(info).length > 0 ? info : undefined;
 };
 
-const parseTableAutoFilter = (node: XmlNode): AutoFilter | undefined => {
-  const ref = node.attrs['ref'];
-  if (!ref) return undefined;
-  const filterColumns: FilterColumn[] = [];
-  for (const fc of findChildren(node, FILTER_COLUMN_TAG)) {
-    const colId = parseInteger(fc.attrs['colId']);
-    if (colId === undefined) continue;
-    const filtersEl = findChild(fc, FILTERS_TAG);
-    if (!filtersEl) continue;
-    const values: string[] = [];
-    for (const f of findChildren(filtersEl, FILTER_TAG)) {
-      if (f.attrs['val'] !== undefined) values.push(f.attrs['val']);
-    }
-    const blank = parseBool(filtersEl.attrs['blank']);
-    const out: FilterColumn = { kind: 'filters', colId, values };
-    if (blank !== undefined) out.blank = blank;
-    filterColumns.push(out);
-  }
-  return { ref, filterColumns };
-};
-
 /** Serialise a TableDefinition to its `xl/tables/tableN.xml` bytes. */
 export function tableToBytes(table: TableDefinition): Uint8Array {
   return new TextEncoder().encode(serializeTable(table));
@@ -154,7 +143,8 @@ function serializeTable(table: TableDefinition): string {
   if (table.totalsRowShown !== undefined) attrs += ` totalsRowShown="${table.totalsRowShown ? '1' : '0'}"`;
 
   const parts: string[] = [XML_HEADER, `<table xmlns="${SHEET_MAIN_NS}"${attrs}>`];
-  if (table.autoFilter) parts.push(serializeTableAutoFilter(table.autoFilter));
+  if (table.autoFilter) parts.push(serializeAutoFilterXml(table.autoFilter));
+  if (table.sortState) parts.push(serializeSortStateXml(table.sortState));
   parts.push(`<tableColumns count="${table.columns.length}">`);
   for (const col of table.columns) parts.push(serializeTableColumn(col));
   parts.push('</tableColumns>');
@@ -164,10 +154,14 @@ function serializeTable(table: TableDefinition): string {
 }
 
 const serializeTableColumn = (col: TableColumn): string => {
-  let attrs = ` id="${col.id}" name="${escapeAttr(col.name)}"`;
+  let attrs = ` id="${col.id}" name="${escapeAttr(escapeCellString(col.name))}"`;
   if (col.totalsRowFunction) attrs += ` totalsRowFunction="${col.totalsRowFunction}"`;
-  if (col.totalsRowLabel !== undefined) attrs += ` totalsRowLabel="${escapeAttr(col.totalsRowLabel)}"`;
-  return `<tableColumn${attrs}/>`;
+  if (col.totalsRowLabel !== undefined) attrs += ` totalsRowLabel="${escapeAttr(escapeCellString(col.totalsRowLabel))}"`;
+  // CT_TableColumn sequence: calculatedColumnFormula, totalsRowFormula.
+  let children = '';
+  if (col.calculatedColumnFormula !== undefined) children += `<calculatedColumnFormula>${escapeXmlText(col.calculatedColumnFormula)}</calculatedColumnFormula>`;
+  if (col.totalsRowFormula !== undefined) children += `<totalsRowFormula>${escapeXmlText(col.totalsRowFormula)}</totalsRowFormula>`;
+  return children === '' ? `<tableColumn${attrs}/>` : `<tableColumn${attrs}>${children}</tableColumn>`;
 };
 
 const serializeTableStyleInfo = (info: TableStyleInfo): string => {
@@ -180,22 +174,3 @@ const serializeTableStyleInfo = (info: TableStyleInfo): string => {
   return `<tableStyleInfo${attrs}/>`;
 };
 
-const serializeTableAutoFilter = (filter: AutoFilter): string => {
-  if (filter.filterColumns.length === 0) return `<autoFilter ref="${escapeAttr(filter.ref)}"/>`;
-  const parts: string[] = [`<autoFilter ref="${escapeAttr(filter.ref)}">`];
-  for (const fc of filter.filterColumns) {
-    parts.push(`<filterColumn colId="${fc.colId}">`);
-    let filtersAttrs = '';
-    if (fc.blank !== undefined) filtersAttrs += ` blank="${fc.blank ? '1' : '0'}"`;
-    if (fc.values.length === 0) {
-      parts.push(`<filters${filtersAttrs}/>`);
-    } else {
-      parts.push(`<filters${filtersAttrs}>`);
-      for (const v of fc.values) parts.push(`<filter val="${escapeAttr(v)}"/>`);
-      parts.push('</filters>');
-    }
-    parts.push('</filterColumn>');
-  }
-  parts.push('</autoFilter>');
-  return parts.join('');
-};

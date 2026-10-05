@@ -5,9 +5,9 @@
 import type { CellValue } from '@office-kit/xlsx/cell';
 import { makeCell } from '@office-kit/xlsx/cell';
 import type { Font, HorizontalAlignment, Side, VerticalAlignment } from '@office-kit/xlsx/styles';
-import { getCellFont, getCellProtection, isDateFormat, makeColor } from '@office-kit/xlsx/styles';
+import { classifyDateFormat, getCellFont, getCellProtection, isDateFormat, makeColor } from '@office-kit/xlsx/styles';
 import { addWorksheet, moveSheet, removeSheet, renameSheet, setSheetState } from '@office-kit/xlsx/workbook';
-import type { Worksheet } from '@office-kit/xlsx/worksheet';
+import type { TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
 import type { PageSetup } from '@office-kit/xlsx/worksheet';
 import {
   setColumnDimension,
@@ -18,16 +18,17 @@ import {
 } from '@office-kit/xlsx/worksheet';
 import { columnIndexFromLetter, columnLetterFromIndex, coordinateFromString } from '@office-kit/xlsx/utils';
 import { addImageAt, loadImage } from '@office-kit/xlsx/drawing';
-import { formulaReferences, fromStorageFormula, renameSheetInFormula, translateFormula } from '../calc/index.ts';
+import { deleteSheetInFormula, formulaReferences, fromStorageFormula, renameSheetInFormula, translateFormula } from '../calc/index.ts';
 import type { Range } from './address.ts';
-import { MAX_COL, MAX_ROW, inRange, quoteSheetName, rangeAddress } from './address.ts';
+import { MAX_COL, MAX_ROW, inRange, quoteSheetName, rangeAddress, rangesIntersect } from './address.ts';
 import { refCell } from './comments.ts';
 import { forEachCellInRange, getCellAt, isBlank } from './cells.ts';
 import { validateValue } from './validation.ts';
 import { flashFill } from './flash-fill.ts';
 import { groupLines, isCollapsed, toggleRun } from './outline.ts';
-import { clearRanges, formatRanges, freeze, mergeRanges, setHidden, type ClearKind, type MergeMode } from './commands.ts';
+import { clearRanges, formatRanges, freeze, mergeDiscardsValues, mergeRanges, setHidden, type ClearKind, type MergeMode } from './commands.ts';
 import { autofitColumns, autofitRows } from './autofit.ts';
+import { isRowFiltered } from './filter.ts';
 import { copyToSystem, pasteFromSystem, type PasteMode } from './clipboard.ts';
 import type { EditorController } from './controller.svelte.ts';
 import { extendSeries, type SeriesMode, type SeriesSeed } from './fill.ts';
@@ -36,6 +37,7 @@ import { pxToColWidth, pxToPt } from './metrics.ts';
 import { currentRange } from './selection.ts';
 import { validateName } from './names.ts';
 import { applyStructuralEdit, declareStructural, structuralEdit } from './structure.ts';
+import { tableRange } from './tables.ts';
 import { recentFunctions } from './recent-functions.svelte.ts';
 
 // ---- history ------------------------------------------------------------------
@@ -73,6 +75,7 @@ export function paste(ctl: EditorController, mode: PasteMode = 'all'): void {
 // ---- clearing & formatting --------------------------------------------------------
 
 export function clear(ctl: EditorController, kind: ClearKind): void {
+  if ((kind === 'contents' || kind === 'all') && ctl.splitsArray(ctl.doc.selection.ranges)) return;
   clearRanges(ctl.doc, ctl.doc.selection.ranges, kind);
 }
 
@@ -189,7 +192,37 @@ export function applyBorder(ctl: EditorController, preset: BorderPreset, side: S
 }
 
 export function merge(ctl: EditorController, mode: MergeMode): void {
-  repeatable(ctl, () => mergeRanges(ctl.doc, ctl.doc.selection.ranges, mode));
+  const ws = ctl.doc.ws;
+  if (mode !== 'unmerge' && ctl.doc.selection.ranges.some((r) => ws.tables.some((t) => intersectsTable(t, r)))) {
+    ctl.dialog = { kind: 'alert', props: { message: 'mergeInTable' } };
+    return;
+  }
+  const run = () => repeatable(ctl, () => mergeRanges(ctl.doc, ctl.doc.selection.ranges, mode));
+  if (mergeDiscardsValues(ws, ctl.doc.selection.ranges, mode)) {
+    ctl.dialog = { kind: 'alert', props: { message: 'mergeDiscardsValues', onConfirm: run } };
+    return;
+  }
+  run();
+}
+
+function intersectsTable(def: TableDefinition, r: Range): boolean {
+  const t = tableRange(def);
+  return t !== undefined && rangesIntersect(t, r);
+}
+
+/**
+ * Why Excel refuses to shift cells under `r` (Insert / Delete Cells): the cells
+ * that move would split a table or a merged cell, moving only part of it.
+ */
+function shiftSplits(ctl: EditorController, r: Range, axis: 'row' | 'col'): 'shiftTable' | 'shiftMerge' | undefined {
+  const moving: Range = axis === 'row' ? { r1: r.r1, c1: r.c1, r2: MAX_ROW, c2: r.c2 } : { r1: r.r1, c1: r.c1, r2: r.r2, c2: MAX_COL };
+  const splits = (o: Range) => rangesIntersect(o, moving) && (axis === 'row' ? o.c1 < r.c1 || o.c2 > r.c2 : o.r1 < r.r1 || o.r2 > r.r2);
+  if (ctl.doc.ws.tables.some((t) => {
+    const range = tableRange(t);
+    return range !== undefined && splits(range);
+  })) return 'shiftTable';
+  if (ctl.doc.merges.intersecting(moving).some(splits)) return 'shiftMerge';
+  return undefined;
 }
 
 // ---- fill -------------------------------------------------------------------------
@@ -218,11 +251,14 @@ export function autoFill(ctl: EditorController, source: Range, target: Range, mo
     return;
   }
   const isDate = (styleId: number) => isDateFormat(doc.styles.get(styleId).numFmt);
-  const fillCtx = { translate: translateFormula, isDate };
+  const isTime = (styleId: number) => classifyDateFormat(doc.styles.get(styleId).numFmt) === 'time';
+  const fillCtx = { translate: translateFormula, isDate, isTime, date1904: doc.wb.date1904 };
   const seriesMode: SeriesMode = mode === 'formats' ? 'copy' : mode === 'values' ? 'auto' : mode;
   doc.transact('AutoFill', (tx) => {
     tx.cells(ws, target);
     const write = (row: number, col: number, produced: SeriesSeed) => {
+      // Ctrl+D / Ctrl+R over a filtered list fill only the rows on show.
+      if (mode === 'copy' && isRowFiltered(ws, row)) return;
       const existing = getCellAt(ws, row, col);
       const seed: SeriesSeed =
         mode === 'formats'
@@ -270,25 +306,28 @@ export function autoFill(ctl: EditorController, source: Range, target: Range, mo
 
 /** Cmd+D / Cmd+R: copy the top row / left column of the selection across it. */
 export function fillFrom(ctl: EditorController, direction: 'down' | 'right' | 'up' | 'left'): void {
-  const r = currentRange(ctl.doc.selection);
-  const single = r.r1 === r.r2 && r.c1 === r.c2;
-  // A single cell fills from its neighbour (the cell above / to the left).
-  if (direction === 'down') {
-    const src = single ? { ...r, r1: r.r1 - 1, r2: r.r1 - 1 } : { ...r, r2: r.r1 };
-    if (src.r1 < 1) return;
-    autoFill(ctl, src, { ...r, r1: src.r1 }, 'copy');
-  } else if (direction === 'right') {
-    const src = single ? { ...r, c1: r.c1 - 1, c2: r.c1 - 1 } : { ...r, c2: r.c1 };
-    if (src.c1 < 1) return;
-    autoFill(ctl, src, { ...r, c1: src.c1 }, 'copy');
-  } else if (direction === 'up') {
-    const src = { ...r, r1: r.r2 };
-    autoFill(ctl, src, r, 'copy');
-  } else {
-    const src = { ...r, c1: r.c2 };
-    autoFill(ctl, src, r, 'copy');
-  }
-  ctl.selectRange(r, ctl.doc.selection.active);
+  repeatable(ctl, () => {
+    const r = currentRange(ctl.doc.selection);
+    // `autoFill` selects the filled range around the source; keep the cell the
+    // user was on active, or the next entry would overwrite the source.
+    const active = ctl.doc.selection.active;
+    const single = r.r1 === r.r2 && r.c1 === r.c2;
+    // A single cell fills from its neighbour (the cell above / to the left).
+    if (direction === 'down') {
+      const src = single ? { ...r, r1: r.r1 - 1, r2: r.r1 - 1 } : { ...r, r2: r.r1 };
+      if (src.r1 < 1) return;
+      autoFill(ctl, src, { ...r, r1: src.r1 }, 'copy');
+    } else if (direction === 'right') {
+      const src = single ? { ...r, c1: r.c1 - 1, c2: r.c1 - 1 } : { ...r, c2: r.c1 };
+      if (src.c1 < 1) return;
+      autoFill(ctl, src, { ...r, c1: src.c1 }, 'copy');
+    } else if (direction === 'up') {
+      autoFill(ctl, { ...r, r1: r.r2 }, r, 'copy');
+    } else {
+      autoFill(ctl, { ...r, c1: r.c2 }, r, 'copy');
+    }
+    ctl.selectRange(r, active);
+  });
 }
 
 /** Double-clicking the fill handle fills down as far as the adjacent column has data. */
@@ -352,6 +391,11 @@ export function shiftCells(ctl: EditorController, mode: 'down' | 'right' | 'up' 
   const doc = ctl.doc;
   const ws = doc.ws;
   const r = currentRange(doc.selection);
+  const refused = shiftSplits(ctl, r, mode === 'down' || mode === 'up' ? 'row' : 'col');
+  if (refused) {
+    ctl.dialog = { kind: 'alert', props: { message: refused } };
+    return;
+  }
   doc.transact(mode === 'down' || mode === 'right' ? 'Insert Cells' : 'Delete Cells', (tx) => {
     if (mode === 'down' || mode === 'up') {
       structuralEdit(tx, doc.wb, ws, { axis: 'row', at: r.r1, count: mode === 'down' ? r.r2 - r.r1 + 1 : -(r.r2 - r.r1 + 1), band: { from: r.c1, to: r.c2 } });
@@ -463,10 +507,38 @@ export function deleteSheet(ctl: EditorController, index: number): void {
   const title = doc.wb.sheets[index]?.sheet.title;
   if (title === undefined) return;
   const next = Math.max(0, index >= doc.wb.sheets.length - 1 ? index - 1 : index);
+  const order = doc.wb.sheets.map((s) => s.sheet.title);
   doc.transact('Delete Sheet', (tx) => {
     tx.structural = true;
     tx.workbook('sheets', 'activeSheetIndex', 'definedNames');
     removeSheet(doc.wb, title);
+    // A PivotTable reading from the deleted sheet can no longer be rebuilt; its values stay as plain cells.
+    for (const s of doc.wb.sheets) {
+      if (s.kind !== 'worksheet' || !s.sheet.pivotTables?.some((pt) => pt.source.sheet.toLowerCase() === title.toLowerCase())) continue;
+      tx.sheet(s.sheet, 'pivotTables');
+      s.sheet.pivotTables = s.sheet.pivotTables.filter((pt) => pt.source.sheet.toLowerCase() !== title.toLowerCase());
+    }
+    for (const s of doc.wb.sheets) {
+      if (s.kind !== 'worksheet') continue;
+      let touched = false;
+      for (const rowMap of s.sheet.rows.values()) {
+        for (const cell of rowMap.values()) {
+          const v = cell.value;
+          if (v === null || typeof v !== 'object' || v instanceof Date || v.kind !== 'formula' || !v.formula) continue;
+          const f = deleteSheetInFormula(v.formula, title, order);
+          if (f === v.formula) continue;
+          if (!touched) {
+            tx.cells(s.sheet, { r1: 1, c1: 1, r2: MAX_ROW, c2: MAX_COL });
+            touched = true;
+          }
+          cell.value = { ...v, formula: f };
+        }
+      }
+    }
+    doc.wb.definedNames = doc.wb.definedNames.map((dn) => {
+      const value = deleteSheetInFormula(dn.value, title, order);
+      return value === dn.value ? dn : { ...dn, value };
+    });
   });
   doc.activeSheetIndex = Math.min(next, doc.wb.sheets.length - 1);
   doc.layoutVersion++;
@@ -500,6 +572,7 @@ export function renameSheetAt(ctl: EditorController, index: number, name: string
         }
       }
     }
+    for (const dn of doc.wb.definedNames) dn.value = renameSheetInFormula(dn.value, old, trimmed);
   });
   return undefined;
 }

@@ -583,6 +583,11 @@ export interface PlotArea {
   chart: ChartKind;
   catAx?: CategoryAxis;
   valAx?: ValueAxis;
+  /**
+   * The X axis of a scatter or bubble chart, which is a value axis where other
+   * charts have `catAx`. `valAx` is then the Y axis.
+   */
+  xValAx?: ValueAxis;
   /** Date / time axis. Replaces `catAx` when the categories are dates. */
   dateAx?: DateAxis;
   /** Series axis (used by `surface3DChart` / `surfaceChart`). */

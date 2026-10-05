@@ -9,7 +9,7 @@
 
 import type { Cell } from '@office-kit/xlsx/cell';
 import type { Workbook } from '@office-kit/xlsx/workbook';
-import type { Worksheet } from '@office-kit/xlsx/worksheet';
+import { activeSelection, type Worksheet } from '@office-kit/xlsx/worksheet';
 import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
 import { fromArrayBuffer, loadWorkbook, workbookToBytes } from '@office-kit/xlsx/io';
 import { getCellDisplayText } from '@office-kit/xlsx/styles';
@@ -17,13 +17,14 @@ import { CalcEngine, type CellRef } from '../calc/index.ts';
 import type { CellPos, Range } from './address.ts';
 import { clampPos, rangeOf } from './address.ts';
 import { getCellAt, isBlank } from './cells.ts';
-import { syncTableHeaders } from './tables.ts';
+import { renameEditedHeaders, syncTableHeaders } from './tables.ts';
 import { changedCells, EditRefusedError, History, Transaction, type HistoryStep, type TransactionGuard } from './history.ts';
 import { MergeIndex } from './merges.ts';
 import { buildColumnAxis, buildRowAxis } from './metrics.ts';
 import { StyleResolver } from './render-style.ts';
 import { currentRange, singleCell, type Selection } from './selection.ts';
 import type { AxisIndex } from './axis.ts';
+import { fitAutoRows } from './autofit.ts';
 
 export interface SheetView {
   selection: Selection;
@@ -137,7 +138,8 @@ export class SpreadsheetEditor {
     this.wb.activeSheetIndex = this.activeSheetIndex;
     syncTableHeaders(this.wb, (ws, row, col) => {
       const cell = getCellAt(ws, row, col);
-      return cell && !isBlank(cell) ? getCellDisplayText(this.wb, cell).trim() : '';
+      // Not trimmed: Excel keeps a header's spaces in the column name.
+      return cell && !isBlank(cell) ? getCellDisplayText(this.wb, cell) : '';
     });
     return workbookToBytes(this.wb);
   }
@@ -148,7 +150,7 @@ export class SpreadsheetEditor {
     let v = this.#views.get(ws);
     if (!v) {
       const sv = ws.views[0];
-      const activeRef = sv?.selection?.activeCell;
+      const activeRef = sv ? activeSelection(sv)?.activeCell : undefined;
       const pos = activeRef ? parseA1(activeRef) : undefined;
       v = {
         selection: singleCell(pos ?? { row: 1, col: 1 }),
@@ -230,9 +232,17 @@ export class SpreadsheetEditor {
     let result: T;
     try {
       result = fn(tx);
+      if (!tx.structural) {
+        renameEditedHeaders(this.wb, tx, (ws, row, col) => {
+          const cell = getCellAt(ws, row, col);
+          return cell ? getCellDisplayText(this.wb, cell) : '';
+        });
+      }
+      fitAutoRows(this, tx);
     } catch (err) {
-      if (!(err instanceof EditRefusedError)) throw err;
+      // Put back what the step changed before failing, so no half-done edit is left without an undo step.
       tx.rollback();
+      if (!(err instanceof EditRefusedError)) throw err;
       this.onRefused?.(err.reason);
       return undefined;
     }
@@ -257,6 +267,7 @@ export class SpreadsheetEditor {
     } else {
       const changed: CellRef[] = changedCells(step).map(({ ws, row, col }) => ({ sheet: ws.title, row, col }));
       if (changed.length > 0) this.calc.update(changed);
+      if (step.before.some((s) => s.part.kind === 'sheet' && s.part.fields.includes('rowDimensions'))) this.calc.recalculateSubtotals();
     }
     if (step.structural || step.before.some((s) => s.part.kind === 'sheet' && s.part.fields.some((f) => LAYOUT_FIELDS.has(f) || f === 'mergedCells'))) {
       this.layoutVersion++;

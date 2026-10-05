@@ -1,6 +1,6 @@
 {
   "kind": "additive",
   "reason": "PieChart gains optional firstSliceAng (and makePieChart accepts it) so a rotated pie keeps its rotation.",
-  "baselineSha256": "d1de6c5624d582210ed364719a9c7b380153e1463492245cd4b5159b9f75cb67",
+  "baselineSha256": "f4a8fbd623e1ac41a57350f42bb0d7e592c6ce50515ce0af9eb3cc000dfeabf5",
   "changeset": ".changeset/pie-first-slice-angle.md"
 }
