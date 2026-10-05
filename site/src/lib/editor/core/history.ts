@@ -35,7 +35,13 @@ type WorkbookField = keyof Workbook;
 
 export type Part =
   | { readonly kind: 'cells'; readonly ws: Worksheet; readonly range: Range }
-  | { readonly kind: 'sheet'; readonly ws: Worksheet; readonly fields: readonly SheetField[] }
+  | {
+      readonly kind: 'sheet';
+      readonly ws: Worksheet;
+      readonly fields: readonly SheetField[];
+      /** Snapshot every field, including ones the step adds or removes, not just `fields`. */
+      readonly whole?: boolean;
+    }
   | { readonly kind: 'title'; readonly ws: Worksheet }
   | { readonly kind: 'workbook'; readonly fields: readonly WorkbookField[] };
 
@@ -88,7 +94,7 @@ function take(part: Part, wb: Workbook): Snapshot {
       return { part, data: snapCells(part.ws, part.range) };
     case 'sheet': {
       const record: Record<string, unknown> = {};
-      for (const f of part.fields) record[f] = structuredClone(part.ws[f]);
+      for (const f of part.whole ? sheetFields(part.ws) : part.fields) record[f] = structuredClone(part.ws[f]);
       return { part, data: record };
     }
     case 'title':
@@ -102,6 +108,10 @@ function take(part: Part, wb: Workbook): Snapshot {
   }
 }
 
+function sheetFields(ws: Worksheet): SheetField[] {
+  return Object.keys(ws).filter((k): k is SheetField => k !== 'rows' && k !== 'title');
+}
+
 type SheetSnap = { readonly ref: SheetRef; readonly state: SheetRef['state'] };
 
 function restore(snapshot: Snapshot, wb: Workbook): void {
@@ -112,6 +122,11 @@ function restore(snapshot: Snapshot, wb: Workbook): void {
       return;
     case 'sheet': {
       const record = data as Record<string, unknown>;
+      if (part.whole) {
+        for (const f of sheetFields(part.ws)) if (!(f in record)) Reflect.deleteProperty(part.ws, f);
+        for (const f of Object.keys(record)) Object.assign(part.ws, { [f]: structuredClone(record[f]) });
+        return;
+      }
       // Clone again: the snapshot must survive later edits of the restored state.
       for (const f of part.fields) Object.assign(part.ws, { [f]: structuredClone(record[f]) });
       return;
@@ -190,8 +205,8 @@ export class Transaction {
   wholeSheet(ws: Worksheet): void {
     this.structural = true;
     this.cells(ws, { r1: 1, c1: 1, r2: 1_048_576, c2: 16_384 });
-    const fields = Object.keys(ws).filter((k): k is SheetField => k !== 'rows' && k !== 'title');
-    this.sheet(ws, ...fields);
+    // `fields` still lists what is there now, for the protection guard.
+    this.#add({ kind: 'sheet', ws, fields: sheetFields(ws), whole: true });
   }
 
   /** Undo whatever the callback already changed (an edit refused part-way). */
