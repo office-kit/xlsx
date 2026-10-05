@@ -10,7 +10,7 @@
 
 import type { Cell } from '@office-kit/xlsx/cell';
 import type { Workbook } from '@office-kit/xlsx/workbook';
-import type { PivotTable, TableColumn, TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
+import type { DataValidation, PivotTable, TableColumn, TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
 import { adjustFormulaForStructure } from '../calc/index.ts';
 import type { Range } from './address.ts';
 import { colLetter, MAX_COL, MAX_ROW, parseRangeAddress } from './address.ts';
@@ -320,10 +320,35 @@ function adjustAllFormulas(wb: Workbook, sheetTitle: string, e: Edit): void {
       }
     }
   }
+  // Rule formulas follow the cells they point at, like cell formulas do; a
+  // rule on another sheet may point into this one.
+  for (const ref of wb.sheets) {
+    if (ref.kind !== 'worksheet') continue;
+    const host = ref.sheet;
+    const adjust = (f: string): string => adjustFormulaForStructure(f, host.title, edit);
+    host.conditionalFormatting = host.conditionalFormatting.map((cf) => {
+      const rules = cf.rules.map((rule) => {
+        const formulas = rule.formulas.map(adjust);
+        return formulas.every((f, i) => f === rule.formulas[i]) ? rule : { ...rule, formulas };
+      });
+      return rules.every((r, i) => r === cf.rules[i]) ? cf : { ...cf, rules };
+    });
+    host.dataValidations = host.dataValidations.map((dv) => adjustValidation(dv, adjust));
+  }
   wb.definedNames = wb.definedNames.map((dn) => {
     const value = adjustFormulaForStructure(dn.value, sheetTitle, edit);
     return value === dn.value ? dn : { ...dn, value };
   });
+}
+
+function adjustValidation(dv: DataValidation, adjust: (formula: string) => string): DataValidation {
+  const formula1 = dv.formula1 === undefined ? undefined : adjust(dv.formula1);
+  const formula2 = dv.formula2 === undefined ? undefined : adjust(dv.formula2);
+  if (formula1 === dv.formula1 && formula2 === dv.formula2) return dv;
+  const next = { ...dv };
+  if (formula1 !== undefined) next.formula1 = formula1;
+  if (formula2 !== undefined) next.formula2 = formula2;
+  return next;
 }
 
 /**
@@ -342,6 +367,7 @@ export function declareStructural(tx: Transaction, wb: Workbook, ws: Worksheet):
   for (const ref of wb.sheets) {
     if (ref.kind !== 'worksheet' || ref.sheet === ws) continue;
     tx.cells(ref.sheet, { r1: 1, c1: 1, r2: MAX_ROW, c2: MAX_COL });
+    tx.sheet(ref.sheet, 'conditionalFormatting', 'dataValidations');
     // A PivotTable elsewhere may read its source from this sheet.
     if (ref.sheet.pivotTables) tx.sheet(ref.sheet, 'pivotTables');
   }
