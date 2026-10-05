@@ -349,9 +349,7 @@ function pasteInternal(ctl: EditorController, p: ClipPayload, opts: PasteSpecial
     }
 
     // Dissolve merges overlapping the destination.
-    for (const m of ws.mergedCells.slice()) {
-      if (rangesIntersect({ r1: m.minRow, c1: m.minCol, r2: m.maxRow, c2: m.maxCol }, dest)) unmergeCells(ws, m);
-    }
+    ws.mergedCells = ws.mergedCells.filter((m) => !rangesIntersect({ r1: m.minRow, c1: m.minCol, r2: m.maxRow, c2: m.maxCol }, dest));
 
     const byPos = new Map<string, ClipCell>();
     for (const c of p.cells) byPos.set(`${c.dr},${c.dc}`, c);

@@ -13,7 +13,6 @@ import {
   setColumnDimension,
   setFreezePanes,
   setRowDimension,
-  unmergeCells,
 } from '@office-kit/xlsx/worksheet';
 import type { CellPos, Range } from './address.ts';
 import { fromBoundaries, MAX_COL, MAX_ROW, parseRangeAddress, rangesIntersect, toBoundaries } from './address.ts';
@@ -244,11 +243,9 @@ export function mergeRanges(editor: SpreadsheetEditor, ranges: readonly Range[],
     tx.sheet(ws, 'mergedCells');
     for (const range of ranges) {
       tx.cells(ws, range);
-      // Any merge overlapping the target is dissolved first, as Excel does.
-      for (const existing of ws.mergedCells.slice()) {
-        const r = { r1: existing.minRow, c1: existing.minCol, r2: existing.maxRow, c2: existing.maxCol };
-        if (rangesIntersect(r, range)) unmergeCells(ws, existing);
-      }
+      // Any merge overlapping the target is dissolved first, as Excel does; in
+      // one pass, since unmerging one at a time searches the list each time.
+      ws.mergedCells = ws.mergedCells.filter((m) => !rangesIntersect({ r1: m.minRow, c1: m.minCol, r2: m.maxRow, c2: m.maxCol }, range));
       if (mode === 'unmerge') continue;
       for (const part of mergeParts(range, mode)) {
         if (part.r1 === part.r2 && part.c1 === part.c2) continue;
