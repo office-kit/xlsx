@@ -85,6 +85,10 @@ const displayText = (code: string, value: CellValue, epoch: ExcelEpoch): string 
  * - Dates and times: `y` `m` `d` `h` `s` runs, `mmm` / `mmmm` month names,
  *   `ddd` / `dddd` weekday names, `AM/PM` and `A/P`, fractional seconds, and
  *   the elapsed forms `[h]` `[mm]` `[ss]`.
+ * - Comparison sections (`[<1000]0;[<1000000]0.0,"K";0.0,,"M"`), picked the
+ *   way Excel does; a value no section takes has no reading.
+ * - The 1900 system's phantom days: serial 0 prints as 1/0/1900 and 60 as
+ *   2/29/1900, as in Excel.
  * - Booleans as `TRUE` / `FALSE`, error cells as their token, rich text as its
  *   runs joined, a formula cell from the value Excel cached for it, and an
  *   empty cell as `''`.
@@ -92,7 +96,6 @@ const displayText = (code: string, value: CellValue, epoch: ExcelEpoch): string 
  * Not covered, and the cell falls back to `cellValueAsString` so the reading is
  * a plain coercion rather than a guess:
  *
- * - Comparison sections (`[>=100]"over";[<0]"under";0`).
  * - A section splicing two numeric layouts together (`0.00" ("0.00")"`).
  * - Calendar and numbering modifiers: era tokens (`g`, `e`, `b`) and bracket
  *   groups such as `[DBNum1]` that replace the digits themselves.

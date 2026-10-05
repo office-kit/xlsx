@@ -294,10 +294,44 @@ describe('getCellDisplayText: formula cells', () => {
   });
 });
 
+// Each row was read back from Excel for Mac with the code applied to the value.
+describe('getCellDisplayText: comparison sections', () => {
+  it.each([
+    ['[<1000]0;[<1000000]0.0,"K";0.0,,"M"', 12345, '12.3K'],
+    ['[<1000]0;[<1000000]0.0,"K";0.0,,"M"', 1500000, '1.5M'],
+    ['[<1000]0;[<1000000]0.0,"K"', 500, '500'],
+    ['[<1000]0;[<1000000]0.0,"K"', -5, '-5'],
+    ['[>10]"big";[<0]"neg";"small"', 5, 'small'],
+    ['[=1]"one";"other"', 1, 'one'],
+    ['[>=0]0;[<0]0', -5, '5'],
+    ['[<0]0;0', -5, '5'],
+    ['[>100]0;0', -5, '-5'],
+    ['[>100]0;[<-100]0;0', -5, '-5'],
+    ['[>100]0;[<-100]0;0', -500, '500'],
+    ['[>10]0;0;"z"', 5, 'z'],
+    ['[=1]0;[=2]0;0', -3, '-3'],
+    ['[Red][<0]0.0;0', -2, '2.0'],
+  ] satisfies Array<[string, CellValue, string]>)('%s on %s shows %s', (code, value, expected) => {
+    expect(display(code, value)).toBe(expected);
+  });
+
+  it('a value no section takes has no reading and degrades', () => {
+    expect(display('[<1000]0;[<1000000]0.0,"K"', 2000000)).toBe('2000000');
+  });
+});
+
+describe('getCellDisplayText: the 1900 system\'s phantom days', () => {
+  it('shows serial 0 as 1/0/1900 and serial 60 as 2/29/1900, like Excel', () => {
+    expect(display('m/d/yyyy', 0)).toBe('1/0/1900');
+    expect(display('m/d/yyyy', 60)).toBe('2/29/1900');
+    expect(display('m/d/yyyy', 59)).toBe('2/28/1900');
+    expect(display('m/d/yyyy', 61)).toBe('3/1/1900');
+    expect(display('dddd', 60)).toBe('Wednesday');
+  });
+});
+
 describe('getCellDisplayText: codes outside the supported set', () => {
   it.each([
-    // Comparison sections pick a branch by value, not by sign.
-    ['[>=100]"big";0', 150, '150'],
     // Era and calendar tokens need a calendar this renderer does not carry.
     ['ggge"年"m"月"d"日"', MARCH_14_2024, '45365'],
     ['[DBNum1]0', 42, '42'],
@@ -315,7 +349,7 @@ describe('getCellDisplayText: codes outside the supported set', () => {
 
   it('degrades a Date to its ISO form, not to a serial', () => {
     const date = new Date(Date.UTC(2024, 2, 14));
-    expect(display('[>=100]"big";0', date)).toBe(date.toISOString());
+    expect(display('[DBNum1]0', date)).toBe(date.toISOString());
   });
 
   it('a serial past the range a Date covers degrades to the number', () => {
