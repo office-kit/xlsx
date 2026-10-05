@@ -9,12 +9,14 @@
 import type { CellValue } from '@office-kit/xlsx/cell';
 import { makeCell } from '@office-kit/xlsx/cell';
 import { cellStyleToCss, getCellDisplayText } from '@office-kit/xlsx/styles';
+import type { Worksheet } from '@office-kit/xlsx/worksheet';
 import { mergeCells, setColumnDimension, unmergeCells } from '@office-kit/xlsx/worksheet';
 import { adjustFormulaForMove, translateFormula } from '../calc/index.ts';
 import type { CellPos, Range } from './address.ts';
 import { MAX_COL, MAX_ROW, rangesIntersect, toBoundaries } from './address.ts';
 import { deleteCellsInRange, forEachCellInRange, getCellAt, usedRange } from './cells.ts';
 import type { EditorController } from './controller.svelte.ts';
+import { isRowFiltered } from './filter.ts';
 import { parseInput } from './input.ts';
 import { pxToColWidth } from './metrics.ts';
 import { selectRange } from './selection.ts';
@@ -22,13 +24,16 @@ import { selectRange } from './selection.ts';
 interface ClipCell {
   readonly dr: number;
   readonly dc: number;
+  /** Row offset in the source when filtered-out rows were left out of the copy (`dr` is then the packed row). */
+  readonly srcDr?: number;
   readonly value: CellValue;
   readonly styleId: number;
 }
 
 export interface ClipPayload {
   readonly id: string;
-  readonly sheetIndex: number;
+  /** The sheet itself, not its index: sheets can move or go between the cut and the paste. */
+  readonly sheet: Worksheet;
   readonly source: Range;
   readonly rows: number;
   readonly cols: number;
@@ -59,7 +64,7 @@ export function captureSelection(ctl: EditorController, cut: boolean): ClipPaylo
   const p = snapshotSelection(ctl, cut);
   if (!p) return null;
   payload = p;
-  ctl.clipboard = { sheetIndex: ctl.doc.activeSheetIndex, range: ctl.doc.selection.ranges[0] ?? p.source, cut };
+  ctl.clipboard = { sheet: ctl.doc.ws, range: ctl.doc.selection.ranges[0] ?? p.source, cut };
   return p;
 }
 
@@ -73,16 +78,40 @@ function snapshotSelection(ctl: EditorController, cut: boolean): ClipPayload | n
   if (!full) return null;
   const range = boundedSource(ctl, full);
   const ws = ctl.doc.ws;
+  // Copying a filtered list copies only the rows on show (Excel); a cut keeps the block whole.
+  const packed: number[] = [];
+  let skipped = false;
+  if (!cut && range.r2 - range.r1 < MAX_ROW - 1) {
+    for (let r = range.r1; r <= range.r2; r++) {
+      if (isRowFiltered(ws, r)) skipped = true;
+      else packed.push(r);
+    }
+  }
+  const packedIndex = skipped ? new Map(packed.map((r, i) => [r, i])) : undefined;
   const cells: ClipCell[] = [];
-  forEachCellInRange(ws, range, (c) => cells.push({ dr: c.row - range.r1, dc: c.col - range.c1, value: c.value, styleId: c.styleId }));
-  const merges = ctl.doc.merges.intersecting(range).map((m) => ({ r1: m.r1 - range.r1, c1: m.c1 - range.c1, r2: m.r2 - range.r1, c2: m.c2 - range.c1 }));
+  forEachCellInRange(ws, range, (c) => {
+    const dr = c.row - range.r1;
+    if (!packedIndex) {
+      cells.push({ dr, dc: c.col - range.c1, value: c.value, styleId: c.styleId });
+      return;
+    }
+    const at = packedIndex.get(c.row);
+    if (at !== undefined) cells.push({ dr: at, dc: c.col - range.c1, srcDr: dr, value: c.value, styleId: c.styleId });
+  });
+  // Only merges wholly inside the block travel with it; one sticking out cannot be rebuilt at the destination.
+  const merges = packedIndex
+    ? []
+    : ctl.doc.merges
+        .intersecting(range)
+        .filter((m) => m.r1 >= range.r1 && m.c1 >= range.c1 && m.r2 <= range.r2 && m.c2 <= range.c2)
+        .map((m) => ({ r1: m.r1 - range.r1, c1: m.c1 - range.c1, r2: m.r2 - range.r1, c2: m.c2 - range.c1 }));
   const colWidths = new Map<number, number>();
   for (let c = range.c1; c <= range.c2 && c - range.c1 < 256; c++) colWidths.set(c - range.c1, ctl.doc.cols.sizeOf(c));
   return {
     id: Math.random().toString(36).slice(2),
-    sheetIndex: ctl.doc.activeSheetIndex,
+    sheet: ctl.doc.ws,
     source: range,
-    rows: range.r2 - range.r1 + 1,
+    rows: packedIndex ? packed.length : range.r2 - range.r1 + 1,
     cols: range.c2 - range.c1 + 1,
     cells,
     merges,
@@ -263,10 +292,17 @@ function pasteInternal(ctl: EditorController, p: ClipPayload, opts: PasteSpecial
     r2: Math.min(MAX_ROW, origin.row + rows * tilesR - 1),
     c2: Math.min(MAX_COL, origin.col + cols * tilesC - 1),
   };
-  const sourceRef = doc.wb.sheets[p.sheetIndex];
-  const sourceSheet = sourceRef?.kind === 'worksheet' ? sourceRef.sheet : undefined;
+  const sourceSheet = doc.wb.sheets.some((s) => s.sheet === p.sheet) ? p.sheet : undefined;
   const sourceTitle = sourceSheet?.title ?? ws.title;
   const isMove = p.cut && opts.what === 'all' && !opts.transpose;
+  // Excel refuses a paste that would cover part of a merged cell.
+  const straddles = (m: { minRow: number; minCol: number; maxRow: number; maxCol: number }) =>
+    rangesIntersect({ r1: m.minRow, c1: m.minCol, r2: m.maxRow, c2: m.maxCol }, dest) &&
+    !(m.minRow >= dest.r1 && m.maxRow <= dest.r2 && m.minCol >= dest.c1 && m.maxCol <= dest.c2);
+  if (ws.mergedCells.some(straddles)) {
+    ctl.toast = 'mergedCellConflict';
+    return;
+  }
 
   doc.transact(p.cut ? 'Cut and Paste' : 'Paste', (tx) => {
     tx.cells(ws, dest);
@@ -300,8 +336,13 @@ function pasteInternal(ctl: EditorController, p: ClipPayload, opts: PasteSpecial
     } else if (moving && sourceSheet) {
       // Cut: clear the source, then write cells unchanged (no relative shift).
       const srcCells = p.cells;
-      deleteCellsInRange(sourceSheet, p.source);
       if (sourceSheet !== ws) tx.cells(sourceSheet, p.source);
+      // The block's merges move with it (they are re-created at the destination below).
+      tx.sheet(sourceSheet, 'mergedCells');
+      for (const m of sourceSheet.mergedCells.slice()) {
+        if (m.minRow >= p.source.r1 && m.maxRow <= p.source.r2 && m.minCol >= p.source.c1 && m.maxCol <= p.source.c2) unmergeCells(sourceSheet, m);
+      }
+      deleteCellsInRange(sourceSheet, p.source);
       deleteCellsInRange(ws, dest);
       for (const c of srcCells) {
         const row = origin.row + c.dr;
@@ -322,6 +363,19 @@ function pasteInternal(ctl: EditorController, p: ClipPayload, opts: PasteSpecial
           }
         }
       }
+      // Names that point into the block follow it, as Excel does.
+      const move = { sheet: sourceTitle, range: p.source, toSheet: ws.title, dRow, dCol };
+      const names = doc.wb.definedNames.map((dn) => {
+        const host = dn.scope === undefined ? sourceTitle : (doc.wb.sheets[dn.scope]?.sheet.title ?? sourceTitle);
+        const value = adjustFormulaForMove(dn.value, host, move);
+        return value === dn.value ? dn : { ...dn, value };
+      });
+      if (names.some((dn, i) => dn !== doc.wb.definedNames[i])) {
+        // Formulas that use a moved name never changed text, so only a full recalc reaches them.
+        tx.structural = true;
+        tx.workbook('definedNames');
+        doc.wb.definedNames = names;
+      }
     } else {
       for (let tr = 0; tr < tilesR; tr++) {
         for (let tc = 0; tc < tilesC; tc++) {
@@ -332,8 +386,9 @@ function pasteInternal(ctl: EditorController, p: ClipPayload, opts: PasteSpecial
               const col = origin.col + tc * cols + c;
               if (row > MAX_ROW || col > MAX_COL) continue;
               if (opts.skipBlanks && (!src || src.value === null)) continue;
+              const srcRow = src?.srcDr ?? (opts.transpose ? c : r);
               writePasted(ctl, row, col, src, opts, {
-                dRow: row - (p.source.r1 + (opts.transpose ? c : r)),
+                dRow: row - (p.source.r1 + srcRow),
                 dCol: col - (p.source.c1 + (opts.transpose ? r : c)),
               });
             }

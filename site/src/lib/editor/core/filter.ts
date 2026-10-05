@@ -37,6 +37,12 @@ export function filterOwners(ws: Worksheet): FilterOwner[] {
   return out;
 }
 
+/** Hidden by a filter with criteria, not by hand: copy and fill skip these rows. */
+export function isRowFiltered(ws: Worksheet, row: number): boolean {
+  if (ws.rowDimensions.get(row)?.hidden !== true) return false;
+  return filterOwners(ws).some((o) => o.autoFilter.filterColumns.length > 0 && row > o.range.r1 && row <= o.range.r2);
+}
+
 /** The filter whose header row holds (row, col), if any. */
 export function filterOwnerAt(ws: Worksheet, row: number, col: number): FilterOwner | undefined {
   return filterOwners(ws).find((o) => o.range.r1 === row && col >= o.range.c1 && col <= o.range.c2);

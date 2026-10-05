@@ -1,6 +1,6 @@
 {
   "kind": "breaking",
   "reason": "FilterColumn gains custom / top10 / dynamic / raw variants (plus the CustomFilterCondition type), and AutoFilter / TableDefinition gain an optional sortState, so filter criteria and filter-button sorts survive a round-trip. Breaking because code that read `values` without narrowing on `kind` no longer compiles.",
-  "baselineSha256": "15e4ebc9f708bd0d9d65cacb0c1ef6c8e8e8c0588e22c408e8800750fbd26c80",
+  "baselineSha256": "cfe52a621f9559a29558f8ed2b037c14e57b5221f2013f102cb7271e4e2a98f2",
   "changeset": ".changeset/autofilter-criteria.md"
 }
