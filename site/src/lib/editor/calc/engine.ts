@@ -32,6 +32,13 @@ import type { Workbook } from '@office-kit/xlsx/workbook';
 import type { Worksheet } from '@office-kit/xlsx/worksheet';
 import { deleteCell, setCell } from '@office-kit/xlsx/worksheet';
 import { cellAddress } from './address.ts';
+
+/** Whether `ref` (`A1:D20`, `A1`) covers `row`. */
+const refSpansRow = (ref: string, row: number): boolean => {
+  const rows = ref.match(/\d+/g)?.map(Number) ?? [];
+  const [r1 = 0, r2 = r1] = rows;
+  return row >= Math.min(r1, r2) && row <= Math.max(r1, r2);
+};
 import type { AstNode, StructuredSpec } from './ast.ts';
 import { serialFromDate } from './dates.ts';
 import { Evaluator, type Frame, resolveRect, topLeft } from './evaluator.ts';
@@ -201,6 +208,15 @@ export class CalcEngine implements EvalHost {
     }
     const dirty = this.closure(roots, seeds);
     return this.runPass(dirty);
+  }
+
+  /** Rows were hidden, shown or filtered: SUBTOTAL / AGGREGATE results depend on that. */
+  recalculateSubtotals(): CellRef[] {
+    if (!this.built) return [];
+    const roots = [...this.nodes.values()].filter((n) => n.hasSubtotal);
+    if (roots.length === 0) return [];
+    this.changed.clear();
+    return this.runPass(this.closure(roots, []));
   }
 
   /** Rows / columns / sheets / defined names / tables changed shape: rebuild lazily on next use. */
@@ -402,6 +418,13 @@ export class CalcEngine implements EvalHost {
 
   isRowHidden(sheet: string, row: number): boolean {
     return this.sheetInfo(sheet)?.ws.rowDimensions.get(row)?.hidden === true;
+  }
+
+  isRowFiltered(sheet: string, row: number): boolean {
+    const ws = this.sheetInfo(sheet)?.ws;
+    if (ws?.rowDimensions.get(row)?.hidden !== true) return false;
+    const filters = [ws.autoFilter, ...ws.tables.map((t) => t.autoFilter)];
+    return filters.some((af) => af !== undefined && af.filterColumns.length > 0 && refSpansRow(af.ref, row));
   }
 
   numberFormat(sheet: string, row: number, col: number): string {
