@@ -47,11 +47,13 @@
     };
   });
 
+  // Run before closing: the menu's `{@const}` values (the sheet a tab menu
+  // is for) read the open menu, and are gone once it is null.
   function run(fn: () => void) {
+    fn();
     ctl.menu = null;
     showTabColors = false;
     sub = null;
-    fn();
   }
 
   const hasNote = $derived.by(() => {

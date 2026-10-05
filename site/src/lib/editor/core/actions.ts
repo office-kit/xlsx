@@ -270,25 +270,28 @@ export function autoFill(ctl: EditorController, source: Range, target: Range, mo
 
 /** Cmd+D / Cmd+R: copy the top row / left column of the selection across it. */
 export function fillFrom(ctl: EditorController, direction: 'down' | 'right' | 'up' | 'left'): void {
-  const r = currentRange(ctl.doc.selection);
-  const single = r.r1 === r.r2 && r.c1 === r.c2;
-  // A single cell fills from its neighbour (the cell above / to the left).
-  if (direction === 'down') {
-    const src = single ? { ...r, r1: r.r1 - 1, r2: r.r1 - 1 } : { ...r, r2: r.r1 };
-    if (src.r1 < 1) return;
-    autoFill(ctl, src, { ...r, r1: src.r1 }, 'copy');
-  } else if (direction === 'right') {
-    const src = single ? { ...r, c1: r.c1 - 1, c2: r.c1 - 1 } : { ...r, c2: r.c1 };
-    if (src.c1 < 1) return;
-    autoFill(ctl, src, { ...r, c1: src.c1 }, 'copy');
-  } else if (direction === 'up') {
-    const src = { ...r, r1: r.r2 };
-    autoFill(ctl, src, r, 'copy');
-  } else {
-    const src = { ...r, c1: r.c2 };
-    autoFill(ctl, src, r, 'copy');
-  }
-  ctl.selectRange(r, ctl.doc.selection.active);
+  repeatable(ctl, () => {
+    const r = currentRange(ctl.doc.selection);
+    // `autoFill` selects the filled range around the source; keep the cell the
+    // user was on active, or the next entry would overwrite the source.
+    const active = ctl.doc.selection.active;
+    const single = r.r1 === r.r2 && r.c1 === r.c2;
+    // A single cell fills from its neighbour (the cell above / to the left).
+    if (direction === 'down') {
+      const src = single ? { ...r, r1: r.r1 - 1, r2: r.r1 - 1 } : { ...r, r2: r.r1 };
+      if (src.r1 < 1) return;
+      autoFill(ctl, src, { ...r, r1: src.r1 }, 'copy');
+    } else if (direction === 'right') {
+      const src = single ? { ...r, c1: r.c1 - 1, c2: r.c1 - 1 } : { ...r, c2: r.c1 };
+      if (src.c1 < 1) return;
+      autoFill(ctl, src, { ...r, c1: src.c1 }, 'copy');
+    } else if (direction === 'up') {
+      autoFill(ctl, { ...r, r1: r.r2 }, r, 'copy');
+    } else {
+      autoFill(ctl, { ...r, c1: r.c2 }, r, 'copy');
+    }
+    ctl.selectRange(r, active);
+  });
 }
 
 /** Double-clicking the fill handle fills down as far as the adjacent column has data. */
