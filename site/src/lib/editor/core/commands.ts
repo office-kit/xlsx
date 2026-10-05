@@ -22,7 +22,7 @@ import type { SpreadsheetEditor } from './editor.svelte.ts';
 import type { Transaction } from './history.ts';
 import { pxToColWidth } from './metrics.ts';
 import { applyStyle, transformStyle, type StylePatch } from './format.ts';
-import { isRowFiltered } from './filter.ts';
+import { isRowFiltered, visibleParts } from './filter.ts';
 import { parseInput, type DateOrder } from './input.ts';
 import { selectRange } from './selection.ts';
 
@@ -125,7 +125,7 @@ export type ClearKind = 'contents' | 'formats' | 'all' | 'comments' | 'hyperlink
 export function clearRanges(editor: SpreadsheetEditor, ranges: readonly Range[], kind: ClearKind): void {
   const ws = editor.ws;
   editor.transact(kind === 'contents' ? 'Clear Contents' : 'Clear', (tx) => {
-    for (const range of ranges) {
+    for (const range of ranges.flatMap((r) => visibleParts(ws, r))) {
       tx.cells(ws, range);
       if (kind === 'all') {
         tx.sheet(ws, 'hyperlinks', 'legacyComments', 'threadedComments');
@@ -188,7 +188,7 @@ function removeAnnotations(ws: Worksheet, range: Range, comments: boolean, links
 export function formatRanges(editor: SpreadsheetEditor, ranges: readonly Range[], patch: StylePatch, label = 'Format Cells'): void {
   const ws = editor.ws;
   editor.transact(label, (tx) => {
-    for (const range of ranges) {
+    for (const range of ranges.flatMap((r) => visibleParts(ws, r))) {
       tx.cells(ws, range);
       if (range.r1 === 1 && range.r2 === MAX_ROW) tx.sheet(ws, 'columnDimensions');
       if (range.c1 === 1 && range.c2 === MAX_COL) tx.sheet(ws, 'rowDimensions');
