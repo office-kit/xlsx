@@ -700,7 +700,12 @@ export class EditorController {
     if (value !== null && typeof value === 'object' && !(value instanceof Date) && value.kind === 'formula') {
       // A formula is checked by its result, as Excel does.
       const result = this.doc.calc.evaluate(value.formula, ref.sheet.title, row, col);
-      value = typeof result === 'number' || typeof result === 'string' || typeof result === 'boolean' ? result : null;
+      value =
+        typeof result === 'number' || typeof result === 'string' || typeof result === 'boolean'
+          ? result
+          : result !== null && result.kind === 'error'
+            ? { kind: 'error', code: result.code }
+            : null;
     }
     return validateValue(this, dv, value, row, col) ? undefined : dv;
   }

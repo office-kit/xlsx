@@ -5,7 +5,7 @@ import type { CellValue } from '@office-kit/xlsx/cell';
 import type { DataValidation } from '@office-kit/xlsx/worksheet';
 import { translateFormula } from '../calc/index.ts';
 import type { EditorController } from './controller.svelte.ts';
-import { listSource } from './data.ts';
+import { listSource, listValues } from './data.ts';
 
 function scalar(v: CellValue): number | string | boolean | null {
   if (v === null) return null;
@@ -51,7 +51,15 @@ function compare(op: DataValidation['operator'], x: number, a: number | undefine
   }
 }
 
+function isError(v: CellValue): boolean {
+  if (v === null || typeof v !== 'object' || v instanceof Date) return false;
+  return v.kind === 'error' || (v.kind === 'formula' && v.cachedValueType === 'error');
+}
+
 export function validateValue(ctl: EditorController, dv: DataValidation, value: CellValue, row: number, col: number): boolean {
+  // An error value is not a number, a date, a list item or a length; only a custom formula
+  // gets to judge it.
+  if (isError(value) && dv.type !== 'custom') return dv.type === undefined;
   const v = scalar(value);
   if (v === null || v === '') return dv.allowBlank !== false;
   const a = () => operand(ctl, dv, dv.formula1, row, col);
@@ -66,9 +74,12 @@ export function validateValue(ctl: EditorController, dv: DataValidation, value: 
     case 'textLength':
       return compare(dv.operator, String(v).length, a(), b());
     case 'list': {
-      const items = dv.formula1 ? listSource(ctl, dv.formula1) : [];
+      if (!dv.formula1) return false;
+      // A range item matches by value (a typed 1/1/2024 is the date in the list), and also by
+      // the text it shows, which is what picking it from the drop-down enters.
+      if (listValues(ctl, dv.formula1).some((item) => item === v || (typeof item === 'string' && typeof v === 'string' && item.toLowerCase() === v.toLowerCase()))) return true;
       const text = typeof v === 'boolean' ? (v ? 'TRUE' : 'FALSE') : String(v);
-      return items.some((item) => item.toLowerCase() === text.toLowerCase());
+      return listSource(ctl, dv.formula1).some((item) => item.toLowerCase() === text.toLowerCase());
     }
     case 'custom': {
       if (!dv.formula1) return true;
