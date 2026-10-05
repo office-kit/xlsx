@@ -3,10 +3,11 @@
 import type { Cell } from '@office-kit/xlsx/cell';
 import { getCellDisplayText } from '@office-kit/xlsx/styles';
 import type { Worksheet } from '@office-kit/xlsx/worksheet';
-import { toStorageFormula } from '../calc/index.ts';
+import { parseFormula } from '../calc/index.ts';
 import type { CellPos } from './address.ts';
+import { writeValue } from './commands.ts';
 import type { EditorController } from './controller.svelte.ts';
-import { editTextFor } from './input.ts';
+import { editTextFor, parseInput } from './input.ts';
 import { selectRange } from './selection.ts';
 
 export interface FindOptions {
@@ -84,41 +85,60 @@ export function findNext(ctl: EditorController, direction: 1 | -1): boolean {
   return true;
 }
 
-function replaceIn(ctl: EditorController, opts: FindOptions, replacement: string, targets: ReadonlyArray<{ ws: Worksheet; cell: Cell }>): void {
+/**
+ * Replace in `targets`, each result read as if typed into its cell. When any
+ * result is a formula that does not parse, nothing is replaced and the bad
+ * formula is returned, as Excel stops with "There's a problem with this formula".
+ */
+function replaceIn(ctl: EditorController, opts: FindOptions, replacement: string, targets: ReadonlyArray<{ ws: Worksheet; cell: Cell }>): ReplaceResult {
   const re = buildReplaceRegex(opts);
+  const inputOpts = { dateOrder: ctl.dateOrder(), date1904: ctl.doc.wb.date1904 };
+  const parsed = targets.map(({ ws, cell }) => {
+    const text = cellText(ctl, cell, 'formulas');
+    const next = opts.wholeCell ? replacement : text.replace(re, replacement.replaceAll('$', '$$$$'));
+    return { ws, cell, text: next, input: parseInput(next, inputOpts) };
+  });
+  for (const p of parsed) {
+    if (!p.text.startsWith('=') || p.text.length < 2) continue;
+    try {
+      parseFormula(p.text.slice(1));
+    } catch {
+      return { replaced: 0, invalidFormula: p.text };
+    }
+  }
   ctl.doc.transact('Replace', (tx) => {
-    for (const { ws, cell } of targets) {
+    for (const { ws, cell, input } of parsed) {
       tx.cells(ws, { r1: cell.row, c1: cell.col, r2: cell.row, c2: cell.col });
-      const text = cellText(ctl, cell, 'formulas');
-      const next = opts.wholeCell ? replacement : text.replace(re, replacement.replaceAll('$', '$$$$'));
-      cell.value = next.startsWith('=') && next.length > 1 ? { kind: 'formula', t: 'normal', formula: toStorageFormula(next.slice(1)) } : coerce(next);
+      writeValue(ctl.doc, ws, cell.row, cell.col, input.value, input.impliedFormat);
     }
   });
+  return { replaced: parsed.length };
 }
 
-/** Replace in the formulas/text of every matching cell; returns the count. */
-export function replaceAll(ctl: EditorController, opts: FindOptions, replacement: string, sheets: readonly Worksheet[]): number {
+export interface ReplaceResult {
+  readonly replaced: number;
+  /** The first replaced text that is not a valid formula; nothing was replaced. */
+  readonly invalidFormula?: string;
+}
+
+/** Replace in the formulas/text of every matching cell. */
+export function replaceAll(ctl: EditorController, opts: FindOptions, replacement: string, sheets: readonly Worksheet[]): ReplaceResult {
   const matches = findAll(ctl, { ...opts, lookIn: 'formulas' }, sheets);
-  if (matches.length > 0) replaceIn(ctl, opts, replacement, matches);
-  return matches.length;
+  return matches.length > 0 ? replaceIn(ctl, opts, replacement, matches) : { replaced: 0 };
 }
 
 function buildReplaceRegex(opts: FindOptions): RegExp {
   return new RegExp(wildcardSource(opts.query), opts.matchCase ? 'g' : 'gi');
 }
 
-function coerce(text: string): string | number {
-  const n = Number(text);
-  return text.trim() !== '' && Number.isFinite(n) ? n : text;
-}
-
 /** Replace button: replace the active cell if it matches, then move to the next match. */
-export function replaceCurrent(ctl: EditorController, opts: FindOptions, replacement: string): void {
+export function replaceCurrent(ctl: EditorController, opts: FindOptions, replacement: string): ReplaceResult {
   const { row, col } = ctl.doc.selection.active;
   const ws = ctl.doc.ws;
   const cell = ws.rows.get(row)?.get(col);
-  if (cell && toMatcher({ ...opts, lookIn: 'formulas' })(cellText(ctl, cell, 'formulas'))) replaceIn(ctl, opts, replacement, [{ ws, cell }]);
-  findNext(ctl, 1);
+  const result = cell && toMatcher({ ...opts, lookIn: 'formulas' })(cellText(ctl, cell, 'formulas')) ? replaceIn(ctl, opts, replacement, [{ ws, cell }]) : { replaced: 0 };
+  if (result.invalidFormula === undefined) findNext(ctl, 1);
+  return result;
 }
 
 export type GoToSpecial = 'blanks' | 'constants' | 'formulas' | 'comments' | 'currentRegion' | 'lastCell' | 'visible' | 'errors' | 'dataValidation' | 'conditionalFormats';

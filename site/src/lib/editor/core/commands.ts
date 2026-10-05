@@ -91,7 +91,7 @@ function widenToFit(editor: SpreadsheetEditor, tx: Transaction, at: CellPos, mea
   setColumnDimension(ws, at.col, { width: pxToColWidth(Math.ceil(need)) });
 }
 
-function writeValue(editor: SpreadsheetEditor, ws: Worksheet, row: number, col: number, value: CellValue, impliedFormat: string | undefined): void {
+export function writeValue(editor: SpreadsheetEditor, ws: Worksheet, row: number, col: number, value: CellValue, impliedFormat: string | undefined): void {
   const wb = editor.wb;
   let cell = getCellAt(ws, row, col);
   if (value === null) {
