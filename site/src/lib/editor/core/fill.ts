@@ -208,11 +208,9 @@ export function extendSeries(
   const counters = values.map((v) => (typeof v === 'string' ? countedText(v) : undefined));
   if (counters.every((c) => c === undefined)) return out2;
   return out2.map((cell, j) => {
-    const i = j + 1;
-    const k = direction === 1 ? (i - 1) % n : n - 1 - ((i - 1) % n);
-    const pass = Math.floor((i - 1) / n) + 1;
+    const k = direction === 1 ? j % n : n - 1 - (j % n);
     const next = counters[k];
-    return next ? { ...cell, value: next(direction * pass) } : cell;
+    return next ? { value: next(direction * (Math.floor(j / n) + 1)), styleId: cell.styleId } : cell;
   });
 }
 
