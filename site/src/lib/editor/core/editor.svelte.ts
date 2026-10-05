@@ -24,6 +24,7 @@ import { buildColumnAxis, buildRowAxis } from './metrics.ts';
 import { StyleResolver } from './render-style.ts';
 import { currentRange, singleCell, type Selection } from './selection.ts';
 import type { AxisIndex } from './axis.ts';
+import { fitAutoRows } from './autofit.ts';
 
 export interface SheetView {
   selection: Selection;
@@ -230,6 +231,7 @@ export class SpreadsheetEditor {
     let result: T;
     try {
       result = fn(tx);
+      fitAutoRows(this, tx);
     } catch (err) {
       if (!(err instanceof EditRefusedError)) throw err;
       tx.rollback();
