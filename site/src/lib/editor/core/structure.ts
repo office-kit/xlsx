@@ -337,7 +337,10 @@ function adjustAllFormulas(wb: Workbook, sheetTitle: string, e: Edit): void {
       const formula1 = dv.formula1 === undefined ? undefined : adjust(dv.formula1);
       const formula2 = dv.formula2 === undefined ? undefined : adjust(dv.formula2);
       if (formula1 === dv.formula1 && formula2 === dv.formula2) return dv;
-      return { ...dv, ...(formula1 === undefined ? {} : { formula1 }), ...(formula2 === undefined ? {} : { formula2 }) };
+      const next = { ...dv };
+      if (formula1 !== undefined) next.formula1 = formula1;
+      if (formula2 !== undefined) next.formula2 = formula2;
+      return next;
     });
   }
   wb.definedNames = wb.definedNames.map((dn) => {
