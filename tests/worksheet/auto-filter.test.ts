@@ -59,7 +59,7 @@ describe('autoFilter round-trip through saveWorkbook → loadWorkbook', () => {
     expect(filter?.filterColumns.length).toBe(1);
     const fc = filter?.filterColumns[0];
     expect(fc?.colId).toBe(1);
-    expect(fc?.values).toEqual(['apple', 'banana']);
+    expect(fc).toHaveProperty('values', ['apple', 'banana']);
   });
 
   it('preserves multi-column filters with blank flag', async () => {
@@ -79,8 +79,8 @@ describe('autoFilter round-trip through saveWorkbook → loadWorkbook', () => {
     const wb2 = await loadWorkbook(fromBuffer(bytes));
     const filter = getAutoFilter(expectSheet(wb2.sheets[0]?.sheet));
     expect(filter?.filterColumns.map((fc) => fc.colId)).toEqual([0, 3]);
-    expect(filter?.filterColumns[1]?.blank).toBe(true);
-    expect(filter?.filterColumns[1]?.values).toEqual(['Q1', 'Q2']);
+    expect(filter?.filterColumns[1]).toHaveProperty('blank', true);
+    expect(filter?.filterColumns[1]).toHaveProperty('values', ['Q1', 'Q2']);
   });
 
   it('escapes special chars in filter values', async () => {
@@ -95,7 +95,7 @@ describe('autoFilter round-trip through saveWorkbook → loadWorkbook', () => {
     );
     const bytes = await workbookToBytes(wb);
     const wb2 = await loadWorkbook(fromBuffer(bytes));
-    expect(getAutoFilter(expectSheet(wb2.sheets[0]?.sheet))?.filterColumns[0]?.values).toEqual([
+    expect(getAutoFilter(expectSheet(wb2.sheets[0]?.sheet))?.filterColumns[0]).toHaveProperty('values', [
       'a < b',
       'c & d',
       '"q"',

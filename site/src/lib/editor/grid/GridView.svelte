@@ -18,7 +18,7 @@
   import { formatPainter } from '../core/format-painter.svelte.ts';
   import CellEditorText from './CellEditorText.svelte';
   import { outlineButtonAt, outlineLayout } from './outline-layout.ts';
-  import { activeCriteria, filterOwners } from '../core/filter.ts';
+  import { filterOwners } from '../core/filter.ts';
   import { paginate, printArea } from '../core/pages.ts';
   import { t } from '../i18n/i18n.svelte.ts';
   import { showLevel, toggleRun } from '../core/outline.ts';
@@ -85,7 +85,7 @@
   const filteredRows = $derived.by(() => {
     void doc.version;
     return filterOwners(doc.ws)
-      .filter((o) => activeCriteria(o).size > 0)
+      .filter((o) => o.autoFilter.filterColumns.length > 0)
       .map((o) => [o.range.r1 + 1, o.range.r2] as const);
   });
 

@@ -4,11 +4,11 @@
 // references, and own their own AutoFilter. Each table sits in a separate part
 // — the worksheet only carries a `<tableParts>` block pointing at the
 // workbook-rels rId. Stage-1 covers the table shell + columns + styleInfo +
-// autoFilter; sortState / totals row formulas / calculated column formulas /
-// xml extlst are reserved for later.
+// autoFilter + sortState; xml extlst is reserved for later.
 
 import type { Workbook } from '../workbook/workbook.js';
 import type { AutoFilter } from './auto-filter.js';
+import type { SortState } from './sort-state.js';
 import { addTable, type Worksheet } from './worksheet.js';
 
 export interface TableColumn {
@@ -53,6 +53,8 @@ export interface TableDefinition {
   styleInfo?: TableStyleInfo;
   columns: TableColumn[];
   autoFilter?: AutoFilter;
+  /** The table's last applied sort. */
+  sortState?: SortState;
   /** Worksheet-rels rId — populated on read; the writer assigns its own. */
   rId?: string;
 }
