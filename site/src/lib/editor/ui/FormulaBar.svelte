@@ -18,6 +18,25 @@
   let nameText = $state('');
   let nameFocused = $state(false);
   let namesOpen = $state(false);
+  let namesMenu = $state<HTMLDivElement>();
+
+  // Like any menu, the defined-names list closes on Escape or a click elsewhere.
+  $effect(() => {
+    if (!namesOpen) return;
+    const down = (e: PointerEvent) => {
+      if (!(e.target instanceof Node) || namesMenu?.contains(e.target) || (e.target instanceof Element && e.target.closest('.nb-arrow'))) return;
+      namesOpen = false;
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') namesOpen = false;
+    };
+    window.addEventListener('pointerdown', down, true);
+    window.addEventListener('keydown', key, true);
+    return () => {
+      window.removeEventListener('pointerdown', down, true);
+      window.removeEventListener('keydown', key, true);
+    };
+  });
 
   const address = $derived.by(() => {
     const sel = doc.selection;
@@ -167,7 +186,7 @@
     />
     <button class="nb-arrow" aria-label={t('definedNames')} onclick={() => (namesOpen = !namesOpen)} onmousedown={(e) => e.preventDefault()}><Icon name="chevron-down" size={11} /></button>
     {#if namesOpen}
-      <div class="xl-menu names" role="menu">
+      <div class="xl-menu names" role="menu" bind:this={namesMenu}>
         {#each names as n (n)}
           <button class="xl-menu-item" onclick={() => { goToReference(ctl, n); namesOpen = false; ctl.gridFocusRequest++; }}>{n}</button>
         {:else}
