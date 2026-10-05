@@ -496,6 +496,20 @@ function paintText(input: PaintInput, job: TextJob, mergeAt: (r: number, c: numb
     }
   }
 
+  // Center Across Selection centres over the run of empty cells to the right
+  // that carry the same alignment, as Excel does.
+  let spanW = job.w;
+  if (h === 'centerContinuous' && !style.wrap) {
+    const rowMap = ws.rows.get(job.row);
+    for (let c = job.col + 1; c <= MAX_COL; c++) {
+      const n = rowMap?.get(c);
+      if ((n !== undefined && n.value !== null && n.value !== '') || mergeAt(job.row, c)) break;
+      if (input.styles.get(styleIdFor(input, job.row, c, n)).hAlign !== 'centerContinuous') break;
+      spanW += geo.colW(c);
+    }
+    clipR = Math.max(clipR, job.x + spanW);
+  }
+
   ctx.save();
   ctx.beginPath();
   ctx.rect(clipL, job.y, clipR - clipL - 1, job.h - 1);
@@ -539,7 +553,8 @@ function paintText(input: PaintInput, job: TextJob, mergeAt: (r: number, c: numb
     const w = measure(line);
     let x: number;
     if (h === 'right') x = job.x + job.w - pad - indent - w - 1;
-    else if (h === 'center' || h === 'centerContinuous' || h === 'distributed') x = job.x + (job.w - w) / 2;
+    else if (h === 'centerContinuous') x = job.x + (spanW - w) / 2;
+    else if (h === 'center' || h === 'distributed') x = job.x + (job.w - w) / 2;
     else x = job.x + pad + indent;
     const baseline = top + i * lineH + ascent;
     ctx.fillText(line, x, baseline);
