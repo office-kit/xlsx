@@ -480,18 +480,23 @@ export function setTotalRow(ctl: EditorController, def: TableDefinition, on: boo
       return;
     }
     const row = range.r2 + 1;
+    let table = def;
     if (rowIsFree(ws, row, range)) {
       tx.cells(ws, { ...range, r1: row, r2: row });
       tx.sheet(ws, 'tables');
       // A total row's formulas bring new dependencies.
       tx.structural = true;
-    } else structuralEdit(tx, doc.wb, ws, { axis: 'row', at: row, count: 1, band: { from: range.c1, to: range.c2 } });
+    } else {
+      structuralEdit(tx, doc.wb, ws, { axis: 'row', at: row, count: 1, band: { from: range.c1, to: range.c2 } });
+      // The edit rebuilt the sheet's table list; keep changing the live definition.
+      table = ws.tables.find((t) => t.id === def.id) ?? def;
+    }
     const full = { ...range, r2: row };
-    def.totalsRowCount = 1;
-    defaultTotals(ctl, def, range, label);
-    def.ref = rangeAddress(full);
-    if (def.autoFilter) def.autoFilter = { ...def.autoFilter, ref: rangeAddress(range) };
-    writeTotalRow(ctl, def, row, full);
+    table.totalsRowCount = 1;
+    defaultTotals(ctl, table, range, label);
+    table.ref = rangeAddress(full);
+    if (table.autoFilter) table.autoFilter = { ...table.autoFilter, ref: rangeAddress(range) };
+    writeTotalRow(ctl, table, row, full);
   });
 }
 
