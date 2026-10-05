@@ -32,10 +32,11 @@ import { parseXsdBoolean } from '../utils/xsd-boolean.js';
 import { localNameOf, MARKUP_COMPAT_NS, qname, REL_NS, SHEET_MAIN_NS } from '../xml/namespaces.js';
 import { isWhitespaceOnly, parseXml, rejectDtdDeclarations } from '../xml/parser.js';
 import { serializeXml } from '../xml/serializer.js';
+import { parseAutoFilterNode } from './auto-filter-xml.js';
+import { parseSortStateNode } from './sort-state-xml.js';
 import { assertNotStrictRoot } from '../xml/strict-package.js';
 import { el, findChild, findChildren, type XmlNode } from '../xml/tree.js';
 import { parseRichString, type SharedStringEntry } from '../workbook/shared-strings.js';
-import type { AutoFilter, FilterColumn } from './auto-filter.js';
 import { parseMultiCellRange, parseRange } from './cell-range.js';
 import { chargeCell, chargeRow, type ContentBudget, makeContentBudget, UNLIMITED_CONTENT_LIMITS } from './content-budget.js';
 import type { LegacyComment } from './comments.js';
@@ -80,7 +81,6 @@ import type { Scenario, ScenarioInputCell, ScenarioList } from './scenarios.js';
 import type { OutlineProperties, PageSetupProperties, SheetProperties } from './properties.js';
 import type { SheetProtection } from './protection.js';
 import type { ProtectedRange } from './protected-ranges.js';
-import type { SortBy, SortCondition, SortIconSet, SortMethod, SortState } from './sort-state.js';
 import type { FormControl, OleDvAspect, OleObject, OleUpdateMode } from './ole-objects.js';
 import type { CustomSheetView, CustomSheetViewState } from './custom-sheet-views.js';
 import type { WebPublishItem, WorksheetCustomProperty } from './web-publish.js';
@@ -112,9 +112,6 @@ const DATA_VALIDATION_TAG = `{${SHEET_MAIN_NS}}dataValidation`;
 const FORMULA1_TAG = `{${SHEET_MAIN_NS}}formula1`;
 const FORMULA2_TAG = `{${SHEET_MAIN_NS}}formula2`;
 const AUTOFILTER_TAG = `{${SHEET_MAIN_NS}}autoFilter`;
-const FILTER_COLUMN_TAG = `{${SHEET_MAIN_NS}}filterColumn`;
-const FILTERS_TAG = `{${SHEET_MAIN_NS}}filters`;
-const FILTER_TAG = `{${SHEET_MAIN_NS}}filter`;
 const TABLE_PARTS_TAG = `{${SHEET_MAIN_NS}}tableParts`;
 const TABLE_PART_TAG = `{${SHEET_MAIN_NS}}tablePart`;
 const CONDITIONAL_FORMATTING_TAG = `{${SHEET_MAIN_NS}}conditionalFormatting`;
@@ -133,7 +130,6 @@ const SHEET_PROTECTION_TAG = `{${SHEET_MAIN_NS}}sheetProtection`;
 const PROTECTED_RANGES_TAG = `{${SHEET_MAIN_NS}}protectedRanges`;
 const PROTECTED_RANGE_TAG = `{${SHEET_MAIN_NS}}protectedRange`;
 const SORT_STATE_TAG = `{${SHEET_MAIN_NS}}sortState`;
-const SORT_CONDITION_TAG = `{${SHEET_MAIN_NS}}sortCondition`;
 const PICTURE_TAG = `{${SHEET_MAIN_NS}}picture`;
 const LEGACY_DRAWING_TAG = `{${SHEET_MAIN_NS}}legacyDrawing`;
 const LEGACY_DRAWING_HF_TAG = `{${SHEET_MAIN_NS}}legacyDrawingHF`;
@@ -294,7 +290,7 @@ export function parseWorksheetXml(bytes: Uint8Array | string, title: string, ctx
   // ref=… descending=… sortBy=… .../> </sortState>
   const ssEl = findChild(root, SORT_STATE_TAG);
   if (ssEl) {
-    const ss = parseSortState(ssEl);
+    const ss = parseSortStateNode(ssEl);
     if (ss) ws.sortState = ss;
   }
 
@@ -362,7 +358,7 @@ export function parseWorksheetXml(bytes: Uint8Array | string, title: string, ctx
   // <autoFilter ref="..."> with optional <filterColumn> children.
   const autoFilterEl = findChild(root, AUTOFILTER_TAG);
   if (autoFilterEl) {
-    const filter = parseAutoFilter(autoFilterEl);
+    const filter = parseAutoFilterNode(autoFilterEl);
     if (filter) ws.autoFilter = filter;
   }
 
@@ -610,63 +606,6 @@ function liftSparklineGroups(ws: Worksheet): void {
   if (kept.length > 0) extras[extLstIndex] = { ...extLst, children: kept };
   else extras.splice(extLstIndex, 1);
 }
-
-const SORT_BY_VALUES: ReadonlyArray<SortBy> = ['value', 'cellColor', 'fontColor', 'icon'];
-const SORT_METHODS: ReadonlyArray<SortMethod> = ['stroke', 'pinYin'];
-const SORT_ICON_SETS: ReadonlyArray<SortIconSet> = [
-  '3Arrows',
-  '3ArrowsGray',
-  '3Flags',
-  '3TrafficLights1',
-  '3TrafficLights2',
-  '3Signs',
-  '3Symbols',
-  '3Symbols2',
-  '4Arrows',
-  '4ArrowsGray',
-  '4RedToBlack',
-  '4Rating',
-  '4TrafficLights',
-  '5Arrows',
-  '5ArrowsGray',
-  '5Rating',
-  '5Quarters',
-];
-
-const parseSortState = (node: XmlNode): SortState | undefined => {
-  const ref = node.attrs['ref'];
-  if (!ref) return undefined;
-  const out: SortState = { ref, conditions: [] };
-  const cs = parseXsdBoolean(node.attrs['columnSort']);
-  if (cs !== undefined) out.columnSort = cs;
-  const cse = parseXsdBoolean(node.attrs['caseSensitive']);
-  if (cse !== undefined) out.caseSensitive = cse;
-  const sm = node.attrs['sortMethod'];
-  if (sm && SORT_METHODS.includes(sm as SortMethod)) out.sortMethod = sm as SortMethod;
-
-  for (const sc of findChildren(node, SORT_CONDITION_TAG)) {
-    const cRef = sc.attrs['ref'];
-    if (!cRef) continue;
-    const c: SortCondition = { ref: cRef };
-    const desc = parseXsdBoolean(sc.attrs['descending']);
-    if (desc !== undefined) c.descending = desc;
-    const sb = sc.attrs['sortBy'];
-    if (sb && SORT_BY_VALUES.includes(sb as SortBy)) c.sortBy = sb as SortBy;
-    if (sc.attrs['customList'] !== undefined) c.customList = sc.attrs['customList'];
-    if (sc.attrs['dxfId'] !== undefined) {
-      const n = Number.parseInt(sc.attrs['dxfId'], 10);
-      if (Number.isInteger(n)) c.dxfId = n;
-    }
-    const is = sc.attrs['iconSet'];
-    if (is && SORT_ICON_SETS.includes(is as SortIconSet)) c.iconSet = is as SortIconSet;
-    if (sc.attrs['iconId'] !== undefined) {
-      const n = Number.parseInt(sc.attrs['iconId'], 10);
-      if (Number.isInteger(n)) c.iconId = n;
-    }
-    out.conditions.push(c);
-  }
-  return out;
-};
 
 const parseScenarioList = (node: XmlNode): ScenarioList | undefined => {
   const out: ScenarioList = { scenarios: [] };
@@ -2243,29 +2182,6 @@ const parseCfRule = (node: XmlNode): ConditionalFormattingRule | undefined => {
     if (inner.length > 0) opts.innerXml = inner.join('');
   }
   return makeCfRule(opts);
-};
-
-const parseAutoFilter = (node: XmlNode): AutoFilter | undefined => {
-  const ref = node.attrs['ref'];
-  if (!ref) return undefined;
-  const filterColumns: FilterColumn[] = [];
-  for (const fc of findChildren(node, FILTER_COLUMN_TAG)) {
-    const colIdRaw = fc.attrs['colId'];
-    const colId = colIdRaw !== undefined ? Number.parseInt(colIdRaw, 10) : -1;
-    if (!Number.isInteger(colId) || colId < 0) continue;
-    const filtersEl = findChild(fc, FILTERS_TAG);
-    if (!filtersEl) continue;
-    const values: string[] = [];
-    for (const f of findChildren(filtersEl, FILTER_TAG)) {
-      const v = f.attrs['val'];
-      if (v !== undefined) values.push(v);
-    }
-    const blank = parseXsdBoolean(filtersEl.attrs['blank']);
-    const fc2: FilterColumn = { kind: 'filters', colId, values };
-    if (blank !== undefined) fc2.blank = blank;
-    filterColumns.push(fc2);
-  }
-  return { ref, filterColumns };
 };
 
 const parseHyperlink = (node: XmlNode, rels: Relationships | undefined): Hyperlink => {

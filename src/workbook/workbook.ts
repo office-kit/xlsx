@@ -93,6 +93,13 @@ export interface Workbook {
    * to `vnd.ms-excel.sheet.macroEnabled.main+xml`.
    */
   vbaProject?: Uint8Array;
+  /**
+   * Package flavour the workbook part is typed as. `loadWorkbook` sets it from
+   * the file. Unset means a plain `.xlsx`, and a `vbaProject` always makes the
+   * file macro-enabled. Keep it in step with the file extension: Excel refuses
+   * to open a `.xlsm` whose workbook is typed as `.xlsx`, and the reverse.
+   */
+  fileFormat?: 'xlsx' | 'xlsm' | 'xltx' | 'xltm';
   /** `xl/vbaProjectSignature.bin` payload, when the macros are signed. */
   vbaSignature?: Uint8Array;
   /**

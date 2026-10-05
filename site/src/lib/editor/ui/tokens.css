@@ -2,6 +2,10 @@
    Excel's green accent. Scoped under .xl-editor so nothing leaks into the
    docs site. */
 .xl-editor {
+  /* The editor has only a light theme; without this, a dark OS theme paints
+     native controls (the formula bar textarea, inputs, selects, scrollbars)
+     dark because the site declares `color-scheme: light dark`. */
+  color-scheme: light;
   --xl-accent: #1e7145;
   --xl-accent-2: #2e8b57;
   --xl-accent-soft: #e3f1e8;

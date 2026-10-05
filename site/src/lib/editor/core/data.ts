@@ -7,7 +7,7 @@ import { getCellDisplayText } from '@office-kit/xlsx/styles';
 import type { Worksheet } from '@office-kit/xlsx/worksheet';
 import { translateFormula } from '../calc/index.ts';
 import type { Range } from './address.ts';
-import { colLetter, MAX_ROW, parseRangeAddress, rangeAddress } from './address.ts';
+import { cellAddress, colLetter, inRange, MAX_ROW, parseRangeAddress, rangeAddress } from './address.ts';
 import { getCellAt, isBlank } from './cells.ts';
 import type { EditorController } from './controller.svelte.ts';
 import { currentRegion } from './navigation.ts';
@@ -90,7 +90,10 @@ function textOf(v: unknown): string {
   return String(v);
 }
 
-/** Does the block's first row look like a header (text over non-text data)? */
+/**
+ * Does the block's first row look like a header (text over non-text data)?
+ * A blank header cell, such as over a formula column, does not rule it out.
+ */
 export function guessHeader(ws: Worksheet, range: Range): boolean {
   if (range.r2 <= range.r1) return false;
   let textTop = 0;
@@ -98,10 +101,11 @@ export function guessHeader(ws: Worksheet, range: Range): boolean {
   for (let c = range.c1; c <= range.c2; c++) {
     const top = effective(getCellAt(ws, range.r1, c)?.value);
     const below = effective(getCellAt(ws, range.r1 + 1, c)?.value);
-    if (typeof top === 'string') textTop++;
+    if (top !== null && top !== undefined && top !== '' && typeof top !== 'string') return false;
+    if (typeof top === 'string' && top !== '') textTop++;
     if (typeof below === 'number' || typeof below === 'boolean') typed++;
   }
-  return textTop === range.c2 - range.c1 + 1 && typed > 0;
+  return textTop > 0 && typed > 0;
 }
 
 export function sortRange(ctl: EditorController, range: Range, keys: readonly SortKey[], hasHeader: boolean, orientation: 'rows' | 'columns' = 'rows'): void {
@@ -142,13 +146,36 @@ export function sortRange(ctl: EditorController, range: Range, keys: readonly So
       const rowMap = ws.rows.get(r);
       if (rowMap) for (let c = body.c1; c <= body.c2; c++) rowMap.delete(c);
     }
+    const dest = new Map<number, number>();
     lines.forEach((line, i) => {
       const at = (byRows ? body.r1 : body.c1) + i;
+      dest.set(line.src, at);
       for (const [k, cell] of line.cells) {
         if (byRows) placeMoved(ws, cell, at, k, at - line.src, 0);
         else placeMoved(ws, cell, k, at, 0, at - line.src);
       }
     });
+    // Notes, comments and links on a single cell travel with it, as in Excel.
+    const moveRef = (ref: string): string => {
+      const at = parseRangeAddress(ref)?.range;
+      if (!at || at.r1 !== at.r2 || at.c1 !== at.c2 || !inRange(body, at.r1, at.c1)) return ref;
+      const row = byRows ? (dest.get(at.r1) ?? at.r1) : at.r1;
+      const col = byRows ? at.c1 : (dest.get(at.c1) ?? at.c1);
+      return cellAddress(row, col);
+    };
+    const moves = <T extends { ref: string }>(items: readonly T[]) => items.some((o) => moveRef(o.ref) !== o.ref);
+    if (moves(ws.legacyComments)) {
+      tx.sheet(ws, 'legacyComments');
+      for (const c of ws.legacyComments) c.ref = moveRef(c.ref);
+    }
+    if (ws.threadedComments && moves(ws.threadedComments)) {
+      tx.sheet(ws, 'threadedComments');
+      for (const c of ws.threadedComments) c.ref = moveRef(c.ref);
+    }
+    if (moves(ws.hyperlinks)) {
+      tx.sheet(ws, 'hyperlinks');
+      for (const h of ws.hyperlinks) h.ref = moveRef(h.ref);
+    }
   });
   ctl.doc.setSelection(selectRange(range, ctl.doc.selection.active));
 }

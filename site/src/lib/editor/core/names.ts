@@ -31,15 +31,19 @@ export function goToReference(ctl: EditorController, text: string): boolean {
   if (!target) return false;
   if (ctl.edit && !ctl.commitEdit()) return true;
   ctl.doc.activateSheet(target.sheetIndex);
-  ctl.doc.setSelection(selectRange(target.range));
+  // As with the mouse, a range that cuts through a merged cell grows to take all of it.
+  ctl.doc.setSelection(selectRange(ctl.doc.merges.expand(target.range)));
   ctl.reveal(target.range.r1, target.range.c1);
   return true;
 }
 
 const NAME_RE = /^[A-Za-z_\\À-￿][A-Za-z0-9_.\\À-￿]*$/;
 
+// R, C, R1, C1, RC, R1C1 … read as R1C1 references, so Excel refuses them as names.
+const R1C1_NAME_RE = /^(?:[Rr]\d*[Cc]?\d*|[Cc]\d*)$/;
+
 export function validateName(name: string): 'invalidName' | undefined {
-  if (!NAME_RE.test(name) || /^[A-Za-z]{1,3}\d+$/.test(name) || /^[RrCc]$/.test(name) || name.length > 255) return 'invalidName';
+  if (!NAME_RE.test(name) || parseRangeAddress(name) !== undefined || R1C1_NAME_RE.test(name) || name.length > 255) return 'invalidName';
   return undefined;
 }
 

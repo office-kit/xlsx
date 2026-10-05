@@ -1,6 +1,6 @@
 {
   "kind": "breaking",
   "reason": "SheetView.selection becomes SheetView.selections (one per pane) so frozen / split views keep every pane's selection; activeSelection() is added to read the active pane's. Breaking because SheetView.selection is removed.",
-  "baselineSha256": "0d1a5875cd71ea806180a2c77cad7690f2b074498132647130b42fecb09e1831",
+  "baselineSha256": "bab503589247511e4be3d22feb6edc318b5fb7f846d42ad415898990b6cdaa5b",
   "changeset": ".changeset/sheetview-pane-selections.md"
 }

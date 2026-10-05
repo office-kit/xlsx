@@ -18,7 +18,7 @@
   import { formatPainter } from '../core/format-painter.svelte.ts';
   import CellEditorText from './CellEditorText.svelte';
   import { outlineButtonAt, outlineLayout } from './outline-layout.ts';
-  import { activeCriteria, filterOwners } from '../core/filter.ts';
+  import { filterOwners } from '../core/filter.ts';
   import { paginate, printArea } from '../core/pages.ts';
   import { t } from '../i18n/i18n.svelte.ts';
   import { showLevel, toggleRun } from '../core/outline.ts';
@@ -46,14 +46,22 @@
   let dpr = $state(typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1);
   let antsPhase = $state(0);
   let composing = false;
+  // The textarea's text while an IME composes. The model is not updated until
+  // the composition ends (rewriting the textarea would cancel it), but the
+  // overlay must show what is being typed, as Excel does.
+  let composingText: string | null = $state(null);
 
   const geo = $derived(ctl.geometry);
 
   // Spacer extent: the used range or the current view (whichever is larger),
   // plus one more screen, so the scrollbar keeps growing like Excel's.
-  const extent = $derived.by(() => {
+  // The used range only changes with the model; kept apart from the
+  // selection / scroll reads below so moving around does not rescan the sheet.
+  const used = $derived.by(() => {
     void doc.version;
-    const used = usedRange(doc.ws);
+    return usedRange(doc.ws);
+  });
+  const extent = $derived.by(() => {
     const sel = doc.selection.active;
     const lastRow = Math.min(MAX_ROW, Math.max(used?.r2 ?? 1, sel.row) + 1);
     const lastCol = Math.min(MAX_COL, Math.max(used?.c2 ?? 1, sel.col) + 1);
@@ -77,7 +85,7 @@
   const filteredRows = $derived.by(() => {
     void doc.version;
     return filterOwners(doc.ws)
-      .filter((o) => activeCriteria(o).size > 0)
+      .filter((o) => o.autoFilter.filterColumns.length > 0)
       .map((o) => [o.range.r1 + 1, o.range.r2] as const);
   });
 
@@ -179,7 +187,7 @@
       overlayAt: overlay,
       tableLookAt: tableLook,
       refHighlights: ctl.editRefs.filter((r) => r.visible).map((r) => ({ range: r.range, color: r.color })),
-      copyRange: ctl.clipboard && ctl.clipboard.sheetIndex === doc.activeSheetIndex ? ctl.clipboard.range : null,
+      copyRange: ctl.clipboard && ctl.clipboard.sheet === doc.ws ? ctl.clipboard.range : null,
       antsPhase,
       dragPreview: ctl.dragPreview,
       editing: editingHere,
@@ -298,7 +306,10 @@
   });
 
   function onInput() {
-    if (composing) return;
+    if (composing) {
+      composingText = input.value;
+      return;
+    }
     const value = input.value;
     if (!ctl.edit) {
       if (value === '') return;
@@ -315,6 +326,7 @@
 
   function onCompositionEnd() {
     composing = false;
+    composingText = null;
     onInput();
   }
 
@@ -780,7 +792,7 @@
     style:text-align={editStyle?.hAlign === 'right' ? 'right' : editStyle?.hAlign === 'center' ? 'center' : 'left'}
   >
     {#if editorVisible && ctl.edit}
-      <CellEditorText text={ctl.edit.text} refs={ctl.editRefs} />
+      <CellEditorText text={composingText ?? ctl.edit.text} refs={composingText === null ? ctl.editRefs : []} />
     {/if}
     <textarea
       bind:this={input}

@@ -116,8 +116,8 @@ describe('addAutoFilter / addAutoFilterColumn / removeAutoFilter', () => {
     addAutoFilterColumn(ws, 2, ['1', '2', '3'], { blank: true });
     expect(ws.autoFilter?.filterColumns.length).toBe(2);
     expect(ws.autoFilter?.filterColumns[0]?.colId).toBe(0);
-    expect(ws.autoFilter?.filterColumns[0]?.values).toEqual(['Open', 'In Progress']);
-    expect(ws.autoFilter?.filterColumns[1]?.blank).toBe(true);
+    expect(ws.autoFilter?.filterColumns[0]).toHaveProperty('values', ['Open', 'In Progress']);
+    expect(ws.autoFilter?.filterColumns[1]).toHaveProperty('blank', true);
   });
 
   it('addAutoFilterColumn throws OpenXmlSchemaError if no autoFilter is set', () => {
@@ -145,6 +145,6 @@ describe('addAutoFilter / addAutoFilterColumn / removeAutoFilter', () => {
     const wb2 = await loadWorkbook(fromBuffer(bytes));
     const ws2 = expectSheet(wb2.sheets[0]?.sheet);
     expect(ws2.autoFilter?.ref).toBe('A1:A5');
-    expect(ws2.autoFilter?.filterColumns[0]?.values).toEqual(['Open', 'Closed']);
+    expect(ws2.autoFilter?.filterColumns[0]).toHaveProperty('values', ['Open', 'Closed']);
   });
 });

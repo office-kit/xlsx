@@ -57,7 +57,9 @@ const SUBTOTAL = T('subtotal');
 const BINNING = T('binning');
 const PARENT_LABEL_LAYOUT = T('parentLabelLayout');
 const VISIBILITY = T('visibility');
-const QUARTILE_METHOD = T('quartileMethod');
+const STATISTICS = T('statistics');
+const BIN_COUNT = T('binCount');
+const BIN_SIZE = T('binSize');
 const GEOGRAPHY = T('geography');
 const REGION_LABEL_LAYOUT = T('regionLabelLayout');
 const AXIS = T('axis');
@@ -255,13 +257,15 @@ const parseLayoutPr = (el: XmlNode): CxLayoutPr | undefined => {
   if (binEl) {
     const intervalRaw = binEl.attrs['intervalClosed'];
     const intervalClosed = intervalRaw === 'r' || intervalRaw === 'l' ? intervalRaw : undefined;
+    // The bin count / size are child elements; neither means automatic bins.
+    const countEl = findChild(binEl, BIN_COUNT);
+    const sizeEl = findChild(binEl, BIN_SIZE);
+    const binCount = countEl ? intAttr(countEl, 'val') : undefined;
+    const binSize = sizeEl ? floatAttr(sizeEl, 'val') : undefined;
     return {
       kind: 'binning',
-      ...(boolAttr(binEl, 'binCountAuto') !== undefined
-        ? { binCountAuto: boolAttr(binEl, 'binCountAuto') as boolean }
-        : {}),
-      ...(intAttr(binEl, 'binCount') !== undefined ? { binCount: intAttr(binEl, 'binCount') as number } : {}),
-      ...(floatAttr(binEl, 'binSize') !== undefined ? { binSize: floatAttr(binEl, 'binSize') as number } : {}),
+      ...(binCount !== undefined ? { binCount } : {}),
+      ...(binSize !== undefined ? { binSize } : {}),
       ...(intervalClosed ? { intervalClosed } : {}),
       ...(floatAttr(binEl, 'underflow') !== undefined ? { underflow: floatAttr(binEl, 'underflow') as number } : {}),
       ...(floatAttr(binEl, 'overflow') !== undefined ? { overflow: floatAttr(binEl, 'overflow') as number } : {}),
@@ -274,13 +278,13 @@ const parseLayoutPr = (el: XmlNode): CxLayoutPr | undefined => {
     return { kind: 'parentLabel', layout };
   }
   const visEl = findChild(el, VISIBILITY);
-  const qmEl = findChild(el, QUARTILE_METHOD);
-  if (visEl || qmEl) {
+  const statsEl = findChild(el, STATISTICS);
+  if (visEl || statsEl) {
     const meanLine = visEl ? boolAttr(visEl, 'meanLine') : undefined;
     const meanMarker = visEl ? boolAttr(visEl, 'meanMarker') : undefined;
     const nonoutliers = visEl ? boolAttr(visEl, 'nonoutliers') : undefined;
     const outliers = visEl ? boolAttr(visEl, 'outliers') : undefined;
-    const qmRaw = qmEl ? valAttr(qmEl) : undefined;
+    const qmRaw = statsEl?.attrs['quartileMethod'];
     const quartileMethod = qmRaw === 'exclusive' || qmRaw === 'inclusive' ? qmRaw : undefined;
     return {
       kind: 'visibility',
@@ -554,14 +558,22 @@ const serializeLayoutPr = (lp: CxLayoutPr): string => {
       return parts.join('');
     }
     case 'binning': {
+      // ECMA's CT_Binning: the interval / flow bounds are attributes, the bin
+      // count or size a child element. Excel asks to repair anything else.
       const a: string[] = [];
-      if (lp.binCountAuto !== undefined) a.push(`binCountAuto="${lp.binCountAuto ? '1' : '0'}"`);
-      if (lp.binCount !== undefined) a.push(`binCount="${lp.binCount}"`);
-      if (lp.binSize !== undefined) a.push(`binSize="${lp.binSize}"`);
       if (lp.intervalClosed !== undefined) a.push(`intervalClosed="${lp.intervalClosed}"`);
       if (lp.underflow !== undefined) a.push(`underflow="${lp.underflow}"`);
       if (lp.overflow !== undefined) a.push(`overflow="${lp.overflow}"`);
-      return `<cx:layoutPr><cx:binning${a.length > 0 ? ` ${a.join(' ')}` : ''}/></cx:layoutPr>`;
+      // Automatic binning (`binCountAuto`) is the default and has no element:
+      // Excel refuses an empty `<cx:binCount/>`.
+      const child =
+        lp.binSize !== undefined
+          ? `<cx:binSize val="${lp.binSize}"/>`
+          : lp.binCount !== undefined
+            ? `<cx:binCount val="${lp.binCount}"/>`
+            : '';
+      const open = `<cx:binning${a.length > 0 ? ` ${a.join(' ')}` : ''}`;
+      return `<cx:layoutPr>${child ? `${open}>${child}</cx:binning>` : `${open}/>`}</cx:layoutPr>`;
     }
     case 'parentLabel':
       return `<cx:layoutPr><cx:parentLabelLayout val="${lp.layout}"/></cx:layoutPr>`;
@@ -572,7 +584,7 @@ const serializeLayoutPr = (lp: CxLayoutPr): string => {
       if (lp.nonoutliers !== undefined) va.push(`nonoutliers="${lp.nonoutliers ? '1' : '0'}"`);
       if (lp.outliers !== undefined) va.push(`outliers="${lp.outliers ? '1' : '0'}"`);
       const visTag = `<cx:visibility${va.length > 0 ? ` ${va.join(' ')}` : ''}/>`;
-      const qmTag = lp.quartileMethod !== undefined ? `<cx:quartileMethod val="${lp.quartileMethod}"/>` : '';
+      const qmTag = lp.quartileMethod !== undefined ? `<cx:statistics quartileMethod="${lp.quartileMethod}"/>` : '';
       return `<cx:layoutPr>${visTag}${qmTag}</cx:layoutPr>`;
     }
     case 'region': {

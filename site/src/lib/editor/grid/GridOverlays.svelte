@@ -6,7 +6,7 @@
   import { getEditor } from '../core/context.ts';
   import { cellAddress, type Range } from '../core/address.ts';
   import { validationAt } from '../core/data.ts';
-  import { activeCriteria, filterOwners } from '../core/filter.ts';
+  import { filterOwners } from '../core/filter.ts';
   import FilterMenu from './FilterMenu.svelte';
   import { autoFill, type FillMode } from '../core/actions.ts';
   import { t, type MessageKey } from '../i18n/i18n.svelte.ts';
@@ -27,14 +27,14 @@
     void doc.version;
     const out: Array<{ row: number; col: number; x: number; y: number; size: number; active: boolean }> = [];
     for (const owner of filterOwners(doc.ws)) {
-      const crit = activeCriteria(owner);
+      const filtered = new Set(owner.autoFilter.filterColumns.map((fc) => owner.range.c1 + fc.colId));
       const row = owner.range.r1;
       for (let col = owner.range.c1; col <= owner.range.c2; col++) {
         const r = visibleRect({ r1: row, c1: col, r2: row, c2: col });
         if (!r) continue;
         const size = Math.min(r.h - 2, Math.round(16 * Math.min(doc.zoom, 1.5)));
         if (size < 6) continue;
-        out.push({ row, col, x: r.x + r.w - size - 2, y: r.y + r.h - size - 1, size, active: crit.has(col) });
+        out.push({ row, col, x: r.x + r.w - size - 2, y: r.y + r.h - size - 1, size, active: filtered.has(col) });
       }
     }
     return out;

@@ -125,6 +125,89 @@ function structuredRefs(formula: string): StructuredRef[] {
   return out;
 }
 
+const COLUMN_TOKEN = /\[((?:'.|[^\]'])*)\]/g;
+
+/**
+ * Rewrite the column names in `table`'s structured references: `rename`
+ * returns the new name, the same name, or null for a deleted column, which
+ * turns the whole reference into #REF! as Excel does. `inTable` says whether
+ * an unqualified `[@Col]` in this formula belongs to `table` (its cell is
+ * inside it).
+ */
+export function mapTableColumnsInFormula(formula: string, table: string, inTable: boolean, rename: (name: string) => string | null): string {
+  const lower = table.toLowerCase();
+  const refs = structuredRefs(formula).filter((r) => (r.table === undefined ? inTable : r.table.toLowerCase() === lower));
+  if (refs.length === 0) return formula;
+  let out = '';
+  let at = 0;
+  for (const r of refs) {
+    const prefixLen = r.end - r.start - r.spec.length;
+    const inner = r.spec.slice(1, -1);
+    let deleted = false;
+    const mapName = (raw: string): string => {
+      if (raw.startsWith('#')) return raw;
+      const thisRow = raw.startsWith('@') ? '@' : '';
+      const name = unescapeColumn(raw.slice(thisRow.length));
+      const next = rename(name);
+      if (next === null) deleted = true;
+      return thisRow + escapeColumn(next ?? name);
+    };
+    // `[Col]` / `[@Col]` hold one name; `[[#Data],[A]:[B]]` a bracketed list.
+    const spec = inner.includes('[') ? `[${inner.replace(COLUMN_TOKEN, (_m, raw: string) => `[${mapName(raw)}]`)}]` : `[${mapName(inner)}]`;
+    out += formula.slice(at, r.start) + (deleted ? '#REF!' : formula.slice(r.start, r.start + prefixLen) + spec);
+    at = r.end;
+  }
+  return out + formula.slice(at);
+}
+
+/**
+ * Header cells typed over in this transaction rename their table columns, and
+ * every structured reference to the old name follows (Excel keeps formulas
+ * working across a header rename).
+ */
+export function renameEditedHeaders(wb: Workbook, tx: Transaction, displayText: (ws: Worksheet, row: number, col: number) => string): void {
+  const renames: Array<{ table: TableDefinition; ws: Worksheet; from: string; to: string }> = [];
+  for (const part of tx.parts) {
+    if (part.kind !== 'cells') continue;
+    for (const def of part.ws.tables) {
+      const range = tableRange(def);
+      if (!range || headerRows(def) === 0 || range.r1 < part.range.r1 || range.r1 > part.range.r2) continue;
+      const taken = new Set(def.columns.map((c) => c.name.toLowerCase()));
+      def.columns.forEach((c, i) => {
+        const col = range.c1 + i;
+        if (col < part.range.c1 || col > part.range.c2) return;
+        const text = displayText(part.ws, range.r1, col);
+        if (text === '' || text === c.name || taken.has(text.toLowerCase())) return;
+        taken.add(text.toLowerCase());
+        renames.push({ table: def, ws: part.ws, from: c.name, to: text });
+      });
+    }
+  }
+  if (renames.length === 0) return;
+  for (const ref of wb.sheets) {
+    if (ref.kind !== 'worksheet') continue;
+    tx.cells(ref.sheet, { r1: 1, c1: 1, r2: MAX_ROW, c2: 16_384 });
+  }
+  for (const ws of new Set(renames.map((r) => r.ws))) tx.sheet(ws, 'tables');
+  for (const { table, ws, from, to } of renames) {
+    const range = tableRange(table);
+    for (const ref of wb.sheets) {
+      if (ref.kind !== 'worksheet') continue;
+      for (const rowMap of ref.sheet.rows.values()) {
+        for (const cell of rowMap.values()) {
+          const v = cell.value;
+          if (v === null || typeof v !== 'object' || v instanceof Date || v.kind !== 'formula' || !v.formula.includes('[')) continue;
+          const inTable = ref.sheet === ws && range !== undefined && cell.row >= range.r1 && cell.row <= range.r2 && cell.col >= range.c1 && cell.col <= range.c2;
+          const next = mapTableColumnsInFormula(v.formula, table.displayName, inTable, (n) => (n.toLowerCase() === from.toLowerCase() ? to : n));
+          if (next !== v.formula) cell.value = { ...v, formula: next };
+        }
+      }
+    }
+    const column = table.columns.find((c) => c.name === from);
+    if (column) column.name = to;
+  }
+}
+
 /** Rewrite `Old[` to `New[` in a formula; returns the input when nothing changed. */
 export function renameTableInFormula(formula: string, from: string, to: string): string {
   const refs = structuredRefs(formula).filter((r) => r.table !== undefined && r.table.toLowerCase() === from.toLowerCase());
@@ -480,18 +563,23 @@ export function setTotalRow(ctl: EditorController, def: TableDefinition, on: boo
       return;
     }
     const row = range.r2 + 1;
+    let table = def;
     if (rowIsFree(ws, row, range)) {
       tx.cells(ws, { ...range, r1: row, r2: row });
       tx.sheet(ws, 'tables');
       // A total row's formulas bring new dependencies.
       tx.structural = true;
-    } else structuralEdit(tx, doc.wb, ws, { axis: 'row', at: row, count: 1, band: { from: range.c1, to: range.c2 } });
+    } else {
+      structuralEdit(tx, doc.wb, ws, { axis: 'row', at: row, count: 1, band: { from: range.c1, to: range.c2 } });
+      // The edit rebuilt the sheet's table list; keep changing the live definition.
+      table = ws.tables.find((t) => t.id === def.id) ?? def;
+    }
     const full = { ...range, r2: row };
-    def.totalsRowCount = 1;
-    defaultTotals(ctl, def, range, label);
-    def.ref = rangeAddress(full);
-    if (def.autoFilter) def.autoFilter = { ...def.autoFilter, ref: rangeAddress(range) };
-    writeTotalRow(ctl, def, row, full);
+    table.totalsRowCount = 1;
+    defaultTotals(ctl, table, range, label);
+    table.ref = rangeAddress(full);
+    if (table.autoFilter) table.autoFilter = { ...table.autoFilter, ref: rangeAddress(range) };
+    writeTotalRow(ctl, table, row, full);
   });
 }
 

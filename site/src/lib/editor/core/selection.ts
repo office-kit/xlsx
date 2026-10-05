@@ -28,8 +28,19 @@ export function currentRange(sel: Selection): Range {
 
 /** Replace the active range with anchor→`to`, keeping the active cell (Shift+click / Shift+arrow). */
 export function extendTo(sel: Selection, to: CellPos): Selection {
+  const cur = currentRange(sel);
+  const next = rangeOf(sel.anchor, to);
+  // Whole rows (Shift+Space, a row header) stay whole rows when extended, and
+  // whole columns stay whole columns, even though the anchor sits inside them.
+  const fullWidth = cur.c1 === 1 && cur.c2 === MAX_COL;
+  const fullHeight = cur.r1 === 1 && cur.r2 === MAX_ROW;
   const ranges = sel.ranges.slice();
-  ranges[sel.activeRange] = rangeOf(sel.anchor, to);
+  ranges[sel.activeRange] = {
+    r1: fullHeight ? 1 : next.r1,
+    r2: fullHeight ? MAX_ROW : next.r2,
+    c1: fullWidth ? 1 : next.c1,
+    c2: fullWidth ? MAX_COL : next.c2,
+  };
   return { ...sel, ranges };
 }
 

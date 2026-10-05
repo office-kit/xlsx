@@ -25,7 +25,8 @@ import { addSharedRichText, addSharedString } from '../workbook/shared-strings.j
 import { MARKUP_COMPAT_NS, SHEET_MAIN_NS, X14_NS } from '../xml/namespaces.js';
 import { serializeXml } from '../xml/serializer.js';
 import type { XmlNode } from '../xml/tree.js';
-import type { AutoFilter } from './auto-filter.js';
+import { serializeAutoFilterXml } from './auto-filter-xml.js';
+import { serializeSortStateXml } from './sort-state-xml.js';
 import { multiCellRangeToString, rangeToString } from './cell-range.js';
 import type { ConditionalFormatting, ConditionalFormattingRule } from './conditional-formatting.js';
 import type { DataValidation } from './data-validations.js';
@@ -41,7 +42,6 @@ import { serializeSparklineExt } from './sparklines-xml.js';
 import type { SheetProperties } from './properties.js';
 import type { SheetProtection } from './protection.js';
 import type { ProtectedRange } from './protected-ranges.js';
-import type { SortCondition, SortState } from './sort-state.js';
 import type { FormControl, OleObject } from './ole-objects.js';
 import type { CustomSheetView } from './custom-sheet-views.js';
 import type { Pane, Selection, SheetView } from './views.js';
@@ -198,8 +198,8 @@ export function writeWorksheetXml(ws: Worksheet, ctx: WorksheetWriteContext, emi
     if (sc) emit(sc);
   }
   // Excel's element order: autoFilter sits between sheetData and mergeCells.
-  if (ws.autoFilter) emit(serializeAutoFilter(ws.autoFilter));
-  if (ws.sortState) emit(serializeSortState(ws.sortState));
+  if (ws.autoFilter) emit(serializeAutoFilterXml(ws.autoFilter));
+  if (ws.sortState) emit(serializeSortStateXml(ws.sortState));
   if (ws.dataConsolidate) {
     const dc = serializeDataConsolidate(ws.dataConsolidate);
     if (dc) emit(dc);
@@ -650,27 +650,6 @@ const serializeColumnDimension = (dim: ColumnDimension): string => {
   return `<col${attrs}/>`;
 };
 
-const serializeAutoFilter = (filter: AutoFilter): string => {
-  const refAttr = ` ref="${escapeXmlAttr(filter.ref)}"`;
-  if (filter.filterColumns.length === 0) return `<autoFilter${refAttr}/>`;
-  const parts: string[] = [`<autoFilter${refAttr}>`];
-  for (const fc of filter.filterColumns) {
-    parts.push(`<filterColumn colId="${fc.colId}">`);
-    let filtersAttrs = '';
-    if (fc.blank !== undefined) filtersAttrs += ` blank="${fc.blank ? '1' : '0'}"`;
-    if (fc.values.length === 0) {
-      parts.push(`<filters${filtersAttrs}/>`);
-    } else {
-      parts.push(`<filters${filtersAttrs}>`);
-      for (const v of fc.values) parts.push(`<filter val="${escapeXmlAttr(v)}"/>`);
-      parts.push('</filters>');
-    }
-    parts.push('</filterColumn>');
-  }
-  parts.push('</autoFilter>');
-  return parts.join('');
-};
-
 const serializeConditionalFormatting = (cf: ConditionalFormatting): string => {
   const sqref = escapeXmlAttr(multiCellRangeToString(cf.sqref));
   let attrs = ` sqref="${sqref}"`;
@@ -816,30 +795,6 @@ const serializeSmartTags = (
   }
   parts.push('</smartTags>');
   return parts.join('');
-};
-
-const serializeSortState = (ss: SortState): string => {
-  let attrs = ` ref="${escapeXmlAttr(ss.ref)}"`;
-  if (ss.columnSort !== undefined) attrs += ` columnSort="${ss.columnSort ? '1' : '0'}"`;
-  if (ss.caseSensitive !== undefined) attrs += ` caseSensitive="${ss.caseSensitive ? '1' : '0'}"`;
-  if (ss.sortMethod !== undefined) attrs += ` sortMethod="${ss.sortMethod}"`;
-  if (ss.conditions.length === 0) return `<sortState${attrs}/>`;
-  const inner: string[] = [`<sortState${attrs}>`];
-  for (const c of ss.conditions) inner.push(serializeSortCondition(c));
-  inner.push('</sortState>');
-  return inner.join('');
-};
-
-const serializeSortCondition = (c: SortCondition): string => {
-  let attrs = '';
-  if (c.descending !== undefined) attrs += ` descending="${c.descending ? '1' : '0'}"`;
-  if (c.sortBy !== undefined) attrs += ` sortBy="${c.sortBy}"`;
-  attrs += ` ref="${escapeXmlAttr(c.ref)}"`;
-  if (c.customList !== undefined) attrs += ` customList="${escapeXmlAttr(c.customList)}"`;
-  if (c.dxfId !== undefined) attrs += ` dxfId="${c.dxfId}"`;
-  if (c.iconSet !== undefined) attrs += ` iconSet="${c.iconSet}"`;
-  if (c.iconId !== undefined) attrs += ` iconId="${c.iconId}"`;
-  return `<sortCondition${attrs}/>`;
 };
 
 const serializeProtectedRanges = (ranges: ReadonlyArray<ProtectedRange>): string => {

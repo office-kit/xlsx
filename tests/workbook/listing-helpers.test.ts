@@ -89,7 +89,7 @@ describe('listDefinedNames', () => {
     const wb = createWorkbook();
     addDefinedName(wb, { name: 'WbName', value: '$A$1' });
     addDefinedName(wb, { name: 'A0', value: '$A$1', scope: 0 });
-    addDefinedName(wb, { name: 'A1', value: '$A$1', scope: 1 });
+    addDefinedName(wb, { name: 'Local', value: '$A$1', scope: 1 });
     const sheet0 = listDefinedNames(wb, { scope: 0 });
     expect(sheet0.map((d) => d.name)).toEqual(['A0']);
   });
