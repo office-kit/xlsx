@@ -165,7 +165,7 @@ export type {
 export { makeCfRule, makeConditionalFormatting } from './conditional-formatting.js';
 export type { Hyperlink } from './hyperlinks.js';
 export { makeHyperlink } from './hyperlinks.js';
-export type { AutoFilter, FilterColumn } from './auto-filter.js';
+export type { AutoFilter, CustomFilterCondition, FilterColumn } from './auto-filter.js';
 export { makeAutoFilter, makeFilterColumn } from './auto-filter.js';
 export type { TableColumn, TableDefinition, TableStyleInfo } from './table.js';
 export { addExcelTable, makeTableColumn, makeTableDefinition } from './table.js';

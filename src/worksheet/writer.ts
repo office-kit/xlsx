@@ -25,7 +25,7 @@ import { addSharedRichText, addSharedString } from '../workbook/shared-strings.j
 import { MARKUP_COMPAT_NS, SHEET_MAIN_NS, X14_NS } from '../xml/namespaces.js';
 import { serializeXml } from '../xml/serializer.js';
 import type { XmlNode } from '../xml/tree.js';
-import type { AutoFilter } from './auto-filter.js';
+import { serializeAutoFilterXml } from './auto-filter-xml.js';
 import { multiCellRangeToString, rangeToString } from './cell-range.js';
 import type { ConditionalFormatting, ConditionalFormattingRule } from './conditional-formatting.js';
 import type { DataValidation } from './data-validations.js';
@@ -198,7 +198,7 @@ export function writeWorksheetXml(ws: Worksheet, ctx: WorksheetWriteContext, emi
     if (sc) emit(sc);
   }
   // Excel's element order: autoFilter sits between sheetData and mergeCells.
-  if (ws.autoFilter) emit(serializeAutoFilter(ws.autoFilter));
+  if (ws.autoFilter) emit(serializeAutoFilterXml(ws.autoFilter));
   if (ws.sortState) emit(serializeSortState(ws.sortState));
   if (ws.dataConsolidate) {
     const dc = serializeDataConsolidate(ws.dataConsolidate);
@@ -648,27 +648,6 @@ const serializeColumnDimension = (dim: ColumnDimension): string => {
   if (dim.outlineLevel !== undefined) attrs += ` outlineLevel="${dim.outlineLevel}"`;
   if (dim.collapsed) attrs += ' collapsed="1"';
   return `<col${attrs}/>`;
-};
-
-const serializeAutoFilter = (filter: AutoFilter): string => {
-  const refAttr = ` ref="${escapeXmlAttr(filter.ref)}"`;
-  if (filter.filterColumns.length === 0) return `<autoFilter${refAttr}/>`;
-  const parts: string[] = [`<autoFilter${refAttr}>`];
-  for (const fc of filter.filterColumns) {
-    parts.push(`<filterColumn colId="${fc.colId}">`);
-    let filtersAttrs = '';
-    if (fc.blank !== undefined) filtersAttrs += ` blank="${fc.blank ? '1' : '0'}"`;
-    if (fc.values.length === 0) {
-      parts.push(`<filters${filtersAttrs}/>`);
-    } else {
-      parts.push(`<filters${filtersAttrs}>`);
-      for (const v of fc.values) parts.push(`<filter val="${escapeXmlAttr(v)}"/>`);
-      parts.push('</filters>');
-    }
-    parts.push('</filterColumn>');
-  }
-  parts.push('</autoFilter>');
-  return parts.join('');
 };
 
 const serializeConditionalFormatting = (cf: ConditionalFormatting): string => {

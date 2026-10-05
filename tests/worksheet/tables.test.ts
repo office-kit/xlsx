@@ -105,7 +105,7 @@ describe('table round-trip through saveWorkbook → loadWorkbook', () => {
     expect(t?.columns[0]?.name).toBe('Region');
     expect(t?.styleInfo?.name).toBe('TableStyleMedium2');
     expect(t?.styleInfo?.showRowStripes).toBe(true);
-    expect(t?.autoFilter?.filterColumns[0]?.values).toEqual(['EU']);
+    expect(t?.autoFilter?.filterColumns[0]).toHaveProperty('values', ['EU']);
     expect(t?.rId).toMatch(/^rId\d+$/);
   });
 

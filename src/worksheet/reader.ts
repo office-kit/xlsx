@@ -32,10 +32,10 @@ import { parseXsdBoolean } from '../utils/xsd-boolean.js';
 import { localNameOf, MARKUP_COMPAT_NS, qname, REL_NS, SHEET_MAIN_NS } from '../xml/namespaces.js';
 import { isWhitespaceOnly, parseXml, rejectDtdDeclarations } from '../xml/parser.js';
 import { serializeXml } from '../xml/serializer.js';
+import { parseAutoFilterNode } from './auto-filter-xml.js';
 import { assertNotStrictRoot } from '../xml/strict-package.js';
 import { el, findChild, findChildren, type XmlNode } from '../xml/tree.js';
 import { parseRichString, type SharedStringEntry } from '../workbook/shared-strings.js';
-import type { AutoFilter, FilterColumn } from './auto-filter.js';
 import { parseMultiCellRange, parseRange } from './cell-range.js';
 import { chargeCell, chargeRow, type ContentBudget, makeContentBudget, UNLIMITED_CONTENT_LIMITS } from './content-budget.js';
 import type { LegacyComment } from './comments.js';
@@ -112,9 +112,6 @@ const DATA_VALIDATION_TAG = `{${SHEET_MAIN_NS}}dataValidation`;
 const FORMULA1_TAG = `{${SHEET_MAIN_NS}}formula1`;
 const FORMULA2_TAG = `{${SHEET_MAIN_NS}}formula2`;
 const AUTOFILTER_TAG = `{${SHEET_MAIN_NS}}autoFilter`;
-const FILTER_COLUMN_TAG = `{${SHEET_MAIN_NS}}filterColumn`;
-const FILTERS_TAG = `{${SHEET_MAIN_NS}}filters`;
-const FILTER_TAG = `{${SHEET_MAIN_NS}}filter`;
 const TABLE_PARTS_TAG = `{${SHEET_MAIN_NS}}tableParts`;
 const TABLE_PART_TAG = `{${SHEET_MAIN_NS}}tablePart`;
 const CONDITIONAL_FORMATTING_TAG = `{${SHEET_MAIN_NS}}conditionalFormatting`;
@@ -362,7 +359,7 @@ export function parseWorksheetXml(bytes: Uint8Array | string, title: string, ctx
   // <autoFilter ref="..."> with optional <filterColumn> children.
   const autoFilterEl = findChild(root, AUTOFILTER_TAG);
   if (autoFilterEl) {
-    const filter = parseAutoFilter(autoFilterEl);
+    const filter = parseAutoFilterNode(autoFilterEl);
     if (filter) ws.autoFilter = filter;
   }
 
@@ -2243,29 +2240,6 @@ const parseCfRule = (node: XmlNode): ConditionalFormattingRule | undefined => {
     if (inner.length > 0) opts.innerXml = inner.join('');
   }
   return makeCfRule(opts);
-};
-
-const parseAutoFilter = (node: XmlNode): AutoFilter | undefined => {
-  const ref = node.attrs['ref'];
-  if (!ref) return undefined;
-  const filterColumns: FilterColumn[] = [];
-  for (const fc of findChildren(node, FILTER_COLUMN_TAG)) {
-    const colIdRaw = fc.attrs['colId'];
-    const colId = colIdRaw !== undefined ? Number.parseInt(colIdRaw, 10) : -1;
-    if (!Number.isInteger(colId) || colId < 0) continue;
-    const filtersEl = findChild(fc, FILTERS_TAG);
-    if (!filtersEl) continue;
-    const values: string[] = [];
-    for (const f of findChildren(filtersEl, FILTER_TAG)) {
-      const v = f.attrs['val'];
-      if (v !== undefined) values.push(v);
-    }
-    const blank = parseXsdBoolean(filtersEl.attrs['blank']);
-    const fc2: FilterColumn = { kind: 'filters', colId, values };
-    if (blank !== undefined) fc2.blank = blank;
-    filterColumns.push(fc2);
-  }
-  return { ref, filterColumns };
 };
 
 const parseHyperlink = (node: XmlNode, rels: Relationships | undefined): Hyperlink => {
