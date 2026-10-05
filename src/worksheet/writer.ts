@@ -550,7 +550,7 @@ const serializeSheetView = (v: SheetView): string => {
 
   const inner: string[] = [];
   if (v.pane) inner.push(serializePane(v.pane));
-  if (v.selection) inner.push(serializeSelection(v.selection));
+  if (v.selections) for (const s of v.selections) inner.push(serializeSelection(s));
 
   if (inner.length === 0) return `<sheetView${attrs}/>`;
   return `<sheetView${attrs}>${inner.join('')}</sheetView>`;

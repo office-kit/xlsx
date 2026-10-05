@@ -1,6 +1,6 @@
 {
   "kind": "breaking",
-  "reason": "FilterColumn gains custom / top10 / dynamic / raw variants (plus the CustomFilterCondition type), and AutoFilter / TableDefinition gain an optional sortState, so filter criteria and filter-button sorts survive a round-trip. Breaking because code that read `values` without narrowing on `kind` no longer compiles.",
-  "baselineSha256": "cfe52a621f9559a29558f8ed2b037c14e57b5221f2013f102cb7271e4e2a98f2",
-  "changeset": ".changeset/autofilter-criteria.md"
+  "reason": "SheetView.selection becomes SheetView.selections (one per pane) so frozen / split views keep every pane's selection; activeSelection() is added to read the active pane's. Breaking because SheetView.selection is removed.",
+  "baselineSha256": "bab503589247511e4be3d22feb6edc318b5fb7f846d42ad415898990b6cdaa5b",
+  "changeset": ".changeset/sheetview-pane-selections.md"
 }

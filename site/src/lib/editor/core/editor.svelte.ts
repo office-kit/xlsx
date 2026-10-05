@@ -9,7 +9,7 @@
 
 import type { Cell } from '@office-kit/xlsx/cell';
 import type { Workbook } from '@office-kit/xlsx/workbook';
-import type { Worksheet } from '@office-kit/xlsx/worksheet';
+import { activeSelection, type Worksheet } from '@office-kit/xlsx/worksheet';
 import { addWorksheet, createWorkbook } from '@office-kit/xlsx/workbook';
 import { fromArrayBuffer, loadWorkbook, workbookToBytes } from '@office-kit/xlsx/io';
 import { getCellDisplayText } from '@office-kit/xlsx/styles';
@@ -150,7 +150,7 @@ export class SpreadsheetEditor {
     let v = this.#views.get(ws);
     if (!v) {
       const sv = ws.views[0];
-      const activeRef = sv?.selection?.activeCell;
+      const activeRef = sv ? activeSelection(sv)?.activeCell : undefined;
       const pos = activeRef ? parseA1(activeRef) : undefined;
       v = {
         selection: singleCell(pos ?? { row: 1, col: 1 }),
