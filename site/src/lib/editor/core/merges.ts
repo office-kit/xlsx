@@ -75,3 +75,28 @@ export class MergeIndex {
     }
   }
 }
+
+/**
+ * Whether `range` can be sorted (or filled) line by line: Excel requires every
+ * merged cell in it to be the same size, an unmerged cell counting as 1×1, so
+ * each line must carry the same merges, each within that one line.
+ */
+export function mergesAllowLineMoves(ws: Worksheet, range: Range, byRows: boolean): boolean {
+  const lines = new Map<number, string[]>();
+  for (const m of ws.mergedCells) {
+    const r = fromBoundaries(m);
+    if (!rangesIntersect(r, range)) continue;
+    const inside = r.r1 >= range.r1 && r.r2 <= range.r2 && r.c1 >= range.c1 && r.c2 <= range.c2;
+    const oneLine = byRows ? r.r1 === r.r2 : r.c1 === r.c2;
+    if (!inside || !oneLine) return false;
+    const line = byRows ? r.r1 : r.c1;
+    const spans = lines.get(line) ?? [];
+    spans.push(byRows ? `${r.c1}:${r.c2}` : `${r.r1}:${r.r2}`);
+    lines.set(line, spans);
+  }
+  if (lines.size === 0) return true;
+  const count = byRows ? range.r2 - range.r1 + 1 : range.c2 - range.c1 + 1;
+  if (lines.size !== count) return false;
+  const signatures = new Set([...lines.values()].map((spans) => spans.sort().join(',')));
+  return signatures.size === 1;
+}

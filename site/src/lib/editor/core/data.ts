@@ -14,6 +14,7 @@ import { currentRegion } from './navigation.ts';
 import { currentRange, selectRange } from './selection.ts';
 import { autoFilterRange, filterKey } from './filter.ts';
 import { headerRows, tableAt, totalRows } from './tables.ts';
+import { mergesAllowLineMoves } from './merges.ts';
 
 /** The data block a sort/filter applies to: the selection if it spans cells, else the current region. */
 export function dataRange(ctl: EditorController): Range {
@@ -123,6 +124,10 @@ export function sortRange(ctl: EditorController, range: Range, keys: readonly So
   const ws = doc.ws;
   const body: Range = orientation === 'rows' ? { ...range, r1: range.r1 + (hasHeader ? 1 : 0) } : { ...range, c1: range.c1 + (hasHeader ? 1 : 0) };
   if (body.r1 > body.r2 || body.c1 > body.c2) return;
+  if (!mergesAllowLineMoves(ws, body, orientation === 'rows')) {
+    ctl.dialog = { kind: 'alert', props: { message: 'mergedCellsSameSize' } };
+    return;
+  }
   doc.transact('Sort', (tx) => {
     tx.cells(ws, body);
     const byRows = orientation === 'rows';
