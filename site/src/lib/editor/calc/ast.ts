@@ -55,7 +55,14 @@ export type AstNode =
   | { readonly type: 'structured'; readonly table: string | undefined; readonly spec: StructuredSpec }
   | { readonly type: 'unary'; readonly op: '-' | '+' | '@'; readonly operand: AstNode }
   | { readonly type: 'postfix'; readonly op: '%' | '#'; readonly operand: AstNode }
-  | { readonly type: 'binary'; readonly op: BinaryOp; readonly left: AstNode; readonly right: AstNode }
+  | {
+      readonly type: 'binary';
+      readonly op: BinaryOp;
+      readonly left: AstNode;
+      readonly right: AstNode;
+      /** Written inside `( )`; Excel's final-subtraction rounding skips it. */
+      readonly parenthesized?: true;
+    }
   /** `name` is upper-cased with any `_xlfn.` / `_xlws.` storage prefix removed. */
   | { readonly type: 'call'; readonly name: string; readonly args: readonly AstNode[] }
   /** Calling the result of an expression: `LAMBDA(x, x+1)(2)`. */

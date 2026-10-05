@@ -211,7 +211,7 @@ class Parser {
       case 'lparen': {
         const inner = this.expression(0, true);
         this.expect('rparen', "')'");
-        return this.invocations(inner);
+        return this.invocations(inner.type === 'binary' ? { ...inner, parenthesized: true } : inner);
       }
       case 'lbrace':
         return this.arrayConstant();
