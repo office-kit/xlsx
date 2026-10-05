@@ -22,6 +22,7 @@ import type { SpreadsheetEditor } from './editor.svelte.ts';
 import type { Transaction } from './history.ts';
 import { pxToColWidth } from './metrics.ts';
 import { applyStyle, transformStyle, type StylePatch } from './format.ts';
+import { isRowFiltered } from './filter.ts';
 import { parseInput, type DateOrder } from './input.ts';
 import { selectRange } from './selection.ts';
 
@@ -59,6 +60,8 @@ export function commitInput(
     for (const range of targets) {
       tx.cells(ws, range);
       for (let r = range.r1; r <= range.r2; r++) {
+        // Ctrl+Enter over a filtered list fills only the rows on show.
+        if (fill && isRowFiltered(ws, r)) continue;
         for (let c = range.c1; c <= range.c2; c++) {
           let value: CellValue = parsed.value;
           if (fill && value !== null && typeof value === 'object' && !(value instanceof Date) && value.kind === 'formula') {

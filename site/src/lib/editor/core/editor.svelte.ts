@@ -17,7 +17,7 @@ import { CalcEngine, type CellRef } from '../calc/index.ts';
 import type { CellPos, Range } from './address.ts';
 import { clampPos, rangeOf } from './address.ts';
 import { getCellAt, isBlank } from './cells.ts';
-import { syncTableHeaders } from './tables.ts';
+import { renameEditedHeaders, syncTableHeaders } from './tables.ts';
 import { changedCells, EditRefusedError, History, Transaction, type HistoryStep, type TransactionGuard } from './history.ts';
 import { MergeIndex } from './merges.ts';
 import { buildColumnAxis, buildRowAxis } from './metrics.ts';
@@ -230,6 +230,12 @@ export class SpreadsheetEditor {
     let result: T;
     try {
       result = fn(tx);
+      if (!tx.structural) {
+        renameEditedHeaders(this.wb, tx, (ws, row, col) => {
+          const cell = getCellAt(ws, row, col);
+          return cell ? getCellDisplayText(this.wb, cell) : '';
+        });
+      }
     } catch (err) {
       if (!(err instanceof EditRefusedError)) throw err;
       tx.rollback();
