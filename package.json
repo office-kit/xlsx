@@ -100,13 +100,14 @@
   "scripts": {
     "prepare": "git submodule update --init --recursive || true",
     "typecheck": "tsc --noEmit",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
+    "lint": "oxlint && pnpm --dir site lint",
+    "lint:fix": "oxlint --fix && pnpm --dir site lint --fix",
     "knip": "knip",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:perf": "vitest run --config vitest.perf.config.ts",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "test:editor": "vitest run --root site --config vitest.editor.config.ts",
     "bench": "vitest bench --run tests/perf/throughput.bench.ts",
     "build": "tsdown && tsc -p tsconfig.build.json",
     "build:js": "tsdown",
@@ -122,6 +123,7 @@
     "qa:corpus": "node scripts/qa-corpus.mjs",
     "test:browser": "pnpm build && pnpm qa:corpus && playwright test",
     "qa:mutations": "node scripts/qa-mutations.mjs",
+    "qa:public-api-resave": "node scripts/qa-public-api-resave.mjs",
     "qa:excel": "node scripts/qa-excel.mjs",
     "qa:office": "node scripts/qa-office.mjs",
     "qa:excel-calibration": "node --test scripts/qa-excel.test.mjs",
@@ -146,6 +148,7 @@
     "@vitest/coverage-v8": "^4.1.9",
     "esbuild": "^0.28.0",
     "fast-check": "^4.8.0",
+    "fast-xml-parser": "^5.9.3",
     "knip": "^6.24.0",
     "oxlint": "^1.72.0",
     "size-limit": "^12.1.0",
@@ -161,7 +164,6 @@
     ]
   },
   "dependencies": {
-    "fast-xml-parser": "^5.9.3",
     "fflate": "^0.8.3",
     "saxes": "^6.0.0"
   }

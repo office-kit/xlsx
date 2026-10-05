@@ -11,6 +11,9 @@ export type {
   Drawing,
   DrawingItem,
   PictureReference,
+  ShapeReference,
+  ShapeStyle,
+  ShapeStyleMatrixRef,
 } from './drawing.js';
 export {
   addChartAt,
@@ -20,6 +23,7 @@ export {
   makeChartDrawingItem,
   makeDrawing,
   makePictureDrawingItem,
+  makeShapeDrawingItem,
   removeAllCharts,
   removeAllDrawingItems,
   removeAllImages,
@@ -35,6 +39,10 @@ export type {
 export { makeOneCellAnchor } from './anchor.js';
 export type { BlackWhiteMode, ShapeProperties, Transform2D } from './dml/shape-properties.js';
 export { makeShapeProperties } from './dml/shape-properties.js';
+export type { CustomGeometry, Geometry, PresetGeometry } from './dml/geometry.js';
+export { makePresetGeometry, PRESET_SHAPE_NAMES } from './dml/geometry.js';
+export type { LineEnd, LineEndType, LineProperties, PresetDash } from './dml/line.js';
+export { makeLine } from './dml/line.js';
 
 // ---- DML colours -----------------------------------------------------------
 export type { ColorMod, DmlColor, DmlColorWithMods, SchemeColorName } from './dml/colors.js';

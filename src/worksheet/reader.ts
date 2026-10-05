@@ -89,11 +89,13 @@ import { makeColumnDimension, makeRowDimension } from './dimensions.js';
 import type { Hyperlink } from './hyperlinks.js';
 import type { TableDefinition } from './table.js';
 import type { Pane, PaneState, PaneType, Selection, SheetView, SheetViewMode } from './views.js';
+import { findSparklineGroupsInExt, parseSparklineGroups } from './sparklines-xml.js';
 import { makeSheetView } from './views.js';
 import { makeWorksheet, setCell, type Worksheet } from './worksheet.js';
 
 const WORKSHEET_TAG = `{${SHEET_MAIN_NS}}worksheet`;
 const SHEETDATA_TAG = `{${SHEET_MAIN_NS}}sheetData`;
+const EXT_LST_TAG = `{${SHEET_MAIN_NS}}extLst`;
 const MERGE_CELLS_TAG = `{${SHEET_MAIN_NS}}mergeCells`;
 const MERGE_CELL_TAG = `{${SHEET_MAIN_NS}}mergeCell`;
 const SHEET_VIEWS_TAG = `{${SHEET_MAIN_NS}}sheetViews`;
@@ -583,7 +585,30 @@ export function parseWorksheetXml(bytes: Uint8Array | string, title: string, ctx
   }
 
   captureWorksheetBodyExtras(root, ws);
+  liftSparklineGroups(ws);
   return ws;
+}
+
+/**
+ * Move the sparkline entry out of the passthrough `<extLst>` into
+ * `ws.sparklineGroups`; the writer splices it back. An `<extLst>` left with no
+ * entries is dropped so it isn't re-emitted empty.
+ */
+function liftSparklineGroups(ws: Worksheet): void {
+  const extras = ws.bodyExtras?.afterSheetData;
+  if (!extras) return;
+  const extLstIndex = extras.findIndex((n) => n.name === EXT_LST_TAG);
+  const extLst = extras[extLstIndex];
+  if (!extLst) return;
+  const kept = extLst.children.filter((ext) => {
+    const groups = findSparklineGroupsInExt(ext);
+    if (!groups) return true;
+    (ws.sparklineGroups ??= []).push(...parseSparklineGroups(groups));
+    return false;
+  });
+  if (kept.length === extLst.children.length) return;
+  if (kept.length > 0) extras[extLstIndex] = { ...extLst, children: kept };
+  else extras.splice(extLstIndex, 1);
 }
 
 const SORT_BY_VALUES: ReadonlyArray<SortBy> = ['value', 'cellColor', 'fontColor', 'icon'];
@@ -1328,6 +1353,8 @@ const parseSheetView = (node: XmlNode): SheetView => {
   if (showZeros !== undefined) opts.showZeros = showZeros;
   const rightToLeft = parseXsdBoolean(node.attrs['rightToLeft']);
   if (rightToLeft !== undefined) opts.rightToLeft = rightToLeft;
+  const showOutlineSymbols = parseXsdBoolean(node.attrs['showOutlineSymbols']);
+  if (showOutlineSymbols !== undefined) opts.showOutlineSymbols = showOutlineSymbols;
   const view = node.attrs['view'];
   if (view !== undefined && (SHEET_VIEW_MODES as ReadonlyArray<string>).includes(view)) {
     opts.view = view as SheetViewMode;

@@ -37,6 +37,7 @@ import { unknownCellType } from '../utils/cell-text.js';
 import { parseXsdBoolean } from '../utils/xsd-boolean.js';
 import { iterParse, type SaxEvent, type SaxInput } from '../xml/iterparse.js';
 import { el, type XmlNode } from '../xml/tree.js';
+import { resolveRelTarget } from '../packaging/part-name.js';
 import { parseXml } from '../xml/parser.js';
 import { assertNotStrictRelTypes, assertNotStrictRoot } from '../xml/strict-package.js';
 import type { XlsxSource } from '../io/source.js';
@@ -48,7 +49,6 @@ import {
   parseDate1904,
   parseSheetEntries,
   readOptionalWorkbookPart,
-  resolveRelTarget,
   SHARED_STRINGS_PART,
   STYLES_PART,
   WORKBOOK_TAG,

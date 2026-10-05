@@ -2,7 +2,7 @@
 // comments / hyperlinks / data-validations / conditional-formatting /
 // auto-filter / tables / page-setup / protection / errors / smart-tags /
 // ole-objects / sort-state / scenarios / data-consolidate / web-publish /
-// phonetic / protected-ranges / properties / custom-sheet-views.
+// phonetic / protected-ranges / properties / custom-sheet-views / sparklines.
 
 export type { ContentLimits } from './content-budget.js';
 export type {
@@ -141,6 +141,8 @@ export type {
 export { freezePaneRef, makeFreezePane, makeSheetView } from './views.js';
 export type { LegacyComment } from './comments.js';
 export { makeLegacyComment } from './comments.js';
+export type { ThreadedComment, ThreadedCommentMention } from './threaded-comments.js';
+export { makeThreadedComment } from './threaded-comments.js';
 export type {
   DataValidation,
   DataValidationErrorStyle,
@@ -167,6 +169,28 @@ export type { AutoFilter, FilterColumn } from './auto-filter.js';
 export { makeAutoFilter, makeFilterColumn } from './auto-filter.js';
 export type { TableColumn, TableDefinition, TableStyleInfo } from './table.js';
 export { addExcelTable, makeTableColumn, makeTableDefinition } from './table.js';
+export type {
+  AddPivotTableOptions,
+  PivotAggregate,
+  PivotFilterField,
+  PivotItemValue,
+  PivotLayout,
+  PivotSubtotals,
+  PivotTable,
+  PivotValueField,
+} from './pivot-table.js';
+export {
+  addPivotTable,
+  getPivotFieldItems,
+  getPivotSourceFields,
+  getPivotTableAt,
+  getPivotTableOutputRef,
+  nextPivotTableName,
+  refreshPivotTable,
+  removePivotTable,
+} from './pivot-table.js';
+export type { PivotTableSummary } from './pivot-reader.js';
+export { listPassthroughPivotTables } from './pivot-reader.js';
 export type { CellWatch, IgnoredError } from './errors.js';
 export { makeCellWatch, makeIgnoredError } from './errors.js';
 export type { OutlineProperties, PageSetupProperties, SheetProperties } from './properties.js';
@@ -239,3 +263,11 @@ export type {
 export { makeDataConsolidate } from './data-consolidate.js';
 export type { Scenario, ScenarioInputCell, ScenarioList } from './scenarios.js';
 export { makeScenario, makeScenarioInputCell, makeScenarioList } from './scenarios.js';
+export type {
+  Sparkline,
+  SparklineAxisType,
+  SparklineEmptyCells,
+  SparklineGroup,
+  SparklineType,
+} from './sparklines.js';
+export { makeSparklineGroup } from './sparklines.js';

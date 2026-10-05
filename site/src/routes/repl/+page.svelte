@@ -23,7 +23,6 @@
   let result = $state.raw<ReplResult | undefined>();
   let busy = $state(true);
   let copyStatus = $state<'idle' | 'copied' | 'failed'>('idle');
-  // eslint-disable-next-line prefer-const -- reassigned by `bind:this` in template
   let editorContainer = $state<HTMLDivElement | undefined>();
 
   // Both load on mount: prerendering never evaluates user code, and the

@@ -2,13 +2,16 @@
 //
 // A `Drawing` is the per-worksheet `xl/drawings/drawingN.xml` part — a list of
 // anchor entries, each carrying a content variant (chart, picture, shape,
-// connector, group). Charts and pictures are modeled; everything else is kept
-// as the verbatim source XML so it survives a round-trip untouched.
+// connector, group). Charts, pictures and plain shapes / connectors are
+// modeled; everything else is kept as the verbatim source XML so it survives a
+// round-trip untouched.
 
 import type { ChartSpace } from '../chart/chart.js';
 import type { CxChartSpace } from '../chart/cx/chartex.js';
 import type { DrawingAnchor } from './anchor.js';
+import type { DmlColorWithMods } from './dml/colors.js';
 import type { ShapeProperties } from './dml/shape-properties.js';
+import type { TextBody } from './dml/text.js';
 import type { XlsxImage } from './image.js';
 
 /** Reference to a chart part — the chart's drawing-rels rId resolves to xl/charts/chartN.xml. */
@@ -52,16 +55,56 @@ export interface PictureReference {
   spPr?: ShapeProperties;
 }
 
+/** `<a:lnRef>` / `<a:fillRef>` / `<a:effectRef>`: an index into the theme's format scheme, tinted with `color`. */
+export interface ShapeStyleMatrixRef {
+  idx: number;
+  color?: DmlColorWithMods;
+}
+
+/**
+ * `<xdr:style>`. Excel draws a shape whose `spPr` leaves fill or outline unset
+ * from the theme entries this points at, so it has to survive a round-trip for
+ * the shape to keep its look.
+ */
+export interface ShapeStyle {
+  lnRef: ShapeStyleMatrixRef;
+  fillRef: ShapeStyleMatrixRef;
+  effectRef: ShapeStyleMatrixRef;
+  fontRef: { idx: 'major' | 'minor' | 'none'; color?: DmlColorWithMods };
+}
+
+/** A plain shape (`<xdr:sp>`), text box (`txBox="1"`) or connector (`<xdr:cxnSp>`). */
+export interface ShapeReference {
+  /** `<xdr:cxnSp>` — a line or connector, which carries no text. */
+  connector?: boolean;
+  /** `<xdr:cNvSpPr txBox="1"/>` — Excel's Insert ▸ Text Box. */
+  textBox?: boolean;
+  /** Display name (`<xdr:cNvPr name="...">`). */
+  name?: string;
+  /** Alt text. */
+  descr?: string;
+  hidden?: boolean;
+  /** `textlink` — a cell reference whose value the shape displays. */
+  textLink?: string;
+  /** Geometry (`prstGeom` / `custGeom`), fill, outline, rotation. */
+  spPr: ShapeProperties;
+  style?: ShapeStyle;
+  /** Text inside the shape. Ignored for connectors, whose schema has no text slot. */
+  txBody?: TextBody;
+}
+
 export interface DrawingItem {
   anchor: DrawingAnchor;
   content:
     | { kind: 'chart'; chart: ChartReference }
     | { kind: 'picture'; picture: PictureReference }
+    | { kind: 'shape'; shape: ShapeReference }
     | { kind: 'unsupported'; rawTag: string };
   /**
    * The whole source anchor element, captured verbatim. Set by the reader for
-   * `unsupported` content — a plain shape, a group, a connector — because the
-   * model has no slot for its geometry, text or `<xdr:clientData>` attributes.
+   * `unsupported` content — a group, a graphic frame that isn't a chart, a
+   * shape carrying a macro, hyperlink or `<xdr:clientData>` flags — because
+   * the model has no slot for those.
    * When present the writer emits it as-is instead of rebuilding the anchor
    * from {@link anchor} + {@link content}.
    */
@@ -99,6 +142,10 @@ export function makePictureDrawingItem(anchor: DrawingAnchor, picture: PictureRe
   // discriminator: XlsxImage carries `format`, PictureReference doesn't.
   const ref: PictureReference = 'format' in picture ? { image: picture as XlsxImage } : (picture as PictureReference);
   return { anchor, content: { kind: 'picture', picture: ref } };
+}
+
+export function makeShapeDrawingItem(anchor: DrawingAnchor, shape: ShapeReference): DrawingItem {
+  return { anchor, content: { kind: 'shape', shape } };
 }
 
 // ---- Worksheet ergonomic helpers ----------------------------------------

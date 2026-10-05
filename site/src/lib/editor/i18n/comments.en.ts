@@ -1,0 +1,31 @@
+// Strings for threaded comments (Insert / Review ▸ New Comment, the comment
+// card and the Comments pane).
+
+export const commentsEn = {
+  cmtNewComment: 'New Comment',
+  insComment: 'Comment',
+  cmtDelete: 'Delete',
+  cmtPrevious: 'Previous Comment',
+  cmtNext: 'Next Comment',
+  cmtShowComments: 'Show Comments',
+  cmtReply: 'Reply',
+  cmtReplyToComment: 'Reply to Comment',
+  cmtDeleteComment: 'Delete Comment',
+  cmtReplyPlaceholder: 'Reply…',
+  cmtStartPlaceholder: 'Start a conversation',
+  cmtPost: 'Post',
+  cmtCancel: 'Cancel',
+  cmtSave: 'Save',
+  cmtEdit: 'Edit Comment',
+  cmtDeleteThread: 'Delete Thread',
+  cmtResolve: 'Resolve Thread',
+  cmtReopen: 'Reopen Thread',
+  cmtResolved: 'Resolved',
+  cmtMoreActions: 'More thread actions',
+  cmtPaneTitle: 'Comments',
+  cmtNew: 'New',
+  cmtNone: 'There are no comments on this sheet.',
+  cmtClosePane: 'Close Comments',
+  cmtUserName: 'Your name',
+  cmtNoteHere: 'This cell has a note. Delete the note to add a comment.',
+};

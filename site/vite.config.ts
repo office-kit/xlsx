@@ -15,7 +15,7 @@ function servePagefindFromBuild(): Plugin {
   const buildPagefind = path.resolve('build/pagefind');
 
   const handler: Connect.NextHandleFunction = (req, res, next) => {
-    const url = (req.url ?? '').split('?')[0];
+    const url = (req.url ?? '').split('?')[0] ?? '';
     const match = url.match(/\/pagefind\/(.+)$/);
     if (!match) return next();
 

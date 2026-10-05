@@ -44,10 +44,6 @@ license text lives.
 - **saxes** (ISC) — <https://github.com/lddubeau/saxes>
   Streaming XML parser. Drives the SAX iter API in `src/xml/iterparse.ts`
   which the streaming read-only path in `src/streaming/read-only.ts` uses.
-- **fast-xml-parser** (MIT) —
-  <https://github.com/NaturalIntelligence/fast-xml-parser>
-  DOM-style XML parser used by `src/xml/parser.ts` for the eager
-  load path; the streaming read-only path uses saxes instead.
 
 ## Dev dependencies
 

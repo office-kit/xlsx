@@ -30,6 +30,8 @@ import { coordinateToTuple, parseSheetRange } from '../utils/coordinate.js';
 import { multiCellRangeContainsCell, parseRange, rangeContainsCell, rangeToString } from '../worksheet/cell-range.js';
 import type { LegacyComment } from '../worksheet/comments.js';
 import type { Hyperlink } from '../worksheet/hyperlinks.js';
+import { newOfficeGuid } from '../worksheet/threaded-comments.js';
+import type { Person } from './persons.js';
 import type { CellsByKindCounts, Worksheet } from '../worksheet/worksheet.js';
 import {
   classifyCellValue,
@@ -67,8 +69,17 @@ export interface Workbook {
   properties?: CoreProperties;
   appProperties?: ExtendedProperties;
   customProperties?: CustomProperties;
-  /** Author display names, shared between threaded comments. */
+  /**
+   * @deprecated Never read or written; it stays only so code that touches it
+   * keeps compiling. Threaded-comment authors are in `persons`.
+   */
   authors: string[];
+  /**
+   * Threaded-comment authors (`xl/persons/person.xml`), referenced by
+   * `ThreadedComment.personId`. `createWorkbook` sets it to `[]`; it is
+   * optional so workbook literals written before it existed still type-check.
+   */
+  persons?: Person[];
   /** Workbook + sheet-scope defined names (named ranges, print areas etc). */
   definedNames: import('./defined-names.js').DefinedName[];
   /**
@@ -212,6 +223,7 @@ export function createWorkbook(opts?: { date1904?: boolean }): Workbook {
     styles: makeStylesheet(),
     date1904: opts?.date1904 ?? false,
     authors: [],
+    persons: [],
     definedNames: [],
   };
 }
@@ -430,6 +442,7 @@ export function setActiveSheet(wb: Workbook, title: string): void {
  * `oldTitle`, or if `newTitle` collides with an existing sheet (Excel requires
  * sheet names to be unique within a workbook). Formula text and defined-name
  * expressions are retained verbatim; callers must update sheet references.
+ * PivotTable sources (`ws.pivotTables[].source.sheet`) do follow the rename.
  */
 export function renameSheet(wb: Workbook, oldTitle: string, newTitle: string): void {
   const i = wb.sheets.findIndex((s) => s.sheet.title === oldTitle);
@@ -440,6 +453,11 @@ export function renameSheet(wb: Workbook, oldTitle: string, newTitle: string): v
   validateUniqueTitle(wb, newTitle, i);
   const ref = wb.sheets[i];
   if (ref) ref.sheet.title = newTitle;
+  // PivotTables name their source sheet by title.
+  for (const s of wb.sheets) {
+    if (s.kind !== 'worksheet') continue;
+    for (const pt of s.sheet.pivotTables ?? []) if (pt.source.sheet === oldTitle) pt.source.sheet = newTitle;
+  }
 }
 
 /**
@@ -622,6 +640,17 @@ export function duplicateSheet(
     t.displayName = candidate;
     t.name = candidate;
     usedDisplayNames.add(candidate);
+  }
+  // Excel ties a thread to its legacy placeholder by id, so ids shared between
+  // two sheets make it drop one of the threads as corrupt. Mention ids are
+  // workbook-unique too.
+  const newIds = new Map<string, string>();
+  const threads = cloned.threadedComments ?? [];
+  for (const c of threads) newIds.set(c.id, newOfficeGuid());
+  for (const c of threads) {
+    c.id = newIds.get(c.id) ?? c.id;
+    if (c.parentId !== undefined) c.parentId = newIds.get(c.parentId) ?? c.parentId;
+    for (const m of c.mentions ?? []) m.mentionId = newOfficeGuid();
   }
 
   const ref: SheetRef = {

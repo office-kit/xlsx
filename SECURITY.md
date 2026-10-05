@@ -69,7 +69,7 @@ Out of scope:
 
 - Issues that require the attacker to control the source code or the host
   process (a malicious dependency added by the consumer, etc.).
-- Bugs in our dependencies (`fflate`, `saxes`, `fast-xml-parser`). Please
+- Bugs in our dependencies (`fflate`, `saxes`). Please
   report those upstream; we'll backport mitigations once they ship.
 - Excel correctness bugs that aren't security-relevant (wrong cell value,
   styling mismatch). Use the public issue tracker for those.

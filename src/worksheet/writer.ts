@@ -37,6 +37,7 @@ import type { Scenario, ScenarioInputCell, ScenarioList } from './scenarios.js';
 import type { HeaderFooter, PageBreak, PageMargins, PageSetup, PrintOptions } from './page-setup.js';
 import type { WorksheetPhoneticProperties } from './phonetic.js';
 import type { WebPublishItem, WorksheetCustomProperty } from './web-publish.js';
+import { serializeSparklineExt } from './sparklines-xml.js';
 import type { SheetProperties } from './properties.js';
 import type { SheetProtection } from './protection.js';
 import type { ProtectedRange } from './protected-ranges.js';
@@ -82,9 +83,12 @@ export interface WorksheetWriteContext {
    * placeholder VML drawing for all comments on the sheet, and returns the
    * worksheet-rels rId for the VML — which the writer splats into
    * `<legacyDrawing r:id>`. Called once per worksheet that carries any
-   * comments.
+   * comments, threaded or legacy: threads also need a legacy placeholder.
    */
-  registerComments?: (comments: ReadonlyArray<import('./comments.js').LegacyComment>) => { vmlRelId: string };
+  registerComments?: (
+    comments: ReadonlyArray<import('./comments.js').LegacyComment>,
+    threads: ReadonlyArray<import('./threaded-comments.js').ThreadedComment>,
+  ) => { vmlRelId: string };
   /**
    * Drawing allocator. saveWorkbook emits xl/drawings/drawingN.xml under a
    * workbook-global counter, registers a `${REL_NS}/drawing` rel on the
@@ -245,7 +249,9 @@ export function writeWorksheetXml(ws: Worksheet, ctx: WorksheetWriteContext, emi
   if (ws.colBreaks.length > 0) emit(serializePageBreaks(ws.colBreaks, 'colBreaks'));
   if (ws.customProperties.length > 0) emit(serializeWorksheetCustomProperties(ws.customProperties));
   if (ws.bodyExtras?.afterSheetData) {
-    for (const node of ws.bodyExtras.afterSheetData) emit(serializeBodyExtraNode(node));
+    for (const node of ws.bodyExtras.afterSheetData) {
+      if (node.name !== EXT_LST_TAG) emit(serializeBodyExtraNode(node));
+    }
   }
   if (ws.cellWatches.length > 0) {
     emit(serializeCellWatches(ws.cellWatches));
@@ -258,8 +264,9 @@ export function writeWorksheetXml(ws: Worksheet, ctx: WorksheetWriteContext, emi
     const { rId } = ctx.registerDrawing(ws.drawing);
     emit(`<drawing r:id="${escapeXmlAttr(rId)}"/>`);
   }
-  if (ws.legacyComments.length > 0 && ctx.registerComments) {
-    const { vmlRelId } = ctx.registerComments(ws.legacyComments);
+  const threads = ws.threadedComments ?? [];
+  if ((ws.legacyComments.length > 0 || threads.length > 0) && ctx.registerComments) {
+    const { vmlRelId } = ctx.registerComments(ws.legacyComments, threads);
     emit(`<legacyDrawing r:id="${escapeXmlAttr(vmlRelId)}"/>`);
   } else if (ws.legacyDrawingRId !== undefined) {
     emit(`<legacyDrawing r:id="${escapeXmlAttr(ws.legacyDrawingRId)}"/>`);
@@ -281,6 +288,8 @@ export function writeWorksheetXml(ws: Worksheet, ctx: WorksheetWriteContext, emi
     }
     emit('</tableParts>');
   }
+  const extLst = serializeExtLst(ws);
+  if (extLst) emit(extLst);
   emit('</worksheet>');
 }
 
@@ -532,6 +541,7 @@ const serializeSheetView = (v: SheetView): string => {
   attrs += xmlBoolAttr('showFormulas', v.showFormulas);
   attrs += xmlBoolAttr('showZeros', v.showZeros);
   attrs += xmlBoolAttr('rightToLeft', v.rightToLeft);
+  attrs += xmlBoolAttr('showOutlineSymbols', v.showOutlineSymbols);
   if (v.view) attrs += ` view="${v.view}"`;
   if (v.topLeftCell) attrs += ` topLeftCell="${escapeXmlAttr(v.topLeftCell)}"`;
   if (v.zoomScale !== undefined) attrs += ` zoomScale="${v.zoomScale}"`;
@@ -1240,6 +1250,33 @@ const serializeOleObjects = (objs: ReadonlyArray<OleObject>): string => {
  * that so older readers skip the block instead of rejecting the part. The
  * `x14` (and `mc`) prefixes are declared on the worksheet root.
  */
+const EXT_LST_TAG = `{${SHEET_MAIN_NS}}extLst`;
+
+// Excel lists its own worksheet extensions in a fixed order and puts
+// sparklines after the x14 conditional formats and data validations.
+const EXTS_BEFORE_SPARKLINES: ReadonlySet<string> = new Set([
+  '{78C0D931-6437-407d-A8EE-F0AAD7539E65}',
+  '{CCE6A557-97BC-4b89-ADB6-D9C93CAAB3DF}',
+]);
+
+/**
+ * `<extLst>` — the passthrough extension entries with the modeled sparkline
+ * entry spliced in. Emitted last, where CT_Worksheet requires it.
+ */
+const serializeExtLst = (ws: Worksheet): string | undefined => {
+  const exts = ws.bodyExtras?.afterSheetData.find((n) => n.name === EXT_LST_TAG)?.children ?? [];
+  const parts = exts.map(serializeBodyExtraNode);
+  const groups = ws.sparklineGroups ?? [];
+  if (groups.length > 0) {
+    let at = 0;
+    exts.forEach((ext, i) => {
+      if (EXTS_BEFORE_SPARKLINES.has(ext.attrs['uri'] ?? '')) at = i + 1;
+    });
+    parts.splice(at, 0, serializeSparklineExt(groups));
+  }
+  return parts.length > 0 ? `<extLst>${parts.join('')}</extLst>` : undefined;
+};
+
 const wrapInX14Choice = (xml: string): string =>
   `<mc:AlternateContent><mc:Choice Requires="x14">${xml}</mc:Choice></mc:AlternateContent>`;
 

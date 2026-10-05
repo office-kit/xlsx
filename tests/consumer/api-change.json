@@ -1,0 +1,6 @@
+{
+  "kind": "breaking",
+  "reason": "Adds threaded comments and persons, PivotTable creation, sparklines, drawing shapes and SheetView.showOutlineSymbols. Workbook.persons, Worksheet.threadedComments and Worksheet.sparklineGroups are optional so older object literals still compile; Workbook.authors stays (deprecated). Breaking only because DrawingItem.content gains a 'shape' variant, which exhaustive switches must handle.",
+  "baselineSha256": "b76fe3922144021147f3313dc2a806ba5d3710d7329487178b98dc9a9ef3c208",
+  "changeset": ".changeset/drawing-shapes-sparklines.md"
+}
