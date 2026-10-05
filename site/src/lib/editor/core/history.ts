@@ -268,17 +268,24 @@ export class History<V> {
  * declared — and it includes cells that were deleted, whose formula
  * dependents still need recalculating.
  */
+/** Larger than any column index, so `row * COL_KEY_SPAN + col` is unique. */
+const COL_KEY_SPAN = 16_385;
+
 export function changedCells<V>(step: HistoryStep<V>): Array<{ ws: Worksheet; row: number; col: number }> {
   const out: Array<{ ws: Worksheet; row: number; col: number }> = [];
-  const seen = new Set<string>();
+  // Numeric keys per sheet: a string key per cell made a 2M-cell sort spend
+  // seconds here.
+  const seen = new Map<Worksheet, Set<number>>();
   for (const list of [step.before, step.after]) {
     for (const snap of list) {
       if (snap.part.kind !== 'cells') continue;
       const ws = snap.part.ws;
+      let keys = seen.get(ws);
+      if (!keys) seen.set(ws, (keys = new Set()));
       for (const c of snap.data as CellSnap[]) {
-        const key = `${ws.title}\u0000${c.row}\u0000${c.col}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
+        const key = c.row * COL_KEY_SPAN + c.col;
+        if (keys.has(key)) continue;
+        keys.add(key);
         out.push({ ws, row: c.row, col: c.col });
       }
     }
