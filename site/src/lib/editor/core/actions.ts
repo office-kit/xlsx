@@ -39,6 +39,7 @@ import { validateName } from './names.ts';
 import { applyStructuralEdit, declareSheetObjectFormulas, declareStructural, rewriteSheetObjectFormulas, structuralEdit } from './structure.ts';
 import { tableRange } from './tables.ts';
 import { recentFunctions } from './recent-functions.svelte.ts';
+import type { Transaction } from './history.ts';
 
 // ---- history ------------------------------------------------------------------
 
@@ -300,6 +301,8 @@ export function autoFill(ctl: EditorController, source: Range, target: Range, mo
         out.forEach((seed, i) => write(r, right ? source.c2 + 1 + i : source.c1 - 1 - i, seed));
       }
     }
+    // Merged cells in the source repeat down (or across) the fill, as in Excel.
+    if (mode !== 'values') fillMerges(tx, ws, source, target);
   });
   ctl.selectRange(target, { row: source.r1, col: source.c1 });
 }
@@ -328,6 +331,29 @@ export function fillFrom(ctl: EditorController, direction: 'down' | 'right' | 'u
     }
     ctl.selectRange(r, active);
   });
+}
+
+function fillMerges(tx: Transaction, ws: Worksheet, source: Range, target: Range): void {
+  const within = (m: { minRow: number; minCol: number; maxRow: number; maxCol: number }, r: Range) => m.minRow >= r.r1 && m.maxRow <= r.r2 && m.minCol >= r.c1 && m.maxCol <= r.c2;
+  const seeds = ws.mergedCells.filter((m) => within(m, source));
+  if (seeds.length === 0) return;
+  const vertical = target.r1 < source.r1 || target.r2 > source.r2;
+  const forward = vertical ? target.r2 > source.r2 : target.c2 > source.c2;
+  const filled: Range = vertical
+    ? forward ? { ...source, r1: source.r2 + 1, r2: target.r2 } : { ...source, r1: target.r1, r2: source.r1 - 1 }
+    : forward ? { ...source, c1: source.c2 + 1, c2: target.c2 } : { ...source, c1: target.c1, c2: source.c1 - 1 };
+  const step = (vertical ? source.r2 - source.r1 + 1 : source.c2 - source.c1 + 1) * (forward ? 1 : -1);
+  tx.sheet(ws, 'mergedCells');
+  const merges = ws.mergedCells.filter((m) => !within(m, filled));
+  for (const m of seeds) {
+    for (let k = 1; ; k++) {
+      const d = step * k;
+      const next = vertical ? { ...m, minRow: m.minRow + d, maxRow: m.maxRow + d } : { ...m, minCol: m.minCol + d, maxCol: m.maxCol + d };
+      if (!within(next, filled)) break;
+      merges.push(next);
+    }
+  }
+  ws.mergedCells = merges;
 }
 
 /** Double-clicking the fill handle fills down as far as the adjacent column has data. */
