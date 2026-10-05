@@ -149,3 +149,40 @@ describe('storage prefixes', () => {
     expect(fromStorageFormula(toStorageFormula(f))).toBe(f);
   });
 });
+
+// Each pair was typed into Excel for Mac and read back from the cell's formula.
+describe('entry normalisation', () => {
+  test.each([
+    ['SUM(A10:A3)', 'SUM(A3:A10)'],
+    ['SUM(B3:A1)', 'SUM(A1:B3)'],
+    ['SUM(3:1)', 'SUM(1:3)'],
+    ['SUM(C:A)', 'SUM(A:C)'],
+    ['$b$2:a1', 'A1:$B$2'],
+    ['$A3:B$1', '$A$1:B3'],
+    ['B$1:$A3', '$A$1:B3'],
+    ['A1:A1', 'A1:A1'],
+    ["'S'!A1", 'S!A1'],
+    ["'My Sheet'!a1", "'My Sheet'!A1"],
+    ['if(true,1,2)', 'IF(TRUE,1,2)'],
+    ['1+false', '1+FALSE'],
+    ['1E3', '1000'],
+    ['1.50', '1.5'],
+    ['.5', '0.5'],
+    ['0005', '5'],
+    ['1e-5', '0.00001'],
+    ['1.0E+3', '1000'],
+    ['0.1E1', '1'],
+    ['1E20', '100000000000000000000'],
+    ['1E21', '1E+21'],
+    ['1.5E300', '1.5E+300'],
+    ['1E-19', '0.0000000000000000001'],
+    ['1E-20', '1E-20'],
+    ['1.23456789E-12', '1.23456789E-12'],
+    ['123456789012345678', '123456789012345000'],
+    ['12345678901234567890123', '1.23456789012345E+22'],
+    ['0.1234567890123456789', '0.123456789012345'],
+    ['"a"&"b"', '"a"&"b"'],
+  ])('%s → %s', (typed, stored) => {
+    expect(toStorageFormula(typed)).toBe(stored);
+  });
+});

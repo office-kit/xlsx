@@ -6,6 +6,8 @@
 // editor writes must go through `toStorageFormula`; text read from a file goes
 // through `fromStorageFormula` before it is shown in the formula bar.
 
+import { renderArea, renderPrefix } from './address.ts';
+import type { RefArea } from './ast.ts';
 import { FUNCTIONS } from './functions/index.ts';
 import { type Token, tokenize } from './lexer.ts';
 import { normalizeFunctionName } from './parser.ts';
@@ -86,6 +88,42 @@ const parameterNames = (tokens: readonly Token[]): Set<string> => {
 };
 
 /** Add the `_xlfn.` / `_xlws.` / `_xlpm.` prefixes Excel expects in a file. */
+/** Each axis's smaller end first; a `$` stays with the row or column it was written on. */
+function orderArea(a: RefArea): RefArea {
+  const flipRows = a.r1 > a.r2;
+  const flipCols = a.c1 > a.c2;
+  if (!flipRows && !flipCols) return a;
+  return {
+    kind: a.kind,
+    r1: flipRows ? a.r2 : a.r1,
+    r1Abs: flipRows ? a.r2Abs : a.r1Abs,
+    r2: flipRows ? a.r1 : a.r2,
+    r2Abs: flipRows ? a.r1Abs : a.r2Abs,
+    c1: flipCols ? a.c2 : a.c1,
+    c1Abs: flipCols ? a.c2Abs : a.c1Abs,
+    c2: flipCols ? a.c1 : a.c2,
+    c2Abs: flipCols ? a.c1Abs : a.c2Abs,
+  };
+}
+
+/** Longest plain-decimal literal Excel keeps; past it (1E+21, 1E-20) it writes an exponent. */
+const MAX_PLAIN_LITERAL = 21;
+
+/** A number literal the way Excel stores it: 15 significant digits, =1E3 → =1000, =.5 → =0.5. */
+function numberLiteral(value: number): string {
+  const v = Number(value.toPrecision(15));
+  if (v === 0) return '0';
+  const [mantissa = '', expText = '0'] = v.toExponential().split('e');
+  const exp = Number(expText);
+  const digits = mantissa.replace('.', '');
+  let plain: string;
+  if (exp < 0) plain = `0.${'0'.repeat(-exp - 1)}${digits}`;
+  else if (digits.length <= exp + 1) plain = digits + '0'.repeat(exp + 1 - digits.length);
+  else plain = `${digits.slice(0, exp + 1)}.${digits.slice(exp + 1)}`;
+  if (plain.length <= MAX_PLAIN_LITERAL) return plain;
+  return `${mantissa}E${exp < 0 ? '-' : '+'}${Math.abs(exp)}`;
+}
+
 export function toStorageFormula(text: string): string {
   const tokens = tokenize(text, true);
   const params = parameterNames(tokens);
@@ -108,8 +146,17 @@ export function toStorageFormula(text: string): string {
     } else if (t.kind === 'name' && t.prefix === undefined && params.has(t.name.toUpperCase())) {
       edits.push({ start: t.start, end: t.start, text: PARAM_PREFIX });
     } else if (t.kind === 'ref' && t.area !== undefined) {
-      const ref = text.slice(t.prefixEnd, t.end);
-      if (ref !== ref.toUpperCase()) edits.push({ start: t.prefixEnd, end: t.end, text: ref.toUpperCase() });
+      // Excel stores a reference upper-cased, with a sheet name quoted only
+      // when it must be, and its corners ordered: =SUM(A10:A3) → =SUM(A3:A10).
+      const prefix = t.prefix ? renderPrefix(t.prefix) : '';
+      const ref = prefix + renderArea(orderArea(t.area));
+      if (ref !== text.slice(t.start, t.end)) edits.push({ start: t.start, end: t.end, text: ref });
+    } else if (t.kind === 'bool') {
+      const word = t.value ? 'TRUE' : 'FALSE';
+      if (text.slice(t.start, t.end) !== word) edits.push({ start: t.start, end: t.end, text: word });
+    } else if (t.kind === 'number') {
+      const literal = numberLiteral(t.value);
+      if (text.slice(t.start, t.end) !== literal) edits.push({ start: t.start, end: t.end, text: literal });
     }
   }
   return apply(text, edits);
