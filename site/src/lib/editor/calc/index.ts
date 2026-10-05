@@ -10,7 +10,7 @@ export { fromStorageFormula, toStorageFormula } from './storage.ts';
 export type { FormulaReferenceSpan } from './references.ts';
 export { formulaReferences, toggleReferenceAt } from './references.ts';
 export type { MoveEdit, StructureEdit } from './translate.ts';
-export { adjustFormulaForMove, adjustFormulaForStructure, renameSheetInFormula, translateFormula } from './translate.ts';
+export { adjustFormulaForMove, adjustFormulaForStructure, deleteSheetInFormula, renameSheetInFormula, translateFormula } from './translate.ts';
 export type { FunctionInfo } from './functions/index.ts';
 export { FUNCTION_CATALOG, isVolatileFunction } from './functions/index.ts';
 export type { FunctionCategory } from './function-spec.ts';

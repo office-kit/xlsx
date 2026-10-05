@@ -31,10 +31,13 @@
     // Pointing at a reference while editing a formula stays on worksheets.
     if (ctl.edit && ctl.canPoint(true)) {
       if (doc.wb.sheets[i]?.kind === 'worksheet') doc.activateSheet(i);
+      ctl.gridFocusRequest++;
       return;
     }
     if (ctl.edit && !ctl.commitEdit()) return;
     ctl.showSheet(i);
+    // Keys go to the sheet just opened, not to the tab button, as in Excel.
+    ctl.gridFocusRequest++;
   }
 
   function startRename(i: number) {

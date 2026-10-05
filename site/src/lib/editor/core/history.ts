@@ -15,7 +15,7 @@
 // except the sheet list, whose entries must keep their identity.
 
 import type { CellValue } from '@office-kit/xlsx/cell';
-import type { Workbook } from '@office-kit/xlsx/workbook';
+import type { SheetRef, Workbook } from '@office-kit/xlsx/workbook';
 import type { Worksheet } from '@office-kit/xlsx/worksheet';
 import { makeCell } from '@office-kit/xlsx/cell';
 import type { Range } from './address.ts';
@@ -95,11 +95,14 @@ function take(part: Part, wb: Workbook): Snapshot {
       return { part, data: part.ws.title };
     case 'workbook': {
       const record: Record<string, unknown> = {};
-      for (const f of part.fields) record[f] = f === 'sheets' ? wb.sheets.slice() : structuredClone(wb[f]);
+      // Sheet entries are kept by identity (they hold the sheets); their visibility is copied, since Hide/Unhide changes it in place.
+      for (const f of part.fields) record[f] = f === 'sheets' ? wb.sheets.map((ref) => ({ ref, state: ref.state })) : structuredClone(wb[f]);
       return { part, data: record };
     }
   }
 }
+
+type SheetSnap = { readonly ref: SheetRef; readonly state: SheetRef['state'] };
 
 function restore(snapshot: Snapshot, wb: Workbook): void {
   const { part, data } = snapshot;
@@ -119,7 +122,12 @@ function restore(snapshot: Snapshot, wb: Workbook): void {
     case 'workbook': {
       const record = data as Record<string, unknown>;
       for (const f of part.fields) {
-        Object.assign(wb, { [f]: f === 'sheets' ? (record[f] as Workbook['sheets']).slice() : structuredClone(record[f]) });
+        if (f === 'sheets') {
+          wb.sheets = (record[f] as SheetSnap[]).map(({ ref, state }) => {
+            ref.state = state;
+            return ref;
+          });
+        } else Object.assign(wb, { [f]: structuredClone(record[f]) });
       }
     }
   }
@@ -268,28 +276,37 @@ export class History<V> {
  * declared — and it includes cells that were deleted, whose formula
  * dependents still need recalculating.
  */
+/** Larger than any column index, so `row * COL_KEY_SPAN + col` is unique. */
+const COL_KEY_SPAN = 16_385;
+
 export function changedCells<V>(step: HistoryStep<V>): Array<{ ws: Worksheet; row: number; col: number }> {
   // Only value changes count: a format applied over a spilled range must not
-  // read as the user overwriting the spill.
-  const before = new Map<string, { ws: Worksheet; row: number; col: number; value: CellValue }>();
+  // read as the user overwriting the spill. Numeric keys per sheet: a string
+  // key per cell made a 2M-cell sort spend seconds here.
+  const before = new Map<Worksheet, Map<number, CellValue>>();
   for (const snap of step.before) {
     if (snap.part.kind !== 'cells') continue;
     const ws = snap.part.ws;
-    for (const c of snap.data as CellSnap[]) before.set(`${ws.title}\u0000${c.row}\u0000${c.col}`, { ws, row: c.row, col: c.col, value: c.value });
+    let values = before.get(ws);
+    if (!values) before.set(ws, (values = new Map()));
+    for (const c of snap.data as CellSnap[]) values.set(c.row * COL_KEY_SPAN + c.col, c.value);
   }
   const out: Array<{ ws: Worksheet; row: number; col: number }> = [];
   for (const snap of step.after) {
     if (snap.part.kind !== 'cells') continue;
     const ws = snap.part.ws;
+    const values = before.get(ws);
     for (const c of snap.data as CellSnap[]) {
-      const key = `${ws.title}\u0000${c.row}\u0000${c.col}`;
-      const was = before.get(key);
-      before.delete(key);
-      if (!sameValue(was?.value ?? null, c.value)) out.push({ ws, row: c.row, col: c.col });
+      const key = c.row * COL_KEY_SPAN + c.col;
+      const was = values?.get(key);
+      values?.delete(key);
+      if (!sameValue(was ?? null, c.value)) out.push({ ws, row: c.row, col: c.col });
     }
   }
   // Cells that existed before and are gone after.
-  for (const was of before.values()) if (was.value !== null) out.push({ ws: was.ws, row: was.row, col: was.col });
+  for (const [ws, values] of before) {
+    for (const [key, value] of values) if (value !== null) out.push({ ws, row: Math.floor(key / COL_KEY_SPAN), col: key % COL_KEY_SPAN });
+  }
   return out;
 }
 

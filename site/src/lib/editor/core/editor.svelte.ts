@@ -24,6 +24,7 @@ import { buildColumnAxis, buildRowAxis } from './metrics.ts';
 import { StyleResolver } from './render-style.ts';
 import { currentRange, singleCell, type Selection } from './selection.ts';
 import type { AxisIndex } from './axis.ts';
+import { fitAutoRows } from './autofit.ts';
 
 export interface SheetView {
   selection: Selection;
@@ -137,7 +138,8 @@ export class SpreadsheetEditor {
     this.wb.activeSheetIndex = this.activeSheetIndex;
     syncTableHeaders(this.wb, (ws, row, col) => {
       const cell = getCellAt(ws, row, col);
-      return cell && !isBlank(cell) ? getCellDisplayText(this.wb, cell).trim() : '';
+      // Not trimmed: Excel keeps a header's spaces in the column name.
+      return cell && !isBlank(cell) ? getCellDisplayText(this.wb, cell) : '';
     });
     return workbookToBytes(this.wb);
   }
@@ -230,9 +232,11 @@ export class SpreadsheetEditor {
     let result: T;
     try {
       result = fn(tx);
+      fitAutoRows(this, tx);
     } catch (err) {
-      if (!(err instanceof EditRefusedError)) throw err;
+      // Put back what the step changed before failing, so no half-done edit is left without an undo step.
       tx.rollback();
+      if (!(err instanceof EditRefusedError)) throw err;
       this.onRefused?.(err.reason);
       return undefined;
     }
@@ -257,6 +261,7 @@ export class SpreadsheetEditor {
     } else {
       const changed: CellRef[] = changedCells(step).map(({ ws, row, col }) => ({ sheet: ws.title, row, col }));
       if (changed.length > 0) this.calc.update(changed);
+      if (step.before.some((s) => s.part.kind === 'sheet' && s.part.fields.includes('rowDimensions'))) this.calc.recalculateSubtotals();
     }
     if (step.structural || step.before.some((s) => s.part.kind === 'sheet' && s.part.fields.some((f) => LAYOUT_FIELDS.has(f) || f === 'mergedCells'))) {
       this.layoutVersion++;
