@@ -124,7 +124,13 @@ function numberLiteral(value: number): string {
   return `${mantissa}E${exp < 0 ? '-' : '+'}${Math.abs(exp)}`;
 }
 
-export function toStorageFormula(text: string): string {
+/**
+ * `sheetTitles`, when given, corrects a typed sheet name's case to the real
+ * sheet's (`=sheet1!a1` → `=Sheet1!A1`), as Excel does.
+ */
+export function toStorageFormula(text: string, sheetTitles: readonly string[] = []): string {
+  const titles = new Map(sheetTitles.map((t) => [t.toLowerCase(), t]));
+  const realTitle = (name: string): string => titles.get(name.toLowerCase()) ?? name;
   const tokens = tokenize(text, true);
   const params = parameterNames(tokens);
   const edits: Edit[] = [];
@@ -148,7 +154,10 @@ export function toStorageFormula(text: string): string {
     } else if (t.kind === 'ref' && t.area !== undefined) {
       // Excel stores a reference upper-cased, with a sheet name quoted only
       // when it must be, and its corners ordered: =SUM(A10:A3) → =SUM(A3:A10).
-      const prefix = t.prefix ? renderPrefix(t.prefix) : '';
+      const p = t.prefix;
+      const prefix = p
+        ? renderPrefix(p.external !== undefined ? p : { ...p, sheet: realTitle(p.sheet), ...(p.sheet2 !== undefined ? { sheet2: realTitle(p.sheet2) } : {}) })
+        : '';
       const ref = prefix + renderArea(orderArea(t.area));
       if (ref !== text.slice(t.start, t.end)) edits.push({ start: t.start, end: t.end, text: ref });
     } else if (t.kind === 'bool') {

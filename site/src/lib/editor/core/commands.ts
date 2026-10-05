@@ -56,7 +56,7 @@ export function commitInput(
 ): void {
   const ws = editor.ws;
   const wb = editor.wb;
-  const parsed = parseInput(text, { dateOrder: opts.dateOrder, date1904: wb.date1904 });
+  const parsed = parseInput(text, { dateOrder: opts.dateOrder, date1904: wb.date1904, sheetTitles: wb.sheets.map((s) => s.sheet.title) });
   const targets: Range[] = fill ? fill.ranges.slice() : [{ r1: at.row, c1: at.col, r2: at.row, c2: at.col }];
   editor.transact('Typing', (tx) => {
     for (const range of targets) {

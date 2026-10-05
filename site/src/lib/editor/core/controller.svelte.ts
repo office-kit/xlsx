@@ -695,7 +695,7 @@ export class EditorController {
     if (ref?.kind !== 'worksheet') return undefined;
     const dv = validationAt(ref.sheet, row, col);
     if (!dv || dv.showErrorMessage === false) return undefined;
-    const parsed = parseInput(text, { dateOrder: this.dateOrder(), date1904: this.doc.wb.date1904 });
+    const parsed = parseInput(text, { dateOrder: this.dateOrder(), date1904: this.doc.wb.date1904, sheetTitles: this.doc.wb.sheets.map((s) => s.sheet.title) });
     let value = parsed.value;
     if (value !== null && typeof value === 'object' && !(value instanceof Date) && value.kind === 'formula') {
       // A formula is checked by its result, as Excel does.
