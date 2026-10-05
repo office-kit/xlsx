@@ -16,7 +16,7 @@
 
   function onok(): boolean {
     const err = renameSheetAt(ctl, index, name);
-    if (err === 'invalidSheetName' || err === 'duplicateSheetName') {
+    if (err) {
       notice = t(err);
       return false;
     }

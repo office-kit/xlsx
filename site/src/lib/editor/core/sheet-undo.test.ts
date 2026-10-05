@@ -49,3 +49,11 @@ it('a cut still moves from its own sheet after sheets are reordered', () => {
   expect(getCell(source, 5, 1)?.value).toBe('moved');
   expect(getCell(source, 2, 1)).toBeUndefined();
 });
+
+it('Excel refuses "History" as a sheet name in any case, but not "History1"', () => {
+  const ctl = new EditorController();
+  expect(A.renameSheetAt(ctl, 0, 'history')).toBe('reservedSheetName');
+  expect(A.renameSheetAt(ctl, 0, 'History1')).toBeUndefined();
+  expect(A.sheetNameError(ctl.doc.wb, 'a]b')).toBe('invalidSheetName');
+  expect(A.sheetNameError(ctl.doc.wb, 'history1')).toBe('duplicateSheetName');
+});

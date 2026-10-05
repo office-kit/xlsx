@@ -4,6 +4,7 @@
   // step covering both sheets.
   import { makeDrawing } from '@office-kit/xlsx/drawing';
   import { addChartsheet } from '@office-kit/xlsx/workbook';
+  import { sheetNameError } from '../core/actions.ts';
   import { getEditor } from '../core/context.ts';
   import { t } from '../i18n/i18n.svelte.ts';
   import Dialog from './Dialog.svelte';
@@ -33,8 +34,9 @@
     const chart = item.content.chart;
     if (mode === 'sheet') {
       const title = name.trim();
-      if (!title || taken(title)) {
-        notice = title ? t('chSheetExists', { name: title }) : t('invalidSheetName');
+      const error = sheetNameError(doc.wb, title);
+      if (error) {
+        notice = error === 'duplicateSheetName' ? t('chSheetExists', { name: title }) : t(error);
         return false;
       }
       const moved = doc.transact('Move Chart', (tx) => {

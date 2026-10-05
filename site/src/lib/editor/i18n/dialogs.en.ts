@@ -12,6 +12,7 @@ export const dialogsEn = {
   lastSheet: 'A workbook must contain at least one visible worksheet.',
   invalidSheetName: "That sheet name isn't valid. Names can't be blank, longer than 31 characters, or contain : \\ / ? * [ ].",
   duplicateSheetName: 'That name is already taken. Try a different one.',
+  reservedSheetName: '"History" is a reserved name. Try a different one.',
   invalidName: 'The name that you entered is not valid.',
   duplicateName: 'That name already exists. Names must be unique.',
   statistics: 'Sheets / cells with data / formulas',
