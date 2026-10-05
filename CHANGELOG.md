@@ -1,5 +1,77 @@
 # @office-kit/xlsx
 
+## 0.24.0
+
+### Minor Changes
+
+- [#257](https://github.com/office-kit/xlsx/pull/257) [`924caff`](https://github.com/office-kit/xlsx/commit/924caff2fcef72eb38c3518a4256e0bac50c8fae) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: AutoFilter custom conditions, Top 10 and dynamic (e.g. above average) filters were dropped on load/save; colour and icon filters are now kept verbatim. The sort Excel stores inside `<autoFilter>` and in table parts is kept too (`AutoFilter.sortState`, `TableDefinition.sortState`). Breaking: `FilterColumn` gains `custom`, `top10`, `dynamic` and `raw` variants, so code reading `values` must first check `kind === 'filters'`.
+
+- [#251](https://github.com/office-kit/xlsx/pull/251) [`5633cf7`](https://github.com/office-kit/xlsx/commit/5633cf7f21451c15163d798eb8cb0898d57023ff) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: charts kept their series names and scatter / bubble charts kept both value axes through load and save. Series names (`<c:tx>`) were dropped on load, so legends showed "Series1". The X value axis of a scatter chart was lost and replaced by a default one sharing the Y axis's id. It is now read into the new `PlotArea.xValAx`. Typed series names are written as `<c:v>` instead of an empty-formula reference.
+
+- [#233](https://github.com/office-kit/xlsx/pull/233) [`a2325bf`](https://github.com/office-kit/xlsx/commit/a2325bf37c13f2abd911c0d818db38d321461fb3) Thanks [@baseballyama](https://github.com/baseballyama)! - feat: model drawing shapes, text boxes and connectors, and worksheet sparklines
+
+  - `DrawingItem.content` gains a `shape` kind for `<xdr:sp>` (including text boxes, `textBox: true`) and `<xdr:cxnSp>` (`connector: true`): preset or custom geometry, fill, outline, the theme `style` reference and the text body all round-trip, and `makeShapeDrawingItem` builds one. Shapes the model can't carry faithfully — with a macro, a hyperlink, shape locks or `<xdr:clientData>` flags — are still kept verbatim as `unsupported`. Code that switches on `content.kind` should handle the new `shape` variant; such shapes were previously reported as `unsupported`.
+  - `Worksheet.sparklineGroups` reads and writes Excel 2010 sparklines (`<x14:sparklineGroups>`): line / column / win-loss (`stacked`) type, the high / low / negative / first / last / markers flags, colours, axis settings and the data-range ↔ location pairs. `makeSparklineGroup` applies Excel's default colours. The field is optional (`addWorksheet` sets it to `[]`), so older `Worksheet` literals still compile. Other worksheet `<extLst>` entries are preserved, and the `<extLst>` is now written as the last worksheet child, where the schema requires it.
+  - Breaking for exhaustive matches: a `switch` on `DrawingItem.content.kind` that ends in a `never` check stops compiling until it adds `case 'shape':`. Nothing else in the public types was removed or narrowed.
+  - `@office-kit/xlsx/drawing` now also exports `makePresetGeometry`, `PRESET_SHAPE_NAMES`, `makeLine` and the geometry / line types.
+
+- [#288](https://github.com/office-kit/xlsx/pull/288) [`12b42ee`](https://github.com/office-kit/xlsx/commit/12b42ee09c4c3b6f72695931f2846a98611bed5c) Thanks [@baseballyama](https://github.com/baseballyama)! - feat: `getCellDisplayText` renders Japanese era dates and Japanese-locale names the way Excel does: `[$-411]ggge"年"m"月"d"日"` shows `令和5年3月15日`, and `[$-411]` sections print `aaa` / `ddd` as `水`, `mmm` as `3月` and `AM/PM` as `午前` / `午後`. `isDateFormat` now treats `g` and `aaa` codes as dates.
+
+- [#252](https://github.com/office-kit/xlsx/pull/252) [`b8bf1cc`](https://github.com/office-kit/xlsx/commit/b8bf1cca2b37ecd05e5385273b043d5a90a5602b) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: a `.xlsm` with no macros, or a template, is saved in its own format again. Before, any workbook without a `vbaProject` was saved with the plain `.xlsx` workbook content type, and Excel refused to open the result under its `.xlsm` name ("file format or file extension is not valid"). The new `Workbook.fileFormat` (`'xlsx' | 'xlsm' | 'xltx' | 'xltm'`) is set by `loadWorkbook` and decides the content type on save; a `vbaProject` still makes the file macro-enabled.
+
+- [#260](https://github.com/office-kit/xlsx/pull/260) [`1ddd398`](https://github.com/office-kit/xlsx/commit/1ddd398e624fbdae8a4df67c33095d6a4ad7a778) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: a rotated pie chart (Angle of first slice) lost its rotation on load/save. `PieChart.firstSliceAng` now round-trips, as it already did for doughnuts.
+
+- [#233](https://github.com/office-kit/xlsx/pull/233) [`a2325bf`](https://github.com/office-kit/xlsx/commit/a2325bf37c13f2abd911c0d818db38d321461fb3) Thanks [@baseballyama](https://github.com/baseballyama)! - feat: create and edit PivotTables from a worksheet range
+
+  - `addPivotTable(wb, ws, { source, anchor, rows, columns, filters, values, layout, subtotals, rowGrandTotals, columnGrandTotals })` creates a PivotTable and writes its report cells. Row and column items of a date column are written with that column's date format, so they read as dates rather than serial numbers. Values aggregate with sum / count / average / max / min, report filters take one selected item, and the compact, outline and tabular layouts are supported. `refreshPivotTable` recomputes the report after the definition or source data changes, `removePivotTable` deletes it, and `getPivotTableAt`, `getPivotSourceFields`, `getPivotFieldItems`, `getPivotTableOutputRef` and `nextPivotTableName` help build UIs on top.
+  - `saveWorkbook` writes the pivot cache definition, cache records and pivotTable parts and wires them into `workbook.xml`, the rels and `[Content_Types].xml`. The cache is marked `refreshOnLoad`, so Excel rebuilds the report from the source when the file opens.
+  - `loadWorkbook` now reads a pivot back into `Worksheet.pivotTables` when the model can hold all of it — every pivot this library writes, and plain Excel pivots. Pivots that use anything the model lacks (hidden items, grouping, calculated fields, custom styles or number formats, …) are still carried through byte for byte, and `listPassthroughPivotTables` describes them by field name. A loaded pivot that is lifted into the model is regenerated on save rather than copied, so its `wb.pivotCaches` entry and its passthrough parts no longer appear after load.
+  - `renameSheet` now re-points PivotTable sources that name the renamed sheet.
+
+- [#233](https://github.com/office-kit/xlsx/pull/233) [`a2325bf`](https://github.com/office-kit/xlsx/commit/a2325bf37c13f2abd911c0d818db38d321461fb3) Thanks [@baseballyama](https://github.com/baseballyama)! - feat: `SheetView.showOutlineSymbols` reads and writes the sheet view's outline-symbol visibility (Excel's Ctrl+8 toggle)
+
+- [#259](https://github.com/office-kit/xlsx/pull/259) [`6bfb01b`](https://github.com/office-kit/xlsx/commit/6bfb01b94b39f5f567ec23e55fcd94138e41f3e0) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: a split or frozen sheet lost all but its first `<selection>`, so after a round-trip Excel reopened on the frozen corner instead of the selected cell. Breaking: `SheetView.selection` is now `SheetView.selections` (one per pane); `activeSelection(view)` returns the active pane's.
+
+- [#233](https://github.com/office-kit/xlsx/pull/233) [`a2325bf`](https://github.com/office-kit/xlsx/commit/a2325bf37c13f2abd911c0d818db38d321461fb3) Thanks [@baseballyama](https://github.com/baseballyama)! - feat: read and write Excel threaded comments
+
+  - `Worksheet.threadedComments` models Excel 365 threaded comments (`xl/threadedComments/`): cell, author, creation time, text, replies via `parentId`, the resolved (`done`) state and @mentions. `makeThreadedComment` from `@office-kit/xlsx/worksheet` builds one with a fresh id.
+  - `Workbook.persons` models the comment authors (`xl/persons/person.xml`); `makePerson` from `@office-kit/xlsx/workbook` builds one.
+  - `Workbook.persons` and `Worksheet.threadedComments` are optional, so `Workbook` / `Worksheet` object literals written for earlier versions still compile. `createWorkbook` and `addWorksheet` set them to `[]`; when they are absent the workbook has no threaded comments.
+  - On save, each thread also gets the legacy "[Threaded comment]" note and VML shape Excel writes, so older readers still show it and Excel opens the file without repair. On load, those placeholders are recognised and no longer show up in `Worksheet.legacyComments`.
+  - `Workbook.authors` is deprecated: it was never read or written, and threaded-comment authors are now in `Workbook.persons`. It is still there, so existing code keeps compiling.
+  - Threaded-comment and person parts are now read into `Worksheet.threadedComments` and `Workbook.persons` instead of `Workbook.passthrough`. They are still written back on save; code that looked them up in `passthrough` no longer finds them there.
+  - `duplicateSheet` gives the copied threads and their @mentions new ids, since Excel rejects ids repeated across sheets.
+
+### Patch Changes
+
+- [#293](https://github.com/office-kit/xlsx/pull/293) [`cc942a9`](https://github.com/office-kit/xlsx/commit/cc942a99f80f619fd27b77f4f42e78e9d13d4cc2) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: built-in number formats 44 (Accounting) and 47 now carry the codes Excel renders. `getCellDisplayText` showed Accounting cells as a bare number (`1234.5` instead of `$1,234.50`), and id 47 as `0101.4` instead of `01:01.4`.
+
+- [#236](https://github.com/office-kit/xlsx/pull/236) [`4832c6f`](https://github.com/office-kit/xlsx/commit/4832c6f02b03217a12b9314da94c40952b339471) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: Excel no longer asks to repair workbooks with histogram, Pareto, box & whisker, waterfall, funnel, treemap or sunburst charts
+
+  - Each `cx:` chart is now saved with its chart style and color parts. Excel refused a chartex chart without them and removed it on repair.
+  - Histogram and Pareto bin settings are written the way the schema defines them. `binCount` / `binSize` become child elements, and automatic binning writes nothing. They used to be written as attributes, which Excel rejected.
+  - The box & whisker quartile method is written as `<cx:statistics quartileMethod="…"/>`. It used to be `<cx:quartileMethod val="…"/>`, which Excel rejected.
+  - Re-saving a workbook that Excel wrote with one of these charts no longer drops the `xmlns:cx1` declaration that `<mc:Choice Requires="cx1">` refers to. The same applies to any prefix named in `Requires`, `mc:Ignorable`, `mc:MustUnderstand` or `mc:ProcessContent` inside content kept verbatim.
+
+- [#233](https://github.com/office-kit/xlsx/pull/233) [`a2325bf`](https://github.com/office-kit/xlsx/commit/a2325bf37c13f2abd911c0d818db38d321461fb3) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: drop the `fast-xml-parser` runtime dependency, shrinking `@office-kit/xlsx/io`
+
+  - `parseXml` now uses a small built-in lexer instead of `fast-xml-parser`, which removes about 74 kB minified (about 20 kB brotli) from bundles that load workbooks. Parse results are unchanged: the new lexer is checked against `fast-xml-parser` on every XML part of the test fixtures.
+  - A payload whose only top-level content is text followed by a stray closing tag (for example `x</q>`) used to throw a raw `RangeError` (stack overflow). It now throws `OpenXmlSchemaError` like any other unreadable payload.
+
+- [#258](https://github.com/office-kit/xlsx/pull/258) [`a6c8e48`](https://github.com/office-kit/xlsx/commit/a6c8e48d131c6ecf86ed7f739b2797154838d42d) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: `addDefinedName` and `addTable` / `addExcelTable` accepted names Excel rejects (`T1`, `R2C3`, names with spaces), producing a file Excel offered to repair. They now throw `OpenXmlSchemaError`.
+
+- [#261](https://github.com/office-kit/xlsx/pull/261) [`60a654f`](https://github.com/office-kit/xlsx/commit/60a654f21accc1f0e0b6c594b545f64fae213514) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: workbooks with form controls (and other Office 2010+ extensions) came back with `mc:Choice Requires="a14"` pointing at a prefix that had been renamed to `ns0`, so Excel offered to repair the file. Excel's extension namespaces now keep their usual prefixes (`a14`, `x14ac`, `xr`, `c16`, …).
+
+- [#279](https://github.com/office-kit/xlsx/pull/279) [`b597e55`](https://github.com/office-kit/xlsx/commit/b597e555f0303b971d320a7da9c7c869ff8381dd) Thanks [@baseballyama](https://github.com/baseballyama)! - perf: `mergeCells` and `unmergeCells` compare ranges as numbers instead of building an A1 string for every existing merge, so adding many merges to a sheet is several times faster (10,000 merges: 2.5 s → 0.6 s).
+
+- [#266](https://github.com/office-kit/xlsx/pull/266) [`faab8b5`](https://github.com/office-kit/xlsx/commit/faab8b533498ac75405a9443349e87e1d64bb8aa) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: `getCellDisplayText` ignored comparison sections (`[<1000]0;[<1000000]0.0,"K";0.0,,"M"` showed `12345` instead of `12.3K`), and showed serials 0 and 60 as 12/31/1899 and 2/28/1900 instead of Excel's 1/0/1900 and 2/29/1900.
+
+- [#288](https://github.com/office-kit/xlsx/pull/288) [`12b42ee`](https://github.com/office-kit/xlsx/commit/12b42ee09c4c3b6f72695931f2846a98611bed5c) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: `getCellDisplayText` keeps the decimal point when a format shows no fraction digits, as Excel does (`0.` shows `2.`, `#.##` shows `5.` for 5)
+
+- [#253](https://github.com/office-kit/xlsx/pull/253) [`d8cb962`](https://github.com/office-kit/xlsx/commit/d8cb962bdc360452493cdba4a757751bb8eda5fc) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: table column names with a line break and table column formulas survived load and save. Excel writes a line break in a header as `_x000a_`, and the name was kept with that sequence, so it no longer matched the header cell. Calculated-column (`<calculatedColumnFormula>`) and custom total-row (`<totalsRowFormula>`) formulas were dropped on load and never written.
+
+- [#285](https://github.com/office-kit/xlsx/pull/285) [`f02a082`](https://github.com/office-kit/xlsx/commit/f02a08261d118c80584f9f229d6c7ee3327f5f2e) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: `saveWorkbook` / `workbookToBytes` now throw `OpenXmlSchemaError` when a conditional-formatting rule's `dxfId` points past the stylesheet's differential formats. Such a file was written before, and Excel silently refused to open it. Add the format with `addDxf(wb.styles, ...)` first.
+
 ## 0.23.4
 
 ### Patch Changes
