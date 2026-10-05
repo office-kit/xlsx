@@ -41,10 +41,12 @@ export const BUILTIN_FORMATS: Readonly<Record<number, string>> = Object.freeze({
   41: '_(* #,##0_);_(* \\(#,##0\\);_(* "-"_);_(@_)',
   42: '_("$"* #,##0_);_("$"* \\(#,##0\\);_("$"* "-"_);_(@_)',
   43: '_(* #,##0.00_);_(* \\(#,##0.00\\);_(* "-"??_);_(@_)',
-  44: '_("$"* #,##0.00_)_("$"* \\(#,##0.00\\)_("$"* "-"??_)_(@_)',
+  // ECMA-376 prints 44 without its section separators and 47 without the colon;
+  // these are the codes Excel actually renders for the two ids.
+  44: '_("$"* #,##0.00_);_("$"* \\(#,##0.00\\);_("$"* "-"??_);_(@_)',
   45: 'mm:ss',
   46: '[h]:mm:ss',
-  47: 'mmss.0',
+  47: 'mm:ss.0',
   48: '##0.0E+0',
   49: '@',
 });
