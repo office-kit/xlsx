@@ -176,7 +176,7 @@ describe('Comment VML is not captured as pass-through', () => {
 
 describe('Modern Excel parts pass-through', () => {
   it(
-    'round-trips externalLinks / richData / threadedComments / timelines / workbookCache verbatim',
+    'round-trips externalLinks / richData / timelines / workbookCache verbatim',
     async () => {
       const wb = createWorkbook();
       addWorksheet(wb, 'Sheet1');
@@ -201,11 +201,6 @@ describe('Modern Excel parts pass-through', () => {
         {
           path: 'xl/richData/rdRichValue.xml',
           ct: 'application/vnd.ms-excel.rdrichvalue+xml',
-        },
-        // Modern threaded comments (separate from legacy comments).
-        {
-          path: 'xl/threadedComments/threadedComment1.xml',
-          ct: 'application/vnd.ms-excel.threadedcomments+xml',
         },
         // Pivot timeline filter.
         {

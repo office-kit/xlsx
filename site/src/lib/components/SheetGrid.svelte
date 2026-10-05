@@ -12,7 +12,6 @@
 
   let activeIndex = $state(0);
   let picked = $state<Position | undefined>();
-  // eslint-disable-next-line prefer-const -- reassigned by `bind:this` in template
   let body = $state<HTMLTableSectionElement | undefined>();
 
   // The sheets are replaced on every REPL run, so the tab that was open may be gone.

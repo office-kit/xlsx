@@ -1,0 +1,1050 @@
+# Microsoft Excel for Mac 16.113.3 dialogs and context menus, dumped via macOS Accessibility (AXUIElement) on 2026-10-03.
+# Long list rows truncated to 25. Self-nesting range-picker TextFields collapsed.
+
+##### DIALOG: Format > Cells... (Cmd+1)
+---- TAB Number
+  Window "Format Cells"
+    TabGroup
+      RadioButton "Number" ="1"
+      RadioButton "Alignment" ="0"
+      RadioButton "Font" ="0"
+      RadioButton "Border" ="0"
+      RadioButton "Fill" ="0"
+      RadioButton "Protection" ="0"
+      StaticText ="Category:"
+      ScrollArea
+        Table
+          Row
+            StaticText ="General"
+          Row
+            StaticText ="Number"
+          Row
+            StaticText ="Currency"
+          Row
+            StaticText ="Accounting"
+          Row
+            StaticText ="Date"
+          Row
+            StaticText ="Time"
+          Row
+            StaticText ="Percentage"
+          Row
+            StaticText ="Fraction"
+          Row
+            StaticText ="Scientific"
+          Row
+            StaticText ="Text"
+          Row
+            StaticText ="Special"
+          Row
+            StaticText ="Custom"
+          Column
+      Group
+        StaticText
+        StaticText
+      StaticText ="General format cells have no specific number format."
+      StaticText ="Sample"
+    Button "OK"
+    Button "Cancel"
+    StaticText ="Format Cells"
+---- TAB Alignment
+  Window "Format Cells"
+    TabGroup
+      RadioButton "Number" ="0"
+      RadioButton "Alignment" ="1"
+      RadioButton "Font" ="0"
+      RadioButton "Border" ="0"
+      RadioButton "Fill" ="0"
+      RadioButton "Protection" ="0"
+      Group
+        CheckBox "Merge cells" ="0"
+        CheckBox "Shrink to fit" ="0"
+        CheckBox "Wrap text" ="0"
+        StaticText ="Text control:"
+      Group
+        TextField ="0"
+        Incrementor ="0"
+          Button
+          Button
+        Image
+        StaticText ="Degrees:"
+        CheckBox "Text" ="0"
+        StaticText ="Orientation:"
+      StaticText ="Horizontal alignment:"
+      PopUpButton ="General"
+      StaticText ="Vertical alignment: "
+      PopUpButton ="Center"
+      StaticText ="Indent:" (disabled)
+      TextField ="0"
+      Incrementor ="0"
+        Button
+        Button
+      CheckBox "Justify distributed" ="0" (disabled)
+    Button "OK"
+    Button "Cancel"
+    StaticText ="Format Cells"
+---- TAB Font
+  Window "Format Cells"
+    TabGroup
+      RadioButton "Number" ="0"
+      RadioButton "Alignment" ="0"
+      RadioButton "Font" ="1"
+      RadioButton "Border" ="0"
+      RadioButton "Fill" ="0"
+      RadioButton "Protection" ="0"
+      StaticText ="Color:"
+      StaticText ="Font:"
+      StaticText ="Font style:"
+      ScrollArea
+        Table
+          Row
+            StaticText ="游ゴシック Light (Headings)"
+          Row
+            StaticText ="游ゴシック (Body)"
+          Row
+            StaticText ="BIZ UDGothic"
+          Row
+            StaticText ="BIZ UDMincho"
+          Row
+            StaticText ="HGGothicE"
+          Row
+            StaticText ="HGMaruGothicMPRO"
+          Row
+            StaticText ="HGMinchoE"
+          Row
+            StaticText ="HGPGothicE"
+          Row
+            StaticText ="HGPMinchoE"
+          Row
+            StaticText ="HGPSoeiKakugothicUB"
+          Row
+            StaticText ="HGPｺﾞｼｯｸE"
+          Row
+            StaticText ="HGP創英角ｺﾞｼｯｸUB"
+          Row
+            StaticText ="HGP明朝E"
+          Row
+            StaticText ="HGSGothicE"
+          Row
+            StaticText ="HGSMinchoE"
+          Row
+            StaticText ="HGSoeiKakugothicUB"
+          Row
+            StaticText ="HGSSoeiKakugothicUB"
+          Row
+            StaticText ="HGSｺﾞｼｯｸE"
+          Row
+            StaticText ="HGS創英角ｺﾞｼｯｸUB"
+          Row
+            StaticText ="HGS明朝E"
+          Row
+            StaticText ="HGｺﾞｼｯｸE"
+          Row
+            StaticText ="HG丸ｺﾞｼｯｸM-PRO"
+          Row
+            StaticText ="HG創英角ｺﾞｼｯｸUB"
+          Row
+            StaticText ="HG明朝E"
+          Row
+            StaticText ="Hiragino Maru Gothic ProN W4"
+          ...(765 more rows)
+        ScrollBar ="0"
+          ValueIndicator ="0"
+          Button
+          Button
+          Button
+          Button
+      TextField ="游ゴシック (Body)"
+      StaticText ="Size:"
+      ScrollArea
+        Table
+          Row
+            TextField ="6"
+          Row
+            TextField ="8"
+          Row
+            TextField ="9"
+          Row
+            TextField ="10"
+          Row
+            TextField ="11"
+          Row
+            TextField ="12"
+          Row
+            TextField ="14"
+          Row
+            TextField ="16"
+          Row
+            TextField ="18"
+          Row
+            TextField ="20"
+          Row
+            TextField ="22"
+          Row
+            TextField ="24"
+          Row
+            TextField ="26"
+          Row
+            TextField ="28"
+          Row
+            TextField ="36"
+          Row
+            TextField ="48"
+          Row
+            TextField ="72"
+          Column
+        ScrollBar ="0.03240740740740741"
+          ValueIndicator ="0.03240740740740741"
+          Button
+          Button
+          Button
+          Button
+      TextField ="12"
+      CheckBox "Normal font" ="1"
+      ScrollArea
+        Table
+          Row
+            StaticText ="Regular"
+          Row
+            StaticText ="Italic"
+          Row
+            StaticText ="Bold"
+          Row
+            StaticText ="Bold Italic"
+          Column
+      TextField ="Regular"
+      PopUpButton ="None"
+      Group
+        CheckBox "Strikethrough" ="0"
+        CheckBox "Superscript" ="0"
+        CheckBox "Subscript" ="0"
+        StaticText ="Effects:"
+      Group
+        Image (disabled)
+        StaticText ="Preview"
+      MenuButton
+      StaticText ="Underline:"
+    Button "OK"
+    Button "Cancel"
+    StaticText ="Format Cells"
+---- TAB Border
+  Window "Format Cells"
+    TabGroup
+      RadioButton "Number" ="0"
+      RadioButton "Alignment" ="0"
+      RadioButton "Font" ="0"
+      RadioButton "Border" ="1"
+      RadioButton "Fill" ="0"
+      RadioButton "Protection" ="0"
+      Group
+        Button {Left}
+        Button {Top}
+        Button {Bottom}
+        Button {Veritical} (disabled)
+        Button {Horizontal} (disabled)
+        Button {Diagonal Up}
+        Button {Right}
+        Image
+        Button {Diagonal Down}
+        StaticText ="Border:"
+      StaticText
+      Group
+        Button {None}
+        Button {Inside} (disabled)
+        StaticText ="None"
+        StaticText ="Inside" (disabled)
+        StaticText ="Outline"
+        Button {Outline}
+        StaticText ="Presets:"
+      Group
+        Image
+        StaticText ="Line Color:"
+        RadioButton {None} ="0"
+        RadioButton {Hair} ="0"
+        RadioButton {Dotted} ="0"
+        RadioButton {Dash Dot Dot} ="0"
+        RadioButton {Dash Dot} ="0"
+        RadioButton {Dashed} ="0"
+        RadioButton {Thin} ="1"
+        RadioButton {Medium Dash Dot Dot} ="0"
+        RadioButton {Slanted Dash Dot} ="0"
+        RadioButton {Medium Dash Dot} ="0"
+        RadioButton {Medium Dashed} ="0"
+        RadioButton {Medium} ="0"
+        RadioButton {Thick} ="0"
+        RadioButton {Double} ="0"
+        MenuButton
+        StaticText ="Line Style:"
+    Button "OK"
+    Button "Cancel"
+    StaticText ="Format Cells"
+---- TAB Fill
+  Window "Format Cells"
+    TabGroup
+      RadioButton "Number" ="0"
+      RadioButton "Alignment" ="0"
+      RadioButton "Font" ="0"
+      RadioButton "Border" ="0"
+      RadioButton "Fill" ="1"
+      RadioButton "Protection" ="0"
+      Group
+        StaticText ="Background color:"
+        MenuButton
+        StaticText
+      Group
+        StaticText ="Pattern style:"
+        StaticText ="Pattern color:"
+        MenuButton
+        MenuButton
+        StaticText
+      Group
+        Image (disabled)
+        StaticText ="Sample"
+    Button "OK"
+    Button "Cancel"
+    StaticText ="Format Cells"
+---- TAB Protection
+  Window "Format Cells"
+    TabGroup
+      RadioButton "Number" ="0"
+      RadioButton "Alignment" ="0"
+      RadioButton "Font" ="0"
+      RadioButton "Border" ="0"
+      RadioButton "Fill" ="0"
+      RadioButton "Protection" ="1"
+      CheckBox "Locked" ="1"
+      CheckBox "Hidden" ="0"
+      StaticText
+    Button "OK"
+    Button "Cancel"
+    StaticText ="Format Cells"
+
+##### DIALOG: Data > Sort...
+Window "Sort"
+  StaticText ="Add levels to sort by:"
+  ScrollArea
+    Table
+      Row
+        StaticText ="Sort by"
+        PopUpButton
+        PopUpButton ="Values"
+        PopUpButton ="A to Z"
+        PopUpButton (disabled)
+      Column
+      Column
+      Column
+      Column
+      Column
+      Group
+        Button
+        Button "Column"
+        Button "Sort On"
+        Button "Order"
+        Button "Color/Icon"
+  CheckBox "My list has headers" ="1"
+  Button "Options..." -- Option+O
+  Button "Cancel"
+  Button "OK"
+  Button {add level} -- Add Level
+  Button {remove level} -- Remove Level
+  Button "Copy" {copy level} -- Copy Level
+  Button (disabled)
+  Button
+    Group
+  Button (disabled)
+  StaticText ="Sort"
+##### DIALOG: Data > Validation...
+Window "Data Validation"
+  TabGroup
+    RadioButton "Settings" ="1"
+    RadioButton "Input Message" ="0"
+    RadioButton "Error Alert" ="0"
+    RadioButton "IME Mode" ="0"
+    StaticText ="Validation criteria"
+    StaticText ="Allow:"
+    StaticText ="Data:" (disabled)
+    CheckBox "Ignore blank" ="1" (disabled)
+    CheckBox "Apply these changes to all other cells with the same settings" ="0" (disabled)
+    PopUpButton ="between" (disabled)
+    PopUpButton ="Any value"
+  Button "Clear All"
+  Button "OK"
+  Button "Cancel"
+  StaticText ="Data Validation"
+---- TAB Settings
+  Window "Data Validation"
+    TabGroup
+      RadioButton "Settings" ="1"
+      RadioButton "Input Message" ="0"
+      RadioButton "Error Alert" ="0"
+      RadioButton "IME Mode" ="0"
+      StaticText ="Validation criteria"
+      StaticText ="Allow:"
+      StaticText ="Data:" (disabled)
+      CheckBox "Ignore blank" ="1" (disabled)
+      CheckBox "Apply these changes to all other cells with the same settings" ="0" (disabled)
+      PopUpButton ="between" (disabled)
+      PopUpButton ="Any value"
+    Button "Clear All"
+    Button "OK"
+    Button "Cancel"
+    StaticText ="Data Validation"
+---- TAB Input Message
+  Window "Data Validation"
+    TabGroup
+      RadioButton "Settings" ="0"
+      RadioButton "Input Message" ="1"
+      RadioButton "Error Alert" ="0"
+      RadioButton "IME Mode" ="0"
+      CheckBox "Show input message when cell is selected" ="1"
+      StaticText ="Title:"
+      TextField
+      StaticText ="Input message:"
+      StaticText ="When cell is selected, show this input message:"
+      TextField
+    Button "Clear All"
+    Button "OK"
+    Button "Cancel"
+    StaticText ="Data Validation"
+---- TAB Error Alert
+  Window "Data Validation"
+    TabGroup
+      RadioButton "Settings" ="0"
+      RadioButton "Input Message" ="0"
+      RadioButton "Error Alert" ="1"
+      RadioButton "IME Mode" ="0"
+      CheckBox "Show error alert after invalid data is entered" ="1"
+      StaticText ="When user enters invalid data, show this error alert:"
+      StaticText ="Style:"
+      StaticText ="Title:"
+      TextField
+      StaticText ="Error message:"
+      Image
+      PopUpButton ="Stop"
+      TextField
+    Button "Clear All"
+    Button "OK"
+    Button "Cancel"
+    StaticText ="Data Validation"
+---- TAB IME Mode
+  Window "Data Validation"
+    TabGroup
+      RadioButton "Settings" ="0"
+      RadioButton "Input Message" ="0"
+      RadioButton "Error Alert" ="0"
+      RadioButton "IME Mode" ="1"
+      StaticText ="Mode:"
+      PopUpButton ="No Control"
+    Button "Clear All"
+    Button "OK"
+    Button "Cancel"
+    StaticText ="Data Validation"
+##### DIALOG: Edit > Find > Find...
+Window "Find & Replace"
+  TabGroup
+    RadioButton "Find" ="1"
+    RadioButton "Replace" ="0"
+  StaticText ="0 cell(s) found"
+  MenuButton "  "
+  StaticText ="Find what:"
+  TextField
+  Button "Find All"
+  Button "Next"
+  Button "Options" -- Options Collapsed
+  Button "Close"
+  Button "Previous"
+  Button
+  Button
+    Group
+  Button (disabled)
+  StaticText ="Find & Replace"
+##### DIALOG: Edit > Find > Replace...
+Window "Find & Replace"
+  TabGroup
+    RadioButton "Find" ="0"
+    RadioButton "Replace" ="1"
+  StaticText ="0 cell(s) found"
+  MenuButton "  "
+  StaticText ="Find what:"
+  TextField
+  MenuButton "  "
+  StaticText ="Replace with:"
+  TextField
+  Button "Replace"
+  Button "Replace All"
+  Button "Find All"
+  Button "Next"
+  Button "Options" -- Options Collapsed
+  Button "Close"
+  Button "Previous"
+  Button
+  Button
+    Group
+  Button (disabled)
+  StaticText ="Find & Replace"
+##### DIALOG: Edit > Find > Go To...
+Window "Go To"
+  Button "Special..."
+  Button "OK"
+  Button "Cancel"
+  StaticText ="Reference:"
+  StaticText ="Go to:"
+  TextField
+  ScrollArea
+    Table
+      Column
+  StaticText ="Go To"
+##### DIALOG: Insert > Cells...
+Window "Insert"
+  RadioGroup
+    RadioButton "Shift cells right" ="0"
+    RadioButton "Shift cells down" ="1"
+    RadioButton "Entire row" ="0"
+    RadioButton "Entire column" ="0"
+  Button "OK"
+  Button "Cancel"
+  StaticText ="Insert"
+##### DIALOG: Edit > Delete...
+Window "Delete"
+  RadioGroup
+    RadioButton "Shift cells left" ="0"
+    RadioButton "Shift cells up" ="1"
+    RadioButton "Entire row" ="0"
+    RadioButton "Entire column" ="0"
+  Button "OK"
+  Button "Cancel"
+  StaticText ="Delete"
+##### DIALOG: File > Page Setup...
+Window "Page Setup"
+  Button "Cancel"
+  Button "OK"
+  TabGroup
+    RadioButton "Page" ="1"
+    RadioButton "Margins" ="0"
+    RadioButton "Header/Footer" ="0"
+    RadioButton "Sheet" ="0"
+    StaticText ="Orientation"
+    StaticText ="Scaling"
+    RadioGroup
+      RadioButton "Adjust to:" ="1"
+      RadioButton "Fit to:" ="0"
+    StaticText ="First page number:"
+    TextField ="100"
+    Incrementor ="0"
+      Button
+      Button
+    StaticText ="% normal size"
+    TextField ="1" (disabled)
+    Incrementor ="0" (disabled)
+      Button
+      Button
+    StaticText ="Pages wide by"
+    TextField ="1" (disabled)
+    Incrementor ="0" (disabled)
+      Button
+      Button
+    TextField ="Auto"
+    StaticText ="Tall"
+    Image
+    Image
+    RadioButton "Portrait" ="1"
+    RadioButton "Landscape" ="0"
+  StaticText ="Page Setup"
+---- TAB Page
+  Window "Page Setup"
+    Button "Cancel"
+    Button "OK"
+    TabGroup
+      RadioButton "Page" ="1"
+      RadioButton "Margins" ="0"
+      RadioButton "Header/Footer" ="0"
+      RadioButton "Sheet" ="0"
+      StaticText ="Orientation"
+      StaticText ="Scaling"
+      RadioGroup
+        RadioButton "Adjust to:" ="1"
+        RadioButton "Fit to:" ="0"
+      StaticText ="First page number:"
+      TextField ="100"
+      Incrementor ="0"
+        Button
+        Button
+      StaticText ="% normal size"
+      TextField ="1" (disabled)
+      Incrementor ="0" (disabled)
+        Button
+        Button
+      StaticText ="Pages wide by"
+      TextField ="1" (disabled)
+      Incrementor ="0" (disabled)
+        Button
+        Button
+      TextField ="Auto"
+      StaticText ="Tall"
+      Image
+      Image
+      RadioButton "Portrait" ="1"
+      RadioButton "Landscape" ="0"
+    StaticText ="Page Setup"
+---- TAB Margins
+  Window "Page Setup"
+    Button "Cancel"
+    Button "OK"
+    TabGroup
+      RadioButton "Page" ="0"
+      RadioButton "Margins" ="1"
+      RadioButton "Header/Footer" ="0"
+      RadioButton "Sheet" ="0"
+      StaticText ="Header:"
+      StaticText ="Right:"
+      StaticText ="Footer:"
+      StaticText ="Bottom:"
+      StaticText ="Center on page:"
+      CheckBox "Horizontally" ="0"
+      CheckBox "Vertically" ="0"
+      TextField ="0.75\""
+      TextField ="0.75\""
+      TextField ="0.7\""
+      TextField ="0.7\""
+      TextField ="0.3\""
+      TextField ="0.3\""
+      Incrementor ="0"
+        Button
+        Button
+      Incrementor ="0"
+        Button
+        Button
+      Incrementor ="0"
+        Button
+        Button
+      Incrementor ="0"
+        Button
+        Button
+      Incrementor ="0"
+        Button
+        Button
+      Incrementor ="0"
+        Button
+        Button
+      Image
+      StaticText ="Left:"
+      StaticText ="Top:"
+    StaticText ="Page Setup"
+---- TAB Header/Footer
+  Window "Page Setup"
+    Button "Cancel"
+    Button "OK"
+    TabGroup
+      RadioButton "Page" ="0"
+      RadioButton "Margins" ="0"
+      RadioButton "Header/Footer" ="1"
+      RadioButton "Sheet" ="0"
+      StaticText ="Header:"
+      StaticText ="Footer:"
+      Button "Custom Header..."
+      Button "Custom Footer..."
+      PopUpButton ="(none)"
+      PopUpButton ="(none)"
+      Image
+      Image
+      CheckBox "Different odd and even pages" ="0"
+      CheckBox "Different first page" ="0"
+      CheckBox "Scale with document" ="1"
+      CheckBox "Align with page margins" ="1"
+    StaticText ="Page Setup"
+---- TAB Sheet
+  Window "Page Setup"
+    Button "Cancel"
+    Button "OK"
+    TabGroup
+      RadioButton "Page" ="0"
+      RadioButton "Margins" ="0"
+      RadioButton "Header/Footer" ="0"
+      RadioButton "Sheet" ="1"
+      StaticText ="Print Titles"
+      StaticText ="Rows to repeat at top:"
+      StaticText ="Columns to repeat at left:"
+      StaticText ="Print Options"
+      StaticText ="Print area:"
+      CheckBox "Gridlines" ="0"
+      CheckBox "Row and column headings" ="0"
+      CheckBox "Black and white" ="0"
+      StaticText ="Page Order"
+      RadioGroup
+        RadioButton "Down, then over" ="1"
+        RadioButton "Over, then down" ="0"
+      Image
+      TextField -- Select a range on the sheet
+        TextField -- Select a range on the sheet
+          TextField -- Select a range on the sheet
+            TextField -- Select a range on the sheet
+            Button {Collapse Dialog}
+          Button {Collapse Dialog}
+        Button {Collapse Dialog}
+      Button {Collapse Dialog}
+      TextField -- Select a range on the sheet
+        TextField -- Select a range on the sheet
+          TextField -- Select a range on the sheet
+            TextField -- Select a range on the sheet
+            Button {Collapse Dialog}
+          Button {Collapse Dialog}
+        Button {Collapse Dialog}
+      Button {Collapse Dialog}
+      TextField -- Select a range on the sheet
+        TextField -- Select a range on the sheet
+          TextField -- Select a range on the sheet
+            TextField -- Select a range on the sheet
+            Button {Collapse Dialog}
+          Button {Collapse Dialog}
+        Button {Collapse Dialog}
+      Button {Collapse Dialog}
+      PopUpButton ="(None)"
+      CheckBox "Draft quality" ="0"
+      StaticText ="Comments:"
+    StaticText ="Page Setup"
+---- TAB 
+  Window "Page Setup"
+    Button "Cancel"
+    Button "OK"
+    TabGroup
+      RadioButton "Page" ="0"
+      RadioButton "Margins" ="0"
+      RadioButton "Header/Footer" ="0"
+      RadioButton "Sheet" ="1"
+      StaticText ="Print Titles"
+      StaticText ="Rows to repeat at top:"
+      StaticText ="Columns to repeat at left:"
+      StaticText ="Print Options"
+      StaticText ="Print area:"
+      CheckBox "Gridlines" ="0"
+      CheckBox "Row and column headings" ="0"
+      CheckBox "Black and white" ="0"
+      StaticText ="Page Order"
+      RadioGroup
+        RadioButton "Down, then over" ="1"
+        RadioButton "Over, then down" ="0"
+      Image
+      TextField -- Select a range on the sheet
+        TextField -- Select a range on the sheet
+          TextField -- Select a range on the sheet
+            TextField -- Select a range on the sheet
+            Button {Collapse Dialog}
+          Button {Collapse Dialog}
+        Button {Collapse Dialog}
+      Button {Collapse Dialog}
+      TextField -- Select a range on the sheet
+        TextField -- Select a range on the sheet
+          TextField -- Select a range on the sheet
+            TextField -- Select a range on the sheet
+            Button {Collapse Dialog}
+          Button {Collapse Dialog}
+        Button {Collapse Dialog}
+      Button {Collapse Dialog}
+      TextField -- Select a range on the sheet
+        TextField -- Select a range on the sheet
+          TextField -- Select a range on the sheet
+            TextField -- Select a range on the sheet
+            Button {Collapse Dialog}
+          Button {Collapse Dialog}
+        Button {Collapse Dialog}
+      Button {Collapse Dialog}
+      PopUpButton ="(None)"
+      CheckBox "Draft quality" ="0"
+      StaticText ="Comments:"
+    StaticText ="Page Setup"
+---- TAB 
+  Window "Page Setup"
+    Button "Cancel"
+    Button "OK"
+    TabGroup
+      RadioButton "Page" ="0"
+      RadioButton "Margins" ="0"
+      RadioButton "Header/Footer" ="0"
+      RadioButton "Sheet" ="1"
+      StaticText ="Print Titles"
+      StaticText ="Rows to repeat at top:"
+      StaticText ="Columns to repeat at left:"
+      StaticText ="Print Options"
+      StaticText ="Print area:"
+      CheckBox "Gridlines" ="0"
+      CheckBox "Row and column headings" ="0"
+      CheckBox "Black and white" ="0"
+      StaticText ="Page Order"
+      RadioGroup
+        RadioButton "Down, then over" ="1"
+        RadioButton "Over, then down" ="0"
+      Image
+      TextField -- Select a range on the sheet
+        TextField -- Select a range on the sheet
+          TextField -- Select a range on the sheet
+            TextField -- Select a range on the sheet
+            Button {Collapse Dialog}
+          Button {Collapse Dialog}
+        Button {Collapse Dialog}
+      Button {Collapse Dialog}
+      TextField -- Select a range on the sheet
+        TextField -- Select a range on the sheet
+          TextField -- Select a range on the sheet
+            TextField -- Select a range on the sheet
+            Button {Collapse Dialog}
+          Button {Collapse Dialog}
+        Button {Collapse Dialog}
+      Button {Collapse Dialog}
+      TextField -- Select a range on the sheet
+        TextField -- Select a range on the sheet
+          TextField -- Select a range on the sheet
+            TextField -- Select a range on the sheet
+            Button {Collapse Dialog}
+          Button {Collapse Dialog}
+        Button {Collapse Dialog}
+      Button {Collapse Dialog}
+      PopUpButton ="(None)"
+      CheckBox "Draft quality" ="0"
+      StaticText ="Comments:"
+    StaticText ="Page Setup"
+##### DIALOG: Format > Conditional Formatting...
+Window "Manage Rules"
+  StaticText ="Show formatting rules for:"
+  PopUpButton ="Current Selection"
+  Button {Change Rule Order down} (disabled)
+  StaticText ="Change rule order:"
+  Button "OK"
+  Button "Edit Rule..." (disabled)
+  Button "-" {remove} (disabled)
+  Button "+" {add}
+  Button "Duplicate Rule" (disabled)
+  Button "Cancel"
+  StaticText ="Applies to:" (disabled)
+  Button -- Cancel (disabled)
+  Button -- Enter (disabled)
+  TextField -- Select a range on the sheet (disabled)
+    TextField -- Select a range on the sheet (disabled)
+      TextField -- Select a range on the sheet (disabled)
+        TextField -- Select a range on the sheet (disabled)
+          TextField -- Select a range on the sheet (disabled)
+            TextField -- Select a range on the sheet (disabled)
+            Button {Collapse Dialog} (disabled)
+          Button {Collapse Dialog} (disabled)
+        Button {Collapse Dialog} (disabled)
+      Button {Collapse Dialog} (disabled)
+    Button {Collapse Dialog} (disabled)
+  Button {Collapse Dialog} (disabled)
+  ScrollArea
+    Table
+      Column
+      Column
+      Column
+      Column
+      Group
+        Button "Rule (applied in order shown)"
+        Button "Format"
+        Button "Applies to"
+        Button "Stop if true"
+  Button {Change Rule Order up} (disabled)
+  Button
+  Button
+    Group
+  Button (disabled)
+  StaticText ="Manage Rules"
+##### Data Validation popups
+POPUP PopUpButton ="No Control"
+    No Control
+    On
+    Off (English mode)
+    Disable
+    Hiragana
+    Full-width Katakana
+    Half-width Katakana
+    Full-width Alpha-Numeric
+    Half-width Alpha-Numeric
+POPUP PopUpButton ="No Control"
+    No Control
+    On
+    Off (English mode)
+    Disable
+    Hiragana
+    Full-width Katakana
+    Half-width Katakana
+    Full-width Alpha-Numeric
+    Half-width Alpha-Numeric
+##### Go To Special
+Window "Go To Special"
+  Button "OK"
+  Button "Cancel"
+  Group
+    StaticText ="There are no options for this selection."
+    StaticText ="Options"
+  StaticText ="Select"
+  RadioButton "Notes" ="1"
+  RadioButton "Constants" ="0"
+  RadioButton "Formulas" ="0"
+  RadioButton "Blanks" ="0"
+  RadioButton "Current region" ="0"
+  RadioButton "Current array" ="0"
+  RadioButton "Row differences" ="0"
+  RadioButton "Column differences" ="0"
+  RadioButton "Precedents" ="0"
+  RadioButton "Dependents" ="0"
+  RadioButton "Last cell" ="0"
+  RadioButton "Visible cells only" ="0"
+  RadioButton "Objects" ="0"
+  RadioButton "Conditional formats" ="0"
+  RadioButton "Data validation" ="0"
+  StaticText ="Go To Special"
+##### Find options expanded
+Window "Find & Replace"
+  TabGroup
+    RadioButton "Find" ="0"
+    RadioButton "Replace" ="1"
+  StaticText ="0 cell(s) found"
+  MenuButton "  "
+  StaticText ="Find what:"
+  TextField
+  MenuButton "  "
+  StaticText ="Replace with:"
+  TextField
+  StaticText ="Within:"
+  StaticText ="Search:"
+  PopUpButton ="Sheet"
+  PopUpButton ="Formulas"
+  StaticText ="Look in:"
+  PopUpButton ="By Rows"
+  CheckBox "Match case" ="0"
+  CheckBox "Match byte" ="0"
+  CheckBox "Find entire cells only" ="0"
+  Button "Replace"
+  Button "Replace All"
+  Button "Find All"
+  Button "Next"
+  Button "Options" -- Options Expanded
+  Button "Close"
+  Button "Previous"
+  Button
+  Button
+    Group
+      Group
+  Button (disabled)
+  StaticText ="Find & Replace"
+POPUP PopUpButton ="Sheet"
+    Sheet
+    Workbook
+POPUP PopUpButton ="Formulas"
+    Formulas
+POPUP PopUpButton ="By Rows"
+    By Rows
+    By Columns
+
+##### DIALOG: Edit > Paste Special... (after copying a cell)
+Window "Paste Special"
+  RadioButton "All" ="1"
+  RadioButton "All except borders" ="0"
+  RadioButton "All using Source theme" ="0"
+  RadioButton "Column widths" ="0"
+  RadioButton "Formula and number formats" ="0"
+  RadioButton "Formulas" ="0"
+  RadioButton "Values and number formats" ="0"
+  RadioButton "Formats" ="0"
+  RadioButton "Values" ="0"
+  RadioButton "Comments and Notes" ="0"
+  RadioButton "Validation" ="0"
+  RadioButton "All, merge conditional formats" ="0"
+  StaticText ="Paste"
+  StaticText ="Operation"
+  CheckBox "Skip Blanks" ="0"
+  CheckBox "Transpose" ="0"
+  Button "Paste Link"
+  Button "Cancel"
+  Button "OK"
+  RadioButton "None" ="1"
+  RadioButton "Add" ="0"
+  RadioButton "Subtract" ="0"
+  RadioButton "Multiply" ="0"
+  RadioButton "Divide" ="0"
+  StaticText ="Paste Special"
+
+##### DIALOG: Format > Conditional Formatting... (Manage Rules) > "+" (New Formatting Rule) -- pop-up contents
+Style: 2-Color Scale | 3-Color Scale | Data Bar | Icon Sets | Classic
+  (2-Color Scale) Minimum/Maximum Type: Lowest Value|Number|Percent|Formula|Percentile (resp. Highest Value...); Value field; Color button
+  (Classic) rule type: Format only cells that contain | Format only top or bottom ranked values | Format only values that are above or below average | Format only unique or duplicate values | Use a formula to determine which cells to format
+  (Classic, top/bottom) Top|Bottom, count field "10", [ ] Percent
+  Format with: Light Red Fill with Dark Red Text | Yellow Fill with Dark Yellow Text | Green Fill with Dark Green Text | Light Red Fill | Red Text | Red Border | Custom Format...
+
+##### CONTEXT MENU: cell (inside a data region; clipboard holds a copied cell)
+Cut / Copy / Paste / Paste Special > [Paste, Formulas, Formulas & Number Formatting, Keep Source Formatting, No Borders, Keep Source Column Widths, Transpose, Values, Values & Number Formatting, Values & Source Formatting, Formatting, Paste Link, Paste Picture, Paste Picture Link, Paste Special...]
+----
+Thesaurus...
+----
+Insert Copied Cells... (= "Insert..." when clipboard is empty) / Delete... / Clear Contents
+----
+Filter > [Clear Filter, Reapply, Advanced Filter..., Filter by Selected Cell's Value, Filter by Selected Cell's Color, Filter by Selected Cell's Font Color, Filter by Selected Cell's Icon]
+Sort > [Sort Smallest to Largest, Sort Largest to Smallest, Put Selected Cell Color On Top, Put Selected Font Color On Top, Put Selected Formatting Icon On Top, Custom Sort...]
+----
+New Comment / New Note
+----
+Format Cells... (Cmd+1) / Pick From Drop-down List... / Show Phonetic Field / Define Name...
+----
+Hyperlink... (Cmd+K)
+(followed by macOS items: Services, AutoFill)
+
+##### CONTEXT MENU: row header
+Cut / Copy / Paste / Paste Special > [same as cell] / Insert (Insert Copied Cells when clipboard set) / Delete / Clear Contents / Format Cells... (Cmd+1) / Row Height... / Hide (Ctrl+9) / Unhide (Ctrl+Shift+9) / AutoFill (macOS)
+
+##### CONTEXT MENU: column header
+Menu
+  "Cut"
+  "Copy"
+  "Paste"
+  "Paste Special"
+    Menu
+      "Paste"
+      "Formulas"
+      "Formulas & Number Formatting"
+      "Keep Source Formatting"
+      "No Borders"
+      "Keep Source Column Widths"
+      "Transpose"
+      "Values"
+      "Values & Number Formatting"
+      "Values & Source Formatting"
+      "Formatting"
+      "Paste Link"
+      "Paste Picture"
+      "Paste Picture Link"
+      "Paste Special..."
+  "Insert Copied Cells"
+  "Delete"
+  "Clear Contents"
+  "Format Cells..."
+  "Column Width..."
+  "Hide"
+  "Unhide"
+  "AutoFill"
+    Menu
+      "Contact…"
+      "Passwords…"
+      "Credit Card…"
+Menu
+(shortcut glyphs seen in screenshot: Hide Ctrl+0, Unhide Ctrl+Shift+0 for columns; Ctrl+9 / Ctrl+Shift+9 for rows)
+
+##### CONTEXT MENU: sheet tab (Sheet1)
+Menu
+  "Insert Sheet"
+  "Delete"
+  "Rename"
+  "Move or Copy..."
+  "View Code"
+  "Protect Sheet..."
+  "Tab Color"
+    Menu
+      MenuItem
+        Group {Color Picker}
+      "More Colors..."
+  "Hide"
+  "Unhide..." (disabled)
+  "Select All Sheets"
+  "AutoFill"
+    Menu
+      "Contact…"
+      "Passwords…"
+      "Credit Card…"
+

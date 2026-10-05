@@ -35,6 +35,8 @@ export {
   setSheetState,
   sheetNames,
 } from './workbook.js';
+export type { Person } from './persons.js';
+export { makePerson } from './persons.js';
 export type { DefinedName, DefinedNameTarget } from './defined-names.js';
 export {
   addDefinedName,

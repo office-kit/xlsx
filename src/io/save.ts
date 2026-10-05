@@ -34,8 +34,21 @@ import { makeRelationships, type Relationships, relsToBytes } from '../packaging
 import { stylesheetToBytes } from '../styles/stylesheet-writer.js';
 import { makeSharedStrings, sharedStringsToBytes } from '../workbook/shared-strings.js';
 import { type SheetRef, type Workbook, validateSheetTitle } from '../workbook/workbook.js';
+import type { Worksheet } from '../worksheet/worksheet.js';
 import type { LegacyComment } from '../worksheet/comments.js';
 import { commentsToBytes, placeholderVmlDrawing } from '../worksheet/comments-xml.js';
+import type { ThreadedComment } from '../worksheet/threaded-comments.js';
+import {
+  PERSON_REL,
+  PERSON_TYPE,
+  personsToBytes,
+  THREADED_COMMENT_REL,
+  THREADED_COMMENTS_TYPE,
+  threadedCommentsToBytes,
+  threadPlaceholders,
+} from '../worksheet/threaded-comments-xml.js';
+import { computePivotStructure, type PivotStructure, type PivotTable } from '../worksheet/pivot-table.js';
+import { pivotCacheDefinitionToBytes, pivotCacheRecordsToBytes, pivotTableToBytes } from '../worksheet/pivot-xml.js';
 import type { TableDefinition } from '../worksheet/table.js';
 import { tableToBytes } from '../worksheet/table-xml.js';
 import { type WorksheetXmlSink, writeWorksheetXml } from '../worksheet/writer.js';
@@ -74,6 +87,7 @@ const THEME_REL = `${REL_NS}/theme`;
 const TABLE_REL = `${REL_NS}/table`;
 const TABLE_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml';
 const COMMENTS_REL = `${REL_NS}/comments`;
+const ARC_PERSONS = 'xl/persons/person.xml';
 const VML_DRAWING_REL = `${REL_NS}/vmlDrawing`;
 const COMMENTS_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml';
 const VML_DRAWING_TYPE = 'application/vnd.openxmlformats-officedocument.vmlDrawing';
@@ -86,6 +100,12 @@ const IMAGE_REL = `${REL_NS}/image`;
 const CHARTSHEET_REL = `${REL_NS}/chartsheet`;
 const CHARTSHEET_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml';
 const CHART_USER_SHAPES_REL = `${REL_NS}/chartUserShapes`;
+const PIVOT_TABLE_REL = `${REL_NS}/pivotTable`;
+const PIVOT_CACHE_DEFINITION_REL = `${REL_NS}/pivotCacheDefinition`;
+const PIVOT_CACHE_RECORDS_REL = `${REL_NS}/pivotCacheRecords`;
+const PIVOT_TABLE_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.pivotTable+xml';
+const PIVOT_CACHE_DEFINITION_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheDefinition+xml';
+const PIVOT_CACHE_RECORDS_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheRecords+xml';
 
 export interface SaveOptions {
   /**
@@ -265,6 +285,7 @@ export async function saveWorkbook(wb: Workbook, sink: XlsxSink, opts: SaveOptio
 async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZipWriter>): Promise<void> {
   // ---- 1. name every sheet part and claim its workbook rId ----------------
   const sst = makeSharedStrings();
+  const persons = wb.persons ?? [];
   interface SheetPlan {
     ref: SheetRef;
     id: string;
@@ -292,6 +313,8 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
   // xl/drawings/vmlDrawingN.vml naming, so start past whatever is already
   // taken — the zip writer rejects duplicate entries.
   let nextCommentsId = nextFreeIndex(wb, /^xl\/drawings\/vmlDrawing(\d+)\.vml$/);
+  const threadedCommentEmits: Array<{ id: number; bytes: Uint8Array }> = [];
+  let nextThreadedCommentsId = nextFreeIndex(wb, /^xl\/threadedComments\/threadedComment(\d+)\.xml$/);
   // Drawings: workbook-global drawingN counter for xl/drawings/drawingN.xml +
   // matching drawing-rels file (when chart items are present).
   interface DrawingEmit {
@@ -382,10 +405,51 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
     });
   }
 
+  // ---- 1b. modeled pivot tables -------------------------------------------
+  // Each gets its own cache. The cache's workbook rId and cacheId have to be in
+  // workbook.xml, which goes out before the sheets, so the pivots are computed
+  // here; their parts are written after the sheets with the other side parts.
+  interface PivotEmit {
+    pt: PivotTable;
+    computed: PivotStructure;
+    cacheId: number;
+    /** N of pivotCacheDefinitionN / pivotCacheRecordsN. */
+    cacheIndex: number;
+    /** N of pivotTableN. */
+    tableIndex: number;
+    wbRId: string;
+  }
+  const pivotEmits: PivotEmit[] = [];
+  const pivotsBySheet = new Map<Worksheet, PivotEmit[]>();
+  let nextCacheId = Math.max(0, ...(wb.pivotCaches ?? []).map((p) => p.cacheId)) + 1;
+  let nextPivotCacheIndex = Math.max(
+    nextFreeIndex(wb, /^xl\/pivotCache\/pivotCacheDefinition(\d+)\.xml$/),
+    nextFreeIndex(wb, /^xl\/pivotCache\/pivotCacheRecords(\d+)\.xml$/),
+  );
+  let nextPivotTableIndex = nextFreeIndex(wb, /^xl\/pivotTables\/pivotTable(\d+)\.xml$/);
+  for (const ref of wb.sheets) {
+    if (ref.kind !== 'worksheet') continue;
+    for (const pt of ref.sheet.pivotTables ?? []) {
+      const emit: PivotEmit = {
+        pt,
+        computed: computePivotStructure(wb, pt),
+        cacheId: nextCacheId++,
+        cacheIndex: nextPivotCacheIndex++,
+        tableIndex: nextPivotTableIndex++,
+        wbRId: allocateRId(),
+      };
+      pivotEmits.push(emit);
+      const list = pivotsBySheet.get(ref.sheet);
+      if (list) list.push(emit);
+      else pivotsBySheet.set(ref.sheet, [emit]);
+    }
+  }
+
   // ---- 2. workbook.xml ----------------------------------------------------
   const workbookXml = serializeWorkbookXml(
     wb,
     sheetPlans.map((p) => p.id),
+    pivotEmits.map((e) => ({ cacheId: e.cacheId, rId: e.wbRId })),
   );
   await writer.addEntry(ARC_WORKBOOK, new TextEncoder().encode(workbookXml));
 
@@ -427,7 +491,20 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
       tableEmits.push({ id: tableId, bytes: tableToBytes(xmlTable) });
       return { rId };
     };
-    const registerComments = (comments: ReadonlyArray<LegacyComment>): { vmlRelId: string } => {
+    const registerComments = (
+      comments: ReadonlyArray<LegacyComment>,
+      threads: ReadonlyArray<ThreadedComment>,
+    ): { vmlRelId: string } => {
+      if (threads.length > 0) {
+        const tcId = nextThreadedCommentsId++;
+        sheetRels.rels.push({
+          id: allocateSheetRId(),
+          type: THREADED_COMMENT_REL,
+          target: `../threadedComments/threadedComment${tcId}.xml`,
+        });
+        threadedCommentEmits.push({ id: tcId, bytes: threadedCommentsToBytes(threads) });
+      }
+      const entries = [...comments, ...threadPlaceholders(threads)];
       const id = nextCommentsId++;
       const commentsRelId = allocateSheetRId();
       sheetRels.rels.push({
@@ -443,8 +520,8 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
       });
       commentEmits.push({
         id,
-        commentsBytes: commentsToBytes(comments),
-        vmlBytes: placeholderVmlDrawing(comments),
+        commentsBytes: commentsToBytes(entries),
+        vmlBytes: placeholderVmlDrawing(entries),
       });
       return { vmlRelId };
     };
@@ -598,6 +675,15 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
       if (ref.sheet.drawing) drawingRId = registerDrawing(ref.sheet.drawing).rId;
       await writer.addEntry(archivePath, chartsheetToBytes(ref.sheet, drawingRId !== undefined ? { drawingRId } : {}));
     }
+    if (ref.kind === 'worksheet') {
+      for (const e of pivotsBySheet.get(ref.sheet) ?? []) {
+        sheetRels.rels.push({
+          id: allocateSheetRId(),
+          type: PIVOT_TABLE_REL,
+          target: `../pivotTables/pivotTable${e.tableIndex}.xml`,
+        });
+      }
+    }
     // Append captured per-sheet rels passthrough (pivotTable / queryTable /
     // printerSettings / oleObject / customProperty / threadedComment …)
     // verbatim. Their original rIds were pre-claimed so the modeled allocations
@@ -661,6 +747,16 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
       wbRels.rels.push({ id: e.id, type: e.type, target: e.target });
     }
   }
+  if (persons.length > 0) {
+    wbRels.rels.push({ id: allocateRId(), type: PERSON_REL, target: 'persons/person.xml' });
+  }
+  for (const e of pivotEmits) {
+    wbRels.rels.push({
+      id: e.wbRId,
+      type: PIVOT_CACHE_DEFINITION_REL,
+      target: `pivotCache/pivotCacheDefinition${e.cacheIndex}.xml`,
+    });
+  }
 
   // Written after the sheet parts, not before them: whether a
   // `sharedStrings.xml` rel belongs here is only known once every sheet has
@@ -679,6 +775,11 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
     await writer.addEntry(`xl/comments${c.id}.xml`, c.commentsBytes);
     await writer.addEntry(`xl/drawings/vmlDrawing${c.id}.vml`, c.vmlBytes);
   }
+
+  for (const t of threadedCommentEmits) {
+    await writer.addEntry(`xl/threadedComments/threadedComment${t.id}.xml`, t.bytes);
+  }
+  if (persons.length > 0) await writer.addEntry(ARC_PERSONS, personsToBytes(persons));
 
   // ---- 4d. drawings + their rels (when charts are embedded) -------------
   for (const d of drawingEmits) {
@@ -704,6 +805,26 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
   // ---- 4g. embedded images (xl/media/imageN.{ext}) ----------------------
   for (const img of imageEmits) {
     await writer.addEntry(`xl/media/image${img.id}.${img.ext}`, img.bytes);
+  }
+
+  // ---- 4h. pivot tables, their caches and cache records ------------------
+  for (const e of pivotEmits) {
+    const tableRels = makeRelationships();
+    tableRels.rels.push({
+      id: 'rId1',
+      type: PIVOT_CACHE_DEFINITION_REL,
+      target: `../pivotCache/pivotCacheDefinition${e.cacheIndex}.xml`,
+    });
+    await writer.addEntry(`xl/pivotTables/pivotTable${e.tableIndex}.xml`, pivotTableToBytes(e.pt, e.computed, e.cacheId));
+    await writer.addEntry(`xl/pivotTables/_rels/pivotTable${e.tableIndex}.xml.rels`, relsToBytes(tableRels));
+    const cacheRels = makeRelationships();
+    cacheRels.rels.push({ id: 'rId1', type: PIVOT_CACHE_RECORDS_REL, target: `pivotCacheRecords${e.cacheIndex}.xml` });
+    await writer.addEntry(
+      `xl/pivotCache/pivotCacheDefinition${e.cacheIndex}.xml`,
+      pivotCacheDefinitionToBytes(e.pt, e.computed, 'rId1'),
+    );
+    await writer.addEntry(`xl/pivotCache/_rels/pivotCacheDefinition${e.cacheIndex}.xml.rels`, relsToBytes(cacheRels));
+    await writer.addEntry(`xl/pivotCache/pivotCacheRecords${e.cacheIndex}.xml`, pivotCacheRecordsToBytes(e.computed));
   }
 
   // ---- 5. styles.xml + sharedStrings.xml (if any) -------------------------
@@ -792,6 +913,10 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
   for (const c of commentEmits) {
     addOverride(manifest, `/xl/comments${c.id}.xml`, COMMENTS_TYPE);
   }
+  for (const t of threadedCommentEmits) {
+    addOverride(manifest, `/xl/threadedComments/threadedComment${t.id}.xml`, THREADED_COMMENTS_TYPE);
+  }
+  if (persons.length > 0) addOverride(manifest, `/${ARC_PERSONS}`, PERSON_TYPE);
   for (const d of drawingEmits) {
     addOverride(manifest, `/xl/drawings/drawing${d.id}.xml`, DRAWING_TYPE);
   }
@@ -800,6 +925,11 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
   }
   for (const us of userShapeEmits) {
     addOverride(manifest, `/xl/drawings/chartDrawing${us.id}.xml`, DRAWING_TYPE);
+  }
+  for (const e of pivotEmits) {
+    addOverride(manifest, `/xl/pivotTables/pivotTable${e.tableIndex}.xml`, PIVOT_TABLE_TYPE);
+    addOverride(manifest, `/xl/pivotCache/pivotCacheDefinition${e.cacheIndex}.xml`, PIVOT_CACHE_DEFINITION_TYPE);
+    addOverride(manifest, `/xl/pivotCache/pivotCacheRecords${e.cacheIndex}.xml`, PIVOT_CACHE_RECORDS_TYPE);
   }
   if (wb.vbaProject) {
     addOverride(manifest, '/xl/vbaProject.bin', 'application/vnd.ms-office.vbaProject');
@@ -844,7 +974,11 @@ function nextFreeIndex(wb: Workbook, pattern: RegExp): number {
 }
 
 /** Serialise the minimum `<workbook><sheets/></workbook>` Excel needs to load a sheet list. */
-function serializeWorkbookXml(wb: Workbook, sheetRIds: ReadonlyArray<string>): string {
+function serializeWorkbookXml(
+  wb: Workbook,
+  sheetRIds: ReadonlyArray<string>,
+  modeledPivotCaches: ReadonlyArray<{ cacheId: number; rId: string }>,
+): string {
   // Excel's markup-compatibility header: the extra prefixes it declares on the
   // root and the `mc:Ignorable` list naming them. Both are re-emitted exactly
   // as written, and the same prefix map is handed to every captured child so
@@ -941,9 +1075,10 @@ function serializeWorkbookXml(wb: Workbook, sheetRIds: ReadonlyArray<string>): s
   if (wb.customWorkbookViews && wb.customWorkbookViews.length > 0) {
     parts.push(serializeCustomWorkbookViews(wb.customWorkbookViews));
   }
-  if (wb.pivotCaches && wb.pivotCaches.length > 0) {
+  const pivotCaches = [...(wb.pivotCaches ?? []), ...modeledPivotCaches];
+  if (pivotCaches.length > 0) {
     const inner: string[] = ['<pivotCaches>'];
-    for (const pc of wb.pivotCaches) {
+    for (const pc of pivotCaches) {
       inner.push(`<pivotCache cacheId="${pc.cacheId}" r:id="${escapeAttr(pc.rId)}"/>`);
     }
     inner.push('</pivotCaches>');

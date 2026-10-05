@@ -1,0 +1,1903 @@
+# Microsoft Excel for Mac 16.113.3 ribbon, dumped via macOS Accessibility (System Events / JXA) on 2026-10-03.
+# Window 2600x1300 pt (wide, so no groups collapse). Indented entries under a MenuButton are the contents of its
+# dropdown (opened via AXShowMenu). Color pickers are summarised. '(no popup window)' = dropdown did not open in time;
+# see the second section (narrow-window run, 1080 pt) which captured some of those (Borders, Copy, function lists).
+# Ribbon group names are not exposed by AX (groups are anonymous AXGroup).
+##### TAB: Home
+ScrollArea {Home Tab Commands}
+  Group
+    MenuButton "Paste"
+        Group
+          MenuButton "Paste"
+          MenuButton "Paste"
+          MenuButton "Paste Special..."
+    Button "Cut"
+    MenuButton "Copy"
+        (no popup window)
+    CheckBox "Format" -- Copy formatting from one location and apply it to another
+  Group
+    ComboBox {Font:}
+    ComboBox {Font Size:}
+    Button "Increase Font Size"
+    Button "Decrease Font Size"
+    CheckBox "Bold"
+    CheckBox "Italic"
+    MenuButton "Underline"
+        Group
+          MenuButton "Underline"
+          MenuButton "Double Underline"
+    MenuButton "Borders"
+        (no popup window)
+    MenuButton "Shading"
+        Group
+          Group {Color Picker}
+            (theme colors 10x6, standard colors 10, More Colors..., No Fill/Automatic)
+          MenuButton "More Colors..."
+    MenuButton "Font Color"
+        Group
+          Group {Color Picker}
+            (theme colors 10x6, standard colors 10, More Colors..., No Fill/Automatic)
+          MenuButton "More Colors..."
+    MenuButton "Show Phonetic Fields"
+        (no popup window)
+  Group
+    CheckBox "Top Align"
+    CheckBox "Middle Align"
+    CheckBox "Bottom Align"
+    MenuButton "Orientation"
+        Group
+          MenuButton "Angle Counterclockwise"
+          MenuButton "Angle Clockwise"
+          MenuButton "Vertical Text"
+          MenuButton "Rotate Text Up"
+          MenuButton "Rotate Text Down"
+          MenuButton "Format Cell Alignment"
+    CheckBox "Align Left"
+    CheckBox "Center" -- Center Text
+    CheckBox "Align Right"
+    Button "Decrease Indent"
+    Button "Increase Indent"
+    MenuButton "Wrap Text"
+        Group
+          MenuButton "Wrap Text"
+          MenuButton "Shrink Text to Fit"
+    MenuButton "Merge & Center"
+  Group
+    ComboBox {Number Format}
+    MenuButton "Accounting Number Format"
+        Group
+          MenuButton "‎¥‎ Japanese (ja-JP)‎"
+          MenuButton "‎$‎ English (en-US)‎"
+          MenuButton "‎£‎ English (en-GB)‎"
+          MenuButton "‎€‎ Euro (€ 123)‎"
+          MenuButton "‎¥‎ Chinese (zh-CN)‎"
+          MenuButton "‎CHF‎ French (fr-CH)‎"
+          MenuButton "More Accounting Formats..."
+    Button "Percent Style"
+    Button "Comma Style"
+    Button "Increase Decimal"
+    Button "Decrease Decimal"
+  Group
+    MenuButton "Conditional Formatting"
+        Group
+          MenuButton "Highlight Cells Rules" {submenu}
+          MenuButton "Top/Bottom Rules" {submenu}
+          MenuButton "Data Bars" {submenu}
+          MenuButton "Color Scales" {submenu}
+          MenuButton "Icon Sets" {submenu}
+          MenuButton "New Rule..."
+          MenuButton "Clear Rules" {submenu}
+          MenuButton "Manage Rules..."
+    MenuButton "Format as Table"
+        Group
+          Group {Format as Table}
+            Group {Light}
+              StaticText "Light"
+              RadioButton {White, Table Style Light 1} -- White, Table Style Light 1
+              RadioButton {Light Turquoise, Table Style Light 2} -- Light Turquoise, Table Style Light 2
+              RadioButton {Light Orange, Table Style Light 3} -- Light Orange, Table Style Light 3
+              RadioButton {Light Green, Table Style Light 4} -- Light Green, Table Style Light 4
+              RadioButton {Light Turquoise, Table Style Light 5} -- Light Turquoise, Table Style Light 5
+              RadioButton {Pink, Table Style Light 6} -- Pink, Table Style Light 6
+              RadioButton {Light Green, Table Style Light 7} -- Light Green, Table Style Light 7
+              RadioButton {White, Table Style Light 8} -- White, Table Style Light 8
+              RadioButton {Dark Teal, Table Style Light 9} -- Dark Teal, Table Style Light 9
+              RadioButton {Orange, Table Style Light 10} -- Orange, Table Style Light 10
+              RadioButton {Dark Green, Table Style Light 11} -- Dark Green, Table Style Light 11
+              RadioButton {Turquoise, Table Style Light 12} -- Turquoise, Table Style Light 12
+              RadioButton {Plum, Table Style Light 13} -- Plum, Table Style Light 13
+              RadioButton {Green, Table Style Light 14} -- Green, Table Style Light 14
+              RadioButton {White, Table Style Light 15} -- White, Table Style Light 15
+              RadioButton {Light Turquoise, Table Style Light 16} -- Light Turquoise, Table Style Light 16
+              RadioButton {Light Orange, Table Style Light 17} -- Light Orange, Table Style Light 17
+              RadioButton {Light Green, Table Style Light 18} -- Light Green, Table Style Light 18
+              RadioButton {Light Turquoise, Table Style Light 19} -- Light Turquoise, Table Style Light 19
+              RadioButton {Pink, Table Style Light 20} -- Pink, Table Style Light 20
+              RadioButton {Light Green, Table Style Light 21} -- Light Green, Table Style Light 21
+            Group {Medium}
+              StaticText "Medium"
+              RadioButton {White, Table Style Medium 1} -- White, Table Style Medium 1
+              RadioButton {Dark Teal, Table Style Medium 2} -- Dark Teal, Table Style Medium 2
+              RadioButton {Orange, Table Style Medium 3} -- Orange, Table Style Medium 3
+              RadioButton {Dark Green, Table Style Medium 4} -- Dark Green, Table Style Medium 4
+              RadioButton {Turquoise, Table Style Medium 5} -- Turquoise, Table Style Medium 5
+              RadioButton {Plum, Table Style Medium 6} -- Plum, Table Style Medium 6
+              RadioButton {Green, Table Style Medium 7} -- Green, Table Style Medium 7
+              RadioButton {Light Gray, Table Style Medium 8} -- Light Gray, Table Style Medium 8
+              RadioButton {Dark Teal, Table Style Medium 9} -- Dark Teal, Table Style Medium 9
+              RadioButton {Orange, Table Style Medium 10} -- Orange, Table Style Medium 10
+              RadioButton {Dark Green, Table Style Medium 11} -- Dark Green, Table Style Medium 11
+              RadioButton {Turquoise, Table Style Medium 12} -- Turquoise, Table Style Medium 12
+              RadioButton {Plum, Table Style Medium 13} -- Plum, Table Style Medium 13
+              RadioButton {Green, Table Style Medium 14} -- Green, Table Style Medium 14
+              RadioButton {White, Table Style Medium 15} -- White, Table Style Medium 15
+              RadioButton {Dark Teal, Table Style Medium 16} -- Dark Teal, Table Style Medium 16
+              RadioButton {Orange, Table Style Medium 17} -- Orange, Table Style Medium 17
+              RadioButton {Dark Green, Table Style Medium 18} -- Dark Green, Table Style Medium 18
+              RadioButton {Turquoise, Table Style Medium 19} -- Turquoise, Table Style Medium 19
+              RadioButton {Plum, Table Style Medium 20} -- Plum, Table Style Medium 20
+              RadioButton {Green, Table Style Medium 21} -- Green, Table Style Medium 21
+              RadioButton {Light Gray, Table Style Medium 22} -- Light Gray, Table Style Medium 22
+              RadioButton {Light Turquoise, Table Style Medium 23} -- Light Turquoise, Table Style Medium 23
+              RadioButton {Light Orange, Table Style Medium 24} -- Light Orange, Table Style Medium 24
+              RadioButton {Light Green, Table Style Medium 25} -- Light Green, Table Style Medium 25
+              RadioButton {Light Turquoise, Table Style Medium 26} -- Light Turquoise, Table Style Medium 26
+              RadioButton {Pink, Table Style Medium 27} -- Pink, Table Style Medium 27
+              RadioButton {Light Green, Table Style Medium 28} -- Light Green, Table Style Medium 28
+            Group {Dark}
+              StaticText "Dark"
+              RadioButton {Dark Gray, Table Style Dark 1} -- Dark Gray, Table Style Dark 1
+              RadioButton {Dark Teal, Table Style Dark 2} -- Dark Teal, Table Style Dark 2
+              RadioButton {Brown, Table Style Dark 3} -- Brown, Table Style Dark 3
+              RadioButton {Dark Green, Table Style Dark 4} -- Dark Green, Table Style Dark 4
+              RadioButton {Turquoise, Table Style Dark 5} -- Turquoise, Table Style Dark 5
+              RadioButton {Plum, Table Style Dark 6} -- Plum, Table Style Dark 6
+              RadioButton {Dark Green, Table Style Dark 7} -- Dark Green, Table Style Dark 7
+              RadioButton {Light Gray, Table Style Dark 8} -- Light Gray, Table Style Dark 8
+              RadioButton {Orange, Table Style Dark 9} -- Orange, Table Style Dark 9
+              RadioButton {Turquoise, Table Style Dark 10} -- Turquoise, Table Style Dark 10
+              RadioButton {Green, Table Style Dark 11} -- Green, Table Style Dark 11
+          MenuButton "New Table Style..."
+          MenuButton "New PivotTable Style..."
+    Button {Next Cell Styles gallery}
+    ScrollArea {Cell Styles} -- gallery
+      RadioButton {Normal} -- Normal
+      RadioButton {Bad} -- Bad
+      RadioButton {Good} -- Good
+      RadioButton {Neutral} -- Neutral
+      RadioButton {Calculation} -- Calculation
+      RadioButton {Check Cell} -- Check Cell
+      RadioButton {Explanatory Text} -- Explanatory Text
+      RadioButton {Input} -- Input
+      RadioButton {Linked Cell} -- Linked Cell
+      RadioButton {Note} -- Note
+      RadioButton {Output} -- Output
+      RadioButton {Warning Text} -- Warning Text
+      RadioButton {Heading 1} -- Heading 1
+      RadioButton {Heading 2} -- Heading 2
+      RadioButton {Heading 3} -- Heading 3
+      RadioButton {Heading 4} -- Heading 4
+      RadioButton {Title} -- Title
+      RadioButton {Total} -- Total
+      RadioButton {Light Turquoise, 20% - Accent1} -- Light Turquoise, 20% - Accent1
+      RadioButton {Light Orange, 20% - Accent2} -- Light Orange, 20% - Accent2
+      RadioButton {Light Green, 20% - Accent3} -- Light Green, 20% - Accent3
+      RadioButton {Light Turquoise, 20% - Accent4} -- Light Turquoise, 20% - Accent4
+      RadioButton {Pink, 20% - Accent5} -- Pink, 20% - Accent5
+      RadioButton {Light Green, 20% - Accent6} -- Light Green, 20% - Accent6
+      RadioButton {Light Turquoise, 40% - Accent1} -- Light Turquoise, 40% - Accent1
+      RadioButton {Light Orange, 40% - Accent2} -- Light Orange, 40% - Accent2
+      RadioButton {Light Green, 40% - Accent3} -- Light Green, 40% - Accent3
+      RadioButton {Light Turquoise, 40% - Accent4} -- Light Turquoise, 40% - Accent4
+      RadioButton {Pink, 40% - Accent5} -- Pink, 40% - Accent5
+      RadioButton {Light Green, 40% - Accent6} -- Light Green, 40% - Accent6
+      RadioButton {Turquoise, 60% - Accent1} -- Turquoise, 60% - Accent1
+      RadioButton {Light Orange, 60% - Accent2} -- Light Orange, 60% - Accent2
+      RadioButton {Green, 60% - Accent3} -- Green, 60% - Accent3
+      RadioButton {Turquoise, 60% - Accent4} -- Turquoise, 60% - Accent4
+      RadioButton {Pink, 60% - Accent5} -- Pink, 60% - Accent5
+      RadioButton {Green, 60% - Accent6} -- Green, 60% - Accent6
+      RadioButton {Dark Teal, Accent1} -- Dark Teal, Accent1
+      RadioButton {Orange, Accent2} -- Orange, Accent2
+      RadioButton {Dark Green, Accent3} -- Dark Green, Accent3
+      RadioButton {Turquoise, Accent4} -- Turquoise, Accent4
+      RadioButton {Plum, Accent5} -- Plum, Accent5
+      RadioButton {Green, Accent6} -- Green, Accent6
+      RadioButton {Comma} -- Comma
+      RadioButton {Comma [0]} -- Comma [0]
+      RadioButton {Currency} -- Currency
+      RadioButton {Currency [0]} -- Currency [0]
+      RadioButton {Percent} -- Percent
+  Group
+    MenuButton "Insert"
+        Group
+          MenuButton "Insert Cells..."
+          MenuButton "Insert Sheet Rows"
+          MenuButton "Insert Sheet Columns"
+          MenuButton "Insert Sheet"
+    MenuButton "Delete"
+        Group
+          MenuButton "Delete Cells..."
+          MenuButton "Delete Sheet Rows"
+          MenuButton "Delete Sheet Columns"
+          MenuButton "Delete Table Rows"
+          MenuButton "Delete Table Columns"
+          MenuButton "Delete Sheet"
+    MenuButton "Format"
+        Group
+          MenuButton "Cell Size"
+          MenuButton "Row Height..."
+          MenuButton "AutoFit Row Height"
+          MenuButton "Column Width..."
+          MenuButton "AutoFit Column Width"
+          MenuButton "Default Width..."
+          MenuButton "Visibility"
+          MenuButton "Hide & Unhide" {submenu}
+          MenuButton "Organize Sheets"
+          MenuButton "Rename Sheet"
+          MenuButton "Move or Copy Sheet..."
+          MenuButton "Tab Color" {submenu}
+          MenuButton "Protection"
+          MenuButton "Protect Sheet..."
+          MenuButton "Lock Cell"
+          MenuButton "Format Cells..."
+  Group
+    MenuButton "AutoSum"
+        Group
+          MenuButton "Sum"
+          MenuButton "Average"
+          MenuButton "Count Numbers"
+          MenuButton "Max"
+          MenuButton "Min"
+          MenuButton "More Functions..."
+    MenuButton "Fill"
+        (no popup window)
+    MenuButton "Clear"
+        Group
+          MenuButton "Clear All"
+          MenuButton "Clear Formats"
+          MenuButton "Clear Contents"
+          MenuButton "Clear Comments and Notes"
+          MenuButton "Clear Hyperlinks"
+          MenuButton "Remove Hyperlinks"
+    MenuButton "Sort & Filter"
+        Group
+          MenuButton "Sort A to Z"
+          MenuButton "Sort Z to A"
+          MenuButton "Custom Sort..."
+          MenuButton "Filter"
+          MenuButton "Clear"
+          MenuButton "Reapply"
+    MenuButton "Find & Select"
+        Group
+          MenuButton "Find..."
+          MenuButton "Replace..."
+          MenuButton "Go To..."
+          MenuButton "Go To Special..."
+          MenuButton "Formulas"
+          MenuButton "Notes"
+          MenuButton "Conditional Formatting"
+          MenuButton "Constants"
+          MenuButton "Data Validation"
+          MenuButton "Select Objects"
+          MenuButton "Selection Pane..."
+  Group
+    Button "Add‑ins"
+##### TAB: Insert
+ScrollArea {Insert Tab Commands}
+  Group
+    Button "PivotTable"
+    Button "Recommended PivotTables"
+    Button "Table"
+  Group
+    MenuButton "Forms"
+        Group
+          MenuButton "New Form"
+          MenuButton "Preview Form"
+          MenuButton "Edit Form"
+          MenuButton "Send Form"
+  Group
+    MenuButton "From Picture"
+        Group
+          MenuButton "Picture From File..."
+          MenuButton "Picture From Clipboard"
+  Group
+    MenuButton "Pictures" -- Insert Picture
+        Group
+          MenuButton "Place in Cell" {submenu}
+          MenuButton "Place over Cells" {submenu}
+    MenuButton "Shapes"
+        Group
+          Group {Shapes}
+            Group {Recently Used Shapes}
+              StaticText "Recently Used Shapes"
+              RadioButton {Text Box} -- Text Box
+              RadioButton {Vertical Text Box} -- Vertical Text Box
+              RadioButton {Line} -- Line
+              RadioButton {Arrow} -- Arrow
+              RadioButton {Rectangle} -- Rectangle
+              RadioButton {Oval} -- Oval
+              RadioButton {Rounded Rectangle} -- Rounded Rectangle
+              RadioButton {Isosceles Triangle} -- Isosceles Triangle
+              RadioButton {Elbow Connector} -- Elbow Connector
+              RadioButton {Elbow Arrow Connector} -- Elbow Arrow Connector
+              RadioButton {Right Arrow} -- Right Arrow
+              RadioButton {Down Arrow} -- Down Arrow
+              RadioButton {Freeform} -- Freeform
+              RadioButton {Scribble} -- Scribble
+              RadioButton {Arc} -- Arc
+              RadioButton {Curve} -- Curve
+              RadioButton {Left Brace} -- Left Brace
+              RadioButton {Right Brace} -- Right Brace
+            Group {Lines}
+              StaticText "Lines"
+              RadioButton {Line} -- Line
+              RadioButton {Arrow} -- Arrow
+              RadioButton {Double Arrow} -- Double Arrow
+              RadioButton {Elbow Connector} -- Elbow Connector
+              RadioButton {Elbow Arrow Connector} -- Elbow Arrow Connector
+              RadioButton {Elbow Double-Arrow Connector} -- Elbow Double-Arrow Connector
+              RadioButton {Curved Connector} -- Curved Connector
+              RadioButton {Curved Arrow Connector} -- Curved Arrow Connector
+              RadioButton {Curved Double-Arrow Connector} -- Curved Double-Arrow Connector
+              RadioButton {Curve} -- Curve
+              RadioButton {Freeform} -- Freeform
+              RadioButton {Scribble} -- Scribble
+            Group {Rectangles}
+              StaticText "Rectangles"
+              RadioButton {Rectangle} -- Rectangle
+              RadioButton {Rounded Rectangle} -- Rounded Rectangle
+              RadioButton {Snip Single Corner Rectangle} -- Snip Single Corner Rectangle
+              RadioButton {Snip Same Side Corner Rectangle} -- Snip Same Side Corner Rectangle
+              RadioButton {Snip Diagonal Corner Rectangle} -- Snip Diagonal Corner Rectangle
+              RadioButton {Snip and Round Single Corner Rectangle} -- Snip and Round Single Corner Rectangle
+              RadioButton {Round Single Corner Rectangle} -- Round Single Corner Rectangle
+              RadioButton {Round Same Side Corner Rectangle} -- Round Same Side Corner Rectangle
+              RadioButton {Round Diagonal Corner Rectangle} -- Round Diagonal Corner Rectangle
+            Group {Basic Shapes}
+              StaticText "Basic Shapes"
+              RadioButton {Text Box} -- Text Box
+              RadioButton {Vertical Text Box} -- Vertical Text Box
+              RadioButton {Oval} -- Oval
+              RadioButton {Isosceles Triangle} -- Isosceles Triangle
+              RadioButton {Right Triangle} -- Right Triangle
+              RadioButton {Parallelogram} -- Parallelogram
+              RadioButton {Trapezoid} -- Trapezoid
+              RadioButton {Diamond} -- Diamond
+              RadioButton {Regular Pentagon} -- Regular Pentagon
+              RadioButton {Hexagon} -- Hexagon
+              RadioButton {Heptagon} -- Heptagon
+              RadioButton {Octagon} -- Octagon
+              RadioButton {Decagon} -- Decagon
+              RadioButton {Dodecagon} -- Dodecagon
+              RadioButton {Pie} -- Pie
+              RadioButton {Chord} -- Chord
+              RadioButton {Teardrop} -- Teardrop
+              RadioButton {Frame} -- Frame
+              RadioButton {Half Frame} -- Half Frame
+              RadioButton {L-Shape} -- L-Shape
+              RadioButton {Diagonal Stripe} -- Diagonal Stripe
+              RadioButton {Cross} -- Cross
+              RadioButton {Plaque} -- Plaque
+              RadioButton {Can} -- Can
+              RadioButton {Cube} -- Cube
+              RadioButton {Bevel} -- Bevel
+              RadioButton {Donut} -- Donut
+              RadioButton {"No" Symbol} -- "No" Symbol
+              RadioButton {Block Arc} -- Block Arc
+              RadioButton {Folded Corner} -- Folded Corner
+              RadioButton {Smiley Face} -- Smiley Face
+              RadioButton {Heart} -- Heart
+              RadioButton {Lightning Bolt} -- Lightning Bolt
+              RadioButton {Sun} -- Sun
+              RadioButton {Moon} -- Moon
+              RadioButton {Cloud} -- Cloud
+              RadioButton {Arc} -- Arc
+              RadioButton {Double Bracket} -- Double Bracket
+              RadioButton {Double Brace} -- Double Brace
+              RadioButton {Left Bracket} -- Left Bracket
+              RadioButton {Right Bracket} -- Right Bracket
+              RadioButton {Left Brace} -- Left Brace
+              RadioButton {Right Brace} -- Right Brace
+            Group {Block Arrows}
+              StaticText "Block Arrows"
+              RadioButton {Right Arrow} -- Right Arrow
+              RadioButton {Left Arrow} -- Left Arrow
+              RadioButton {Up Arrow} -- Up Arrow
+              RadioButton {Down Arrow} -- Down Arrow
+              RadioButton {Left-Right Arrow} -- Left-Right Arrow
+              RadioButton {Up-Down Arrow} -- Up-Down Arrow
+              RadioButton {Quad Arrow} -- Quad Arrow
+              RadioButton {Left-Right-Up Arrow} -- Left-Right-Up Arrow
+              RadioButton {Bent Arrow} -- Bent Arrow
+              RadioButton
+        ...(truncated)
+    Button "Icons" -- Display the Icons Task Pane
+    MenuButton "3D Models"
+        Group
+          MenuButton "Insert 3D Model From"
+          MenuButton "This Device..."
+          MenuButton "Stock 3D Models..."
+    MenuButton "SmartArt" -- Insert a SmartArt Graphic
+        Group
+          MenuButton "List" {submenu}
+          MenuButton "Process" {submenu}
+          MenuButton "Cycle" {submenu}
+          MenuButton "Hierarchy" {submenu}
+          MenuButton "Relationship" {submenu}
+          MenuButton "Matrix" {submenu}
+          MenuButton "Pyramid" {submenu}
+          MenuButton "Picture" {submenu}
+          MenuButton
+    MenuButton "Screenshot" -- Take a Screenshot
+        Group
+          Group {Screenshot}
+            RadioButton {Microsoft Excel} -- Microsoft Excel
+          MenuButton "Screen Clipping"
+  Group
+    Button "Checkbox"
+  Group
+    MenuButton "Recommended Charts"
+        Group
+          Group {Recommended Charts}
+            RadioButton {There are no recommended charts for the data you selected.}
+    MenuButton "Column"
+        Group
+          Group {Column}
+            Group {2-D Column}
+              StaticText "2-D Column"
+              RadioButton {Clustered Column} -- Clustered Column
+              RadioButton {Stacked Column} -- Stacked Column
+              RadioButton {100% Stacked Column} -- 100% Stacked Column
+            Group {3-D Column}
+              StaticText "3-D Column"
+              RadioButton {3-D Clustered Column} -- 3-D Clustered Column
+              RadioButton {3-D Stacked Column} -- 3-D Stacked Column
+              RadioButton {3-D 100% Stacked Column} -- 3-D 100% Stacked Column
+              RadioButton {3-D Column} -- 3-D Column
+            Group {2-D Bar}
+              StaticText "2-D Bar"
+              RadioButton {Clustered Bar} -- Clustered Bar
+              RadioButton {Stacked Bar} -- Stacked Bar
+              RadioButton {100% Stacked Bar} -- 100% Stacked Bar
+            Group {3-D Bar}
+              StaticText "3-D Bar"
+              RadioButton {3-D Clustered Bar} -- 3-D Clustered Bar
+              RadioButton {3-D Stacked Bar} -- 3-D Stacked Bar
+              RadioButton {3-D 100% Stacked Bar} -- 3-D 100% Stacked Bar
+    MenuButton "Line"
+        Group
+          Group {Line}
+            Group {2-D Line}
+              StaticText "2-D Line"
+              RadioButton {Line} -- Line
+              RadioButton {Stacked Line} -- Stacked Line
+              RadioButton {100% Stacked Line} -- 100% Stacked Line
+              RadioButton {Line with Markers} -- Line with Markers
+              RadioButton {Stacked Line with Markers} -- Stacked Line with Markers
+              RadioButton {100% Stacked Line with Markers} -- 100% Stacked Line with Markers
+            Group {3-D Line}
+              StaticText "3-D Line"
+              RadioButton {3-D Line} -- 3-D Line
+            Group {2-D Area}
+              StaticText "2-D Area"
+              RadioButton {Area} -- Area
+              RadioButton {Stacked Area} -- Stacked Area
+              RadioButton {100% Stacked Area} -- 100% Stacked Area
+            Group {3-D Area}
+              StaticText "3-D Area"
+              RadioButton {3-D Area} -- 3-D Area
+              RadioButton {3-D Stacked Area} -- 3-D Stacked Area
+              RadioButton {3-D 100% Stacked Area} -- 3-D 100% Stacked Area
+    MenuButton "Pie"
+        Group
+          Group {Pie}
+            Group {2-D Pie}
+              StaticText "2-D Pie"
+              RadioButton {Pie} -- Pie
+              RadioButton {Pie of Pie} -- Pie of Pie
+              RadioButton {Bar of Pie} -- Bar of Pie
+            Group {3-D Pie}
+              StaticText "3-D Pie"
+              RadioButton {3-D Pie} -- 3-D Pie
+            Group {Doughnut}
+              StaticText "Doughnut"
+              RadioButton {Doughnut} -- Doughnut
+    MenuButton "Hierarchy"
+        Group
+          Group {Hierarchy}
+            Group {Treemap}
+              StaticText "Treemap"
+              RadioButton {Treemap} -- Treemap
+            Group {Sunburst}
+              StaticText "Sunburst"
+              RadioButton {Sunburst} -- Sunburst
+    MenuButton "Statistical"
+        Group
+          Group {Statistical}
+            Group {Histogram}
+              StaticText "Histogram"
+              RadioButton {Histogram} -- Histogram
+              RadioButton {Pareto} -- Pareto
+            Group {Box and Whisker}
+              StaticText "Box and Whisker"
+              RadioButton {Box and Whisker} -- Box and Whisker
+    MenuButton "X Y (Scatter)"
+        Group
+          Group {X Y (Scatter)}
+            Group {Scatter}
+              StaticText "Scatter"
+              RadioButton {Scatter} -- Scatter
+              RadioButton {Scatter with Smooth Lines and Markers} -- Scatter with Smooth Lines and Markers
+              RadioButton {Scatter with Smooth Lines} -- Scatter with Smooth Lines
+              RadioButton {Scatter with Straight Lines and Markers} -- Scatter with Straight Lines and Markers
+              RadioButton {Scatter with Straight Lines} -- Scatter with Straight Lines
+            Group {Bubble}
+              StaticText "Bubble"
+              RadioButton {Bubble} -- Bubble
+              RadioButton {3-D Bubble} -- 3-D Bubble
+    MenuButton "Waterfall"
+        Group
+          Group {Waterfall}
+            Group {Waterfall}
+              StaticText "Waterfall"
+              RadioButton {Waterfall} -- Waterfall
+            Group {Funnel}
+              StaticText "Funnel"
+              RadioButton {Funnel} -- Funnel
+            Group {Stock}
+              StaticText "Stock"
+              RadioButton {High-Low-Close} -- High-Low-Close
+              RadioButton {Open-High-Low-Close} -- Open-High-Low-Close
+              RadioButton {Volume-High-Low-Close} -- Volume-High-Low-Close
+              RadioButton {Volume-Open-High-Low-Close} -- Volume-Open-High-Low-Close
+            Group {Surface}
+              StaticText "Surface"
+              RadioButton {3-D Surface} -- 3-D Surface
+              RadioButton {Wireframe 3-D Surface} -- Wireframe 3-D Surface
+              RadioButton {Contour} -- Contour
+              RadioButton {Wireframe Contour} -- Wireframe Contour
+            Group {Radar}
+              StaticText "Radar"
+              RadioButton {Radar} -- Radar
+              RadioButton {Radar with Markers} -- Radar with Markers
+              RadioButton {Filled Radar} -- Filled Radar
+    MenuButton "Combo"
+        Group
+          Group {Combo}
+            Group {Combo}
+              StaticText "Combo"
+              RadioButton {Clustered Column - Line} -- Clustered Column - Line
+              RadioButton {Clustered Column - Line on Secondary Axis} -- Clustered Column - Line on Secondary Axis
+              RadioButton {Stacked Area - Clustered Column} -- Stacked Area - Clustered Column
+    MenuButton "Maps" -- Insert Map Chart
+        Group
+          Group {Maps}
+            Group {Filled Map}
+              StaticText "Filled Map"
+              RadioButton {Filled Map} -- Filled Map
+    Button "PivotChart"
+  Group
+    MenuButton "Sparklines" -- Insert Sparklines
+        Group
+          MenuButton "Line"
+          MenuButton "Column"
+          MenuButton "Win/Loss"
+  Group
+    Button "Slicer"
+    Button "Timeline"
+  Group
+    Button "Link" -- Add a Hyperlink
+  Group
+    Button "New Comment"
+  Group
+    MenuButton "Text Box"
+        Group
+          MenuButton "Draw Horizontal Text Box"
+          MenuButton "Vertical Text Box"
+    Button "Header & Footer"
+    MenuButton "WordArt" -- Insert WordArt
+        Group
+          Group {WordArt}
+            RadioButton {Fill: Black, Text color 1; Shadow} -- Fill: Black, Text color 1; Shadow
+            RadioButton {Fill: Dark Teal, Accent color 1; Shadow} -- Fill: Dark Teal, Accent color 1; Shadow
+            RadioButton {Fill: Orange, Accent color 2; Outline: Orange, Accent color 2} -- Fill: Orange, Accent color 2; Outline: Orange, Accent color 2
+            RadioButton {Fill: White; Outline: Plum, Accent color 5; Shadow} -- Fill: White; Outline: Plum, Accent color 5; Shadow
+            RadioButton {Fill: Turquoise, Accent color 4; Soft Bevel} -- Fill: Turquoise, Accent color 4; Soft Bevel
+            RadioButton {Gradient Fill, Gray} -- Gradient Fill, Gray
+            RadioButton {Gradient Fill: Plum, Accent color 5; Reflection} -- Gradient Fill: Plum, Accent color 5; Reflection
+            RadioButton {Gradient Fill: Turquoise, Accent color 4; Outline: Turquoise, Accent color 4} -- Gradient Fill: Turquoise, Accent color 4; Outline: Turquoise, Accent color 4
+            RadioButton {Fill: White; Outline: Dark Teal, Accent color 1; Glow: Dark Teal, Accent color 1} -- Fill: White; Outline: Dark Teal, Accent color 1; Glow: Dark Teal, Accent color 1
+            RadioButton {Fill: Dark Green, Accent color 3; Sharp Bevel} -- Fill: Dark Green, Accent color 3; Sharp Bevel
+            RadioButton {Fill: Black, Text color 1; Outline: White, Background color 1; Hard Shadow: White, Background color 1} -- Fill: Black, Text color 1; Outline: White, Background color 1; Hard Shadow: White, Background color 1
+            RadioButton {Fill: Black, Text color 1; Outline: White, Background color 1; Hard Shadow: Plum, Accent color 5} -- Fill: Black, Text color 1; Outline: White, Background color 1; Hard Shadow: Plum, Accent color 5
+            RadioButton {Fill: Plum, Accent color 5; Outline: White, Background color 1; Hard Shadow: Plum, Accent color 5} -- Fill: Plum, Accent color 5; Outline: White, Background color 1; Hard Shadow: Plum, Accent color 5
+            RadioButton {Fill: White; Outline: Orange, Accent color 2; Hard Shadow: Orange, Accent color 2} -- Fill: White; Outline: Orange, Accent color 2; Hard Shadow: Orange, Accent color 2
+            RadioButton {Fill: Light Gray, Background color 2; Inner Shadow} -- Fill: Light Gray, Background color 2; Inner Shadow
+            RadioButton {Pattern Fill: White; Dark Upward Diagonal Stripe; Shadow} -- Pattern Fill: White; Dark Upward Diagonal Stripe; Shadow
+            RadioButton {Pattern Fill: Dark Green, Accent color 3, Narrow Horizontal Stripe; Inner Shadow} -- Pattern Fill: Dark Green, Accent color 3, Narrow Horizontal Stripe; Inner Shadow
+            RadioButton {Pattern Fill: Dark Teal, Accent color 1, 50%; Hard Shadow: Dark Teal, Accent color 1} -- Pattern Fill: Dark Teal, Accent color 1, 50%; Hard Shadow: Dark Teal, Accent color 1
+            RadioButton {Pattern Fill: Plum, Accent color 5, Light Downward Diagonal Stripe; Outline: Plum, Accent color 5} -- Pattern Fill: Plum, Accent color 5, Light Downward Diagonal Stripe; Outline: Plum, Accent color 5
+            RadioButton {Pattern Fill: Dark Blue, Dark Upward Diagonal Stripe; Hard Shadow} -- Pattern Fill: Dark Blue, Dark Upward Diagonal Stripe; Hard Shadow
+    Button "Object"
+  Group
+    MenuButton "Equation"
+        Group
+          Group {Equation}
+            Group {Area of Circle}
+              StaticText "Area of Circle"
+              RadioButton {Equation Structure Area of Circle} -- Area of Circle
+            Group {Binomial Theorem}
+              StaticText "Binomial Theorem"
+              RadioButton {Equation Structure Binomial Theorem} -- Binomial Theorem
+            Group {Expansion of a Sum}
+              StaticText "Expansion of a Sum"
+              RadioButton {Equation Structure Expansion of a sum} -- Expansion of a sum
+            Group {Fourier Series}
+              StaticText "Fourier Series"
+              RadioButton {Equation Structure Fourier Series} -- Fourier Series
+            Group {Pythagorean Theorem}
+              StaticText "Pythagorean Theorem"
+              RadioButton {Equation Structure Pythagorean Theorem} -- Pythagorean Theorem
+            Group {Quadratic Formula}
+              StaticText "Quadratic Formula"
+              RadioButton {Equation Structure Quadratic Formula} -- Quadratic Formula
+            Group {Taylor Expansion}
+              StaticText "Taylor Expansion"
+              RadioButton {Equation Structure Taylor Expansion} -- Taylor Expansion
+            Group {Trig Identity 1}
+              StaticText "Trig Identity 1"
+              RadioButton {Equation Structure Trig Identity 1} -- Trig Identity 1
+            Group {Trig Identity 2}
+              StaticText "Trig Identity 2"
+              RadioButton {Equation Structure Trig Identity 2} -- Trig Identity 2
+          MenuButton "Insert New Equation"
+    Button "Symbol"
+##### TAB: Draw
+ScrollArea {Draw Tab Commands}
+  Group
+    CheckBox "Draw" -- Enter Draw mode
+    MenuButton "Eraser"
+        Group
+          MenuButton "Stroke Eraser"
+          MenuButton "Small Eraser"
+          MenuButton "Medium Eraser"
+          MenuButton "Segment Eraser"
+    CheckBox "Lasso Select"
+  Group
+    ScrollArea {Pens} -- gallery
+      RadioButton {Pen: Black, 0.5 mm} -- Pen: Black, 0.5 mm
+      RadioButton {Pen: Red, 0.5 mm} -- Pen: Red, 0.5 mm
+      RadioButton {Pencil: Gray, 1 mm} -- Pencil: Gray, 1 mm
+      RadioButton {Highlighter: Yellow, 6 mm} -- Highlighter: Yellow, 6 mm
+    MenuButton "Add"
+        Group
+          MenuButton "Pen"
+          MenuButton "Highlighter"
+          MenuButton "Pencil"
+  Group
+    CheckBox "Draw with
+Trackpad" {switch}
+##### TAB: Page Layout
+ScrollArea {Page Layout Tab Commands}
+  Group
+    MenuButton "Themes"
+        Group
+          Group {Themes}
+            Group {Office}
+              StaticText "Office"
+              RadioButton {Office} -- Office
+              RadioButton {Office 2013 - 2022 Theme} -- Office 2013 - 2022 Theme
+              RadioButton {Atlas} -- Atlas
+              RadioButton {Badge} -- Badge
+              RadioButton {Berlin} -- Berlin
+              RadioButton {Celestial} -- Celestial
+              RadioButton {Crop} -- Crop
+              RadioButton {Depth} -- Depth
+              RadioButton {Droplet} -- Droplet
+              RadioButton {Facet} -- Facet
+              RadioButton {Feathered} -- Feathered
+              RadioButton {Gallery} -- Gallery
+              RadioButton {Headlines} -- Headlines
+              RadioButton {Integral} -- Integral
+              RadioButton {Ion} -- Ion
+              RadioButton {Ion Boardroom} -- Ion Boardroom
+              RadioButton {Madison} -- Madison
+              RadioButton {Main Event} -- Main Event
+              RadioButton {Mesh} -- Mesh
+              RadioButton {Organic} -- Organic
+              RadioButton {Parallax} -- Parallax
+              RadioButton {Parcel} -- Parcel
+              RadioButton {Retrospect} -- Retrospect
+              RadioButton {Savon} -- Savon
+              RadioButton {Slice} -- Slice
+              RadioButton {Vapor Trail} -- Vapor Trail
+              RadioButton {View} -- View
+              RadioButton {Wisp} -- Wisp
+              RadioButton {Wood Type} -- Wood Type
+          MenuButton "Browse for Themes..."
+          MenuButton "Save Current Theme..."
+    MenuButton "Colors" -- Theme Colors
+        Group
+          Group {Colors}
+            Group {Office}
+              StaticText "Office"
+              RadioButton {Office} -- Office
+              RadioButton {Office 2013 - 2022} -- Office 2013 - 2022
+              RadioButton {Office 2007 - 2010} -- Office 2007 - 2010
+              RadioButton {Grayscale} -- Grayscale
+              RadioButton {Blue Warm} -- Blue Warm
+              RadioButton {Blue} -- Blue
+              RadioButton {Blue II} -- Blue II
+              RadioButton {Blue Green} -- Blue Green
+              RadioButton {Green} -- Green
+              RadioButton {Green Yellow} -- Green Yellow
+              RadioButton {Yellow} -- Yellow
+              RadioButton {Yellow Orange} -- Yellow Orange
+              RadioButton {Orange} -- Orange
+              RadioButton {Orange Red} -- Orange Red
+              RadioButton {Red Orange} -- Red Orange
+              RadioButton {Red} -- Red
+              RadioButton {Red Violet} -- Red Violet
+              RadioButton {Violet} -- Violet
+              RadioButton {Violet II} -- Violet II
+              RadioButton {Median} -- Median
+              RadioButton {Paper} -- Paper
+              RadioButton {Marquee} -- Marquee
+              RadioButton {Slipstream} -- Slipstream
+              RadioButton {Aspect} -- Aspect
+    MenuButton "Fonts" -- Theme Fonts
+        Group
+          Group {Fonts}
+            Group {Office}
+              StaticText "Office"
+              RadioButton {Office} -- Office
+              RadioButton {Office 2013 - 2022} -- Office 2013 - 2022
+              RadioButton {Office 2007 - 2010} -- Office 2007 - 2010
+              RadioButton {Calibri} -- Calibri
+              RadioButton {Arial} -- Arial
+              RadioButton {Corbel} -- Corbel
+              RadioButton {Candara} -- Candara
+              RadioButton {Cambria} -- Cambria
+              RadioButton {Garamond} -- Garamond
+              RadioButton {Georgia} -- Georgia
+              RadioButton {Calibri-Cambria} -- Calibri-Cambria
+              RadioButton {Consolas-Verdana} -- Consolas-Verdana
+              RadioButton {Arial-TimesNewRoman} -- Arial-TimesNewRoman
+              RadioButton {ArialBlack-Arial} -- ArialBlack-Arial
+              RadioButton {CalibriLight-Constantia} -- CalibriLight-Constantia
+              RadioButton {CenturyGothic} -- CenturyGothic
+              RadioButton {CenturyGothic-PalatinoLinotype} -- CenturyGothic-PalatinoLinotype
+              RadioButton {CenturySchoolbook} -- CenturySchoolbook
+              RadioButton {Constantia-FranklinGothicBook} -- Constantia-FranklinGothicBook
+              RadioButton {FranklinGothic} -- FranklinGothic
+              RadioButton {Garamond-trebuchetMs} -- Garamond-trebuchetMs
+              RadioButton {GillSansMt} -- GillSansMt
+              RadioButton {TimesNewRoman-Arial} -- TimesNewRoman-Arial
+              RadioButton {TrebuchetMs} -- TrebuchetMs
+              RadioButton {TwCenMT} -- TwCenMT
+              RadioButton {TwCenMT-Rockwell} -- TwCenMT-Rockwell
+  Group
+    MenuButton "Margins" -- Adjust Margins
+        Group
+          Group {Margins}
+            RadioButton {Normal
+Top: 0.75", Bottom: 0.75", Left: 0.7", Right: 0.7"}
+            RadioButton {Wide
+Top: 1", Bottom: 1", Left: 1", Right: 1"}
+            RadioButton {Narrow
+Top: 0.75", Bottom: 0.75", Left: 0.25", Right: 0.25"}
+          MenuButton "Custom Margins..."
+    MenuButton "Orientation" -- Change Page Orientation
+        Group
+          Group {Orientation}
+            RadioButton {Portrait}
+            RadioButton {Landscape}
+    MenuButton "Size" -- Choose Page Size
+        Group
+          Group {Size}
+            RadioButton {Letter 8½ x 11 in
+8.5" x 11"}
+            RadioButton {Letter Small 8½ x 11 in
+8.5" x 11"}
+            RadioButton {Tabloid 11 x 17 in
+11" x 17"}
+            RadioButton {Ledger 17 x 11 in
+17" x 11"}
+            RadioButton {Legal 8½ x 14 in
+8.5" x 14"}
+            RadioButton {Statement 5½ x 8½ in
+5.5" x 8.5"}
+            RadioButton {Executive 7½ x 10 in
+7.25" x 10.5"}
+            RadioButton {A3 297 x 420 mm
+11.69" x 16.54"}
+            RadioButton {A4 210 x 297 mm 
+8.26" x 11.69"}
+            RadioButton {A4 Small 210 x 297 mm
+8.26" x 11.69"}
+            RadioButton {A5 148 x 210 mm
+5.83" x 8.26"}
+            RadioButton {A6 105 x 148 mm
+4.14" x 5.83"}
+            RadioButton {B4 250 x 354 mm
+10.12" x 14.33"}
+            RadioButton {B5 182 x 257 mm
+7.17" x 10.12"}
+            RadioButton {Folio 8½ x 13 in
+8.5" x 13"}
+            RadioButton {Envelope #10 4-1/8 x 9½ in
+4.12" x 9.5"}
+            RadioButton {Envelope DL 110 x 220 mm
+4.33" x 8.67"}
+            RadioButton {Envelope C5 162 x 229 mm
+6.37" x 9.01"}
+            RadioButton {Envelope B5 6.93 x 9.84 in
+6.93" x 9.85"}
+            RadioButton {Envelope C3 324 x 458 mm
+4.72" x 9.25"}
+            RadioButton {Envelope C4 229 x 324 mm
+3.54" x 8.07"}
+            RadioButton {Envelope C6 114 x 162 mm
+4.48" x 6.37"}
+            RadioButton {Envelope Monarch 3.88 x 7.5 in
+3.87" x 7.5"}
+            RadioButton {Japanese Postcard 100 x 148 mm
+3.93" x 5.83"}
+            RadioButton {Japanese Double Postcard 200 x 148 mm
+5.82" x 7.87"}
+    MenuButton "Print Area"
+        Group
+          MenuButton "Set Print Area"
+          MenuButton "Clear Print Area"
+    MenuButton "Breaks"
+        Group
+          MenuButton "Insert Page Break"
+          MenuButton "Remove Page Break"
+          MenuButton "Reset All Page Breaks"
+    Button "Background"
+    Button "Print Titles"
+    Button "Page Setup"
+  Group
+    ComboBox {Width:}
+    ComboBox {Height:}
+  Group
+    StaticText "Gridlines"
+    CheckBox "View" {checkbox} -- View Gridlines
+    CheckBox "Print" {checkbox} -- Print Gridlines
+    StaticText "Headings"
+    CheckBox "View" {checkbox} -- View Gridlines
+    CheckBox "Print" {checkbox} -- Print Gridlines
+##### TAB: Formulas
+ScrollArea {Formulas Tab Commands}
+  Group
+    Button "Insert Function"
+    MenuButton "AutoSum"
+        Group
+          MenuButton "Sum"
+          MenuButton "Average"
+          MenuButton "Count Numbers"
+          MenuButton "Max"
+          MenuButton "Min"
+          MenuButton "More Functions..."
+    MenuButton "Recently Used"
+        Group
+          MenuButton "SUM"
+          MenuButton "AVERAGE"
+          MenuButton "IF"
+          MenuButton "HYPERLINK"
+          MenuButton "COUNT"
+          MenuButton "MAX"
+          MenuButton "SIN"
+          MenuButton "SUMIF"
+          MenuButton "PMT"
+          MenuButton "STDEV"
+          MenuButton "Insert Function..."
+    MenuButton "Financial"
+        Group
+          MenuButton "ACCRINT"
+          MenuButton "ACCRINTM"
+          MenuButton "AMORLINC"
+          MenuButton "COUPDAYBS"
+          MenuButton "COUPDAYS"
+          MenuButton "COUPDAYSNC"
+          MenuButton "COUPNCD"
+          MenuButton "COUPNUM"
+          MenuButton "COUPPCD"
+          MenuButton "CUMIPMT"
+          MenuButton "CUMPRINC"
+          MenuButton "DB"
+          MenuButton "DDB"
+          MenuButton "DISC"
+          MenuButton "DOLLARDE"
+          MenuButton "DOLLARFR"
+          MenuButton "DURATION"
+          MenuButton "EFFECT"
+          MenuButton "FV"
+          MenuButton "FVSCHEDULE"
+          MenuButton "INTRATE"
+          MenuButton "IPMT"
+          MenuButton "IRR"
+          MenuButton "ISPMT"
+          MenuButton "MDURATION"
+          MenuButton "MIRR"
+          MenuButton "NOMINAL"
+          MenuButton "NPER"
+          MenuButton "NPV"
+          MenuButton "ODDFPRICE"
+          MenuButton "ODDFYIELD"
+          MenuButton "ODDLPRICE"
+          MenuButton "ODDLYIELD"
+          MenuButton "PDURATION"
+          MenuButton "PMT"
+          MenuButton "PPMT"
+          MenuButton "PRICE"
+          MenuButton "PRICEDISC"
+          MenuButton "PRICEMAT"
+          MenuButton "PV"
+          MenuButton "RATE"
+          MenuButton "RECEIVED"
+          MenuButton "RRI"
+          MenuButton "SLN"
+          MenuButton "STOCKHISTORY"
+          MenuButton "SYD"
+          MenuButton "TBILLEQ"
+          MenuButton "TBILLPRICE"
+          MenuButton "TBILLYIELD"
+          MenuButton "VDB"
+          MenuButton "XIRR"
+          MenuButton "XNPV"
+          MenuButton "YIELD"
+          MenuButton "YIELDDISC"
+          MenuButton "YIELDMAT"
+          MenuButton "Insert Function..."
+    MenuButton "Logical"
+        Group
+          MenuButton "AND"
+          MenuButton "BYCOL"
+          MenuButton "BYROW"
+          MenuButton "FALSE"
+          MenuButton "IF"
+          MenuButton "IFERROR"
+          MenuButton "IFNA"
+          MenuButton "IFS"
+          MenuButton "LAMBDA"
+          MenuButton "LET"
+          MenuButton "MAKEARRAY"
+          MenuButton "MAP"
+          MenuButton "NOT"
+          MenuButton "OR"
+          MenuButton "REDUCE"
+          MenuButton "SCAN"
+          MenuButton "SWITCH"
+          MenuButton "TRUE"
+          MenuButton "XOR"
+          MenuButton "Insert Function..."
+    MenuButton "Text" -- Text Function
+        Group
+          MenuButton "ARRAYTOTEXT"
+          MenuButton "ASC"
+          MenuButton "BAHTTEXT"
+          MenuButton "CHAR"
+          MenuButton "CLEAN"
+          MenuButton "CODE"
+          MenuButton "CONCAT"
+          MenuButton "DBCS"
+          MenuButton "DETECTLANGUAGE"
+          MenuButton "DOLLAR"
+          MenuButton "EXACT"
+          MenuButton "FIND"
+          MenuButton "FIXED"
+          MenuButton "LEFT"
+          MenuButton "LEN"
+          MenuButton "LOWER"
+          MenuButton "MID"
+          MenuButton "NUMBERVALUE"
+          MenuButton "PROPER"
+          MenuButton "REGEXEXTRACT"
+          MenuButton "REGEXREPLACE"
+          MenuButton "REGEXTEST"
+          MenuButton "REPLACE"
+          MenuButton "REPT"
+          MenuButton "RIGHT"
+          MenuButton "SEARCH"
+          MenuButton "SUBSTITUTE"
+          MenuButton "T"
+          MenuButton "TEXT"
+          MenuButton "TEXTAFTER"
+          MenuButton "TEXTBEFORE"
+          MenuButton "TEXTJOIN"
+          MenuButton "TEXTSPLIT"
+          MenuButton "TRANSLATE"
+          MenuButton "TRIM"
+          MenuButton "UNICHAR"
+          MenuButton "UNICODE"
+          MenuButton "UPPER"
+          MenuButton "USDOLLAR"
+          MenuButton "VALUE"
+          MenuButton "VALUETOTEXT"
+          MenuButton "Insert Function..."
+    MenuButton "Date & Time"
+        Group
+          MenuButton "DATE"
+          MenuButton "DATEVALUE"
+          MenuButton "DAY"
+          MenuButton "DAYS"
+          MenuButton "DAYS360"
+          MenuButton "EDATE"
+          MenuButton "EOMONTH"
+          MenuButton "HOUR"
+          MenuButton "ISOWEEKNUM"
+          MenuButton "MINUTE"
+          MenuButton "MONTH"
+          MenuButton "NETWORKDAYS"
+          MenuButton "NETWORKDAYS.INTL"
+          MenuButton "NOW"
+          MenuButton "SECOND"
+          MenuButton "TIME"
+          MenuButton "TIMEVALUE"
+          MenuButton "TODAY"
+          MenuButton "WEEKDAY"
+          MenuButton "WEEKNUM"
+          MenuButton "WORKDAY"
+          MenuButton "WORKDAY.INTL"
+          MenuButton "YEAR"
+          MenuButton "YEARFRAC"
+          MenuButton "Insert Function..."
+    MenuButton "Lookup & Reference"
+        Group
+          MenuButton "ADDRESS"
+          MenuButton "AREAS"
+          MenuButton "CHOOSE"
+          MenuButton "CHOOSECOLS"
+          MenuButton "CHOOSEROWS"
+          MenuButton "COLUMN"
+          MenuButton "COLUMNS"
+          MenuButton "DROP"
+          MenuButton "EXPAND"
+          MenuButton "FIELDVALUE"
+          MenuButton "FILTER"
+          MenuButton "FORMULATEXT"
+          MenuButton "GETPIVOTDATA"
+          MenuButton "GROUPBY"
+          MenuButton "HLOOKUP"
+          MenuButton "HSTACK"
+          MenuButton "HYPERLINK"
+          MenuButton "IMAGE"
+          MenuButton "INDEX"
+          MenuButton "INDIRECT"
+          MenuButton "LOOKUP"
+          MenuButton "MATCH"
+          MenuButton "OFFSET"
+          MenuButton "PIVOTBY"
+          MenuButton "ROW"
+          MenuButton "ROWS"
+          MenuButton "RTD"
+          MenuButton "SORT"
+          MenuButton "SORTBY"
+          MenuButton "TAKE"
+          MenuButton "TOCOL"
+          MenuButton "TOROW"
+          MenuButton "TRANSPOSE"
+          MenuButton "TRIMRANGE"
+          MenuButton "UNIQUE"
+          MenuButton "VLOOKUP"
+          MenuButton "VSTACK"
+          MenuButton "WRAPCOLS"
+          MenuButton "WRAPROWS"
+          MenuButton "XLOOKUP"
+          MenuButton "XMATCH"
+          MenuButton "Insert Function..."
+    MenuButton "Math & Trig"
+        Group
+          MenuButton "ABS"
+          MenuButton "ACOS"
+          MenuButton "ACOSH"
+          MenuButton "ACOT"
+          MenuButton "ACOTH"
+          MenuButton "AGGREGATE"
+          MenuButton "ARABIC"
+          MenuButton "ASIN"
+          MenuButton "ASINH"
+          MenuButton "ATAN"
+          MenuButton "ATAN2"
+          MenuButton "ATANH"
+          MenuButton "BASE"
+          MenuButton "CEILING.MATH"
+          MenuButton "COMBIN"
+          MenuButton "COMBINA"
+          MenuButton "COS"
+          MenuButton "COSH"
+          MenuButton "COT"
+          MenuButton "COTH"
+          MenuButton "CSC"
+          MenuButton "CSCH"
+          MenuButton "DECIMAL"
+          MenuButton "DEGREES"
+          MenuButton "EVEN"
+          MenuButton "EXP"
+          MenuButton "FACT"
+          MenuButton "FACTDOUBLE"
+          MenuButton "FLOOR.MATH"
+          MenuButton "GCD"
+          MenuButton "INT"
+          MenuButton "LCM"
+          MenuButton "LN"
+          MenuButton "LOG"
+          MenuButton "LOG10"
+          MenuButton "MDETERM"
+          MenuButton "MINVERSE"
+          MenuButton "MMULT"
+          MenuButton "MOD"
+          MenuButton "MROUND"
+          MenuButton "MULTINOMIAL"
+          MenuButton "MUNIT"
+          MenuButton "ODD"
+          MenuButton "PERCENTOF"
+          MenuButton "PI"
+          MenuButton "POWER"
+          MenuButton "PRODUCT"
+          MenuButton "QUOTIENT"
+          MenuButton "RADIANS"
+          MenuButton "RAND"
+          MenuButton "RANDARRAY"
+          MenuButton "RANDBETWEEN"
+          MenuButton "ROMAN"
+          MenuButton "ROUND"
+          MenuButton "ROUNDDOWN"
+          MenuButton "ROUNDUP"
+          MenuButton "SEC"
+          MenuButton "SECH"
+          MenuButton "SEQUENCE"
+          MenuButton "SERIESSUM"
+          MenuButton "SIGN"
+          MenuButton "SIN"
+          MenuButton "SINH"
+          MenuButton "SQRT"
+          MenuButton "SQRTPI"
+          MenuButton "SUBTOTAL"
+          MenuButton "SUM"
+          MenuButton "SUMIF"
+          MenuButton "SUMIFS"
+          MenuButton "SUMPRODUCT"
+          MenuButton "SUMSQ"
+          MenuButton "SUMX2MY2"
+          MenuButton "SUMX2PY2"
+          MenuButton "SUMXMY2"
+          MenuButton "TAN"
+          MenuButton "TANH"
+          MenuButton "TRUNC"
+          MenuButton "Insert Function..."
+    MenuButton "More Functions"
+        Group
+          MenuButton "Statistical" {submenu}
+          MenuButton "Engineering" {submenu}
+          MenuButton "Cube" {submenu}
+          MenuButton "Information" {submenu}
+          MenuButton "Compatibility" {submenu}
+          MenuButton "Web" {submenu}
+  Group
+    Button "Insert Python"
+    MenuButton "Reset"
+        Group
+          MenuButton "Reset"
+          MenuButton "Reset Runtime"
+    Button "Editor"
+    Button "Initialization"
+  Group
+    Button "Name Manager"
+    MenuButton "Define Name"
+        Group
+          MenuButton "Define Name..."
+          MenuButton "Apply Names..."
+    MenuButton "Use in Formula"
+        (no popup window)
+    Button "Create from Selection"
+  Group
+    Button "Trace Precedents"
+    Button "Trace Dependents"
+    MenuButton "Remove Arrows"
+        Group
+          MenuButton "Remove Arrows"
+          MenuButton "Remove Precedent Arrows"
+          MenuButton "Remove Dependent Arrows"
+    CheckBox "Show Formulas"
+    MenuButton "Error Checking"
+        Group
+          MenuButton "Error Checking..."
+          MenuButton "Trace Error"
+          MenuButton "Circular References" {submenu}
+    CheckBox "Watch Window"
+  Group
+    MenuButton "Calculation Options"
+        Group
+          MenuButton "Automatic"
+          MenuButton "Partial"
+          MenuButton "Manual"
+          MenuButton "Format Stale Values"
+          MenuButton "Compatibility Version" {submenu}
+    Button "Calculate Now"
+    Button "Calculate Sheet"
+##### TAB: Data
+ScrollArea {Data Tab Commands}
+  Group
+    MenuButton "Get Data (Power Query)"
+        Group
+          MenuButton "Get Data (Power Query)..."
+          MenuButton "Launch Power Query Editor..."
+          MenuButton "Data Source Settings..."
+          MenuButton "From Database (Microsoft Query)"
+          MenuButton "From HTML"
+          MenuButton "From Text (Legacy)"
+          MenuButton "From SQL Server ODBC"
+    MenuButton "From Picture"
+        Group
+          MenuButton "Picture From File..."
+          MenuButton "Picture From Clipboard"
+  Group
+    MenuButton "Refresh All"
+        Group
+          MenuButton "Refresh All"
+          MenuButton "Refresh"
+          MenuButton "Refresh Status"
+          MenuButton "Cancel Refresh"
+          MenuButton "Properties"
+    Button "Queries & Connections"
+    Button "Properties"
+    Button "Workbook Links"
+  Group
+    ScrollArea {Data Types} -- gallery
+      RadioButton {Stocks (English)} -- Convert cells with company names or ticker symbols, like "MSFT", to get current stock info like price, exchange, and more. Powered by Bing (English)
+      RadioButton {Currencies (English)}
+      RadioButton {Geography (English)} -- Convert cells with countries/regions or cities, like "London", to get current world statistics like population, area, and more. Powered by Bing (English)
+  Group
+    Button "Sort A to Z"
+    Button "Sort Z to A"
+    Button "Sort"
+    CheckBox "Filter"
+    Button "Clear"
+    Button "Reapply"
+    Button "Advanced"
+  Group
+    Button "Text to Columns"
+    Button "Analyze Data" -- Discover more about your data
+    Button "Flash Fill"
+    Button "Remove Duplicates"
+    MenuButton "Data Validation"
+        Group
+          MenuButton "Data Validation..."
+          MenuButton "Circle Invalid Data"
+          MenuButton "Clear Validation Circles"
+    Button "Consolidate"
+  Group
+    MenuButton "What-If Analysis"
+        Group
+          MenuButton "Scenario Manager..."
+          MenuButton "Goal Seek..."
+          MenuButton "Data Table..."
+  Group
+    MenuButton "Group"
+        Group
+          MenuButton "Group..."
+          MenuButton "Auto Outline"
+    MenuButton "Ungroup"
+        Group
+          MenuButton "Ungroup..."
+          MenuButton "Clear Outline"
+    Button "Subtotal"
+    Button "Show Detail"
+    Button "Hide Detail"
+  Group
+    Button "Analysis Tools"
+##### TAB: Review
+ScrollArea {Review Tab Commands}
+  Group
+    Button "Spelling"
+    Button "Thesaurus"
+    Button "Workbook Statistics"
+  Group
+    MenuButton "Check Accessibility"
+        Group
+          MenuButton "Check Accessibility"
+          MenuButton "Alt Text"
+          MenuButton "Format as Table" {submenu}
+          MenuButton "Unmerge Cells"
+          MenuButton "Accessibility Help"
+  Group
+    Button "Translate"
+  Group
+    CheckBox "Show Changes"
+  Group
+    Button "New Comment"
+    Button "Delete" -- Delete Comment
+    Button "Previous Comment"
+    Button "Next Comment"
+    CheckBox "Show Comments"
+  Group
+    MenuButton "Notes"
+        Group
+          MenuButton "New Note"
+          MenuButton "Previous Note"
+          MenuButton "Next Note"
+          MenuButton "Show/Hide Note"
+          MenuButton "Show All Notes"
+          MenuButton "Convert to Comments"
+  Group
+    Button "Protect Sheet"
+    CheckBox "Protect Workbook"
+  Group
+    CheckBox "Always Open Read-Only"
+  Group
+    MenuButton "Hide Ink"
+        Group
+          MenuButton "Hide Ink"
+          MenuButton "Delete All Ink on Sheet"
+          MenuButton "Delete All Ink in Workbook"
+##### TAB: View
+ScrollArea {View Tab Commands}
+  Group
+    ComboBox {Switch Sheet View}
+    Button "Keep" -- Keep Sheet View
+    Button "Exit" -- Exit Sheet View
+    Button "New" -- New Sheet View
+    Button "Options" -- Sheet View Options
+  Group
+    CheckBox "Normal" -- Normal View
+    CheckBox "Page Break Preview"
+    CheckBox "Page Layout" -- Page Layout View
+    Button "Custom Views"
+  Group
+    CheckBox "Navigation" -- Navigation Pane
+    CheckBox "Ruler" {checkbox}
+    CheckBox "Gridlines" {checkbox} -- View Gridlines
+    CheckBox "Formula Bar" {checkbox}
+    CheckBox "Headings" {checkbox} -- View Headings
+    CheckBox "Data Type Icons" {checkbox}
+    MenuButton "Focus Cell"
+        Group
+          MenuButton "Focus Cell"
+          MenuButton "Focus Cell Color" {submenu}
+          MenuButton "Show Auto-Highlight"
+  Group
+    ComboBox {Zoom}
+    Button "Zoom to 100%" -- 100%
+    CheckBox "Zoom to Selection"
+  Group
+    Button "New Window"
+    Button "Arrange All"
+    MenuButton "Freeze Panes"
+        Group
+          MenuButton "Freeze Panes"
+          MenuButton "Freeze Top Row"
+          MenuButton "Freeze First Column"
+    CheckBox "Split"
+    Button "Hide" -- Hide Window
+    Button "Unhide" -- Unhide Window
+    CheckBox "View Side by Side"
+    CheckBox "Synchronous Scrolling"
+    Button "Reset Window Position"
+    MenuButton "Switch Windows"
+        Group
+          MenuButton "1 Book2"
+  Group
+    Button "View Macros"
+    Button "Record Macro"
+    CheckBox "Use Relative References"
+##### TAB: Automate
+ScrollArea {Automate Tab Commands}
+  Group
+    MenuButton "New Script" -- Select a New Script Action
+        Group
+          MenuButton "Create in Code Editor"
+          MenuButton "Create from Recording"
+    MenuButton "View Scripts" -- Select a View Script Action
+        Group
+          MenuButton "Recent Scripts"
+          MenuButton "Scripts from this Workbook"
+          MenuButton "Samples"
+  Group
+    Button {Next Office Scripts gallery}
+    ScrollArea {Office Scripts} -- gallery
+      RadioButton {Unhide All Rows and Columns} -- Script name
+      RadioButton {Freeze Selection} -- Script name
+      RadioButton {Make a Subtable from a Selection} -- Script name
+      RadioButton {Remove Hyperlinks from Sheet} -- Script name
+      RadioButton {Count Empty Rows} -- Script name
+      RadioButton {Return Table Data as JSON} -- Script name
+      RadioButton {Create a New PivotTable from a Table} -- Script name
+  Group
+    Button "Flow Templates"
+
+################ SECOND RUN: narrow window (1080 pt): collapsed groups appear as single MenuButtons ################
+##### TAB: Home
+ScrollArea {Home Tab Commands}
+  Group
+    MenuButton "Paste"
+        Group
+          MenuButton "Paste"
+          MenuButton "Paste"
+          MenuButton "Paste Special..."
+    Button "Cut"
+    MenuButton "Copy"
+        Group
+    CheckBox "Format" -- Copy formatting from one location and apply it to another
+  Group
+    ComboBox {Font:}
+    ComboBox {Font Size:}
+    Button "Increase Font Size"
+    Button "Decrease Font Size"
+    CheckBox "Bold"
+    CheckBox "Italic"
+    MenuButton "Underline"
+        Group
+          MenuButton "Underline"
+          MenuButton "Double Underline"
+    MenuButton "Borders"
+        Group
+          MenuButton "Borders"
+          MenuButton "Bottom Border"
+          MenuButton "Top Border"
+          MenuButton "Left Border"
+          MenuButton "Right Border"
+          MenuButton "No Border"
+          MenuButton "All Borders"
+          MenuButton "Outside Borders"
+          MenuButton "Thick Box Border"
+          MenuButton "Bottom Double Border"
+          MenuButton "Thick Bottom Border"
+          MenuButton "Top and Bottom Border"
+          MenuButton "Top and Thick Bottom Border"
+          MenuButton "Top and Double Bottom Border"
+          MenuButton "Draw Borders"
+          MenuButton "Draw Border"
+          MenuButton "Draw Border Grid"
+          MenuButton "Erase Border"
+          MenuButton "Line Color" {submenu}
+    MenuButton "Shading"
+        Group
+          Group {Color Picker}
+            (theme colors 10x6, standard colors 10, More Colors..., No Fill/Automatic)
+          MenuButton "More Colors..."
+    MenuButton "Font Color"
+        Group
+          Group {Color Picker}
+            (theme colors 10x6, standard colors 10, More Colors..., No Fill/Automatic)
+          MenuButton "More Colors..."
+    MenuButton "Show Phonetic Fields"
+        Group
+          MenuButton "Show Phonetic Fields"
+          MenuButton "Edit Phonetic"
+          MenuButton "Phonetic Settings..."
+  Group
+    CheckBox "Top Align"
+    CheckBox "Middle Align"
+    CheckBox "Bottom Align"
+    MenuButton "Wrap Text"
+        Group
+          MenuButton "Wrap Text"
+          MenuButton "Shrink Text to Fit"
+    CheckBox "Align Left"
+    CheckBox "Center" -- Center Text
+    CheckBox "Align Right"
+    MenuButton "Merge & Center"
+        Group
+          MenuButton "Merge & Center"
+          MenuButton "Merge Across"
+          MenuButton "Merge Cells"
+          MenuButton "Unmerge Cells"
+    Button "Decrease Indent"
+    Button "Increase Indent"
+    MenuButton "Orientation"
+        Group
+          MenuButton "Angle Counterclockwise"
+          MenuButton "Angle Clockwise"
+          MenuButton "Vertical Text"
+          MenuButton "Rotate Text Up"
+          MenuButton "Rotate Text Down"
+          MenuButton "Format Cell Alignment"
+  Group
+    MenuButton "Number"
+        (no popup window)
+  Group
+    MenuButton "Conditional Formatting"
+        Group
+          MenuButton "Highlight Cells Rules" {submenu}
+          MenuButton "Top/Bottom Rules" {submenu}
+          MenuButton "Data Bars" {submenu}
+          MenuButton "Color Scales" {submenu}
+          MenuButton "Icon Sets" {submenu}
+          MenuButton "New Rule..."
+          MenuButton "Clear Rules" {submenu}
+          MenuButton "Manage Rules..."
+    MenuButton "Format as Table"
+        Group
+          Group {Format as Table}
+            Group {Light}
+              StaticText "Light"
+              RadioButton {White, Table Style Light 1} -- White, Table Style Light 1
+              RadioButton {Light Turquoise, Table Style Light 2} -- Light Turquoise, Table Style Light 2
+              RadioButton {Light Orange, Table Style Light 3} -- Light Orange, Table Style Light 3
+              RadioButton {Light Green, Table Style Light 4} -- Light Green, Table Style Light 4
+              RadioButton {Light Turquoise, Table Style Light 5} -- Light Turquoise, Table Style Light 5
+              RadioButton {Pink, Table Style Light 6} -- Pink, Table Style Light 6
+              RadioButton {Light Green, Table Style Light 7} -- Light Green, Table Style Light 7
+              RadioButton {White, Table Style Light 8} -- White, Table Style Light 8
+              RadioButton {Dark Teal, Table Style Light 9} -- Dark Teal, Table Style Light 9
+              RadioButton {Orange, Table Style Light 10} -- Orange, Table Style Light 10
+              RadioButton {Dark Green, Table Style Light 11} -- Dark Green, Table Style Light 11
+              RadioButton {Turquoise, Table Style Light 12} -- Turquoise, Table Style Light 12
+              RadioButton {Plum, Table Style Light 13} -- Plum, Table Style Light 13
+              RadioButton {Green, Table Style Light 14} -- Green, Table Style Light 14
+              RadioButton {White, Table Style Light 15} -- White, Table Style Light 15
+              RadioButton {Light Turquoise, Table Style Light 16} -- Light Turquoise, Table Style Light 16
+              RadioButton {Light Orange, Table Style Light 17} -- Light Orange, Table Style Light 17
+              RadioButton {Light Green, Table Style Light 18} -- Light Green, Table Style Light 18
+              RadioButton {Light Turquoise, Table Style Light 19} -- Light Turquoise, Table Style Light 19
+              RadioButton {Pink, Table Style Light 20} -- Pink, Table Style Light 20
+              RadioButton {Light Green, Table Style Light 21} -- Light Green, Table Style Light 21
+            Group {Medium}
+              StaticText "Medium"
+              RadioButton {White, Table Style Medium 1} -- White, Table Style Medium 1
+              RadioButton {Dark Teal, Table Style Medium 2} -- Dark Teal, Table Style Medium 2
+              RadioButton {Orange, Table Style Medium 3} -- Orange, Table Style Medium 3
+              RadioButton {Dark Green, Table Style Medium 4} -- Dark Green, Table Style Medium 4
+              RadioButton {Turquoise, Table Style Medium 5} -- Turquoise, Table Style Medium 5
+              RadioButton {Plum, Table Style Medium 6} -- Plum, Table Style Medium 6
+              RadioButton {Green, Table Style Medium 7} -- Green, Table Style Medium 7
+              RadioButton {Light Gray, Table Style Medium 8} -- Light Gray, Table Style Medium 8
+              RadioButton {Dark Teal, Table Style Medium 9} -- Dark Teal, Table Style Medium 9
+              RadioButton {Orange, Table Style Medium 10} -- Orange, Table Style Medium 10
+              RadioButton {Dark Green, Table Style Medium 11} -- Dark Green, Table Style Medium 11
+              RadioButton {Turquoise, Table Style Medium 12} -- Turquoise, Table Style Medium 12
+              RadioButton {Plum, Table Style Medium 13} -- Plum, Table Style Medium 13
+              RadioButton {Green, Table Style Medium 14} -- Green, Table Style Medium 14
+              RadioButton {White, Table Style Medium 15} -- White, Table Style Medium 15
+              RadioButton {Dark Teal, Table Style Medium 16} -- Dark Teal, Table Style Medium 16
+              RadioButton {Orange, Table Style Medium 17} -- Orange, Table Style Medium 17
+              RadioButton {Dark Green, Table Style Medium 18} -- Dark Green, Table Style Medium 18
+              RadioButton {Turquoise, Table Style Medium 19} -- Turquoise, Table Style Medium 19
+              RadioButton {Plum, Table Style Medium 20} -- Plum, Table Style Medium 20
+              RadioButton {Green, Table Style Medium 21} -- Green, Table Style Medium 21
+              RadioButton {Light Gray, Table Style Medium 22} -- Light Gray, Table Style Medium 22
+              RadioButton {Light Turquoise, Table Style Medium 23} -- Light Turquoise, Table Style Medium 23
+              RadioButton {Light Orange, Table Style Medium 24} -- Light Orange, Table Style Medium 24
+              RadioButton {Light Green, Table Style Medium 25} -- Light Green, Table Style Medium 25
+              RadioButton {Light Turquoise, Table Style Medium 26} -- Light Turquoise, Table Style Medium 26
+              RadioButton {Pink, Table Style Medium 27} -- Pink, Table Style Medium 27
+              RadioButton {Light Green, Table Style Medium 28} -- Light Green, Table Style Medium 28
+            Group {Dark}
+              StaticText "Dark"
+              RadioButton {Dark Gray, Table Style Dark 1} -- Dark Gray, Table Style Dark 1
+              RadioButton {Dark Teal, Table Style Dark 2} -- Dark Teal, Table Style Dark 2
+              RadioButton {Brown, Table Style Dark 3} -- Brown, Table Style Dark 3
+              RadioButton {Dark Green, Table Style Dark 4} -- Dark Green, Table Style Dark 4
+              RadioButton {Turquoise, Table Style Dark 5} -- Turquoise, Table Style Dark 5
+              RadioButton {Plum, Table Style Dark 6} -- Plum, Table Style Dark 6
+              RadioButton {Dark Green, Table Style Dark 7} -- Dark Green, Table Style Dark 7
+              RadioButton {Light Gray, Table Style Dark 8} -- Light Gray, Table Style Dark 8
+              RadioButton {Orange, Table Style Dark 9} -- Orange, Table Style Dark 9
+              RadioButton {Turquoise, Table Style Dark 10} -- Turquoise, Table Style Dark 10
+              RadioButton {Green, Table Style Dark 11} -- Green, Table Style Dark 11
+          MenuButton "New Table Style..."
+          MenuButton "New PivotTable Style..."
+    MenuButton "Cell Styles"
+        Group
+          Group {Cell Styles}
+            Group {Good, Bad and Neutral}
+              StaticText "Good, Bad and Neutral"
+              RadioButton {Normal} -- Normal
+              RadioButton {Bad} -- Bad
+              RadioButton {Good} -- Good
+              RadioButton {Neutral} -- Neutral
+            Group {Data and Model}
+              StaticText "Data and Model"
+              RadioButton {Calculation} -- Calculation
+              RadioButton {Check Cell} -- Check Cell
+              RadioButton {Explanatory Text} -- Explanatory Text
+              RadioButton {Input} -- Input
+              RadioButton {Linked Cell} -- Linked Cell
+              RadioButton {Note} -- Note
+              RadioButton {Output} -- Output
+              RadioButton {Warning Text} -- Warning Text
+            Group {Titles and Headings}
+              StaticText "Titles and Headings"
+              RadioButton {Heading 1} -- Heading 1
+              RadioButton {Heading 2} -- Heading 2
+              RadioButton {Heading 3} -- Heading 3
+              RadioButton {Heading 4} -- Heading 4
+              RadioButton {Title} -- Title
+              RadioButton {Total} -- Total
+            Group {Themed Cell Styles}
+              StaticText "Themed Cell Styles"
+              RadioButton {Light Turquoise, 20% - Accent1} -- Light Turquoise, 20% - Accent1
+              RadioButton {Light Orange, 20% - Accent2} -- Light Orange, 20% - Accent2
+              RadioButton {Light Green, 20% - Accent3} -- Light Green, 20% - Accent3
+              RadioButton {Light Turquoise, 20% - Accent4} -- Light Turquoise, 20% - Accent4
+              RadioButton {Pink, 20% - Accent5} -- Pink, 20% - Accent5
+              RadioButton {Light Green, 20% - Accent6} -- Light Green, 20% - Accent6
+              RadioButton {Light Turquoise, 40% - Accent1} -- Light Turquoise, 40% - Accent1
+              RadioButton {Light Orange, 40% - Accent2} -- Light Orange, 40% - Accent2
+              RadioButton {Light Green, 40% - Accent3} -- Light Green, 40% - Accent3
+              RadioButton {Light Turquoise, 40% - Accent4} -- Light Turquoise, 40% - Accent4
+              RadioButton {Pink, 40% - Accent5} -- Pink, 40% - Accent5
+              RadioButton {Light Green, 40% - Accent6} -- Light Green, 40% - Accent6
+              RadioButton {Turquoise, 60% - Accent1} -- Turquoise, 60% - Accent1
+              RadioButton {Light Orange, 60% - Accent2} -- Light Orange, 60% - Accent2
+              RadioButton {Green, 60% - Accent3} -- Green, 60% - Accent3
+              RadioButton {Turquoise, 60% - Accent4} -- Turquoise, 60% - Accent4
+              RadioButton {Pink, 60% - Accent5} -- Pink, 60% - Accent5
+              RadioButton {Green, 60% - Accent6} -- Green, 60% - Accent6
+              RadioButton {Dark Teal, Accent1} -- Dark Teal, Accent1
+              RadioButton {Orange, Accent2} -- Orange, Accent2
+              RadioButton {Dark Green, Accent3} -- Dark Green, Accent3
+              RadioButton {Turquoise, Accent4} -- Turquoise, Accent4
+              RadioButton {Plum, Accent5} -- Plum, Accent5
+              RadioButton {Green, Accent6} -- Green, Accent6
+            Group {Number Format}
+              StaticText "Number Format"
+              RadioButton {Comma} -- Comma
+              RadioButton {Comma [0]} -- Comma [0]
+              RadioButton {Currency} -- Currency
+              RadioButton {Currency [0]} -- Currency [0]
+              RadioButton {Percent} -- Percent
+          MenuButton "New Cell Style..."
+          MenuButton "Merge Styles..."
+  Group
+    MenuButton "Cells"
+        (no popup window)
+  Group
+    MenuButton "Editing"
+        (no popup window)
+  Group
+    Button "Add‑ins"
+##### TAB: Formulas
+ScrollArea {Formulas Tab Commands}
+  Group
+    Button "Insert Function"
+    MenuButton "AutoSum"
+        Group
+          MenuButton "Sum"
+          MenuButton "Average"
+          MenuButton "Count Numbers"
+          MenuButton "Max"
+          MenuButton "Min"
+          MenuButton "More Functions..."
+    MenuButton "Recently Used"
+        Group
+          MenuButton "SUM"
+          MenuButton "AVERAGE"
+          MenuButton "IF"
+          MenuButton "HYPERLINK"
+          MenuButton "COUNT"
+          MenuButton "MAX"
+          MenuButton "SIN"
+          MenuButton "SUMIF"
+          MenuButton "PMT"
+          MenuButton "STDEV"
+          MenuButton "Insert Function..."
+    MenuButton "Financial"
+        Group
+          MenuButton "ACCRINT"
+          MenuButton "ACCRINTM"
+          MenuButton "AMORLINC"
+          MenuButton "COUPDAYBS"
+          MenuButton "COUPDAYS"
+          MenuButton "COUPDAYSNC"
+          MenuButton "COUPNCD"
+          MenuButton "COUPNUM"
+          MenuButton "COUPPCD"
+          MenuButton "CUMIPMT"
+          MenuButton "CUMPRINC"
+          MenuButton "DB"
+          MenuButton "DDB"
+          MenuButton "DISC"
+          MenuButton "DOLLARDE"
+          MenuButton "DOLLARFR"
+          MenuButton "DURATION"
+          MenuButton "EFFECT"
+          MenuButton "FV"
+          MenuButton "FVSCHEDULE"
+          MenuButton "INTRATE"
+          MenuButton "IPMT"
+          MenuButton "IRR"
+          MenuButton "ISPMT"
+          MenuButton "MDURATION"
+          MenuButton "MIRR"
+          MenuButton "NOMINAL"
+          MenuButton "NPER"
+          MenuButton "NPV"
+          MenuButton "ODDFPRICE"
+          MenuButton "ODDFYIELD"
+          MenuButton "ODDLPRICE"
+          MenuButton "ODDLYIELD"
+          MenuButton "PDURATION"
+          MenuButton "PMT"
+          MenuButton "PPMT"
+          MenuButton "PRICE"
+          MenuButton "PRICEDISC"
+          MenuButton "PRICEMAT"
+          MenuButton "PV"
+          MenuButton "RATE"
+          MenuButton "RECEIVED"
+          MenuButton "RRI"
+          MenuButton "SLN"
+          MenuButton "STOCKHISTORY"
+          MenuButton "SYD"
+          MenuButton "TBILLEQ"
+          MenuButton "TBILLPRICE"
+          MenuButton "TBILLYIELD"
+          MenuButton "VDB"
+          MenuButton "XIRR"
+          MenuButton "XNPV"
+          MenuButton "YIELD"
+          MenuButton "YIELDDISC"
+          MenuButton "YIELDMAT"
+          MenuButton "Insert Function..."
+    MenuButton "Logical"
+        (no popup window)
+    MenuButton "Text" -- Text Function
+        Group
+          MenuButton "ARRAYTOTEXT"
+          MenuButton "ASC"
+          MenuButton "BAHTTEXT"
+          MenuButton "CHAR"
+          MenuButton "CLEAN"
+          MenuButton "CODE"
+          MenuButton "CONCAT"
+          MenuButton "DBCS"
+          MenuButton "DETECTLANGUAGE"
+          MenuButton "DOLLAR"
+          MenuButton "EXACT"
+          MenuButton "FIND"
+          MenuButton "FIXED"
+          MenuButton "LEFT"
+          MenuButton "LEN"
+          MenuButton "LOWER"
+          MenuButton "MID"
+          MenuButton "NUMBERVALUE"
+          MenuButton "PROPER"
+          MenuButton "REGEXEXTRACT"
+          MenuButton "REGEXREPLACE"
+          MenuButton "REGEXTEST"
+          MenuButton "REPLACE"
+          MenuButton "REPT"
+          MenuButton "RIGHT"
+          MenuButton "SEARCH"
+          MenuButton "SUBSTITUTE"
+          MenuButton "T"
+          MenuButton "TEXT"
+          MenuButton "TEXTAFTER"
+          MenuButton "TEXTBEFORE"
+          MenuButton "TEXTJOIN"
+          MenuButton "TEXTSPLIT"
+          MenuButton "TRANSLATE"
+          MenuButton "TRIM"
+          MenuButton "UNICHAR"
+          MenuButton "UNICODE"
+          MenuButton "UPPER"
+          MenuButton "USDOLLAR"
+          MenuButton "VALUE"
+          MenuButton "VALUETOTEXT"
+          MenuButton "Insert Function..."
+    MenuButton "Date & Time"
+        Group
+          MenuButton "DATE"
+          MenuButton "DATEVALUE"
+          MenuButton "DAY"
+          MenuButton "DAYS"
+          MenuButton "DAYS360"
+          MenuButton "EDATE"
+          MenuButton "EOMONTH"
+          MenuButton "HOUR"
+          MenuButton "ISOWEEKNUM"
+          MenuButton "MINUTE"
+          MenuButton "MONTH"
+          MenuButton "NETWORKDAYS"
+          MenuButton "NETWORKDAYS.INTL"
+          MenuButton "NOW"
+          MenuButton "SECOND"
+          MenuButton "TIME"
+          MenuButton "TIMEVALUE"
+          MenuButton "TODAY"
+          MenuButton "WEEKDAY"
+          MenuButton "WEEKNUM"
+          MenuButton "WORKDAY"
+          MenuButton "WORKDAY.INTL"
+          MenuButton "YEAR"
+          MenuButton "YEARFRAC"
+          MenuButton "Insert Function..."
+    MenuButton "Lookup & Reference"
+        Group
+          MenuButton "ADDRESS"
+          MenuButton "AREAS"
+          MenuButton "CHOOSE"
+          MenuButton "CHOOSECOLS"
+          MenuButton "CHOOSEROWS"
+          MenuButton "COLUMN"
+          MenuButton "COLUMNS"
+          MenuButton "DROP"
+          MenuButton "EXPAND"
+          MenuButton "FIELDVALUE"
+          MenuButton "FILTER"
+          MenuButton "FORMULATEXT"
+          MenuButton "GETPIVOTDATA"
+          MenuButton "GROUPBY"
+          MenuButton "HLOOKUP"
+          MenuButton "HSTACK"
+          MenuButton "HYPERLINK"
+          MenuButton "IMAGE"
+          MenuButton "INDEX"
+          MenuButton "INDIRECT"
+          MenuButton "LOOKUP"
+          MenuButton "MATCH"
+          MenuButton "OFFSET"
+          MenuButton "PIVOTBY"
+          MenuButton "ROW"
+          MenuButton "ROWS"
+          MenuButton "RTD"
+          MenuButton "SORT"
+          MenuButton "SORTBY"
+          MenuButton "TAKE"
+          MenuButton "TOCOL"
+          MenuButton "TOROW"
+          MenuButton "TRANSPOSE"
+          MenuButton "TRIMRANGE"
+          MenuButton "UNIQUE"
+          MenuButton "VLOOKUP"
+          MenuButton "VSTACK"
+          MenuButton "WRAPCOLS"
+          MenuButton "WRAPROWS"
+          MenuButton "XLOOKUP"
+          MenuButton "XMATCH"
+          MenuButton "Insert Function..."
+    MenuButton "Math & Trig"
+        Group
+          MenuButton "ABS"
+          MenuButton "ACOS"
+          MenuButton "ACOSH"
+          MenuButton "ACOT"
+          MenuButton "ACOTH"
+          MenuButton "AGGREGATE"
+          MenuButton "ARABIC"
+    MenuButton "More Functions"
+        Group
+          MenuButton "Statistical" {submenu}
+          MenuButton "Engineering" {submenu}
+          MenuButton "Cube" {submenu}
+          MenuButton "Information" {submenu}
+          MenuButton "Compatibility" {submenu}
+          MenuButton "Web" {submenu}
+  Group
+    Button "Insert Python"
+    MenuButton "Reset"
+        (no popup window)
+    Button "Editor"
+    Button "Initialization"
+  Group
+    MenuButton "Defined Names"
+        (no popup window)
+  Group
+    Button "Trace Precedents"
+    Button "Trace Dependents"
+    MenuButton "Remove Arrows"
+        Group
+          MenuButton "Remove Arrows"
+          MenuButton "Remove Precedent Arrows"
+          MenuButton "Remove Dependent Arrows"
+    CheckBox "Show Formulas"
+    MenuButton "Error Checking"
+        Group
+          MenuButton "Error Checking..."
+          MenuButton "Trace Error"
+          MenuButton "Circular References" {submenu}
+    CheckBox "Watch Window"
+  Group
+    MenuButton "Calculation Options"
+        Group
+          MenuButton "Automatic"
+          MenuButton "Partial"
+          MenuButton "Manual"
+          MenuButton "Format Stale Values"
+          MenuButton "Compatibility Version" {submenu}
+    Button "Calculate Now"
+    Button "Calculate Sheet"

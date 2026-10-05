@@ -2,7 +2,7 @@
 
 import { escapeXmlAttr, escapeXmlText } from '../utils/escape.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
-import { SHEET_MAIN_NS } from '../xml/namespaces.js';
+import { MARKUP_COMPAT_NS, SHEET_MAIN_NS, X16_NS } from '../xml/namespaces.js';
 import { parseXml } from '../xml/parser.js';
 import { findChild, findChildren, type XmlNode } from '../xml/tree.js';
 import { coordinateToTuple } from '../utils/coordinate.js';
@@ -67,15 +67,21 @@ export function parseCommentsXml(bytes: Uint8Array | string): LegacyComment[] {
 }
 
 /**
+ * A comment as written: `uid` (`xr:uid`) is set on threaded-comment
+ * placeholders, which Excel ties back to their thread by it.
+ */
+type CommentEntry = LegacyComment & { uid?: string };
+
+/**
  * Serialise a LegacyComment array to a `xl/commentsN.xml` payload. Authors are
  * deduped: each unique `author` becomes one `<author>` entry, and comments
  * reference it by index.
  */
-export function commentsToBytes(comments: ReadonlyArray<LegacyComment>): Uint8Array {
+export function commentsToBytes(comments: ReadonlyArray<CommentEntry>): Uint8Array {
   return new TextEncoder().encode(serializeComments(comments));
 }
 
-export function serializeComments(comments: ReadonlyArray<LegacyComment>): string {
+export function serializeComments(comments: ReadonlyArray<CommentEntry>): string {
   const authorIndex = new Map<string, number>();
   const authors: string[] = [];
   for (const c of comments) {
@@ -84,13 +90,16 @@ export function serializeComments(comments: ReadonlyArray<LegacyComment>): strin
       authors.push(c.author);
     }
   }
-  const parts: string[] = [XML_HEADER, `<comments xmlns="${SHEET_MAIN_NS}"><authors>`];
+  const withUid = comments.some((c) => c.uid !== undefined);
+  const rootNs = withUid ? ` xmlns:mc="${MARKUP_COMPAT_NS}" mc:Ignorable="xr" xmlns:xr="${X16_NS}"` : '';
+  const parts: string[] = [XML_HEADER, `<comments xmlns="${SHEET_MAIN_NS}"${rootNs}><authors>`];
   for (const a of authors) parts.push(`<author>${escapeText(a)}</author>`);
   parts.push('</authors><commentList>');
   for (const c of comments) {
     const id = authorIndex.get(c.author) ?? 0;
+    const uid = c.uid !== undefined ? ` shapeId="0" xr:uid="${escapeAttr(c.uid)}"` : '';
     parts.push(
-      `<comment ref="${escapeAttr(c.ref)}" authorId="${id}"><text><t>${escapeText(c.text)}</t></text></comment>`,
+      `<comment ref="${escapeAttr(c.ref)}" authorId="${id}"${uid}><text><t>${escapeText(c.text)}</t></text></comment>`,
     );
   }
   parts.push('</commentList></comments>');

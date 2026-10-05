@@ -115,6 +115,9 @@ describe('sheet view + tab color round-trip', () => {
     setSheetZoom(ws, 150);
     setSheetViewMode(ws, 'pageLayout');
     setRightToLeft(ws, true);
+    const primary = ws.views[0];
+    if (!primary) throw new Error('expected a sheet view');
+    primary.showOutlineSymbols = false;
 
     const bytes = await workbookToBytes(wb);
     const wb2 = await loadWorkbook(fromBuffer(bytes));
@@ -127,5 +130,6 @@ describe('sheet view + tab color round-trip', () => {
     expect(ws2.views[0]?.zoomScale).toBe(150);
     expect(ws2.views[0]?.view).toBe('pageLayout');
     expect(ws2.views[0]?.rightToLeft).toBe(true);
+    expect(ws2.views[0]?.showOutlineSymbols).toBe(false);
   });
 });

@@ -24,12 +24,10 @@
   };
 
   let open = $state(false);
-  // eslint-disable-next-line prefer-const -- reassigned by `bind:value` in template
   let query = $state('');
   let hits = $state<Hit[]>([]);
   let pagefind = $state<PagefindModule | null>(null);
   let status = $state<'idle' | 'loading' | 'ready' | 'unavailable'>('idle');
-  // eslint-disable-next-line prefer-const -- reassigned by `bind:this` in template
   let inputEl = $state<HTMLInputElement | null>(null);
 
   async function loadPagefind(): Promise<PagefindModule | null> {

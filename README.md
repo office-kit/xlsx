@@ -106,8 +106,8 @@ relitigate them:
    re-discovered painfully in JS.
 2. **The 2010-era JS stack is heavy.** Most existing libraries pull in
    `jszip`, `lodash`, `archiver`, `xmlbuilder`, `sax`. In 2026 we have
-   `fflate`, `fast-xml-parser`, and `saxes` — the toolchain is an order
-   of magnitude lighter. @office-kit/xlsx ships with three runtime dependencies.
+   `fflate` and `saxes` — the toolchain is an order of magnitude lighter.
+   @office-kit/xlsx ships with two runtime dependencies.
 3. **TypeScript-first changes the API surface.** A library authored in TS
    under strict-mode flags from day one exposes different ergonomics than
    `.d.ts` typings retrofitted onto an old JS codebase.
