@@ -60,6 +60,8 @@ describe('buildChart', () => {
     expect(chart.series[0]?.cat?.ref).toBe("'Sheet 1'!$A$2:$A$4");
     expect(chart.series[1]?.tx).toEqual({ kind: 'ref', ref: "'Sheet 1'!$C$1" });
     expect(space.legend?.position).toBe('b');
+    // Excel draws a legend without <c:overlay val="0"/> over the plot area.
+    expect(space.legend?.overlay).toBe(false);
   });
 
   it('titles a single-series chart with the series name', () => {

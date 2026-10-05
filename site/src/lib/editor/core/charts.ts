@@ -450,7 +450,7 @@ export function buildChart(choice: ChartChoice, sheet: string, range: Range, val
   const space = makeChartSpace({
     plotArea,
     ...(title ? { title } : {}),
-    ...(single && !pieLike ? {} : { legend: { position: 'b' } }),
+    ...(single && !pieLike ? {} : { legend: { position: 'b', overlay: false } }),
     ...(view3D ? { view3D } : {}),
   });
   return { space };
