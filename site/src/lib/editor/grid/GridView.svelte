@@ -441,7 +441,7 @@
       capture(ev);
       return;
     }
-    if (ctl.edit && hit.kind === 'cell' && ctl.canPoint()) {
+    if (ctl.edit && hit.kind === 'cell' && ctl.canPoint(true)) {
       ctl.pointTo({ row: hit.row, col: hit.col }, extend);
       drag = { kind: 'point', anchor: { row: hit.row, col: hit.col } };
       capture(ev);

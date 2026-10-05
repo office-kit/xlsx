@@ -29,7 +29,7 @@
 
   function activate(i: number) {
     // Pointing at a reference while editing a formula stays on worksheets.
-    if (ctl.edit && ctl.canPoint()) {
+    if (ctl.edit && ctl.canPoint(true)) {
       if (doc.wb.sheets[i]?.kind === 'worksheet') doc.activateSheet(i);
       return;
     }

@@ -543,10 +543,15 @@ export class EditorController {
     e.point = null;
   }
 
-  /** Whether arrow keys / clicks should insert a reference at the caret (Excel's Point mode). */
-  canPoint(): boolean {
+  /**
+   * Whether arrow keys / clicks should insert a reference at the caret (Excel's
+   * Point mode). In Edit mode (F2, or typing in the formula bar) the arrow keys
+   * move the caret instead, but a click on a cell or sheet tab still points, as
+   * in Excel.
+   */
+  canPoint(byMouse = false): boolean {
     const e = this.edit;
-    if (!e || !e.text.startsWith('=') || e.mode === 'edit') return false;
+    if (!e || !e.text.startsWith('=') || (e.mode === 'edit' && !byMouse)) return false;
     if (e.point) return true;
     return POINTABLE.test(e.text.slice(0, e.selStart));
   }

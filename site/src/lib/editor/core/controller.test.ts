@@ -96,6 +96,21 @@ describe('editing session', () => {
   });
 });
 
+describe('Point mode from Edit mode', () => {
+  // F2 or the formula bar edit in Edit mode: arrows move the caret, a click still points.
+  test('a click inserts the reference, arrow keys do not', () => {
+    const ctl = new EditorController();
+    ctl.startEdit();
+    ctl.setEditText('=SUM(', 5);
+    expect(ctl.edit?.mode).toBe('edit');
+    expect(ctl.canPoint()).toBe(false);
+    expect(ctl.canPoint(true)).toBe(true);
+    ctl.pointTo({ row: 3, col: 3 });
+    expect(ctl.edit?.text).toBe('=SUM(C3');
+    expect(ctl.edit?.mode).toBe('point');
+  });
+});
+
 describe('Enter after Tab', () => {
   test('returns to the column where the Tab run started', () => {
     const ctl = new EditorController();
