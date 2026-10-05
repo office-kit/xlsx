@@ -12,6 +12,7 @@ import type { Cell } from '@office-kit/xlsx/cell';
 import type { Workbook } from '@office-kit/xlsx/workbook';
 import type { DataValidation, PivotTable, TableColumn, TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
 import { adjustFormulaForStructure } from '../calc/index.ts';
+import { mapChartRefs } from './charts.ts';
 import type { Range } from './address.ts';
 import { colLetter, MAX_COL, MAX_ROW, parseRangeAddress } from './address.ts';
 import type { Transaction } from './history.ts';
@@ -325,20 +326,34 @@ function adjustAllFormulas(wb: Workbook, sheetTitle: string, e: Edit): void {
   for (const ref of wb.sheets) {
     if (ref.kind !== 'worksheet') continue;
     const host = ref.sheet;
-    const adjust = (f: string): string => adjustFormulaForStructure(f, host.title, edit);
-    host.conditionalFormatting = host.conditionalFormatting.map((cf) => {
-      const rules = cf.rules.map((rule) => {
-        const formulas = rule.formulas.map(adjust);
-        return formulas.every((f, i) => f === rule.formulas[i]) ? rule : { ...rule, formulas };
-      });
-      return rules.every((r, i) => r === cf.rules[i]) ? cf : { ...cf, rules };
-    });
-    host.dataValidations = host.dataValidations.map((dv) => adjustValidation(dv, adjust));
+    rewriteSheetObjectFormulas(host, (f) => adjustFormulaForStructure(f, host.title, edit));
   }
   wb.definedNames = wb.definedNames.map((dn) => {
     const value = adjustFormulaForStructure(dn.value, sheetTitle, edit);
     return value === dn.value ? dn : { ...dn, value };
   });
+}
+
+/**
+ * Rewrite the formulas a sheet's conditional formatting, data validation and
+ * charts hold, which follow the cells they point at like cell formulas do.
+ * Declare them first with {@link declareSheetObjectFormulas}.
+ */
+export function rewriteSheetObjectFormulas(host: Worksheet, rewrite: (formula: string) => string): void {
+  host.conditionalFormatting = host.conditionalFormatting.map((cf) => {
+    const rules = cf.rules.map((rule) => {
+      const formulas = rule.formulas.map(rewrite);
+      return formulas.every((f, i) => f === rule.formulas[i]) ? rule : { ...rule, formulas };
+    });
+    return rules.every((r, i) => r === cf.rules[i]) ? cf : { ...cf, rules };
+  });
+  host.dataValidations = host.dataValidations.map((dv) => adjustValidation(dv, rewrite));
+  for (const item of host.drawing?.items ?? []) if (item.content.kind === 'chart') mapChartRefs(item.content.chart, rewrite);
+}
+
+export function declareSheetObjectFormulas(tx: Transaction, host: Worksheet): void {
+  tx.sheet(host, 'conditionalFormatting', 'dataValidations');
+  if (host.drawing?.items.some((item) => item.content.kind === 'chart')) tx.sheet(host, 'drawing');
 }
 
 function adjustValidation(dv: DataValidation, adjust: (formula: string) => string): DataValidation {
@@ -367,7 +382,8 @@ export function declareStructural(tx: Transaction, wb: Workbook, ws: Worksheet):
   for (const ref of wb.sheets) {
     if (ref.kind !== 'worksheet' || ref.sheet === ws) continue;
     tx.cells(ref.sheet, { r1: 1, c1: 1, r2: MAX_ROW, c2: MAX_COL });
-    tx.sheet(ref.sheet, 'conditionalFormatting', 'dataValidations');
+    // Rules and charts elsewhere may point at this sheet's cells.
+    declareSheetObjectFormulas(tx, ref.sheet);
     // A PivotTable elsewhere may read its source from this sheet.
     if (ref.sheet.pivotTables) tx.sheet(ref.sheet, 'pivotTables');
   }

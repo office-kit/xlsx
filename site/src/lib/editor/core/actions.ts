@@ -36,7 +36,7 @@ import { borderPatch, type BorderPreset, type StylePatch } from './format.ts';
 import { pxToColWidth, pxToPt } from './metrics.ts';
 import { currentRange } from './selection.ts';
 import { validateName } from './names.ts';
-import { applyStructuralEdit, declareStructural, structuralEdit } from './structure.ts';
+import { applyStructuralEdit, declareSheetObjectFormulas, declareStructural, rewriteSheetObjectFormulas, structuralEdit } from './structure.ts';
 import { tableRange } from './tables.ts';
 import { recentFunctions } from './recent-functions.svelte.ts';
 
@@ -560,6 +560,7 @@ export function renameSheetAt(ctl: EditorController, index: number, name: string
     for (const s of doc.wb.sheets) if (s.kind === 'worksheet') tx.cells(s.sheet, { r1: 1, c1: 1, r2: MAX_ROW, c2: MAX_COL });
     // renameSheet re-points PivotTable sources at the new title.
     for (const s of doc.wb.sheets) if (s.kind === 'worksheet' && s.sheet.pivotTables) tx.sheet(s.sheet, 'pivotTables');
+    for (const s of doc.wb.sheets) if (s.kind === 'worksheet') declareSheetObjectFormulas(tx, s.sheet);
     renameSheet(doc.wb, old, trimmed);
     for (const s of doc.wb.sheets) {
       if (s.kind !== 'worksheet') continue;
@@ -572,6 +573,7 @@ export function renameSheetAt(ctl: EditorController, index: number, name: string
         }
       }
     }
+    for (const s of doc.wb.sheets) if (s.kind === 'worksheet') rewriteSheetObjectFormulas(s.sheet, (f) => renameSheetInFormula(f, old, trimmed));
     for (const dn of doc.wb.definedNames) dn.value = renameSheetInFormula(dn.value, old, trimmed);
   });
   return undefined;
