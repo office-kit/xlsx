@@ -6,6 +6,7 @@
 // editor writes must go through `toStorageFormula`; text read from a file goes
 // through `fromStorageFormula` before it is shown in the formula bar.
 
+import { FUNCTIONS } from './functions/index.ts';
 import { type Token, tokenize } from './lexer.ts';
 import { normalizeFunctionName } from './parser.ts';
 
@@ -92,13 +93,23 @@ export function toStorageFormula(text: string): string {
   for (const t of tokens) {
     if (t.kind === 'func') {
       const name = normalizeFunctionName(t.name);
-      if (name === t.name.toUpperCase() && FUTURE.has(name)) {
-        edits.push({ start: t.start, end: t.start, text: XLWS.has(name) ? '_xlfn._xlws.' : '_xlfn.' });
-      } else if (params.has(t.name.toUpperCase())) {
+      const upper = t.name.toUpperCase();
+      const typedPrefix = t.name.slice(0, t.name.length - name.length).toLowerCase();
+      const prefix = FUTURE.has(name) ? (XLWS.has(name) ? '_xlfn._xlws.' : '_xlfn.') : typedPrefix;
+      if (FUNCTIONS.has(name)) {
+        // Excel upper-cases the functions it knows (`=sum(a1)` → `=SUM(A1)`)
+        // and leaves a misspelt one as typed.
+        edits.push({ start: t.start, end: t.start + t.name.length, text: prefix + name });
+      } else if (params.has(upper)) {
         edits.push({ start: t.start, end: t.start, text: PARAM_PREFIX });
+      } else if (name === upper && FUTURE.has(name)) {
+        edits.push({ start: t.start, end: t.start, text: prefix });
       }
     } else if (t.kind === 'name' && t.prefix === undefined && params.has(t.name.toUpperCase())) {
       edits.push({ start: t.start, end: t.start, text: PARAM_PREFIX });
+    } else if (t.kind === 'ref' && t.area !== undefined) {
+      const ref = text.slice(t.prefixEnd, t.end);
+      if (ref !== ref.toUpperCase()) edits.push({ start: t.prefixEnd, end: t.end, text: ref.toUpperCase() });
     }
   }
   return apply(text, edits);
