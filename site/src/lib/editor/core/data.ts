@@ -52,8 +52,13 @@ function effective(v: CellValue | undefined): CellValue | number | string | bool
   return v ?? undefined;
 }
 
+// Excel's default sort ignores case but not accents: e and E tie, é comes after both.
+// Built once: localeCompare with options builds a collator on every call.
+const CASE_SENSITIVE = new Intl.Collator(undefined, { sensitivity: 'variant', caseFirst: 'lower', numeric: false });
+const CASE_INSENSITIVE = new Intl.Collator(undefined, { sensitivity: 'accent', numeric: false });
+
 function compareText(a: string, b: string, caseSensitive = false): number {
-  return caseSensitive ? a.localeCompare(b, undefined, { sensitivity: 'variant', caseFirst: 'lower', numeric: false }) : a.localeCompare(b, undefined, { sensitivity: 'base', numeric: false });
+  return (caseSensitive ? CASE_SENSITIVE : CASE_INSENSITIVE).compare(a, b);
 }
 
 /**
@@ -63,8 +68,9 @@ function compareText(a: string, b: string, caseSensitive = false): number {
 export function compareValues(a: CellValue | undefined, b: CellValue | undefined, descending: boolean, opts: Pick<SortKey, 'list' | 'caseSensitive'> = {}): number {
   const va = effective(a);
   const vb = effective(b);
-  const blankA = va === undefined || va === null || va === '';
-  const blankB = vb === undefined || vb === null || vb === '';
+  // A formula returning "" is text, not a blank: it sorts with the other text.
+  const blankA = va === undefined || va === null || (va === '' && !isFormulaValue(a));
+  const blankB = vb === undefined || vb === null || (vb === '' && !isFormulaValue(b));
   if (blankA || blankB) return blankA === blankB ? 0 : blankA ? 1 : -1;
   const rank = (v: unknown): number => (typeof v === 'number' || v instanceof Date ? 0 : typeof v === 'string' || (typeof v === 'object' && v !== null && 'runs' in v) ? 1 : typeof v === 'boolean' ? 2 : 3);
   const ra = rank(va);
@@ -76,6 +82,10 @@ export function compareValues(a: CellValue | undefined, b: CellValue | undefined
   else if (ra === 2) cmp = Number(va) - Number(vb);
   else cmp = 0;
   return descending ? -cmp : cmp;
+}
+
+function isFormulaValue(v: CellValue | undefined): boolean {
+  return v !== undefined && v !== null && typeof v === 'object' && !(v instanceof Date) && v.kind === 'formula';
 }
 
 function compareInList(a: string, b: string, list: readonly string[]): number {
