@@ -6,7 +6,7 @@ import type { CellValue } from '@office-kit/xlsx/cell';
 import type { Workbook } from '@office-kit/xlsx/workbook';
 import type { TableColumn, TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
 import type { MessageKey } from '../i18n/i18n.svelte.ts';
-import { colLetter, MAX_ROW, parseRangeAddress, rangeAddress, rangesIntersect, type Range } from './address.ts';
+import { colLetter, MAX_ROW, parseRangeAddress, rangeAddress, rangesIntersect, type CellPos, type Range } from './address.ts';
 import { getCellAt, isBlank, setValueAt } from './cells.ts';
 import type { EditorController } from './controller.svelte.ts';
 import type { Transaction } from './history.ts';
@@ -667,6 +667,26 @@ export function resizeTable(ctl: EditorController, def: TableDefinition, next: R
     if (def.autoFilter) def.autoFilter = { ...def.autoFilter, ref: rangeAddress(filterRange(def, next)), filterColumns: [] };
   });
   return undefined;
+}
+
+/**
+ * Excel's AutoCorrect "include new rows and columns in table": typing into the
+ * row just below a table (one without a total row) or the column just right of
+ * it grows the table to take the cell in. It is its own undo step after the
+ * typing, as in Excel, and is skipped when it would overlap something.
+ */
+export function autoExpandTable(ctl: EditorController, at: CellPos): void {
+  const ws = ctl.doc.ws;
+  if (isBlank(getCellAt(ws, at.row, at.col))) return;
+  for (const def of ws.tables) {
+    const range = tableRange(def);
+    if (!range) continue;
+    const below = totalRows(def) === 0 && at.row === range.r2 + 1 && at.col >= range.c1 && at.col <= range.c2;
+    const right = at.col === range.c2 + 1 && at.row >= range.r1 && at.row <= range.r2;
+    if (!below && !right) continue;
+    resizeTable(ctl, def, below ? { ...range, r2: at.row } : { ...range, c2: at.col });
+    return;
+  }
 }
 
 function themeColor(r: ThemeRef) {
