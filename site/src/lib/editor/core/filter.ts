@@ -5,7 +5,7 @@
 import type { Cell } from '@office-kit/xlsx/cell';
 import { getCellDisplayText } from '@office-kit/xlsx/styles';
 import type { AutoFilter, CustomFilterCondition, FilterColumn, Worksheet } from '@office-kit/xlsx/worksheet';
-import { parseRangeAddress, rangeAddress, type Range } from './address.ts';
+import { MAX_ROW, parseRangeAddress, rangeAddress, type Range } from './address.ts';
 import { getCellAt, isBlank } from './cells.ts';
 import type { EditorController } from './controller.svelte.ts';
 import { dataRange } from './data.ts';
@@ -42,6 +42,32 @@ export function filterOwners(ws: Worksheet): FilterOwner[] {
 export function isRowFiltered(ws: Worksheet, row: number): boolean {
   if (ws.rowDimensions.get(row)?.hidden !== true) return false;
   return filterOwners(ws).some((o) => o.autoFilter.filterColumns.length > 0 && row > o.range.r1 && row <= o.range.r2);
+}
+
+/**
+ * `range` without the rows a filter hides, as runs of visible rows: in a
+ * filtered list Excel clears, formats and pastes only the rows on show. A
+ * whole-column range is left whole, since its format lives on the column.
+ */
+export function visibleParts(ws: Worksheet, range: Range): Range[] {
+  if (range.r1 === 1 && range.r2 === MAX_ROW) return [range];
+  const owners = filterOwners(ws).filter((o) => o.autoFilter.filterColumns.length > 0);
+  if (owners.length === 0) return [range];
+  const hidden: number[] = [];
+  for (const [row, dim] of ws.rowDimensions) {
+    if (dim.hidden !== true || row < range.r1 || row > range.r2) continue;
+    if (owners.some((o) => row > o.range.r1 && row <= o.range.r2)) hidden.push(row);
+  }
+  if (hidden.length === 0) return [range];
+  hidden.sort((a, b) => a - b);
+  const parts: Range[] = [];
+  let from = range.r1;
+  for (const row of hidden) {
+    if (row > from) parts.push({ ...range, r1: from, r2: row - 1 });
+    from = row + 1;
+  }
+  if (from <= range.r2) parts.push({ ...range, r1: from });
+  return parts;
 }
 
 /** The filter whose header row holds (row, col), if any. */
