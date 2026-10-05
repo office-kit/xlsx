@@ -51,9 +51,13 @@
 
   // Spacer extent: the used range or the current view (whichever is larger),
   // plus one more screen, so the scrollbar keeps growing like Excel's.
-  const extent = $derived.by(() => {
+  // The used range only changes with the model; kept apart from the
+  // selection / scroll reads below so moving around does not rescan the sheet.
+  const used = $derived.by(() => {
     void doc.version;
-    const used = usedRange(doc.ws);
+    return usedRange(doc.ws);
+  });
+  const extent = $derived.by(() => {
     const sel = doc.selection.active;
     const lastRow = Math.min(MAX_ROW, Math.max(used?.r2 ?? 1, sel.row) + 1);
     const lastCol = Math.min(MAX_COL, Math.max(used?.c2 ?? 1, sel.col) + 1);
