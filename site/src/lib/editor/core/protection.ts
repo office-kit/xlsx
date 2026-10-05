@@ -28,6 +28,12 @@ const FIELD_FLAG: Partial<Record<SheetField, keyof SheetProtection>> = {
   scenarios: 'scenarios',
 };
 
+/**
+ * Fields whose only change in a structural step elsewhere (a row insert on
+ * another sheet, a sheet rename) is their references being rewritten.
+ */
+const REFERENCE_FIELDS: ReadonlySet<SheetField> = new Set<SheetField>(['conditionalFormatting', 'dataValidations', 'drawing', 'pivotTables']);
+
 function isProtected(ws: Worksheet): boolean {
   return ws.sheetProtection?.sheet === true;
 }
@@ -76,6 +82,7 @@ export function protectionGuard(wb: () => Workbook): TransactionGuard {
       case 'sheet': {
         const p = part.ws.sheetProtection;
         if (!p?.sheet) return;
+        if (structural && !part.whole && part.fields.every((f) => REFERENCE_FIELDS.has(f))) return;
         for (const field of part.fields) {
           if (ALWAYS_ALLOWED.has(field)) continue;
           const flag = FIELD_FLAG[field];
