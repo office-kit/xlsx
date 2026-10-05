@@ -10,7 +10,7 @@
 
 import type { Cell } from '@office-kit/xlsx/cell';
 import type { Workbook } from '@office-kit/xlsx/workbook';
-import type { PivotTable, TableColumn, TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
+import type { DataValidation, PivotTable, TableColumn, TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
 import { adjustFormulaForStructure } from '../calc/index.ts';
 import type { Range } from './address.ts';
 import { colLetter, MAX_COL, MAX_ROW, parseRangeAddress } from './address.ts';
@@ -333,20 +333,22 @@ function adjustAllFormulas(wb: Workbook, sheetTitle: string, e: Edit): void {
       });
       return rules.every((r, i) => r === cf.rules[i]) ? cf : { ...cf, rules };
     });
-    host.dataValidations = host.dataValidations.map((dv) => {
-      const formula1 = dv.formula1 === undefined ? undefined : adjust(dv.formula1);
-      const formula2 = dv.formula2 === undefined ? undefined : adjust(dv.formula2);
-      if (formula1 === dv.formula1 && formula2 === dv.formula2) return dv;
-      const next = { ...dv };
-      if (formula1 !== undefined) next.formula1 = formula1;
-      if (formula2 !== undefined) next.formula2 = formula2;
-      return next;
-    });
+    host.dataValidations = host.dataValidations.map((dv) => adjustValidation(dv, adjust));
   }
   wb.definedNames = wb.definedNames.map((dn) => {
     const value = adjustFormulaForStructure(dn.value, sheetTitle, edit);
     return value === dn.value ? dn : { ...dn, value };
   });
+}
+
+function adjustValidation(dv: DataValidation, adjust: (formula: string) => string): DataValidation {
+  const formula1 = dv.formula1 === undefined ? undefined : adjust(dv.formula1);
+  const formula2 = dv.formula2 === undefined ? undefined : adjust(dv.formula2);
+  if (formula1 === dv.formula1 && formula2 === dv.formula2) return dv;
+  const next = { ...dv };
+  if (formula1 !== undefined) next.formula1 = formula1;
+  if (formula2 !== undefined) next.formula2 = formula2;
+  return next;
 }
 
 /**
