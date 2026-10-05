@@ -515,14 +515,15 @@ export function insertSheet(ctl: EditorController, at?: number): void {
 
 export function deleteSheet(ctl: EditorController, index: number): void {
   const doc = ctl.doc;
-  const visible = doc.wb.sheets.filter((s) => s.state === 'visible' && s.kind === 'worksheet');
-  if (visible.length <= 1) {
+  const title = doc.wb.sheets[index]?.sheet.title;
+  if (title === undefined) return;
+  // Some visible worksheet has to stay; a chart sheet can always go.
+  if (!doc.wb.sheets.some((s, i) => i !== index && s.state === 'visible' && s.kind === 'worksheet')) {
     ctl.dialog = { kind: 'alert', props: { message: 'lastSheet' } };
     return;
   }
-  const title = doc.wb.sheets[index]?.sheet.title;
-  if (title === undefined) return;
-  const next = Math.max(0, index >= doc.wb.sheets.length - 1 ? index - 1 : index);
+  const activeTitle = doc.wb.sheets[doc.activeSheetIndex]?.sheet.title;
+  const shownTitle = ctl.shownChartsheet === null ? undefined : doc.wb.sheets[ctl.shownChartsheet]?.sheet.title;
   const order = doc.wb.sheets.map((s) => s.sheet.title);
   doc.transact('Delete Sheet', (tx) => {
     tx.structural = true;
@@ -556,7 +557,18 @@ export function deleteSheet(ctl: EditorController, index: number): void {
       return value === dn.value ? dn : { ...dn, value };
     });
   });
-  doc.activeSheetIndex = Math.min(next, doc.wb.sheets.length - 1);
+  const sheets = doc.wb.sheets;
+  const kept = sheets.findIndex((s) => s.sheet.title === activeTitle);
+  // Deleting the active sheet moves to the next visible worksheet, else the one before.
+  const usable = (i: number) => sheets[i]?.state === 'visible' && sheets[i]?.kind === 'worksheet';
+  let active = kept;
+  if (active < 0) {
+    active = sheets.findIndex((_, i) => i >= index && usable(i));
+    for (let i = index - 1; active < 0 && i >= 0; i--) if (usable(i)) active = i;
+  }
+  doc.activeSheetIndex = active;
+  const shown = sheets.findIndex((s) => s.sheet.title === shownTitle);
+  ctl.chartsheet = shown < 0 ? null : shown;
   doc.layoutVersion++;
 }
 
