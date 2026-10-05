@@ -232,6 +232,23 @@ function formulaInput(body: string, sheetTitles: readonly string[] | undefined):
   return impliedFormat === undefined ? { value } : { value, impliedFormat };
 }
 
+/** U+FF01–U+FF5E are the full-width forms of ASCII `!`–`~`. */
+const FULLWIDTH_ASCII_OFFSET = 0xfee0;
+const FULLWIDTH_RE = /[\uFF01-\uFF5E\u3000]/;
+
+/** `＝ＳＵＭ（Ａ１）` → `=SUM(A1)`; text inside `"…"` keeps its spelling. */
+function halfWidth(text: string): string {
+  let out = '';
+  let quoted = false;
+  for (const ch of text) {
+    const code = ch.charCodeAt(0);
+    const half = code >= 0xff01 && code <= 0xff5e ? String.fromCharCode(code - FULLWIDTH_ASCII_OFFSET) : code === 0x3000 ? ' ' : ch;
+    if (half === '"') quoted = !quoted;
+    out += quoted && half !== '"' ? ch : half;
+  }
+  return out;
+}
+
 /**
  * Interpret typed text. Formula text keeps the user's spelling (after the `=`)
  * apart from the `_xlfn.` / `_xlpm.` prefixes Excel needs in a file; the
@@ -239,6 +256,15 @@ function formulaInput(body: string, sheetTitles: readonly string[] | undefined):
  * before the value is committed.
  */
 export function parseInput(input: string, opts: ParseOptions = {}): ParsedInput {
+  const parsed = parseTyped(input, opts);
+  if (typeof parsed.value !== 'string' || !FULLWIDTH_RE.test(input)) return parsed;
+  // Excel reads full-width digits, signs and formulas (an IME's default) as
+  // their ASCII forms; text that is still text keeps its full-width spelling.
+  const folded = parseTyped(halfWidth(input), opts);
+  return typeof folded.value === 'string' ? parsed : folded;
+}
+
+function parseTyped(input: string, opts: ParseOptions): ParsedInput {
   if (input === '') return { value: null };
   if (input.startsWith("'")) return { value: input.slice(1) };
   if (input.startsWith('=') && input.length > 1) return formulaInput(input.slice(1), opts.sheetTitles);
