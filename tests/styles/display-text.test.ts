@@ -338,10 +338,48 @@ describe('getCellDisplayText: the 1900 system\'s phantom days', () => {
   });
 });
 
+// Expected texts were read from Excel for Mac.
+describe('getCellDisplayText: Japanese era and locale', () => {
+  const serial = (y: number, m: number, d: number): number => (Date.UTC(y, m - 1, d) - Date.UTC(1899, 11, 30)) / 86_400_000;
+  it.each([
+    [serial(1912, 7, 29), '明治45年'],
+    [serial(1912, 7, 30), '大正01年'],
+    [serial(1926, 12, 24), '大正15年'],
+    [serial(1926, 12, 25), '昭和01年'],
+    [serial(1989, 1, 7), '昭和64年'],
+    [serial(1989, 1, 8), '平成01年'],
+    [serial(2019, 4, 30), '平成31年'],
+    [serial(2019, 5, 1), '令和01年'],
+    [1, '明治33年'],
+    [60, '明治33年'],
+  ])('era boundary: %s', (value, expected) => {
+    expect(display('[$-411]gggee"年"', value)).toBe(expected);
+  });
+
+  it.each([
+    ['ggge"年"m"月"d"日"', '令和5年3月15日'],
+    ['gge', '令5'],
+    ['[$-411]g e', 'R 5'],
+    ['[$-411]gg ee', '令 05'],
+    ['[$-ja-JP]ggg e', '令和 5'],
+    ['[$-411]ggggg', '令和'],
+    ['[$-411]ge.m.d', 'R5.3.15'],
+    ['[$-411]ggge"年"m"月"d"日";@', '令和5年3月15日'],
+    ['[$-411]aaa aaaa', '水 水曜日'],
+    ['[$-411]ddd dddd', '水 水曜日'],
+    ['[$-411]mmm mmmm mmmmm', '3月 3月 3'],
+    ['[$-411]yyyy/m/d h:mm AM/PM', '2023/3/15 6:00 午後'],
+    ['[$-ja-JP]yyyy"年"m"月"d"日"(aaa)', '2023年3月15日(水)'],
+    ['yyyy"年"m"月"d"日"(aaa)', '2023年3月15日(Wed)'],
+    ['[$-411]h:mm:ss', '18:00:00'],
+  ])('%s', (code, expected) => {
+    expect(display(code, 45_000.75)).toBe(expected);
+  });
+});
+
 describe('getCellDisplayText: codes outside the supported set', () => {
   it.each([
-    // Era and calendar tokens need a calendar this renderer does not carry.
-    ['ggge"年"m"月"d"日"', MARCH_14_2024, '45365'],
+    // Number words need a numeral system this renderer does not carry.
     ['[DBNum1]0', 42, '42'],
     // More than the four sections Excel defines.
     ['0;0;0;0;0', 1.5, '1.5'],

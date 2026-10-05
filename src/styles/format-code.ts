@@ -60,6 +60,29 @@ const MONTH_NAMES = [
 ] as const;
 
 const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
+const JA_WEEKDAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'] as const;
+const JA_WEEKDAY_SUFFIX = '曜日';
+const JA_MONTH_SUFFIX = '月';
+const JA_AM = '午前';
+const JA_PM = '午後';
+
+/** A Japanese era: the Gregorian day it starts and the three ways `g` / `gg` / `ggg` spell it. */
+interface JapaneseEra {
+  readonly start: readonly [year: number, month: number, day: number];
+  readonly names: readonly [latin: string, short: string, long: string];
+}
+
+// Newest first. Meiji is the era of every day the 1900 date system reaches before Taisho.
+const JAPANESE_ERAS: readonly JapaneseEra[] = [
+  { start: [2019, 5, 1], names: ['R', '令', '令和'] },
+  { start: [1989, 1, 8], names: ['H', '平', '平成'] },
+  { start: [1926, 12, 25], names: ['S', '昭', '昭和'] },
+  { start: [1912, 7, 30], names: ['T', '大', '大正'] },
+  { start: [1868, 1, 1], names: ['M', '明', '明治'] },
+];
+
+/** `[$-411]`, `[$-ja-JP]`, `[$¥-411]`: the locale part of the id names Japanese. */
+const JAPANESE_LOCALE_RE = /-(?:[0-9a-f]*0?411|ja(?:-jp)?)(?:-|$)/i;
 
 const COLOR_NAMES: ReadonlySet<string> = new Set(FORMAT_COLOR_NAMES.toLowerCase().split('|'));
 const INDEXED_COLOR_RE = /^color\s*\d+$/i;
@@ -74,7 +97,7 @@ const ELAPSED_RE = /^([hms])\1*$/i;
 
 type DigitPlaceholder = '0' | '#' | '?';
 
-type DatePart = 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second' | 'monthOrMinute';
+type DatePart = 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second' | 'monthOrMinute' | 'era' | 'eraYear';
 type ElapsedPart = 'hour' | 'minute' | 'second';
 
 interface DatePartToken {
@@ -130,6 +153,8 @@ interface DateFormatSection {
   readonly kind: 'date';
   readonly tokens: readonly Token[];
   readonly elapsed: boolean;
+  /** A `[$-411]`-style locale: month, weekday and AM/PM names print in Japanese. */
+  readonly japanese: boolean;
   /** A year, month or day part: the section names a day, not just a time within one. */
   readonly calendar: boolean;
   readonly hasMeridiem: boolean;
@@ -258,11 +283,18 @@ const datePartOf = (letter: string): DatePart => {
   if (letter === 'd') return 'day';
   if (letter === 'h') return 'hour';
   if (letter === 's') return 'second';
+  if (letter === 'g') return 'era';
+  if (letter === 'e') return 'eraYear';
   return 'monthOrMinute';
 };
 
+/** What the brackets of a section said beyond the tokens they produced. */
+interface SectionContext {
+  japanese: boolean;
+}
+
 /** `[Red]`, `[$€-407]`, `[hh]`, `[>100]`: everything Excel puts in brackets. */
-const tokenizeBracket = (body: string, tokens: Token[]): boolean => {
+const tokenizeBracket = (body: string, tokens: Token[], context: SectionContext): boolean => {
   const elapsed = ELAPSED_RE.exec(body);
   if (elapsed !== null) {
     const letter = (elapsed[1] ?? 'h').toLowerCase();
@@ -271,10 +303,11 @@ const tokenizeBracket = (body: string, tokens: Token[]): boolean => {
     return true;
   }
   if (body.startsWith('$')) {
-    // `[$<symbol>-<locale>]`: the symbol prints, the locale id only picks
-    // number words and calendar names this renderer does not vary.
+    // `[$<symbol>-<locale>]`: the symbol prints, and a Japanese locale switches
+    // month, weekday and AM/PM names to Japanese. Other locales keep English.
     const symbol = body.slice(1).split('-')[0] ?? '';
     if (symbol.length > 0) pushLiteral(tokens, symbol);
+    if (JAPANESE_LOCALE_RE.test(body)) context.japanese = true;
     return true;
   }
   const lower = body.toLowerCase();
@@ -292,7 +325,7 @@ const meridiemToken = (raw: string): Token => {
   return { kind: 'meridiem', am: raw.slice(0, slash), pm: raw.slice(slash + 1) };
 };
 
-const tokenizeSection = (src: string): Token[] | undefined => {
+const tokenizeSection = (src: string, context: SectionContext): Token[] | undefined => {
   const tokens: Token[] = [];
   let i = 0;
   while (i < src.length) {
@@ -324,7 +357,7 @@ const tokenizeSection = (src: string): Token[] | undefined => {
     if (ch === '[') {
       const end = src.indexOf(']', i + 1);
       if (end === -1) return undefined;
-      if (!tokenizeBracket(src.slice(i + 1, end), tokens)) return undefined;
+      if (!tokenizeBracket(src.slice(i + 1, end), tokens, context)) return undefined;
       i = end + 1;
       continue;
     }
@@ -384,22 +417,31 @@ const tokenizeSection = (src: string): Token[] | undefined => {
     const lower = ch.toLowerCase();
     if (lower === 'e') {
       const sign = src.charAt(i + 1);
-      // A bare `e` is the era-year token, which needs a calendar this renderer
-      // does not carry.
-      if (sign !== '+' && sign !== '-') return undefined;
-      tokens.push({ kind: 'exponent', explicitSign: sign === '+' });
-      i += 2;
+      if (sign === '+' || sign === '-') {
+        tokens.push({ kind: 'exponent', explicitSign: sign === '+' });
+        i += 2;
+        continue;
+      }
+    }
+    // `aaa` / `aaaa` are the weekday in the section's language, like `ddd` / `dddd`.
+    if (lower === 'a' && src.slice(i, i + NAME_TOKEN_WIDTH).toLowerCase() === 'aaa') {
+      let width = NAME_TOKEN_WIDTH;
+      while (src.charAt(i + width).toLowerCase() === 'a') width++;
+      tokens.push({ kind: 'datePart', part: 'day', width });
+      i += width;
       continue;
     }
-    if (lower === 'y' || lower === 'm' || lower === 'd' || lower === 'h' || lower === 's') {
+    // `g` is the Japanese era and a bare `e` the year within it; Excel draws
+    // both from the Japanese calendar whatever the section's locale.
+    if (lower === 'y' || lower === 'm' || lower === 'd' || lower === 'h' || lower === 's' || lower === 'g' || lower === 'e') {
       let width = 1;
       while (src.charAt(i + width).toLowerCase() === lower) width++;
       tokens.push({ kind: 'datePart', part: datePartOf(lower), width });
       i += width;
       continue;
     }
-    // `g` (era) and `b` (Buddhist calendar) shift the calendar system.
-    if (lower === 'g' || lower === 'b') return undefined;
+    // `b` (Buddhist calendar) shifts the calendar system.
+    if (lower === 'b') return undefined;
     pushLiteral(tokens, ch);
     i++;
   }
@@ -595,7 +637,7 @@ const nextDateToken = (tokens: readonly Token[], index: number, step: number): D
   return undefined;
 };
 
-const resolveDateSection = (tokens: readonly Token[]): DateFormatSection | undefined => {
+const resolveDateSection = (tokens: readonly Token[], japanese: boolean): DateFormatSection | undefined => {
   // `.0` right after a seconds token is fractional seconds, not a decimal point.
   const withSubseconds: Token[] = [];
   let subsecondDigits = 0;
@@ -636,7 +678,9 @@ const resolveDateSection = (tokens: readonly Token[]): DateFormatSection | undef
 
   const elapsed = resolved.some((t) => t.kind === 'elapsed');
   const calendarPart = resolved.some(
-    (t) => t.kind === 'datePart' && (t.part === 'year' || t.part === 'month' || t.part === 'day'),
+    (t) =>
+      t.kind === 'datePart' &&
+      (t.part === 'year' || t.part === 'month' || t.part === 'day' || t.part === 'era' || t.part === 'eraYear'),
   );
   // A leftover digit placeholder means the code mixes a numeric layout into a
   // date layout, and an elapsed duration has no calendar date to print.
@@ -647,6 +691,7 @@ const resolveDateSection = (tokens: readonly Token[]): DateFormatSection | undef
     kind: 'date',
     tokens: resolved,
     elapsed,
+    japanese,
     calendar: calendarPart,
     hasMeridiem: resolved.some((t) => t.kind === 'meridiem'),
     subsecondDigits,
@@ -654,7 +699,8 @@ const resolveDateSection = (tokens: readonly Token[]): DateFormatSection | undef
 };
 
 const parseSection = (src: string): FormatSection | undefined => {
-  const tokens = tokenizeSection(src);
+  const context: SectionContext = { japanese: false };
+  const tokens = tokenizeSection(src, context);
   if (tokens === undefined) return undefined;
   if (tokens.length === 0) return { kind: 'blank' };
   if (tokens.some((t) => t.kind === 'general')) {
@@ -665,7 +711,7 @@ const parseSection = (src: string): FormatSection | undefined => {
   const hasDate = tokens.some((t) => t.kind === 'datePart' || t.kind === 'elapsed' || t.kind === 'meridiem');
   if (hasText && hasDate) return undefined;
   if (hasText) return { kind: 'text', tokens };
-  if (hasDate) return resolveDateSection(tokens);
+  if (hasDate) return resolveDateSection(tokens, context.japanese);
   if (tokens.every((token) => token.kind === 'literal')) {
     return { kind: 'literal', text: tokens.map(literalFor).join('') };
   }
@@ -1084,25 +1130,44 @@ const PHANTOM_DAYS: ReadonlyMap<number, { month: number; day: number; weekday: n
 
 const twoDigits = (value: number, width: number): string => (width === 1 ? String(value) : String(value).padStart(2, '0'));
 
-const renderDatePart = (token: DatePartToken, fields: DateFields, hasMeridiem: boolean): string => {
+const japaneseEraOf = (fields: DateFields): { era: JapaneseEra; year: number } => {
+  const key = fields.year * 10_000 + fields.month * 100 + fields.day;
+  const era =
+    JAPANESE_ERAS.find(({ start: [y, m, d] }) => key >= y * 10_000 + m * 100 + d) ??
+    (JAPANESE_ERAS[JAPANESE_ERAS.length - 1] as JapaneseEra);
+  return { era, year: fields.year - era.start[0] + 1 };
+};
+
+const renderDatePart = (token: DatePartToken, fields: DateFields, section: DateFormatSection): string => {
   switch (token.part) {
+    case 'era': {
+      const { names } = japaneseEraOf(fields).era;
+      return names[Math.min(token.width, names.length) - 1] ?? '';
+    }
+    case 'eraYear':
+      return twoDigits(japaneseEraOf(fields).year, token.width);
     case 'year':
       return token.width <= 2
         ? String(fields.year % 100).padStart(2, '0')
         : String(fields.year).padStart(FULL_YEAR_DIGITS, '0');
     case 'month': {
       if (token.width < NAME_TOKEN_WIDTH) return twoDigits(fields.month, token.width);
+      if (section.japanese) return token.width > MONTH_FULL_WIDTH ? String(fields.month) : `${fields.month}${JA_MONTH_SUFFIX}`;
       const name = MONTH_NAMES[fields.month - 1] ?? '';
       if (token.width === NAME_TOKEN_WIDTH) return name.slice(0, NAME_TOKEN_WIDTH);
       return token.width === MONTH_FULL_WIDTH ? name : name.slice(0, 1);
     }
     case 'day': {
       if (token.width < NAME_TOKEN_WIDTH) return twoDigits(fields.day, token.width);
+      if (section.japanese) {
+        const short = JA_WEEKDAY_NAMES[fields.weekday] ?? '';
+        return token.width === NAME_TOKEN_WIDTH ? short : short + JA_WEEKDAY_SUFFIX;
+      }
       const name = WEEKDAY_NAMES[fields.weekday] ?? '';
       return token.width === NAME_TOKEN_WIDTH ? name.slice(0, NAME_TOKEN_WIDTH) : name;
     }
     case 'hour': {
-      const hour = hasMeridiem ? fields.hour % HOURS_PER_HALF_DAY || HOURS_PER_HALF_DAY : fields.hour;
+      const hour = section.hasMeridiem ? fields.hour % HOURS_PER_HALF_DAY || HOURS_PER_HALF_DAY : fields.hour;
       return twoDigits(hour, token.width);
     }
     case 'minute':
@@ -1144,13 +1209,14 @@ const renderDateTokens = (section: DateFormatSection, fields: DateFields): strin
   for (const token of section.tokens) {
     switch (token.kind) {
       case 'datePart':
-        pieces.push(renderDatePart(token, fields, section.hasMeridiem));
+        pieces.push(renderDatePart(token, fields, section));
         break;
       case 'elapsed':
         pieces.push(renderElapsed(token, fields));
         break;
       case 'meridiem':
-        pieces.push(fields.hour < HOURS_PER_HALF_DAY ? token.am : token.pm);
+        if (section.japanese && token.am.length > 1) pieces.push(fields.hour < HOURS_PER_HALF_DAY ? JA_AM : JA_PM);
+        else pieces.push(fields.hour < HOURS_PER_HALF_DAY ? token.am : token.pm);
         break;
       case 'subsecond':
         pieces.push(`.${subsecondText(fields.subsecond, token.digits)}`);
