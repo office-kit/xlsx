@@ -289,32 +289,29 @@
   }
 
   /* Shared form layout for dialog bodies. */
+  /* Tab strip as Excel for Mac draws it: a gray track with the selected segment raised in white. */
   .body :global(.seg) {
     display: flex;
     justify-content: center;
-    margin-bottom: 10px;
+    margin: 0 auto 10px;
+    width: fit-content;
+    padding: 2px;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
   }
   .body :global(.seg > button) {
-    border: 1px solid var(--xl-border-strong);
-    border-left-width: 0;
-    background: #fff;
+    border: 0;
+    background: transparent;
+    border-radius: 5px;
     padding: 3px 12px;
     font: inherit;
     font-size: 12px;
     color: var(--xl-text);
     cursor: default;
   }
-  .body :global(.seg > button:first-child) {
-    border-left-width: 1px;
-    border-radius: 5px 0 0 5px;
-  }
-  .body :global(.seg > button:last-child) {
-    border-radius: 0 5px 5px 0;
-  }
   .body :global(.seg > button[aria-selected='true']) {
-    background: var(--xl-accent);
-    border-color: var(--xl-accent);
-    color: #fff;
+    background: #fff;
+    box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.25);
   }
   .body :global(.row) {
     display: flex;
@@ -361,14 +358,14 @@
     text-align: left;
     border: 0;
     background: transparent;
-    padding: 3px 6px;
+    padding: 1px 6px;
+    line-height: 16px;
     font: inherit;
     color: inherit;
     cursor: default;
   }
   .body :global(.list button[aria-selected='true']) {
-    background: var(--xl-accent);
-    color: #fff;
+    background: var(--xl-pressed);
   }
   .body :global(.hint) {
     color: var(--xl-text-2);

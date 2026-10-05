@@ -4,7 +4,7 @@
 
 import type { Cell, CellValue } from '@office-kit/xlsx/cell';
 import { makeCell } from '@office-kit/xlsx/cell';
-import type { Alignment, Border, Color, FontPatch, HorizontalAlignment, PatternType, Side, SideStyle, UnderlineStyle, VerticalAlignment } from '@office-kit/xlsx/styles';
+import type { Alignment, Border, Color, Font, FontPatch, HorizontalAlignment, PatternType, Side, SideStyle, UnderlineStyle, VerticalAlignment } from '@office-kit/xlsx/styles';
 import { getCellAlignment, getCellBorder, getCellDisplayText, getCellFill, getCellFont, getCellProtection, makeBorder, makeColor } from '@office-kit/xlsx/styles';
 import { createWorkbook } from '@office-kit/xlsx/workbook';
 import { mergeCells, unmergeCells } from '@office-kit/xlsx/worksheet';
@@ -174,7 +174,8 @@ export const EDGES = ['top', 'insideH', 'bottom', 'left', 'insideV', 'right', 'd
 export type Edge = (typeof EDGES)[number];
 
 /** Line styles in the order of Excel's Style box (two columns, top to bottom). */
-export const LINE_STYLES: readonly SideStyle[] = ['hair', 'dotted', 'dashDotDot', 'dashDot', 'dashed', 'thin', 'mediumDashDotDot', 'slantDashDot', 'mediumDashDot', 'mediumDashed', 'medium', 'thick', 'double'];
+/** Excel's Line Style list, read top to bottom in two columns of seven. */
+export const LINE_STYLES: readonly SideStyle[] = ['none', 'hair', 'dotted', 'dashDotDot', 'dashDot', 'dashed', 'thin', 'mediumDashDotDot', 'slantDashDot', 'mediumDashDot', 'mediumDashed', 'medium', 'thick', 'double'];
 
 export interface BorderState {
   lineStyle: SideStyle;
@@ -277,6 +278,29 @@ function hexOf(color: Color | undefined, palette: ThemePalette): string | null {
   return css ? css.slice(1).toUpperCase() : null;
 }
 
+function fontStateOf(font: Font, palette: ThemePalette): FontState {
+  return {
+    name: font.name ?? 'Aptos Narrow',
+    style: font.bold && font.italic ? 'boldItalic' : font.bold ? 'bold' : font.italic ? 'italic' : 'regular',
+    size: font.size ?? 11,
+    underline: font.underline ?? 'none',
+    color: hexOf(font.color, palette),
+    strike: font.strike === true,
+    superscript: font.vertAlign === 'superscript',
+    subscript: font.vertAlign === 'subscript',
+  };
+}
+
+/** The workbook's Normal style font, which the Font tab's "Normal font" box restores. */
+export function normalFontState(ctl: EditorController): FontState {
+  const doc = ctl.doc;
+  return fontStateOf(getCellFont(doc.wb, makeCell(1, 1, null, 0)), doc.styles.palette);
+}
+
+export function sameFont(a: FontState, b: FontState): boolean {
+  return (Object.keys(a) as Array<keyof FontState>).every((k) => a[k] === b[k]);
+}
+
 export function initialState(ctl: EditorController): FormatCellsState {
   const doc = ctl.doc;
   const wb = doc.wb;
@@ -305,16 +329,7 @@ export function initialState(ctl: EditorController): FormatCellsState {
       degrees: rotation === 255 ? 0 : rotationToDegrees(rotation),
       stacked: rotation === 255,
     },
-    font: {
-      name: font.name ?? 'Aptos Narrow',
-      style: font.bold && font.italic ? 'boldItalic' : font.bold ? 'bold' : font.italic ? 'italic' : 'regular',
-      size: font.size ?? 11,
-      underline: font.underline ?? 'none',
-      color: hexOf(font.color, palette),
-      strike: font.strike === true,
-      superscript: font.vertAlign === 'superscript',
-      subscript: font.vertAlign === 'subscript',
-    },
+    font: fontStateOf(font, palette),
     border: {
       lineStyle: 'thin',
       lineColor: null,

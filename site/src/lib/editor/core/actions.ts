@@ -36,6 +36,7 @@ import { pxToColWidth, pxToPt } from './metrics.ts';
 import { currentRange } from './selection.ts';
 import { validateName } from './names.ts';
 import { applyStructuralEdit, declareStructural, structuralEdit } from './structure.ts';
+import { recentFunctions } from './recent-functions.svelte.ts';
 
 // ---- history ------------------------------------------------------------------
 
@@ -818,6 +819,7 @@ export function resetPageBreaks(ctl: EditorController): void {
 
 /** Function Library menus: start a formula with the function, as Excel's Function Arguments flow does. */
 export function insertFunctionCall(ctl: EditorController, name: string): void {
+  recentFunctions.use(name);
   const e = ctl.edit;
   if (e && e.text.startsWith('=')) {
     const ins = `${name}(`;

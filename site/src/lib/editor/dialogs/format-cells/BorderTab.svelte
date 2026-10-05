@@ -36,7 +36,9 @@
     diagDown: [X0, Y0, X1, Y1],
   };
 
-  function currentSide(): Side {
+  // Line Style "None" erases: clicking an edge or a preset with it removes those borders.
+  function currentSide(): Side | null {
+    if (model.lineStyle === 'none') return null;
     return makeSide({ style: model.lineStyle, ...(model.lineColor ? { color: makeColor({ rgb: model.lineColor }) } : {}) });
   }
 
@@ -47,6 +49,31 @@
 
   function toggle(edge: Edge): void {
     set(edge, model.edges[edge] ? null : currentSide());
+  }
+
+  // Clicking in the preview toggles the edge nearest the pointer, as in Excel.
+  function clickPreview(e: MouseEvent): void {
+    const svg = e.currentTarget as SVGSVGElement;
+    const box = svg.getBoundingClientRect();
+    const x = ((e.clientX - box.left) / box.width) * 200;
+    const y = ((e.clientY - box.top) / box.height) * 120;
+    let best: Edge | undefined;
+    let bestDist = 10;
+    for (const edge of EDGES) {
+      const d = distanceToSegment(x, y, LINES[edge]);
+      if (d < bestDist) {
+        best = edge;
+        bestDist = d;
+      }
+    }
+    if (best) toggle(best);
+  }
+
+  function distanceToSegment(px: number, py: number, [x1, y1, x2, y2]: [number, number, number, number]): number {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const k = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)));
+    return Math.hypot(px - (x1 + k * dx), py - (y1 + k * dy));
   }
 
   function preset(kind: 'none' | 'outline' | 'inside'): void {
@@ -77,20 +104,56 @@
 {/snippet}
 
 <div class="border">
-  <div class="main">
-    <div class="presets">
-      <button class="xl-btn outlined" onclick={() => preset('none')}>{t('dlgNone')}</button>
-      <button class="xl-btn outlined" onclick={() => preset('outline')}>{t('dlgOutline')}</button>
-      <button class="xl-btn outlined" onclick={() => preset('inside')}>{t('dlgInside')}</button>
+  <div class="line">
+    <div class="lbl">{t('dlgLineStyle')}</div>
+    <div class="styles" role="listbox" aria-label={t('dlgLineStyle')}>
+      {#each LINE_STYLES as style (style)}
+        {@const s = strokeOf(style)}
+        <button role="option" aria-selected={model.lineStyle === style} aria-label={style === 'none' ? t('dlgNone') : style} onclick={() => (model.lineStyle = style)}>
+          {#if style === 'none'}
+            <span class="none">{t('dlgNone')}</span>
+          {:else}
+            <svg viewBox="0 0 60 8" width="60" height="8" aria-hidden="true">
+              {#if s.double}
+                <line x1="2" y1="2.5" x2="58" y2="2.5" stroke="currentColor" />
+                <line x1="2" y1="5.5" x2="58" y2="5.5" stroke="currentColor" />
+              {:else}
+                <line x1="2" y1="4" x2="58" y2="4" stroke="currentColor" stroke-width={s.width} stroke-dasharray={s.dash || undefined} />
+              {/if}
+            </svg>
+          {/if}
+        </button>
+      {/each}
     </div>
-    <div class="lbl">{t('borders')}</div>
+    <div class="lbl">{t('dlgLineColor')}</div>
+    <ColorPicker bind:value={model.lineColor} noneLabel={t('automatic')} label={t('dlgLineColor')} />
+  </div>
+  <div class="main">
+    <div class="lbl">{t('dlgPresets')}</div>
+    <div class="presets">
+      {#each [['none', 'dlgNone'], ['outline', 'dlgOutline'], ['inside', 'dlgInside']] as const as [kind, key] (kind)}
+        <button class="preset" onclick={() => preset(kind)}>
+          <span class="xl-btn outlined">
+            <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+              <rect x="4" y="4" width="24" height="24" fill="#fff" stroke="#bbb" stroke-dasharray="1 1" />
+              <line x1="16" y1="4" x2="16" y2="28" stroke={kind === 'inside' ? '#000' : '#bbb'} stroke-width={kind === 'inside' ? 2 : 1} stroke-dasharray={kind === 'inside' ? undefined : '1 1'} />
+              <line x1="4" y1="16" x2="28" y2="16" stroke={kind === 'inside' ? '#000' : '#bbb'} stroke-width={kind === 'inside' ? 2 : 1} stroke-dasharray={kind === 'inside' ? undefined : '1 1'} />
+              {#if kind === 'outline'}<rect x="4" y="4" width="24" height="24" fill="none" stroke="#000" stroke-width="2" />{/if}
+            </svg>
+          </span>
+          <span>{t(key)}</span>
+        </button>
+      {/each}
+    </div>
+    <div class="lbl">{t('dlgBorderLabel')}</div>
     <div class="board">
       <div class="side-buttons">
         {@render edgeButton('top')}
         {@render edgeButton('insideH')}
         {@render edgeButton('bottom')}
       </div>
-      <svg class="preview" viewBox="0 0 200 120" role="img" aria-label={t('dlgPreview')}>
+      <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+      <svg class="preview" viewBox="0 0 200 120" role="img" aria-label={t('dlgPreview')} onclick={clickPreview}>
         <rect x={X0} y={Y0} width={X1 - X0} height={Y1 - Y0} fill="#fff" />
         {#each [0, 1] as r (r)}
           {#each [0, 1] as c (c)}
@@ -121,45 +184,40 @@
       {@render edgeButton('right')}
       {@render edgeButton('diagDown')}
     </div>
-    <p class="hint">{t('dlgBorderHint')}</p>
-  </div>
-  <div class="line">
-    <fieldset>
-      <legend>{t('dlgLine')}</legend>
-      <div class="lbl">{t('dlgStyle')}</div>
-      <div class="styles" role="listbox" aria-label={t('dlgStyle')}>
-        {#each LINE_STYLES as style (style)}
-          {@const s = strokeOf(style)}
-          <button role="option" aria-selected={model.lineStyle === style} aria-label={style} onclick={() => (model.lineStyle = style)}>
-            <svg viewBox="0 0 60 8" width="60" height="8" aria-hidden="true">
-              {#if s.double}
-                <line x1="2" y1="2.5" x2="58" y2="2.5" stroke="currentColor" />
-                <line x1="2" y1="5.5" x2="58" y2="5.5" stroke="currentColor" />
-              {:else}
-                <line x1="2" y1="4" x2="58" y2="4" stroke="currentColor" stroke-width={s.width} stroke-dasharray={s.dash || undefined} />
-              {/if}
-            </svg>
-          </button>
-        {/each}
-      </div>
-      <div class="lbl">{t('dlgColor')}</div>
-      <ColorPicker bind:value={model.lineColor} noneLabel={t('automatic')} label={t('dlgColor')} />
-    </fieldset>
   </div>
 </div>
+<p class="hint">{t('dlgBorderHint')}</p>
 
 <style>
   .border {
     display: flex;
-    gap: 12px;
+    gap: 20px;
   }
   .main {
     flex: 1;
   }
+  .lbl {
+    margin-bottom: 4px;
+  }
   .presets {
     display: flex;
-    gap: 8px;
-    margin-bottom: 6px;
+    gap: 18px;
+    margin: 0 0 8px 36px;
+  }
+  .preset {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+  }
+  .preset .xl-btn {
+    padding: 2px;
   }
   .board {
     display: flex;
@@ -186,6 +244,7 @@
     height: 132px;
     background: #fafafa;
     border: 1px solid var(--xl-border);
+    cursor: pointer;
   }
   .line {
     width: 170px;
@@ -193,20 +252,28 @@
   .styles {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(7, auto);
+    grid-auto-flow: column;
     border: 1px solid var(--xl-border-strong);
     background: #fff;
-    border-radius: 3px;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
   }
   .styles button {
     border: 0;
     background: transparent;
-    padding: 4px;
+    height: 22px;
+    padding: 0 4px;
     color: #000;
     cursor: default;
   }
   .styles button[aria-selected='true'] {
-    background: var(--xl-selected);
-    outline: 1px solid var(--xl-accent);
+    outline: 1px dotted #000;
+    outline-offset: -2px;
+  }
+  .none {
+    font-size: 12px;
+  }
+  .hint {
+    margin: 12px 0 0;
   }
 </style>

@@ -198,26 +198,20 @@
   </Group>
 
   <Group label={t('chGroupData')}>
-    <button class="xl-btn big" disabled={!source} onclick={switchRowColumn}><Icon name="text-columns" size={24} /><span>{t('chSwitchRowCol')}</span></button>
-    <button class="xl-btn big" onclick={() => ctl.openDialog('chartSelectData')}><Icon name="table" size={24} /><span>{t('chSelectData')}</span></button>
+    <button class="xl-btn big" disabled={!source} onclick={switchRowColumn}><Icon name="text-columns" size={30} /><span>{t('chSwitchRowCol')}</span></button>
+    <button class="xl-btn big" onclick={() => ctl.openDialog('chartSelectData')}><Icon name="table" size={30} /><span>{t('chSelectData')}</span></button>
   </Group>
 
   <Group label={t('chGroupType')}>
-    <button class="xl-btn big" onclick={() => ctl.openDialog('insertChart', { mode: 'change' })}><Icon name="chart" size={24} /><span>{t('chChangeType')}</span></button>
+    <button class="xl-btn big" onclick={() => ctl.openDialog('insertChart', { mode: 'change' })}><Icon name="chart" size={30} /><span>{t('chChangeType')}</span></button>
   </Group>
 
   <Group label={t('chGroupLocation')}>
-    <button class="xl-btn big" onclick={() => ctl.openDialog('moveChart')}><Icon name="sheet" size={24} /><span>{t('chMoveChart')}</span></button>
+    <button class="xl-btn big" onclick={() => ctl.openDialog('moveChart')}><Icon name="sheet" size={30} /><span>{t('chMoveChart')}</span></button>
   </Group>
 {/if}
 
 <style>
-  .big {
-    flex-direction: column;
-    height: 64px;
-    min-width: 52px;
-    font-size: 11px;
-  }
   .head {
     padding: 6px 10px 2px;
     font-size: 11.5px;
@@ -251,12 +245,11 @@
     display: block;
     pointer-events: none;
   }
+  /* One row of thumbnails, like Excel's in-ribbon Chart Styles gallery. */
   .styles {
-    display: grid;
-    grid-template-columns: repeat(3, auto);
+    display: flex;
     gap: 2px;
-    align-content: center;
-    height: 100%;
+    align-self: center;
   }
   .set {
     gap: 2px;

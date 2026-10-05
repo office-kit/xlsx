@@ -124,7 +124,6 @@
           <button class="xl-menu-item" onclick={() => { A.toggleUnderline(ctl, 'double'); close(); }}>{t('doubleUnderline')}</button>
         {/snippet}
       </MenuButton>
-      <button class="xl-btn" title={t('strikethrough')} aria-pressed={!!font.strike} onclick={() => A.toggleStrike(ctl)}><Icon name="strike" /></button>
       <MenuButton split icon="borders" title={t('borders')} onmain={() => A.applyBorder(ctl, lastBorder)}>
         {#snippet menu(close)}
           {#each BORDERS as b (b.id)}
@@ -230,8 +229,8 @@
 </Group>
 
 <Group label={t('groupStyles')}>
-  <div class="row">
-    <MenuButton large icon="cond-format" label={t('conditionalFormatting')}>
+  <div class="col">
+    <MenuButton icon="cond-format" label={t('conditionalFormatting')}>
       {#snippet menu(close)}
         <button class="xl-menu-item" onclick={() => { ctl.openDialog('conditionalFormatting', { preset: 'highlight' }); close(); }}>{t('cfHighlightRules')}</button>
         <button class="xl-menu-item" onclick={() => { ctl.openDialog('conditionalFormatting', { preset: 'topBottom' }); close(); }}>{t('cfTopBottomRules')}</button>
@@ -244,8 +243,8 @@
         <button class="xl-menu-item" onclick={() => { ctl.openDialog('conditionalFormatting', { preset: 'manage' }); close(); }}>{t('cfManageRules')}</button>
       {/snippet}
     </MenuButton>
-    <button class="xl-btn large" onclick={() => ctl.openDialog('createTable')}><Icon name="table" size={26} /><span>{t('formatAsTable')}</span></button>
-    <MenuButton large icon="cell-styles" label={t('cellStyles')}>
+    <button class="xl-btn" onclick={() => ctl.openDialog('createTable')}><Icon name="table" /><span>{t('formatAsTable')}</span></button>
+    <MenuButton icon="cell-styles" label={t('cellStyles')}>
       {#snippet menu(close)}
         <div class="styles">
           {#each CELL_STYLE_PRESETS as p (p.id)}
@@ -308,7 +307,7 @@
 
 <Group label={t('groupEditing')}>
   <div class="col">
-    <MenuButton split icon="sum" label={t('autoSum')} onmain={() => A.autoSum(ctl)}>
+    <MenuButton split icon="sum" title={t('autoSum')} onmain={() => A.autoSum(ctl)}>
       {#snippet menu(close)}
         {#each [['SUM', 'fnSum'], ['AVERAGE', 'fnAverage'], ['COUNT', 'fnCount'], ['MAX', 'fnMax'], ['MIN', 'fnMin']] as const as [fn, key] (fn)}
           <button class="xl-menu-item" onclick={() => { A.autoSum(ctl, fn); close(); }}>{t(key)}</button>
@@ -317,7 +316,7 @@
         <button class="xl-menu-item" onclick={() => { ctl.openDialog('insertFunction'); close(); }}>{t('moreFunctions')}</button>
       {/snippet}
     </MenuButton>
-    <MenuButton icon="fill-down" label={t('fill')}>
+    <MenuButton icon="fill-down" title={t('fill')}>
       {#snippet menu(close)}
         <button class="xl-menu-item" onclick={() => { A.fillFrom(ctl, 'down'); close(); }}>{t('fillDown')}</button>
         <button class="xl-menu-item" onclick={() => { A.fillFrom(ctl, 'right'); close(); }}>{t('fillRight')}</button>
@@ -326,7 +325,7 @@
         <button class="xl-menu-item" onclick={() => { ctl.openDialog('series'); close(); }}>{t('seriesEllipsis')}</button>
       {/snippet}
     </MenuButton>
-    <MenuButton icon="eraser" label={t('clear')}>
+    <MenuButton icon="eraser" title={t('clear')}>
       {#snippet menu(close)}
         <button class="xl-menu-item" onclick={() => { A.clear(ctl, 'all'); close(); }}>{t('clearAll')}</button>
         <button class="xl-menu-item" onclick={() => { A.clear(ctl, 'formats'); close(); }}>{t('clearFormats')}</button>
@@ -365,14 +364,8 @@
     align-items: center;
     gap: 1px;
   }
-  .col {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    justify-content: center;
-  }
   .font-name {
-    width: 132px;
+    width: 118px;
   }
   .font-size {
     width: 52px;
@@ -412,12 +405,5 @@
   }
   .style-chip:hover {
     outline: 2px solid #f5a623;
-  }
-  .xl-btn.large {
-    flex-direction: column;
-    height: 64px;
-    min-width: 52px;
-    font-size: 11px;
-    gap: 2px;
   }
 </style>

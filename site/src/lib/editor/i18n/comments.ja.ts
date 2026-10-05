@@ -5,6 +5,7 @@ import type { commentsEn } from './comments.en.ts';
 
 export const commentsJa: Partial<Record<keyof typeof commentsEn, string>> = {
   cmtNewComment: '新しいコメント',
+  insComment: 'コメント',
   cmtDelete: '削除',
   cmtPrevious: '前のコメント',
   cmtNext: '次のコメント',

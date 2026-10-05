@@ -6,6 +6,7 @@ import { compileCriteria, criterionTest, matches, runAdvancedFilter } from './ad
 import { consolidateGrids } from './consolidate.ts';
 import { EditorController } from './controller.svelte.ts';
 import { removeDuplicates } from './data.ts';
+import { filterBySelectedValue } from './filter.ts';
 import { setTotalRow } from './tables.ts';
 import { applySubtotals, removeSubtotals } from './subtotal.ts';
 import { changingCells, fillDataTable, goalSeek, saveScenario, scenarioSummary, showScenario } from './what-if.ts';
@@ -297,5 +298,32 @@ describe('Remove Duplicates', () => {
     const ref = wb.sheets[0];
     if (ref?.kind !== 'worksheet') return expect.unreachable('expected a worksheet');
     expect([2, 3, 4, 5].map((r) => getCell(ref.sheet, r, 1)?.value ?? null)).toEqual(['East', 'West', 'North', null]);
+  });
+});
+
+describe('Filter by Selected Cell\'s Value', () => {
+  const hidden = (ctl: EditorController) => [...ctl.doc.ws.rowDimensions].filter(([, d]) => d.hidden).map(([r]) => r);
+
+  it('turns the filter on and keeps the matching rows in one undo step', () => {
+    const ctl = new EditorController();
+    grid(ctl, SALES);
+    ctl.selectCell({ row: 4, col: 1 });
+    filterBySelectedValue(ctl);
+    expect(ctl.doc.ws.autoFilter?.ref).toBe('A1:B6');
+    expect(ctl.doc.ws.autoFilter?.filterColumns).toEqual([{ kind: 'filters', colId: 0, values: ['West'] }]);
+    expect(hidden(ctl)).toEqual([2, 3]);
+    ctl.doc.undo();
+    expect(ctl.doc.ws.autoFilter).toBeUndefined();
+    expect(hidden(ctl)).toEqual([]);
+  });
+
+  it('leaves a cell outside the sheet filter alone', () => {
+    const ctl = new EditorController();
+    grid(ctl, SALES);
+    ctl.selectCell({ row: 2, col: 1 });
+    ctl.toggleFilter();
+    type(ctl, 10, 4, 'x');
+    filterBySelectedValue(ctl);
+    expect(ctl.doc.ws.autoFilter?.filterColumns).toEqual([]);
   });
 });

@@ -39,10 +39,14 @@
   });
 
   const zoomPct = $derived(Math.round(doc.zoom * 100));
+  // Excel's zoom slider is piecewise: the left half spans 10–100 %, the right
+  // half 100–400 %, so 100 % sits on the centre mark.
+  const sliderOf = (pct: number) => (pct <= 100 ? ((pct - 10) / 90) * 100 : 100 + ((pct - 100) / 300) * 100);
+  const pctOf = (pos: number) => Math.round(pos <= 100 ? 10 + pos * 0.9 : 100 + (pos - 100) * 3);
   const VIEWS: Array<['normal' | 'pageLayout' | 'pageBreakPreview', string, MessageKey]> = [
     ['normal', 'sheet', 'viewNormal'],
     ['pageLayout', 'page-layout', 'viewPageLayout'],
-    ['pageBreakPreview', 'page', 'viewPageBreak'],
+    ['pageBreakPreview', 'page-break', 'viewPageBreak'],
   ];
 
   // Right-click on the bar picks the aggregates, as in Excel; remembered per browser.
@@ -133,7 +137,7 @@
   </span>
   <span class="zoom">
     <button class="xl-btn" title={t('zoomOut')} onclick={() => doc.setZoom(Math.round(doc.zoom * 10 - 1) / 10)}><Icon name="minus" size={12} /></button>
-    <input type="range" min="10" max="400" step="5" value={zoomPct} aria-label={t('zoom')} oninput={(e) => doc.setZoom(Number((e.currentTarget as HTMLInputElement).value) / 100)} />
+    <input type="range" min="0" max="200" step="1" value={sliderOf(zoomPct)} aria-label={t('zoom')} aria-valuetext="{zoomPct}%" oninput={(e) => doc.setZoom(pctOf(Number((e.currentTarget as HTMLInputElement).value)) / 100)} />
     <button class="xl-btn" title={t('zoomIn')} onclick={() => doc.setZoom(Math.round(doc.zoom * 10 + 1) / 10)}><Icon name="plus" size={12} /></button>
     <button class="xl-btn pct" onclick={() => ctl.openDialog('zoom')}>{zoomPct}%</button>
   </span>
@@ -180,7 +184,25 @@
   }
   .zoom input {
     width: 100px;
-    accent-color: var(--xl-accent);
+    height: 16px;
+    margin: 0;
+    appearance: none;
+    background: linear-gradient(var(--xl-text-2), var(--xl-text-2)) center / 1px 8px no-repeat, linear-gradient(var(--xl-text-3), var(--xl-text-3)) center / 100% 1px no-repeat;
+    cursor: pointer;
+  }
+  .zoom input::-webkit-slider-thumb {
+    appearance: none;
+    width: 4px;
+    height: 12px;
+    border-radius: 1px;
+    background: var(--xl-text-2);
+  }
+  .zoom input::-moz-range-thumb {
+    width: 4px;
+    height: 12px;
+    border: 0;
+    border-radius: 1px;
+    background: var(--xl-text-2);
   }
   .pct {
     min-width: 46px;

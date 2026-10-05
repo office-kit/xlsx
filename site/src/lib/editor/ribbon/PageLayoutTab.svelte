@@ -46,14 +46,14 @@
       <button class="xl-menu-item" onclick={() => { A.setPrintArea(ctl, false); close(); }}>{t('clearPrintArea')}</button>
     {/snippet}
   </MenuButton>
-  <MenuButton large icon="page" label={t('breaks')}>
+  <MenuButton large icon="page-break" label={t('breaks')}>
     {#snippet menu(close)}
       <button class="xl-menu-item" onclick={() => { A.insertPageBreak(ctl); close(); }}>{t('insertPageBreak')}</button>
       <button class="xl-menu-item" onclick={() => { A.removePageBreak(ctl); close(); }}>{t('removePageBreak')}</button>
       <button class="xl-menu-item" onclick={() => { A.resetPageBreaks(ctl); close(); }}>{t('resetPageBreaks')}</button>
     {/snippet}
   </MenuButton>
-  <button class="xl-btn big" onclick={() => ctl.openDialog('pageSetup', { tab: 'sheet' })}><Icon name="headings" size={24} /><span>{t('printTitles')}</span></button>
+  <button class="xl-btn big" onclick={() => ctl.openDialog('pageSetup', { tab: 'sheet' })}><Icon name="headings" size={30} /><span>{t('printTitles')}</span></button>
 </Group>
 
 <Group label={t('groupScaleToFit')}>
@@ -77,11 +77,6 @@
 </Group>
 
 <style>
-  .col {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
   .field {
     display: flex;
     align-items: center;
@@ -93,12 +88,6 @@
   }
   .num {
     width: 60px;
-  }
-  .big {
-    flex-direction: column;
-    height: 64px;
-    min-width: 52px;
-    font-size: 11px;
   }
   .grid2 {
     display: grid;

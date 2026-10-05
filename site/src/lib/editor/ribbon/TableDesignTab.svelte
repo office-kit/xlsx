@@ -181,12 +181,6 @@
 {/if}
 
 <style>
-  .col {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-items: flex-start;
-  }
   .name {
     display: flex;
     flex-direction: column;

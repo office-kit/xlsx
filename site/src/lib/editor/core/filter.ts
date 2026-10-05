@@ -114,21 +114,49 @@ export function activeCriteria(owner: FilterOwner): ReadonlyMap<number, FilterCr
  */
 export function setColumnFilter(ctl: EditorController, owner: FilterOwner, col: number, criterion: FilterCriterion | undefined): void {
   const ws = ctl.doc.ws;
+  ctl.doc.transact('Filter', (tx) => {
+    tx.sheet(ws, 'autoFilter', 'tables', 'rowDimensions');
+    writeColumnFilter(ctl, owner, col, criterion);
+  });
+}
+
+/**
+ * Cell menu ▸ Filter ▸ Filter by Selected Cell's Value: keep the rows whose
+ * cell in the active column shows the active cell's value. A cell in no
+ * filter gets a sheet AutoFilter over its data region first, in the same
+ * undo step; a cell outside an existing sheet AutoFilter is left alone.
+ */
+export function filterBySelectedValue(ctl: EditorController): void {
+  const ws = ctl.doc.ws;
+  const { row, col } = ctl.doc.selection.active;
+  const existing = filterOwners(ws).find((o) => row > o.range.r1 && row <= o.range.r2 && col >= o.range.c1 && col <= o.range.c2);
+  if (!existing && ws.autoFilter) return;
+  const values = new Set([filterKey(ctl, getCellAt(ws, row, col))]);
+  ctl.doc.transact('Filter', (tx) => {
+    tx.sheet(ws, 'autoFilter', 'tables', 'rowDimensions');
+    let owner = existing;
+    if (!owner) {
+      const range = dataRange(ctl);
+      ws.autoFilter = { ref: rangeAddress(range), filterColumns: [] };
+      owner = { range, autoFilter: ws.autoFilter };
+    }
+    writeColumnFilter(ctl, owner, col, { values });
+  });
+}
+
+function writeColumnFilter(ctl: EditorController, owner: FilterOwner, col: number, criterion: FilterCriterion | undefined): void {
   const map = new Map(activeCriteria(owner));
   if (criterion) map.set(col, criterion);
   else map.delete(col);
   criteria.set(owner.autoFilter, map);
-  ctl.doc.transact('Filter', (tx) => {
-    tx.sheet(ws, 'autoFilter', 'tables', 'rowDimensions');
-    const af = owner.autoFilter;
-    const colId = col - owner.range.c1;
-    af.filterColumns = af.filterColumns.filter((fc) => fc.colId !== colId);
-    if (criterion?.values) {
-      const values = [...criterion.values].filter((v) => v !== '');
-      af.filterColumns.push({ kind: 'filters', colId, values, ...(criterion.values.has('') ? { blank: true } : {}) });
-    }
-    applyCriteria(ctl, owner.range, map);
-  });
+  const af = owner.autoFilter;
+  const colId = col - owner.range.c1;
+  af.filterColumns = af.filterColumns.filter((fc) => fc.colId !== colId);
+  if (criterion?.values) {
+    const values = [...criterion.values].filter((v) => v !== '');
+    af.filterColumns.push({ kind: 'filters', colId, values, ...(criterion.values.has('') ? { blank: true } : {}) });
+  }
+  applyCriteria(ctl, owner.range, map);
 }
 
 /** Data ▸ Reapply: re-run every filter after the data changed. */

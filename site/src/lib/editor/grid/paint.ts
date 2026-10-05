@@ -58,17 +58,17 @@ export interface Theme {
 
 export const LIGHT_THEME: Theme = {
   background: '#FFFFFF',
-  gridline: '#E1E1E1',
-  headerBg: '#F5F5F5',
+  gridline: '#DCDCDC',
+  headerBg: '#F3F3F3',
   headerText: '#444444',
-  headerLine: '#D5D5D5',
-  headerSelBg: '#DCEFE3',
+  headerLine: '#C8C7C6',
+  headerSelBg: '#D2D2D2',
   headerSelText: '#0E5C2F',
   headerFullBg: '#1E7145',
   headerFullText: '#FFFFFF',
   accent: '#1E7145',
-  selectionFill: 'rgba(30, 113, 69, 0.12)',
-  frozenLine: '#9E9E9E',
+  selectionFill: 'rgba(0, 0, 0, 0.18)',
+  frozenLine: '#ABABAB',
 };
 
 export interface PaintInput {

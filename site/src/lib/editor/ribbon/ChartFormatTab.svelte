@@ -60,13 +60,6 @@
 <DrawingSizeGroup {index} />
 
 <style>
-  .col {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    justify-content: center;
-    height: 100%;
-  }
   .head {
     padding: 4px 10px 2px;
     font-size: 11.5px;

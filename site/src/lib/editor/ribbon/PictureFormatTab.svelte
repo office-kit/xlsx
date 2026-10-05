@@ -23,20 +23,12 @@
 </script>
 
 <Group label={t('chGroupAdjust')}>
-  <button class="xl-btn big" disabled={!natural} onclick={() => natural && resizeDrawing(doc, index, natural.w, natural.h)}><Icon name="image" size={24} /><span>{t('chResetSize')}</span></button>
+  <button class="xl-btn big" disabled={!natural} onclick={() => natural && resizeDrawing(doc, index, natural.w, natural.h)}><Icon name="image" size={30} /><span>{t('chResetSize')}</span></button>
 </Group>
 
 <Group label={t('chGroupAccessibility')}>
-  <button class="xl-btn big" onclick={() => ctl.openDialog('altText')}><Icon name="note" size={24} /><span>{t('chAltText')}</span></button>
+  <button class="xl-btn big" onclick={() => ctl.openDialog('altText')}><Icon name="note" size={30} /><span>{t('chAltText')}</span></button>
 </Group>
 
 <DrawingSizeGroup {index} lockable />
 
-<style>
-  .big {
-    flex-direction: column;
-    height: 64px;
-    min-width: 52px;
-    font-size: 11px;
-  }
-</style>

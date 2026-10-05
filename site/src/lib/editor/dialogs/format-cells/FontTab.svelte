@@ -2,8 +2,9 @@
   import type { UnderlineStyle } from '@office-kit/xlsx/styles';
   import { cssFontFamily } from '../../core/render-style.ts';
   import { t, type MessageKey } from '../../i18n/i18n.svelte.ts';
+  import { getEditor } from '../../core/context.ts';
   import ColorPicker from '../ColorPicker.svelte';
-  import { FONT_NAMES, FONT_SIZES, type FontState, type FontStyle } from '../format-cells.ts';
+  import { FONT_NAMES, FONT_SIZES, normalFontState, sameFont, type FontState, type FontStyle } from '../format-cells.ts';
 
   let { model = $bindable() }: { model: FontState } = $props();
 
@@ -22,6 +23,12 @@
   ];
   const names = $derived(FONT_NAMES.includes(model.name) ? FONT_NAMES : [model.name, ...FONT_NAMES]);
   let sizeText = $state(String(model.size));
+  const normal = normalFontState(getEditor());
+
+  function useNormalFont(): void {
+    Object.assign(model, normal);
+    sizeText = String(model.size);
+  }
 
   function commitSize(): void {
     const n = Number(sizeText);
@@ -34,7 +41,7 @@
 <div class="font">
   <div class="cols">
     <div class="col name">
-      <label class="lbl" for="ft-name">{t('fontName')}</label>
+      <label class="lbl" for="ft-name">{t('dlgFontLabel')}</label>
       <input id="ft-name" class="xl-input" bind:value={model.name} spellcheck="false" />
       <div class="list" role="listbox" aria-label={t('fontName')}>
         {#each names as n (n)}
@@ -51,7 +58,7 @@
       </div>
     </div>
     <div class="col size">
-      <label class="lbl" for="ft-size">{t('size')}</label>
+      <label class="lbl" for="ft-size">{t('dlgSizeLabel')}</label>
       <input id="ft-size" class="xl-input" bind:value={sizeText} onchange={commitSize} inputmode="decimal" />
       <div class="list" role="listbox" aria-label={t('size')}>
         {#each FONT_SIZES as s (s)}
@@ -61,12 +68,13 @@
     </div>
   </div>
   <div class="row">
-    <label for="ft-ul">{t('underline')}</label>
+    <label for="ft-ul">{t('dlgUnderlineLabel')}</label>
     <select id="ft-ul" class="xl-select" bind:value={model.underline}>
       {#each UNDERLINES as [value, label] (value)}<option {value}>{t(label)}</option>{/each}
     </select>
     <span class="lbl right">{t('dlgColor')}</span>
     <ColorPicker bind:value={model.color} noneLabel={t('automatic')} label={t('fontColor')} />
+    <label class="check normal"><input type="checkbox" checked={sameFont(model, normal)} onchange={(e) => { if ((e.currentTarget as HTMLInputElement).checked) useNormalFont(); else (e.currentTarget as HTMLInputElement).checked = sameFont(model, normal); }} />{t('dlgNormalFont')}</label>
   </div>
   <div class="cols">
     <fieldset class="effects">
@@ -112,6 +120,10 @@
   }
   .col .list {
     height: 120px;
+  }
+  .normal {
+    margin-left: 12px;
+    white-space: nowrap;
   }
   .lbl.right {
     min-width: 0;

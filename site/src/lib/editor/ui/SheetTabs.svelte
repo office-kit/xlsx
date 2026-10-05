@@ -139,6 +139,8 @@
   .tab {
     display: flex;
     align-items: center;
+    min-width: 64px;
+    justify-content: center;
     padding: 0 14px;
     border-right: 1px solid var(--xl-border);
     cursor: pointer;
@@ -150,13 +152,16 @@
   .tab:hover {
     background: var(--xl-hover);
   }
+  /* Excel draws the active sheet as a raised white tab with green, non-bold text. */
   .tab.active {
     background: #fff;
     color: var(--xl-accent);
-    font-weight: 600;
+    margin: 2px 0 3px;
+    border-right-color: transparent;
+    border-radius: 3px;
     box-shadow:
-      inset 0 -2px 0 var(--xl-accent),
-      inset 0 -5px 0 var(--tab-color);
+      0 0 0 1px var(--xl-border-strong),
+      inset 0 -3px 0 var(--tab-color);
   }
   .tab.drop-before {
     box-shadow: inset 3px 0 0 var(--xl-accent);

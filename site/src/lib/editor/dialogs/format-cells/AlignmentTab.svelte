@@ -53,9 +53,9 @@
     </fieldset>
     <fieldset>
       <legend>{t('dlgTextControl')}</legend>
-      <label class="check"><input type="checkbox" bind:checked={model.wrap} onchange={() => { if (model.wrap) model.shrink = false; }} />{t('wrapText')}</label>
+      <label class="check"><input type="checkbox" bind:checked={model.wrap} onchange={() => { if (model.wrap) model.shrink = false; }} />{t('dlgWrapText')}</label>
       <label class="check"><input type="checkbox" bind:checked={model.shrink} disabled={model.wrap} />{t('dlgShrinkToFit')}</label>
-      <label class="check"><input type="checkbox" bind:checked={model.merge} />{t('mergeCells')}</label>
+      <label class="check"><input type="checkbox" bind:checked={model.merge} />{t('dlgMergeCells')}</label>
     </fieldset>
   </div>
   <fieldset class="orient">

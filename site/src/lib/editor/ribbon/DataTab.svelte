@@ -22,11 +22,11 @@
 
 <Group label={t('groupSortFilter')}>
   <div class="col">
-    <button class="xl-btn" title={t('sortAZ')} onclick={() => quickSort(ctl, false)}><Icon name="sort-asc" />{t('sortAZShort')}</button>
-    <button class="xl-btn" title={t('sortZA')} onclick={() => quickSort(ctl, true)}><Icon name="sort-desc" />{t('sortZAShort')}</button>
+    <button class="xl-btn" title={t('sortAZ')} onclick={() => quickSort(ctl, false)}><Icon name="sort-asc" /></button>
+    <button class="xl-btn" title={t('sortZA')} onclick={() => quickSort(ctl, true)}><Icon name="sort-desc" /></button>
   </div>
-  <button class="xl-btn big" onclick={() => ctl.openDialog('sort')}><Icon name="sort" size={24} /><span>{t('sort')}</span></button>
-  <button class="xl-btn big" aria-pressed={hasFilter} onclick={() => ctl.toggleFilter()}><Icon name="filter" size={24} /><span>{t('filter')}</span></button>
+  <button class="xl-btn big" onclick={() => ctl.openDialog('sort')}><Icon name="sort" size={30} /><span>{t('sort')}</span></button>
+  <button class="xl-btn big" aria-pressed={hasFilter} onclick={() => ctl.toggleFilter()}><Icon name="filter" size={30} /><span>{t('filter')}</span></button>
   <div class="col">
     <button
       class="xl-btn"
@@ -34,25 +34,29 @@
       onclick={() => {
         clearAllFilters(ctl);
         clearAdvancedFilter(ctl);
-      }}>{t('clearFilter')}</button
+      }}><Icon name="filter-clear" />{t('clearFilter')}</button
     >
-    <button class="xl-btn" disabled={!hasFilter} onclick={() => reapplyFilters(ctl)}>{t('reapply')}</button>
-    <button class="xl-btn" onclick={() => ctl.openDialog('advancedFilter')}>{t('dtAdvanced')}</button>
+    <button class="xl-btn" disabled={!hasFilter} onclick={() => reapplyFilters(ctl)}><Icon name="filter-reapply" />{t('reapply')}</button>
+    <button class="xl-btn" onclick={() => ctl.openDialog('advancedFilter')}><Icon name="filter-advanced" />{t('dtAdvanced')}</button>
   </div>
 </Group>
 
 <Group label={t('groupDataTools')}>
-  <button class="xl-btn big" onclick={() => ctl.openDialog('textToColumns')}><Icon name="text-columns" size={24} /><span>{t('textToColumns')}</span></button>
-  <button class="xl-btn big" onclick={() => A.flashFillActive(ctl)}><Icon name="fill-down" size={24} /><span>{t('flashFill')}</span></button>
-  <button class="xl-btn big" onclick={() => ctl.openDialog('removeDuplicates')}><Icon name="duplicates" size={24} /><span>{t('removeDuplicates')}</span></button>
-  <MenuButton large icon="validation" label={t('dataValidation')}>
-    {#snippet menu(close)}
-      <button class="xl-menu-item" onclick={() => { ctl.openDialog('dataValidation'); close(); }}>{t('dataValidationEllipsis')}</button>
-      <button class="xl-menu-item" onclick={() => { A.circleInvalid(ctl); close(); }}>{t('circleInvalidData')}</button>
-      <button class="xl-menu-item" onclick={() => { A.clearInvalidCircles(ctl); close(); }}>{t('clearValidationCircles')}</button>
-    {/snippet}
-  </MenuButton>
-  <button class="xl-btn big" onclick={() => ctl.openDialog('consolidate')}><Icon name="insert" size={24} /><span>{t('dtConsolidate')}</span></button>
+  <button class="xl-btn big" onclick={() => ctl.openDialog('textToColumns')}><Icon name="text-columns" size={30} /><span>{t('textToColumns')}</span></button>
+  <div class="col">
+    <button class="xl-btn" title={t('flashFill')} onclick={() => A.flashFillActive(ctl)}><Icon name="flash-fill" /></button>
+    <button class="xl-btn" title={t('removeDuplicates')} onclick={() => ctl.openDialog('removeDuplicates')}><Icon name="duplicates" /></button>
+    <MenuButton icon="validation" title={t('dataValidation')}>
+      {#snippet menu(close)}
+        <button class="xl-menu-item" onclick={() => { ctl.openDialog('dataValidation'); close(); }}>{t('dataValidationEllipsis')}</button>
+        <button class="xl-menu-item" onclick={() => { A.circleInvalid(ctl); close(); }}>{t('circleInvalidData')}</button>
+        <button class="xl-menu-item" onclick={() => { A.clearInvalidCircles(ctl); close(); }}>{t('clearValidationCircles')}</button>
+      {/snippet}
+    </MenuButton>
+  </div>
+  <div class="col">
+    <button class="xl-btn" title={t('dtConsolidate')} onclick={() => ctl.openDialog('consolidate')}><Icon name="consolidate" /></button>
+  </div>
 </Group>
 
 <Group label={t('dtGroupForecast')}>
@@ -66,25 +70,13 @@
 </Group>
 
 <Group label={t('groupOutline')}>
-  <button class="xl-btn big" onclick={() => A.groupSelection(ctl, true)}><Icon name="group" size={24} /><span>{t('group')}</span></button>
-  <button class="xl-btn big" onclick={() => A.groupSelection(ctl, false)}><Icon name="ungroup" size={24} /><span>{t('ungroup')}</span></button>
-  <button class="xl-btn big" onclick={() => ctl.openDialog('subtotal')}><Icon name="sum" size={24} /><span>{t('dtSubtotal')}</span></button>
   <div class="col">
-    <button class="xl-btn" onclick={() => A.showDetail(ctl, true)}>{t('showDetail')}</button>
-    <button class="xl-btn" onclick={() => A.showDetail(ctl, false)}>{t('hideDetail')}</button>
+    <button class="xl-btn" onclick={() => A.groupSelection(ctl, true)}><Icon name="group" />{t('group')}</button>
+    <button class="xl-btn" onclick={() => A.groupSelection(ctl, false)}><Icon name="ungroup" />{t('ungroup')}</button>
+    <button class="xl-btn" onclick={() => ctl.openDialog('subtotal')}><Icon name="sum" />{t('dtSubtotal')}</button>
+  </div>
+  <div class="col">
+    <button class="xl-btn" title={t('showDetail')} onclick={() => A.showDetail(ctl, true)}><Icon name="show-detail" /></button>
+    <button class="xl-btn" title={t('hideDetail')} onclick={() => A.showDetail(ctl, false)}><Icon name="hide-detail" /></button>
   </div>
 </Group>
-
-<style>
-  .col {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .big {
-    flex-direction: column;
-    height: 64px;
-    min-width: 52px;
-    font-size: 11px;
-  }
-</style>

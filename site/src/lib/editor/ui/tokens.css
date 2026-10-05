@@ -58,8 +58,8 @@
   background: var(--xl-pressed);
 }
 .xl-btn[aria-pressed='true'] {
-  background: var(--xl-selected);
-  border-color: #9fcfb0;
+  background: var(--xl-pressed);
+  border-color: var(--xl-border-strong);
 }
 .xl-btn:disabled {
   color: var(--xl-text-3);
@@ -139,4 +139,38 @@
   height: 1px;
   background: var(--xl-border);
   margin: 4px 0;
+}
+
+/* Ribbon layout shared by every tab, sized like Excel's: a large button is a
+   32 px icon over a label that wraps to at most two lines ("Text to /
+   Columns"), and a column of small buttons holds exactly three 22 px rows, so
+   the group labels all sit on one baseline. */
+.xl-editor .xl-ribbon-panel .big,
+.xl-editor .xl-ribbon-panel .xl-btn.large {
+  flex-direction: column;
+  justify-content: flex-start;
+  height: 68px;
+  min-width: 40px;
+  max-width: 84px;
+  padding: 3px 4px 2px;
+  gap: 2px;
+  font-size: 11px;
+  line-height: 13px;
+  white-space: normal;
+  text-align: center;
+  text-wrap: balance;
+}
+.xl-editor .xl-ribbon-panel .col {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 1px;
+  height: 68px;
+}
+.xl-editor .xl-ribbon-panel .col > .xl-btn,
+.xl-editor .xl-ribbon-panel .col > .mb > .xl-btn,
+.xl-editor .xl-ribbon-panel .col > .check {
+  height: 22px;
+  min-height: 22px;
 }

@@ -38,7 +38,7 @@
 </script>
 
 <button class="xl-btn big" bind:this={root} title={t('shpShapes')} aria-haspopup="menu" aria-expanded={open} onclick={() => (open = !open)} onmousedown={(e) => e.preventDefault()}>
-  <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="1.4" /><rect x="10" y="10" width="11" height="11" fill="var(--xl-accent)" fill-opacity="0.25" stroke="currentColor" stroke-width="1.4" /></svg>
+  <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="1.4" /><rect x="10" y="10" width="11" height="11" fill="var(--xl-accent)" fill-opacity="0.25" stroke="currentColor" stroke-width="1.4" /></svg>
   <span class="lbl">{t('shpShapes')}<Icon name="chevron-down" size={9} /></span>
 </button>
 {#if open && root}
@@ -57,13 +57,6 @@
 {/if}
 
 <style>
-  .big {
-    flex-direction: column;
-    height: 64px;
-    min-width: 52px;
-    font-size: 11px;
-    gap: 2px;
-  }
   .lbl {
     display: inline-flex;
     align-items: center;

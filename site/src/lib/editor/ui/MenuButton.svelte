@@ -33,17 +33,30 @@
 </script>
 
 <span class="mb" class:large bind:this={root}>
-  {#if split}
-    <button class="xl-btn main" class:large {title} {disabled} onclick={() => onmain?.()} onmousedown={(e) => e.preventDefault()}>
-      {#if icon}<Icon name={icon} size={large ? 26 : 18} />{/if}
+  {#if split && large}
+    <!-- Excel's large split button: the icon half runs the command, the "Label ▾" half opens the menu. -->
+    <button class="xl-btn main" {title} {disabled} onclick={() => onmain?.()} onmousedown={(e) => e.preventDefault()}>
+      {#if icon}<Icon name={icon} size={30} />{/if}
+    </button>
+    <button class="xl-btn arrow" {title} aria-haspopup="menu" aria-expanded={open} {disabled} onclick={() => (open = !open)} onmousedown={(e) => e.preventDefault()}>
+      <span class="lbl">{label}<Icon name="chevron-down" size={9} /></span>
+    </button>
+  {:else if split}
+    <button class="xl-btn main" {title} {disabled} onclick={() => onmain?.()} onmousedown={(e) => e.preventDefault()}>
+      {#if icon}<Icon name={icon} size={18} />{/if}
       {#if label}<span class="lbl">{label}</span>{/if}
     </button>
     <button class="xl-btn arrow" title={title} aria-haspopup="menu" aria-expanded={open} {disabled} onclick={() => (open = !open)} onmousedown={(e) => e.preventDefault()}>
       <Icon name="chevron-down" size={11} />
     </button>
+  {:else if large}
+    <button class="xl-btn large" {title} aria-haspopup="menu" aria-expanded={open} {disabled} onclick={() => (open = !open)} onmousedown={(e) => e.preventDefault()}>
+      {#if icon}<Icon name={icon} size={30} />{/if}
+      <span class="lbl">{label}<Icon name="chevron-down" size={9} /></span>
+    </button>
   {:else}
-    <button class="xl-btn" class:large {title} aria-haspopup="menu" aria-expanded={open} {disabled} onclick={() => (open = !open)} onmousedown={(e) => e.preventDefault()}>
-      {#if icon}<Icon name={icon} size={large ? 26 : 18} />{/if}
+    <button class="xl-btn" {title} aria-haspopup="menu" aria-expanded={open} {disabled} onclick={() => (open = !open)} onmousedown={(e) => e.preventDefault()}>
+      {#if icon}<Icon name={icon} size={18} />{/if}
       {#if label}<span class="lbl">{label}</span>{/if}
       <Icon name="chevron-down" size={11} />
     </button>
@@ -70,26 +83,32 @@
     border-bottom-left-radius: 0;
     padding: 2px 2px;
   }
-  .xl-btn.large {
-    flex-direction: column;
-    min-width: 44px;
-    height: 64px;
-    font-size: 11px;
-    gap: 2px;
-  }
   .mb.large {
     flex-direction: column;
+    height: 68px;
   }
   .mb.large .main {
     border-radius: 4px 4px 0 0;
-    height: 44px;
-    padding: 2px 4px;
+    height: 38px;
+    padding: 4px 4px 0;
   }
   .mb.large .arrow {
     border-radius: 0 0 4px 4px;
-    height: 20px;
+    height: 30px;
+    padding: 0 4px;
+    align-items: flex-start;
+    font-size: 11px;
+    line-height: 13px;
+    max-width: 84px;
+    white-space: normal;
+    text-wrap: balance;
   }
   .lbl {
-    line-height: 1.1;
+    line-height: inherit;
+  }
+  .large .lbl :global(svg) {
+    display: inline;
+    margin-left: 2px;
+    vertical-align: 0;
   }
 </style>

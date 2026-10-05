@@ -94,24 +94,26 @@ interface InsertMenu {
   readonly label: MessageKey;
   readonly tip: MessageKey;
   readonly groups: readonly ChartGroup[];
+  readonly icon: string;
+  /** Grid cell in the Charts group's three-row block of small buttons, 1-based. */
+  readonly col: number;
+  readonly row: number;
 }
 
-/** The Insert tab's chart buttons, each a menu over one or more groups, as Excel lays them out. */
+/** The Insert tab's chart buttons, each a menu over one or more groups, in Excel's grid positions. */
 const ALL_INSERT_MENUS: readonly InsertMenu[] = [
-  { label: 'chInsColumn', tip: 'chInsColumnTip', groups: ['column', 'bar'] },
-  { label: 'chInsLine', tip: 'chInsLineTip', groups: ['line', 'area'] },
-  { label: 'chInsPie', tip: 'chInsPieTip', groups: ['pie'] },
-  { label: 'chInsScatter', tip: 'chInsScatterTip', groups: ['scatter', 'bubble'] },
-  { label: 'chInsHierarchy', tip: 'chInsHierarchyTip', groups: ['hierarchy'] },
-  { label: 'chInsStatistic', tip: 'chInsStatisticTip', groups: ['statistic'] },
-  { label: 'chInsWaterfall', tip: 'chInsWaterfallTip', groups: ['waterfall'] },
-  { label: 'chInsStock', tip: 'chInsStockTip', groups: ['stock', 'surface'] },
-  { label: 'chInsRadar', tip: 'chInsRadarTip', groups: ['radar'] },
+  { label: 'chInsColumn', icon: 'chart-column', tip: 'chInsColumnTip', groups: ['column', 'bar'], col: 1, row: 1 },
+  { label: 'chInsLine', icon: 'chart-line', tip: 'chInsLineTip', groups: ['line', 'area'], col: 1, row: 2 },
+  { label: 'chInsPie', icon: 'chart-pie', tip: 'chInsPieTip', groups: ['pie'], col: 1, row: 3 },
+  { label: 'chInsHierarchy', icon: 'chart', tip: 'chInsHierarchyTip', groups: ['hierarchy'], col: 2, row: 1 },
+  { label: 'chInsStatistic', icon: 'chart', tip: 'chInsStatisticTip', groups: ['statistic'], col: 2, row: 2 },
+  { label: 'chInsScatter', icon: 'chart-scatter', tip: 'chInsScatterTip', groups: ['scatter', 'bubble'], col: 2, row: 3 },
+  { label: 'chInsWaterfall', icon: 'chart-stock', tip: 'chInsWaterfallTip', groups: ['waterfall', 'stock', 'surface', 'radar'], col: 3, row: 1 },
 ];
 
 export const INSERT_MENUS: readonly InsertMenu[] = ALL_INSERT_MENUS.flatMap((m) => {
   const groups = m.groups.filter(offered);
-  return groups.length > 0 ? [{ label: m.label, tip: m.tip, groups }] : [];
+  return groups.length > 0 ? [{ ...m, groups }] : [];
 });
 
 // Thumbnails draw the type over fixed sample data, like Excel's gallery icons.

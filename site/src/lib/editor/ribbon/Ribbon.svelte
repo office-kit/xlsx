@@ -103,7 +103,7 @@
     </button>
   </div>
   {#if !ctl.ribbonCollapsed}
-    <div class="panel" role="tabpanel">
+    <div class="panel xl-ribbon-panel" role="tabpanel">
       {#if ctl.ribbonTab === 'home'}<HomeTab />
       {:else if ctl.ribbonTab === 'insert'}<InsertTab />
       {:else if ctl.ribbonTab === 'pageLayout'}<PageLayoutTab />
@@ -167,8 +167,8 @@
   .panel {
     display: flex;
     align-items: stretch;
-    height: 100px;
-    padding: 4px 4px 0;
+    height: 96px;
+    padding: 2px 4px 0;
     overflow-x: auto;
     overflow-y: hidden;
     /* Narrow windows scroll the ribbon sideways (trackpad/shift-wheel) without a bar eating its height. */

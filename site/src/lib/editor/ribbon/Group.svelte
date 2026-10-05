@@ -12,21 +12,23 @@
   .group {
     display: flex;
     flex-direction: column;
-    padding: 2px 6px 0;
+    padding: 2px 4px 0;
+    margin: 0 0 3px;
     border-right: 1px solid var(--xl-border);
     flex-shrink: 0;
   }
   .body {
-    flex: 1;
+    height: 70px;
     display: flex;
-    align-items: center;
-    gap: 4px;
+    align-items: flex-start;
+    gap: 2px;
   }
   .label {
+    height: 18px;
+    line-height: 16px;
     text-align: center;
     color: var(--xl-text-2);
-    font-size: 10.5px;
-    padding: 1px 0 2px;
+    font-size: 11px;
     white-space: nowrap;
   }
 </style>

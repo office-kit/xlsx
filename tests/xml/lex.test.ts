@@ -248,7 +248,8 @@ describe('lexXml lexes as fast-xml-parser did', () => {
     for (const dir of ['reference/openpyxl', 'tests/fixtures']) {
       for (const entry of readdirSync(join(root, dir), { recursive: true, encoding: 'utf8' })) {
         if (!/\.(xlsx|xlsm|xltx|xltm)$/i.test(entry)) continue;
-        const file = relative(root, join(root, dir, entry));
+        // Windows walks with `\`; normalise so the notZip lookup matches.
+        const file = relative(root, join(root, dir, entry)).replaceAll('\\', '/');
         const bytes = readFileSync(join(root, file));
         if (notZip.has(file)) {
           expect(() => unzipSync(bytes)).toThrow();

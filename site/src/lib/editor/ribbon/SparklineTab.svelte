@@ -54,7 +54,7 @@
 <Group label={t('spkGroupType')}>
   {#each TYPES as ty (ty.type)}
     <button class="xl-btn big" class:on={type === ty.type} aria-pressed={type === ty.type} onclick={() => setSparklineType(doc, groupIndex, ty.type)}>
-      <Icon name={ty.icon} size={24} /><span>{t(ty.label)}</span>
+      <Icon name={ty.icon} size={30} /><span>{t(ty.label)}</span>
     </button>
   {/each}
 </Group>
@@ -92,16 +92,10 @@
 </Group>
 
 <Group label={t('spkGroupGroup')}>
-  <button class="xl-btn big" onclick={() => clearSparklines(doc, doc.selection.ranges)}><Icon name="eraser" size={24} /><span>{t('spkClear')}</span></button>
+  <button class="xl-btn big" onclick={() => clearSparklines(doc, doc.selection.ranges)}><Icon name="eraser" size={30} /><span>{t('spkClear')}</span></button>
 </Group>
 
 <style>
-  .big {
-    flex-direction: column;
-    height: 64px;
-    min-width: 52px;
-    font-size: 11px;
-  }
   .on {
     background: var(--xl-hover);
     outline: 1px solid var(--xl-accent);

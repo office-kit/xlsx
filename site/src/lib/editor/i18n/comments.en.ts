@@ -3,6 +3,7 @@
 
 export const commentsEn = {
   cmtNewComment: 'New Comment',
+  insComment: 'Comment',
   cmtDelete: 'Delete',
   cmtPrevious: 'Previous Comment',
   cmtNext: 'Next Comment',
