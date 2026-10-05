@@ -6,6 +6,7 @@ import { SHEET_MAIN_NS } from '../xml/namespaces.js';
 import { serializeXml } from '../xml/serializer.js';
 import { findChild, findChildren, type XmlNode } from '../xml/tree.js';
 import type { AutoFilter, CustomFilterCondition, FilterColumn } from './auto-filter.js';
+import { parseSortStateNode, serializeSortStateXml } from './sort-state-xml.js';
 
 const FILTER_COLUMN_TAG = `{${SHEET_MAIN_NS}}filterColumn`;
 const FILTERS_TAG = `{${SHEET_MAIN_NS}}filters`;
@@ -14,6 +15,7 @@ const CUSTOM_FILTERS_TAG = `{${SHEET_MAIN_NS}}customFilters`;
 const CUSTOM_FILTER_TAG = `{${SHEET_MAIN_NS}}customFilter`;
 const TOP10_TAG = `{${SHEET_MAIN_NS}}top10`;
 const DYNAMIC_FILTER_TAG = `{${SHEET_MAIN_NS}}dynamicFilter`;
+const SORT_STATE_TAG = `{${SHEET_MAIN_NS}}sortState`;
 
 const OPERATORS: ReadonlySet<string> = new Set(['equal', 'lessThan', 'lessThanOrEqual', 'notEqual', 'greaterThanOrEqual', 'greaterThan']);
 const isOperator = (op: string): op is NonNullable<CustomFilterCondition['operator']> => OPERATORS.has(op);
@@ -83,7 +85,9 @@ export function parseAutoFilterNode(node: XmlNode): AutoFilter | undefined {
     const column = parseColumn(fc, colId);
     if (column) filterColumns.push(column);
   }
-  return { ref, filterColumns };
+  const sortEl = findChild(node, SORT_STATE_TAG);
+  const sortState = sortEl ? parseSortStateNode(sortEl) : undefined;
+  return { ref, filterColumns, ...(sortState ? { sortState } : {}) };
 }
 
 const serializeColumn = (fc: FilterColumn): string => {
@@ -119,7 +123,7 @@ const serializeColumn = (fc: FilterColumn): string => {
 /** AutoFilter → `<autoFilter>` XML. */
 export function serializeAutoFilterXml(filter: AutoFilter): string {
   const ref = ` ref="${escapeXmlAttr(filter.ref)}"`;
-  if (filter.filterColumns.length === 0) return `<autoFilter${ref}/>`;
-  const columns = filter.filterColumns.map((fc) => `<filterColumn colId="${fc.colId}">${serializeColumn(fc)}</filterColumn>`);
-  return `<autoFilter${ref}>${columns.join('')}</autoFilter>`;
+  const inner = filter.filterColumns.map((fc) => `<filterColumn colId="${fc.colId}">${serializeColumn(fc)}</filterColumn>`);
+  if (filter.sortState) inner.push(serializeSortStateXml(filter.sortState));
+  return inner.length === 0 ? `<autoFilter${ref}/>` : `<autoFilter${ref}>${inner.join('')}</autoFilter>`;
 }

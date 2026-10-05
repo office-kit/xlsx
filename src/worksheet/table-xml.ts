@@ -10,6 +10,7 @@ import { SHEET_MAIN_NS } from '../xml/namespaces.js';
 import { parseXml } from '../xml/parser.js';
 import { findChild, findChildren, type XmlNode } from '../xml/tree.js';
 import { parseAutoFilterNode, serializeAutoFilterXml } from './auto-filter-xml.js';
+import { parseSortStateNode, serializeSortStateXml } from './sort-state-xml.js';
 import type { TableColumn, TableDefinition, TableStyleInfo } from './table.js';
 import { makeTableColumn, makeTableDefinition } from './table.js';
 
@@ -18,6 +19,7 @@ const TABLE_COLUMNS_TAG = `{${SHEET_MAIN_NS}}tableColumns`;
 const TABLE_COLUMN_TAG = `{${SHEET_MAIN_NS}}tableColumn`;
 const TABLE_STYLE_INFO_TAG = `{${SHEET_MAIN_NS}}tableStyleInfo`;
 const AUTOFILTER_TAG = `{${SHEET_MAIN_NS}}autoFilter`;
+const SORT_STATE_TAG = `{${SHEET_MAIN_NS}}sortState`;
 
 const XML_HEADER = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
 
@@ -84,7 +86,11 @@ export function parseTableXml(bytes: Uint8Array | string): TableDefinition {
     const af = parseAutoFilterNode(autoFilterEl);
     if (af) opts.autoFilter = af;
   }
-  return makeTableDefinition(opts);
+  const table = makeTableDefinition(opts);
+  const sortEl = findChild(root, SORT_STATE_TAG);
+  const sortState = sortEl ? parseSortStateNode(sortEl) : undefined;
+  if (sortState) table.sortState = sortState;
+  return table;
 }
 
 const parseTableColumn = (node: XmlNode): TableColumn => {
@@ -131,6 +137,7 @@ function serializeTable(table: TableDefinition): string {
 
   const parts: string[] = [XML_HEADER, `<table xmlns="${SHEET_MAIN_NS}"${attrs}>`];
   if (table.autoFilter) parts.push(serializeAutoFilterXml(table.autoFilter));
+  if (table.sortState) parts.push(serializeSortStateXml(table.sortState));
   parts.push(`<tableColumns count="${table.columns.length}">`);
   for (const col of table.columns) parts.push(serializeTableColumn(col));
   parts.push('</tableColumns>');

@@ -5,6 +5,7 @@
 // round-trip.
 
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
+import type { SortState } from './sort-state.js';
 
 /** One condition of a custom filter; `val` may hold `*` / `?` wildcards. */
 export interface CustomFilterCondition {
@@ -60,6 +61,8 @@ export interface AutoFilter {
   /** Excel range the filter covers (`"A1:E100"`). */
   ref: string;
   filterColumns: FilterColumn[];
+  /** The sort applied from the filter buttons; Excel nests it in `<autoFilter>`. */
+  sortState?: SortState;
 }
 
 export function makeAutoFilter(opts: { ref: string; filterColumns?: FilterColumn[] }): AutoFilter {
