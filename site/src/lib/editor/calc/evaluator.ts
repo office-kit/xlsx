@@ -6,7 +6,7 @@
 // evaluation itself.
 
 import type { AstNode, RefArea, SheetPrefix } from './ast.ts';
-import { compareScalars, round15, toNumber, toText } from './coerce.ts';
+import { approxAdd, compareScalars, round15, toNumber, toText } from './coerce.ts';
 import type { ArgKind, EagerSpec, FnContext, FunctionSpec, Thunk } from './function-spec.ts';
 import type { EvalHost } from './host.ts';
 import { CalcParseError } from './lexer.ts';
@@ -74,7 +74,9 @@ export class Evaluator {
 
   /** Evaluate a whole formula: references are read, LAMBDAs without a call become #CALC!. */
   evaluateFormula(node: AstNode, frame: Frame): Scalarish {
-    const v = this.evaluate(node, frame);
+    // Excel rounds a formula's last addition or subtraction to 0 when it only
+    // cancels to floating-point noise: =0.1+0.2-0.3 is 0, =(0.1+0.2-0.3) is not.
+    const v = node.type === 'binary' && (node.op === '+' || node.op === '-') && !node.parenthesized ? this.binary(node.op, node.left, node.right, frame, true) : this.evaluate(node, frame);
     if (isLambda(v)) return ERRORS.CALC;
     return this.deref(v);
   }
@@ -207,7 +209,7 @@ export class Evaluator {
     return ERRORS.VALUE;
   }
 
-  private binary(op: string, leftNode: AstNode, rightNode: AstNode, frame: Frame): CalcValue {
+  private binary(op: string, leftNode: AstNode, rightNode: AstNode, frame: Frame, final = false): CalcValue {
     const left = this.evaluate(leftNode, frame);
     const right = this.evaluate(rightNode, frame);
     switch (op) {
@@ -227,7 +229,7 @@ export class Evaluator {
       case '>=':
         return mapBinary(this.deref(left), this.deref(right), (a, b) => compareOp(op, a, b));
       default:
-        return mapBinary(this.deref(left), this.deref(right), (a, b) => arithmeticOp(op, a, b));
+        return mapBinary(this.deref(left), this.deref(right), (a, b) => arithmeticOp(op, a, b, final));
     }
   }
 
@@ -402,7 +404,7 @@ const arith = (x: CalcScalar, y: number, fn: (a: number, b: number) => number): 
   return fn(n, y);
 };
 
-function arithmeticOp(op: string, x: CalcScalar, y: CalcScalar): CalcScalar {
+function arithmeticOp(op: string, x: CalcScalar, y: CalcScalar, final = false): CalcScalar {
   if (isError(x)) return x;
   if (isError(y)) return y;
   const a = toNumber(x);
@@ -412,10 +414,10 @@ function arithmeticOp(op: string, x: CalcScalar, y: CalcScalar): CalcScalar {
   let r: number;
   switch (op) {
     case '+':
-      r = a + b;
+      r = final ? approxAdd(a, b) : a + b;
       break;
     case '-':
-      r = a - b;
+      r = final ? approxAdd(a, -b) : a - b;
       break;
     case '*':
       r = a * b;

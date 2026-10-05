@@ -42,6 +42,8 @@ const NUMERIC_TEXT = /^([+-]?)\s*(\$?)\s*([+-]?)((?:\d{1,3}(?:,\d{3})+|\d*)(?:\.
  * `"50%"`, `"(12)"`, `"1e3"`, and dates / times such as `"2024-01-15"` or
  * `"12:30"`. Undefined when the text is not numeric.
  */
+const MIXED_FRACTION = /^(-)?(\d+)\s+(\d+)\/(\d+)$/;
+
 export function parseNumericText(input: string, date1904 = false): number | undefined {
   let text = input.trim();
   if (text === '') return undefined;
@@ -60,6 +62,12 @@ export function parseNumericText(input: string, date1904 = false): number | unde
     return Number.isFinite(value) ? value : undefined;
   }
   if (negate) return undefined;
+  // "1 1/2" is a mixed number; a bare "1/2" stays a date (January 2), as in Excel.
+  const frac = MIXED_FRACTION.exec(text);
+  if (frac && Number(frac[4]) !== 0) {
+    const v = Number(frac[2]) + Number(frac[3]) / Number(frac[4]);
+    return frac[1] ? -v : v;
+  }
   const dt = parseDateTimeText(text, date1904, new Date().getFullYear());
   return dt === undefined ? undefined : dt.date + dt.time;
 }
@@ -139,4 +147,13 @@ export function isNumericScalar(v: CalcScalar): v is number {
 export function firstError(values: readonly CalcScalar[]): CalcError | undefined {
   for (const v of values) if (isError(v)) return v;
   return undefined;
+}
+
+/** Within this relative distance, two magnitudes that cancel count as equal (2^-48, as LibreOffice's approxAdd). */
+const CANCEL_EPSILON = 2 ** -48;
+
+/** `a + b`, but 0 when `b` cancels `a` down to floating-point noise, as Excel's last addition does. */
+export function approxAdd(a: number, b: number): number {
+  if (Math.sign(a) === -Math.sign(b) && Math.abs(a + b) < Math.abs(a) * CANCEL_EPSILON) return 0;
+  return a + b;
 }
