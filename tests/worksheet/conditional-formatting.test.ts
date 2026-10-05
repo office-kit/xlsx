@@ -2,10 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { fromBuffer } from '../../src/io/node.js';
 import { loadWorkbook } from '../../src/io/load.js';
 import { workbookToBytes } from '../../src/io/save.js';
-import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
+import { addWorksheet, createWorkbook, type Workbook } from '../../src/workbook/workbook.js';
 import { parseMultiCellRange } from '../../src/worksheet/cell-range.js';
 import { makeCfRule, makeConditionalFormatting } from '../../src/worksheet/conditional-formatting.js';
 import { addConditionalFormatting, getConditionalFormatting, type Worksheet } from '../../src/worksheet/worksheet.js';
+import { addDxf, makeDifferentialStyle } from '../../src/styles/differential.js';
+
+/** Differential formats for the dxfIds below to point at; a save refuses dangling ones. */
+function poolDxfs(wb: Workbook, n: number): void {
+  for (let i = 0; i < n; i++) addDxf(wb.styles, makeDifferentialStyle({ font: { size: 10 + i } }));
+}
 
 const expectSheet = (ws: Worksheet | import('../../src/chartsheet/chartsheet.js').Chartsheet | undefined): Worksheet => {
   if (!ws) throw new Error('expected sheet');
@@ -32,6 +38,7 @@ describe('addConditionalFormatting / getConditionalFormatting', () => {
 describe('conditional formatting round-trip', () => {
   it('preserves cellIs / expression / containsText / duplicateValues / aboveAverage / top10', async () => {
     const wb = createWorkbook();
+    poolDxfs(wb, 6);
     const ws = addWorksheet(wb, 'C');
     addConditionalFormatting(
       ws,
@@ -75,6 +82,7 @@ describe('conditional formatting round-trip', () => {
 
   it('preserves multi-range sqref + multiple blocks', async () => {
     const wb = createWorkbook();
+    poolDxfs(wb, 6);
     const ws = addWorksheet(wb, 'C');
     addConditionalFormatting(
       ws,
@@ -139,6 +147,7 @@ describe('conditional formatting round-trip', () => {
 
   it('escapes special chars in formula text', async () => {
     const wb = createWorkbook();
+    poolDxfs(wb, 6);
     const ws = addWorksheet(wb, 'C');
     addConditionalFormatting(
       ws,
