@@ -231,27 +231,44 @@ export function validationAt(ws: Worksheet, row: number, col: number) {
   return ws.dataValidations.find((dv) => dv.sqref.ranges.some((r) => row >= r.minRow && row <= r.maxRow && col >= r.minCol && col <= r.maxCol));
 }
 
+/** The cells of a list validation's range source, or undefined when the source is not a range. */
+function listCells(ctl: EditorController, formula1: string): Cell[] | undefined {
+  const text = formula1.trim();
+  if (text.startsWith('"')) return undefined;
+  const parsed = parseRangeAddress(text.replace(/^=/, ''));
+  if (!parsed) return undefined;
+  const targetRef = parsed.sheet === undefined ? undefined : ctl.doc.wb.sheets.find((s) => s.sheet.title === parsed.sheet);
+  const target = parsed.sheet === undefined ? ctl.doc.ws : targetRef?.kind === 'worksheet' ? targetRef.sheet : undefined;
+  if (!target) return undefined;
+  const out: Cell[] = [];
+  const { range } = parsed;
+  // A list longer than this is unusable as a drop-down anyway.
+  for (let r = range.r1; r <= Math.min(range.r2, range.r1 + 10_000); r++) {
+    for (let c = range.c1; c <= range.c2; c++) {
+      const cell = getCellAt(target, r, c);
+      if (cell && !isBlank(cell)) out.push(cell);
+    }
+  }
+  return out;
+}
+
+/** A range-sourced list's item values (numbers stay numbers); empty for other sources. */
+export function listValues(ctl: EditorController, formula1: string): Array<number | string | boolean> {
+  return (listCells(ctl, formula1) ?? []).flatMap((cell) => {
+    const v = cell.value;
+    const raw = v !== null && typeof v === 'object' && !(v instanceof Date) && v.kind === 'formula' ? v.cachedValue : v;
+    return typeof raw === 'number' || typeof raw === 'string' || typeof raw === 'boolean' ? [raw] : [];
+  });
+}
+
 /** A list validation's items: a quoted comma list, or a range/name reference evaluated to values. */
 export function listSource(ctl: EditorController, formula1: string): string[] {
   const text = formula1.trim();
   if (text.startsWith('"') && text.endsWith('"')) return text.slice(1, -1).split(',').map((s) => s.trim());
   const ws = ctl.doc.ws;
   const ref = text.replace(/^=/, '');
-  const parsed = parseRangeAddress(ref);
-  const targetRef = parsed?.sheet === undefined ? undefined : ctl.doc.wb.sheets.find((s) => s.sheet.title === parsed.sheet);
-  const target = parsed?.sheet === undefined ? ws : targetRef?.kind === 'worksheet' ? targetRef.sheet : undefined;
-  if (parsed && target) {
-    const out: string[] = [];
-    const { range } = parsed;
-    // A list longer than this is unusable as a drop-down anyway.
-    for (let r = range.r1; r <= Math.min(range.r2, range.r1 + 10_000); r++) {
-      for (let c = range.c1; c <= range.c2; c++) {
-        const cell = getCellAt(target, r, c);
-        if (cell && !isBlank(cell)) out.push(getCellDisplayText(ctl.doc.wb, cell));
-      }
-    }
-    return out;
-  }
+  const cells = listCells(ctl, formula1);
+  if (cells) return cells.map((cell) => getCellDisplayText(ctl.doc.wb, cell));
   // Defined names and other formulas go through the engine.
   const sheetTitle = ws.title;
   const value = ctl.doc.calc.evaluate(ref, sheetTitle, 1, 1);
