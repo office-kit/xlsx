@@ -22,7 +22,8 @@ const C = 'Date & Time' as const;
 const dateArg = (v: CalcValue | undefined, ctx: FnContext): number | CalcError => {
   const n = num(v, ctx);
   if (isError(n)) return n;
-  if (n < 0 || n > MAX_DATE_SERIAL + 1) return ERRORS.NUM;
+  // 2958465.99 is still 12/31/9999; 2958466 is past the last day.
+  if (n < 0 || n >= MAX_DATE_SERIAL + 1) return ERRORS.NUM;
   return n;
 };
 

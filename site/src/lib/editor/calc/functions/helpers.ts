@@ -1,6 +1,6 @@
 // Argument handling shared by the function families.
 
-import { toBoolean, toNumber, toText } from '../coerce.ts';
+import { approxAdd, toBoolean, toNumber, toText } from '../coerce.ts';
 import type { FnContext } from '../function-spec.ts';
 import {
   type Area,
@@ -129,10 +129,12 @@ export function numericVector(v: CalcValue, ctx: FnContext): Array<number | unde
   return out;
 }
 
+/** SUM's total: Excel rounds only the last addition, so SUM(0.1,0.2,-0.3) is 0 but SUM(0.1,0.2,-0.3,0) is not. */
 export function sum(values: readonly number[]): number {
   let s = 0;
-  for (const v of values) s += v;
-  return s;
+  const last = values.length - 1;
+  for (let i = 0; i < last; i++) s += values[i] ?? 0;
+  return last < 0 ? 0 : approxAdd(s, values[last] ?? 0);
 }
 
 /** Kahan-free mean and sample / population variance, two-pass for stability. */
