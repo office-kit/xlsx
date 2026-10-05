@@ -519,6 +519,22 @@ export function chartRefs(chart: ChartReference): { values: string[]; others: st
   return { values, others };
 }
 
+/** Rewrite, in place, every worksheet ref {@link chartRefs} lists. */
+export function mapChartRefs(chart: ChartReference, map: (ref: string) => string): void {
+  for (const s of chart.space?.plotArea.chart.series ?? []) {
+    if ('val' in s) s.val.ref = map(s.val.ref);
+    if ('yVal' in s) s.yVal.ref = map(s.yVal.ref);
+    if ('xVal' in s && s.xVal) s.xVal.ref = map(s.xVal.ref);
+    if ('bubbleSize' in s) s.bubbleSize.ref = map(s.bubbleSize.ref);
+    if ('cat' in s && s.cat) s.cat.ref = map(s.cat.ref);
+    if (s.tx?.kind === 'ref') s.tx.ref = map(s.tx.ref);
+  }
+  for (const data of chart.cxSpace?.chartData.data ?? []) {
+    for (const dim of data.dims) if (dim.f) dim.f = map(dim.f);
+  }
+  for (const s of chart.cxSpace?.chart.plotArea.series ?? []) if (s.tx?.f) s.tx.f = map(s.tx.f);
+}
+
 /**
  * The single block on one sheet that all of a chart's refs fall in, with the
  * orientation its value refs run in. Undefined when the refs span sheets or
