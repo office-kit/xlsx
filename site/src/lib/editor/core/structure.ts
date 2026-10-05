@@ -10,7 +10,7 @@
 
 import type { Cell } from '@office-kit/xlsx/cell';
 import type { Workbook } from '@office-kit/xlsx/workbook';
-import type { TableColumn, TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
+import type { PivotTable, TableColumn, TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
 import { adjustFormulaForStructure } from '../calc/index.ts';
 import type { Range } from './address.ts';
 import { colLetter, MAX_COL, MAX_ROW, parseRangeAddress } from './address.ts';
@@ -340,7 +340,10 @@ export function structuralEdit(tx: Transaction, wb: Workbook, ws: Worksheet, e: 
 export function declareStructural(tx: Transaction, wb: Workbook, ws: Worksheet): void {
   tx.wholeSheet(ws);
   for (const ref of wb.sheets) {
-    if (ref.kind === 'worksheet' && ref.sheet !== ws) tx.cells(ref.sheet, { r1: 1, c1: 1, r2: MAX_ROW, c2: MAX_COL });
+    if (ref.kind !== 'worksheet' || ref.sheet === ws) continue;
+    tx.cells(ref.sheet, { r1: 1, c1: 1, r2: MAX_ROW, c2: MAX_COL });
+    // A PivotTable elsewhere may read its source from this sheet.
+    if (ref.sheet.pivotTables) tx.sheet(ref.sheet, 'pivotTables');
   }
   tx.workbook('definedNames');
 }
@@ -355,8 +358,40 @@ export function applyStructuralEdit(wb: Workbook, ws: Worksheet, e: Edit): void 
   shiftDimensions(ws, e);
   const dropped: DroppedColumns[] = [];
   shiftSheetObjects(ws, e, dropped);
+  shiftPivotTables(wb, ws, e);
   adjustAllFormulas(wb, ws.title, e);
   dropTableColumnRefs(wb, dropped);
+}
+
+/**
+ * PivotTables follow the edit: a source on `ws` grows, shrinks or moves with
+ * its cells, and a report on `ws` moves with its anchor. A report whose source
+ * or anchor was deleted outright is dropped, leaving its last values as plain
+ * cells (the editor can only save a PivotTable it can rebuild from its source).
+ */
+function shiftPivotTables(wb: Workbook, ws: Worksheet, e: Edit): void {
+  for (const ref of wb.sheets) {
+    if (ref.kind !== 'worksheet' || !ref.sheet.pivotTables) continue;
+    const host = ref.sheet;
+    host.pivotTables = ref.sheet.pivotTables.flatMap((pt) => {
+      let { source, anchor, renderedRef } = pt;
+      if (source.sheet.toLowerCase() === ws.title.toLowerCase()) {
+        const next = mapRefText(source.ref, e);
+        if (next === undefined) return [];
+        source = { ...source, ref: next };
+      }
+      if (host === ws) {
+        const next = mapRefText(anchor, e);
+        if (next === undefined) return [];
+        anchor = next;
+        renderedRef = renderedRef === undefined ? undefined : mapRefText(renderedRef, e);
+      }
+      const moved: PivotTable = { ...pt, source, anchor };
+      if (renderedRef === undefined) delete moved.renderedRef;
+      else moved.renderedRef = renderedRef;
+      return [moved];
+    });
+  }
 }
 
 export type { Edit as StructuralEdit };
