@@ -1,6 +1,6 @@
 {
-  "kind": "additive",
-  "reason": "Adds the optional Workbook.fileFormat ('xlsx' | 'xlsm' | 'xltx' | 'xltm'), set by loadWorkbook, so a macro-enabled workbook without macros or a template keeps its content type on save.",
-  "baselineSha256": "2ad9f8b679cb4d0309954dbce2a6186020fbab25766a1d6f09bc7659b4542d24",
-  "changeset": ".changeset/keep-workbook-file-format.md"
+  "kind": "breaking",
+  "reason": "FilterColumn gains custom / top10 / dynamic / raw variants (plus the CustomFilterCondition type), and AutoFilter / TableDefinition gain an optional sortState, so filter criteria and filter-button sorts survive a round-trip. Breaking because code that read `values` without narrowing on `kind` no longer compiles.",
+  "baselineSha256": "cfe52a621f9559a29558f8ed2b037c14e57b5221f2013f102cb7271e4e2a98f2",
+  "changeset": ".changeset/autofilter-criteria.md"
 }

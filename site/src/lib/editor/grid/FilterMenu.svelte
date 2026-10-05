@@ -2,11 +2,12 @@
   // The AutoFilter drop-down: sort, a condition (text or number filter), and
   // the searchable value checklist. Changes apply on OK, as on Windows Excel.
   import { onMount, untrack } from 'svelte';
+  import type { CustomFilterCondition, FilterColumn } from '@office-kit/xlsx/worksheet';
   import type { CellPos } from '../core/address.ts';
   import { getCellAt } from '../core/cells.ts';
   import { getEditor } from '../core/context.ts';
   import { sortRange } from '../core/data.ts';
-  import { activeCriteria, filterOwnerAt, filterValues, setColumnFilter, type FilterCriterion } from '../core/filter.ts';
+  import { activeCriteria, filterOwnerAt, filterValues, setColumnFilter, valuesColumn } from '../core/filter.ts';
   import { t, type MessageKey } from '../i18n/i18n.svelte.ts';
 
   let { at: openedAt }: { at: CellPos } = $props();
@@ -20,7 +21,7 @@
   const LIST_LIMIT = 1000;
 
   const values = owner ? filterValues(ctl, owner, at.col) : [];
-  const current = owner ? activeCriteria(owner).get(at.col) : undefined;
+  const current = owner ? activeCriteria(ctl, owner).get(at.col) : undefined;
   let checked = $state(new Set(current?.values ?? values));
   let search = $state('');
 
@@ -90,66 +91,57 @@
     checked = next;
   }
 
-  function conditionTest(): FilterCriterion['test'] {
-    if (op === 'none') return undefined;
-    const a = v1.toLowerCase();
-    const na = Number(v1);
-    const nb = Number(v2);
-    if (op === 'top10' || op === 'aboveAvg' || op === 'belowAvg') {
-      const nums: number[] = [];
-      if (owner) for (let r = owner.range.r1 + 1; r <= owner.range.r2; r++) {
-        const n = numberOf(getCellAt(doc.ws, r, at.col)?.value);
-        if (n !== undefined) nums.push(n);
+  /** The Text / Number filter as Excel saves it (custom conditions, Top 10, above / below average). */
+  function conditionColumn(): FilterColumn | undefined {
+    if (op === 'none' || !owner) return undefined;
+    const colId = at.col - owner.range.c1;
+    const one = (operator: CustomFilterCondition['operator'], val: string): FilterColumn => ({
+      kind: 'custom',
+      colId,
+      conditions: [operator === undefined ? { val } : { operator, val }],
+    });
+    switch (op) {
+      case 'eq':
+        return one(undefined, v1);
+      case 'ne':
+        return one('notEqual', v1);
+      case 'begins':
+        return one(undefined, `${v1}*`);
+      case 'ends':
+        return one(undefined, `*${v1}`);
+      case 'contains':
+        return one(undefined, `*${v1}*`);
+      case 'notContains':
+        return one('notEqual', `*${v1}*`);
+      case 'gt':
+        return one('greaterThan', v1);
+      case 'ge':
+        return one('greaterThanOrEqual', v1);
+      case 'lt':
+        return one('lessThan', v1);
+      case 'le':
+        return one('lessThanOrEqual', v1);
+      case 'between':
+        return { kind: 'custom', colId, and: true, conditions: [{ operator: 'greaterThanOrEqual', val: v1 }, { operator: 'lessThanOrEqual', val: v2 }] };
+      case 'top10': {
+        const n = Number(v1);
+        return { kind: 'top10', colId, val: v1 !== '' && Number.isFinite(n) ? Math.max(1, Math.floor(n)) : 10 };
       }
-      if (op === 'top10') {
-        const k = Math.max(1, Number.isFinite(na) && v1 !== '' ? Math.floor(na) : 10);
-        const threshold = nums.sort((x, y) => y - x)[Math.min(k, nums.length) - 1] ?? Infinity;
-        return (cell) => (numberOf(cell?.value) ?? -Infinity) >= threshold;
-      }
-      const avg = nums.reduce((s, n) => s + n, 0) / Math.max(1, nums.length);
-      return (cell) => {
-        const n = numberOf(cell?.value);
-        return n !== undefined && (op === 'aboveAvg' ? n > avg : n < avg);
-      };
+      case 'aboveAvg':
+        return { kind: 'dynamic', colId, type: 'aboveAverage' };
+      case 'belowAvg':
+        return { kind: 'dynamic', colId, type: 'belowAverage' };
     }
-    return (cell, text) => {
-      const s = text.toLowerCase();
-      const n = numberOf(cell?.value);
-      switch (op) {
-        case 'eq':
-          return numeric && n !== undefined && v1 !== '' ? n === na : s === a;
-        case 'ne':
-          return numeric && n !== undefined && v1 !== '' ? n !== na : s !== a;
-        case 'begins':
-          return s.startsWith(a);
-        case 'ends':
-          return s.endsWith(a);
-        case 'contains':
-          return s.includes(a);
-        case 'notContains':
-          return !s.includes(a);
-        case 'gt':
-          return n !== undefined && n > na;
-        case 'ge':
-          return n !== undefined && n >= na;
-        case 'lt':
-          return n !== undefined && n < na;
-        case 'le':
-          return n !== undefined && n <= na;
-        case 'between':
-          return n !== undefined && n >= Math.min(na, nb) && n <= Math.max(na, nb);
-      }
-      return true;
-    };
   }
 
   function apply() {
     if (!owner) return close();
-    const test = conditionTest();
+    const condition = conditionColumn();
     const everything = values.every((v) => checked.has(v));
-    const criterion: FilterCriterion | undefined =
-      everything && !test ? undefined : { ...(everything ? {} : { values: new Set(checked) }), ...(test ? { test } : {}) };
-    setColumnFilter(ctl, owner, at.col, criterion);
+    // A saved condition (custom, Top 10, colour) has no checkbox form; untouched boxes keep it.
+    if (!condition && everything && current && !current.values) return close();
+    // A column holds one kind of filter: a condition wins over the value list, as in Excel's dialog.
+    setColumnFilter(ctl, owner, at.col, condition ?? (everything ? undefined : valuesColumn(owner, at.col, checked)));
     close();
   }
 
