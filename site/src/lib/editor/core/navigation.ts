@@ -76,6 +76,11 @@ export function dataEdge(ws: Worksheet, from: CellPos, dRow: -1 | 0 | 1, dCol: -
  * The block of non-blank cells around `pos` bounded by blank rows and columns
  * (Excel's CurrentRegion). Grows the rectangle until every cell on its border
  * ring is blank.
+ *
+ * Rows are tested through their sparse row map, but a column has no index, so
+ * each side column remembers the rows it has already found blank and only
+ * scans the rows the ring gained since. Rescanning the whole column on every
+ * step made Ctrl+A on a 20k-row table take seconds and 100k rows hang.
  */
 export function currentRegion(ws: Worksheet, pos: CellPos): Range {
   let r1 = pos.row;
@@ -88,10 +93,18 @@ export function currentRegion(ws: Worksheet, pos: CellPos): Range {
     for (const [c, cell] of rowMap) if (c >= a && c <= b && !isBlank(cell)) return true;
     return false;
   };
-  const colHasData = (c: number, a: number, b: number): boolean => {
-    for (let r = a; r <= b; r++) if (!isBlank(getCellAt(ws, r, c))) return true;
+  /** Rows `lo..hi` of `col` are known blank. */
+  type Scan = { col: number; lo: number; hi: number };
+  const colHasData = (scan: Scan, col: number, a: number, b: number): boolean => {
+    if (scan.col !== col) Object.assign(scan, { col, lo: a, hi: a - 1 });
+    for (let r = a; r < scan.lo; r++) if (!isBlank(getCellAt(ws, r, col))) return true;
+    scan.lo = Math.min(scan.lo, a);
+    for (let r = Math.max(scan.hi + 1, a); r <= b; r++) if (!isBlank(getCellAt(ws, r, col))) return true;
+    scan.hi = Math.max(scan.hi, b);
     return false;
   };
+  const left: Scan = { col: 0, lo: 1, hi: 0 };
+  const right: Scan = { col: 0, lo: 1, hi: 0 };
   for (;;) {
     let grew = false;
     if (r1 > 1 && rowHasData(r1 - 1, Math.max(1, c1 - 1), Math.min(MAX_COL, c2 + 1))) {
@@ -102,11 +115,11 @@ export function currentRegion(ws: Worksheet, pos: CellPos): Range {
       r2++;
       grew = true;
     }
-    if (c1 > 1 && colHasData(c1 - 1, Math.max(1, r1 - 1), Math.min(MAX_ROW, r2 + 1))) {
+    if (c1 > 1 && colHasData(left, c1 - 1, Math.max(1, r1 - 1), Math.min(MAX_ROW, r2 + 1))) {
       c1--;
       grew = true;
     }
-    if (c2 < MAX_COL && colHasData(c2 + 1, Math.max(1, r1 - 1), Math.min(MAX_ROW, r2 + 1))) {
+    if (c2 < MAX_COL && colHasData(right, c2 + 1, Math.max(1, r1 - 1), Math.min(MAX_ROW, r2 + 1))) {
       c2++;
       grew = true;
     }

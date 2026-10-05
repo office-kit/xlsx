@@ -164,8 +164,10 @@ export function listPassthroughPivotTables(wb: Workbook, ws: Worksheet): PivotTa
   return locatePivots(wb, ws).map(summarize);
 }
 
+// `xmlns:*` entries are prefix declarations the parser keeps for an
+// `mc:Ignorable`, not attributes of the element.
 const onlyKnownAttrs = (node: XmlNode, allowed: ReadonlySet<string>): boolean =>
-  Object.keys(node.attrs).every((k) => allowed.has(k));
+  Object.keys(node.attrs).every((k) => allowed.has(k) || k.startsWith('xmlns:'));
 
 const isTrue = (v: string | undefined, dflt: boolean): boolean => (v === undefined ? dflt : v === '1' || v === 'true');
 

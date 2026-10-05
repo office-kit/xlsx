@@ -90,7 +90,10 @@ function textOf(v: unknown): string {
   return String(v);
 }
 
-/** Does the block's first row look like a header (text over non-text data)? */
+/**
+ * Does the block's first row look like a header (text over non-text data)?
+ * A blank header cell, such as over a formula column, does not rule it out.
+ */
 export function guessHeader(ws: Worksheet, range: Range): boolean {
   if (range.r2 <= range.r1) return false;
   let textTop = 0;
@@ -98,10 +101,11 @@ export function guessHeader(ws: Worksheet, range: Range): boolean {
   for (let c = range.c1; c <= range.c2; c++) {
     const top = effective(getCellAt(ws, range.r1, c)?.value);
     const below = effective(getCellAt(ws, range.r1 + 1, c)?.value);
-    if (typeof top === 'string') textTop++;
+    if (top !== null && top !== undefined && top !== '' && typeof top !== 'string') return false;
+    if (typeof top === 'string' && top !== '') textTop++;
     if (typeof below === 'number' || typeof below === 'boolean') typed++;
   }
-  return textTop === range.c2 - range.c1 + 1 && typed > 0;
+  return textTop > 0 && typed > 0;
 }
 
 export function sortRange(ctl: EditorController, range: Range, keys: readonly SortKey[], hasHeader: boolean, orientation: 'rows' | 'columns' = 'rows'): void {

@@ -54,6 +54,45 @@ export interface FillContext {
   readonly translate: (formula: string, dRow: number, dCol: number) => string;
   /** True when the seed's number format is a date (dates step by day, then by the seed's interval). */
   readonly isDate: (styleId: number) => boolean;
+  readonly date1904?: boolean;
+}
+
+const MS_PER_DAY = 86_400_000;
+const EPOCH_1900_OFFSET = 25_569; // serial of 1970-01-01 in the 1900 system
+const EPOCH_1904_SHIFT = 1_462;
+
+function toUtcDate(serial: number, date1904: boolean): Date {
+  return new Date((Math.floor(serial) + (date1904 ? EPOCH_1904_SHIFT : 0) - EPOCH_1900_OFFSET) * MS_PER_DAY);
+}
+
+function fromUtc(year: number, month: number, day: number, date1904: boolean): number {
+  return Date.UTC(year, month, day) / MS_PER_DAY + EPOCH_1900_OFFSET - (date1904 ? EPOCH_1904_SHIFT : 0);
+}
+
+/**
+ * Dates on the same day of the month a whole number of months apart
+ * (1/15, 2/15 or 2023/1/1, 2024/1/1) continue by that many months, clamped to
+ * the month's last day, as Excel does; anything else steps by days.
+ */
+function monthSeries(nums: readonly number[], count: number, direction: 1 | -1, date1904: boolean): number[] | undefined {
+  const dates = nums.map((n) => toUtcDate(n, date1904));
+  const first = dates[0];
+  if (!first || dates.length < 2) return undefined;
+  const day = first.getUTCDate();
+  const time = (nums[0] ?? 0) - Math.floor(nums[0] ?? 0);
+  if (dates.some((d, i) => d.getUTCDate() !== day || (nums[i] ?? 0) - Math.floor(nums[i] ?? 0) !== time)) return undefined;
+  const index = dates.map((d) => d.getUTCFullYear() * 12 + d.getUTCMonth());
+  const step = (index[1] ?? 0) - (index[0] ?? 0);
+  if (step === 0 || index.some((m, i) => i > 0 && m - (index[i - 1] ?? 0) !== step)) return undefined;
+  const out: number[] = [];
+  for (let i = 1; i <= count; i++) {
+    const target = direction === 1 ? (index[index.length - 1] ?? 0) + step * i : (index[0] ?? 0) - step * i;
+    const year = Math.floor(target / 12);
+    const month = target - year * 12;
+    const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    out.push(fromUtc(year, month, Math.min(day, lastDay), date1904) + time);
+  }
+  return out;
 }
 
 /**
@@ -79,6 +118,14 @@ export function extendSeries(
   if (mode !== 'copy' && nums.length === n) {
     // A single number copies (Excel), unless it's a date, which counts up by a day.
     if (n === 1 && mode === 'auto' && !ctx.isDate(seeds[0]?.styleId ?? 0)) return repeat(seeds, count, direction, axis, ctx);
+    const months = seeds.every((sd) => ctx.isDate(sd.styleId)) ? monthSeries(nums, count, direction, ctx.date1904 ?? false) : undefined;
+    if (months) {
+      return months.map((value, k) => {
+        const i = k + 1;
+        const seed = seeds[direction === 1 ? (i - 1) % n : n - 1 - ((i - 1) % n)] ?? seeds[0];
+        return { value, styleId: seed?.styleId ?? 0 };
+      });
+    }
     const { slope, intercept } = n === 1 ? { slope: 1, intercept: nums[0] ?? 0 } : linearFit(nums);
     for (let i = 1; i <= count; i++) {
       const x = direction === 1 ? n - 1 + i : -i;
