@@ -530,6 +530,7 @@ export function renameSheetAt(ctl: EditorController, index: number, name: string
         }
       }
     }
+    for (const dn of doc.wb.definedNames) dn.value = renameSheetInFormula(dn.value, old, trimmed);
   });
   return undefined;
 }

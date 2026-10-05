@@ -187,7 +187,7 @@
       overlayAt: overlay,
       tableLookAt: tableLook,
       refHighlights: ctl.editRefs.filter((r) => r.visible).map((r) => ({ range: r.range, color: r.color })),
-      copyRange: ctl.clipboard && ctl.clipboard.sheetIndex === doc.activeSheetIndex ? ctl.clipboard.range : null,
+      copyRange: ctl.clipboard && ctl.clipboard.sheet === doc.ws ? ctl.clipboard.range : null,
       antsPhase,
       dragPreview: ctl.dragPreview,
       editing: editingHere,
