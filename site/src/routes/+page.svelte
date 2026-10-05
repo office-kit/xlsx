@@ -92,8 +92,8 @@
       how: 'size-limit runs in CI on every push and pull request. The full load and save path has to stay under 120 KB minified and brotli-compressed with its dependencies, and the streaming entry under 80 KB.',
     },
     {
-      claim: 'Three runtime dependencies.',
-      how: 'fflate for ZIP, saxes for streaming XML, and fast-xml-parser. Only the @office-kit/xlsx/node subpath touches fs; the rest is Web Streams, Blob, and Uint8Array.',
+      claim: 'Two runtime dependencies.',
+      how: 'fflate for ZIP and saxes for streaming XML. Only the @office-kit/xlsx/node subpath touches fs; the rest is Web Streams, Blob, and Uint8Array.',
     },
     {
       claim: 'Tested where you run it, and as you install it.',

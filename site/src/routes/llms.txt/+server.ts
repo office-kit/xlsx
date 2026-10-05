@@ -30,7 +30,7 @@ page concatenated into a single document.
   with \`fetch\` + Web Streams.
 - ESM-only. \`"sideEffects": false\` — fully tree-shakable.
 - No runtime dependencies on Python or native binaries. Internally uses
-  \`fflate\` (deflate/inflate), \`saxes\` (SAX XML), \`fast-xml-parser\`.
+  \`fflate\` (deflate/inflate), \`saxes\` (SAX XML).
 
 ## Install
 

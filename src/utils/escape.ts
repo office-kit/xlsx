@@ -88,7 +88,7 @@ export function escapeXmlText(s: string): string {
  *
  * Note: this deliberately does NOT escape `\r` / `\n` / `\t` to numeric
  * character references. XML 1.0 attribute-value normalisation would
- * collapses them to spaces, but the DOM read path (fast-xml-parser) does not
+ * collapses them to spaces, but the DOM read path (`parseXml`) does not
  * apply that normalisation, so the literal bytes round-trip through
  * `loadWorkbook`. Leaving them literal also matches what Excel itself emits.
  */

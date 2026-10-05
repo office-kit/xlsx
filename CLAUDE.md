@@ -30,8 +30,9 @@ day-to-day contributor workflow.
   declaration that lacks it. See `tests/consumer/README.md`.
 - Runtime: Node `>=22` (relies on built-in `Web Streams`, `Blob`, `fetch`).
   Modern browsers via the same APIs.
-- Runtime dependencies: `fflate` (deflate / inflate), `saxes` (SAX XML),
-  `fast-xml-parser`. Anything else is a build-time dependency.
+- Runtime dependencies: `fflate` (deflate / inflate), `saxes` (SAX XML).
+  The DOM-style parser in `src/xml/` has its own lexer. Anything else is a
+  build-time dependency.
 - Tooling: pnpm, vitest, oxlint, knip, tsdown (bundler), size-limit, typedoc,
   changesets (release management), libxml2-utils (`xmllint`) for ECMA-376 XSD
   validation in CI, `@arethetypeswrong/cli` for published-types validation.

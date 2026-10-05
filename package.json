@@ -148,6 +148,7 @@
     "@vitest/coverage-v8": "^4.1.9",
     "esbuild": "^0.28.0",
     "fast-check": "^4.8.0",
+    "fast-xml-parser": "^5.9.3",
     "knip": "^6.24.0",
     "oxlint": "^1.72.0",
     "size-limit": "^12.1.0",
@@ -163,7 +164,6 @@
     ]
   },
   "dependencies": {
-    "fast-xml-parser": "^5.9.3",
     "fflate": "^0.8.3",
     "saxes": "^6.0.0"
   }

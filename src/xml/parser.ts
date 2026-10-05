@@ -1,17 +1,15 @@
-// DOM-style XML parser. fast-xml-parser does the lexing, then we walk its
-// preserveOrder tree to:
+// DOM-style XML parser. lex.ts does the lexing, then we walk its tree to:
 //   1. resolve `prefix:local` element + attribute names to Clark notation
 //      (`{ns}local`) using a namespace-declaration stack;
 //   2. fold text segments into XmlNode.text for text-only elements;
 //   3. drop XML declarations and processing instructions.
 //
 // DOCTYPE / external entity declarations are rejected outright via a byte-level
-// prescan before the parser ever sees the input. fast-xml-parser does not
-// expand external entities, but we still want the offending document to fail
-// loudly.
+// prescan before the lexer ever sees the input. The lexer does not expand
+// entities, but we still want the offending document to fail loudly.
 
-import { XMLParser } from 'fast-xml-parser';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
+import { ATTR_KEY, CDATA_KEY, lexXml, type RawAttrs, type RawEntry, TEXT_KEY } from './lex.js';
 import { qname } from './namespaces.js';
 import { el, type XmlNode } from './tree.js';
 
@@ -43,30 +41,10 @@ export const rejectDtdDeclarations = (text: string): void => {
   }
 };
 
-// ---- fast-xml-parser configuration ------------------------------------------
+// ---- entities ---------------------------------------------------------------
 
-const TEXT_KEY = '#text';
-const CDATA_KEY = '#cdata';
-
-const parser = new XMLParser({
-  preserveOrder: true,
-  ignoreAttributes: false,
-  attributeNamePrefix: '',
-  attributesGroupName: ':@',
-  trimValues: false,
-  parseTagValue: false,
-  parseAttributeValue: false,
-  // Decode entities ourselves below. fast-xml-parser expands the five named
-  // XML entities but leaves numeric character references untouched. Keeping
-  // its processing disabled also lets us preserve XML's single-pass semantics
-  // (`&amp;#65;` is the literal text "&#65;", not "A").
-  processEntities: false,
-  htmlEntities: false,
-  // Without this, CDATA content is merged into `#text` and would go through
-  // entity decoding, but CDATA is literal: `<![CDATA[&amp;]]>` is "&amp;".
-  cdataPropName: CDATA_KEY,
-});
-
+// The lexer leaves references as written; they are decoded here in one pass,
+// so `&amp;#65;` is the literal text "&#65;", not "A". CDATA is never decoded.
 const XML_ENTITY_RE = /&(amp|lt|gt|quot|apos|#(?:[0-9]+|x[0-9A-Fa-f]+));/g;
 
 /** Decode the five predefined XML entities and decimal/hex character refs once. */
@@ -103,14 +81,6 @@ const isXmlCodePoint = (codePoint: number): boolean =>
   (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
   (codePoint >= 0x10000 && codePoint <= 0x10ffff);
 
-// ---- preserveOrder shape ----------------------------------------------------
-
-type FxpAttrs = Record<string, string>;
-type FxpEntry = { ':@'?: FxpAttrs } & { [tagOrText: string]: FxpEntry[] | string | FxpAttrs | undefined };
-type FxpTree = FxpEntry[];
-
-const ATTR_KEY = ':@';
-
 // ---- public API -------------------------------------------------------------
 
 export interface ParsedDocument {
@@ -143,16 +113,16 @@ export function parseXmlDocument(input: Uint8Array | string): ParsedDocument {
   const text = decodeForPrescan(input);
   rejectDtdDeclarations(text);
 
-  let raw: FxpTree;
+  let raw: RawEntry[];
   try {
-    raw = parser.parse(text) as FxpTree;
+    raw = lexXml(text);
   } catch (cause) {
     throw new OpenXmlSchemaError('parseXml: failed to parse XML payload', { cause });
   }
 
   // Skip XML declaration, processing instructions and any leading whitespace
   // text nodes.
-  const roots: FxpEntry[] = [];
+  const roots: RawEntry[] = [];
   for (const entry of raw) {
     const tag = elementTag(entry);
     if (tag === undefined) continue; // text-only entry
@@ -171,10 +141,17 @@ export function parseXmlDocument(input: Uint8Array | string): ParsedDocument {
   if (root === undefined) {
     throw new OpenXmlSchemaError('parseXml: no root element');
   }
-  return { root: convertElement(root, initial), rootNamespaces: declarationsOf(root[ATTR_KEY] as FxpAttrs | undefined) };
+  if (Object.hasOwn(root, TEXT_KEY)) {
+    // `x</q>`: text before a stray closing tag is the only top-level entry.
+    // Converting it as an element used to recurse until a raw RangeError.
+    throw new OpenXmlSchemaError('parseXml: failed to parse XML payload', {
+      cause: new OpenXmlSchemaError('parseXml: the only top-level entry is text, not an element'),
+    });
+  }
+  return { root: convertElement(root, initial), rootNamespaces: declarationsOf(root[ATTR_KEY] as RawAttrs | undefined) };
 }
 
-const declarationsOf = (attrs: FxpAttrs | undefined): Array<{ prefix: string; ns: string }> => {
+const declarationsOf = (attrs: RawAttrs | undefined): Array<{ prefix: string; ns: string }> => {
   const out: Array<{ prefix: string; ns: string }> = [];
   for (const [k, v] of Object.entries(attrs ?? {})) {
     if (k === 'xmlns') out.push({ prefix: '', ns: decodeXmlEntities(v) });
@@ -192,7 +169,7 @@ interface NamespaceStack {
   readonly byPrefix: Readonly<Record<string, string>>;
 }
 
-const elementTag = (entry: FxpEntry): string | undefined => {
+const elementTag = (entry: RawEntry): string | undefined => {
   for (const k of Object.keys(entry)) {
     if (k === ATTR_KEY) continue;
     return k;
@@ -208,7 +185,7 @@ const splitPrefixed = (qname0: string): { prefix: string; local: string } => {
   return { prefix: qname0.slice(0, idx), local: qname0.slice(idx + 1) };
 };
 
-const extendStack = (parent: NamespaceStack, attrs: FxpAttrs | undefined): NamespaceStack => {
+const extendStack = (parent: NamespaceStack, attrs: RawAttrs | undefined): NamespaceStack => {
   if (attrs === undefined) return parent;
   let nextDefault = parent.default;
   let nextByPrefix: Record<string, string> | undefined;
@@ -252,7 +229,7 @@ const resolveAttrName = (raw: string, stack: NamespaceStack): string => {
   return qname(ns, local);
 };
 
-const filterAttrs = (rawAttrs: FxpAttrs | undefined, stack: NamespaceStack): { resolved: Record<string, string> } => {
+const filterAttrs = (rawAttrs: RawAttrs | undefined, stack: NamespaceStack): { resolved: Record<string, string> } => {
   const resolved: Record<string, string> = {};
   if (rawAttrs === undefined) return { resolved };
   for (const [k, v] of Object.entries(rawAttrs)) {
@@ -272,7 +249,7 @@ const filterAttrs = (rawAttrs: FxpAttrs | undefined, stack: NamespaceStack): { r
  */
 export const isWhitespaceOnly = (s: string): boolean => /^\s*$/.test(s);
 
-const convertElement = (entry: FxpEntry, parentStack: NamespaceStack): XmlNode => {
+const convertElement = (entry: RawEntry, parentStack: NamespaceStack): XmlNode => {
   const rawTag = elementTag(entry);
   if (rawTag === undefined) {
     throw new OpenXmlSchemaError('parseXml: encountered an entry with no element tag');
@@ -281,13 +258,13 @@ const convertElement = (entry: FxpEntry, parentStack: NamespaceStack): XmlNode =
     throw new OpenXmlSchemaError(`parseXml: processing instructions are not supported (saw "<${rawTag}>")`);
   }
 
-  const rawAttrs = entry[ATTR_KEY] as FxpAttrs | undefined;
+  const rawAttrs = entry[ATTR_KEY] as RawAttrs | undefined;
   const stack = extendStack(parentStack, rawAttrs);
 
   const { resolved } = filterAttrs(rawAttrs, stack);
   const node = el(resolveElementName(rawTag, stack), resolved);
 
-  const childEntries = entry[rawTag] as FxpEntry[] | undefined;
+  const childEntries = entry[rawTag] as RawEntry[] | undefined;
   if (childEntries === undefined || childEntries.length === 0) return node;
 
   const textParts: string[] = [];
@@ -298,7 +275,7 @@ const convertElement = (entry: FxpEntry, parentStack: NamespaceStack): XmlNode =
       continue;
     }
     if (Object.hasOwn(child, CDATA_KEY)) {
-      const section = child[CDATA_KEY] as FxpEntry[];
+      const section = child[CDATA_KEY] as RawEntry[];
       for (const part of section) {
         const t = part[TEXT_KEY];
         if (typeof t === 'string') textParts.push(t);
