@@ -4,6 +4,9 @@
 export const dialogsEn = {
   // alert messages (shared with the core strings; repeated so dialogs own their wording)
   formulaError: "There's a problem with this formula.",
+  mergeInTable: "Merging cells in a table isn't supported.",
+  shiftTable: 'This operation is not allowed. The operation is attempting to shift cells in a table on your worksheet.',
+  shiftMerge: "We can't do that to a merged cell.",
   lastSheet: 'A workbook must contain at least one visible worksheet.',
   invalidSheetName: "That sheet name isn't valid. Names can't be blank, longer than 31 characters, or contain : \\ / ? * [ ].",
   duplicateSheetName: 'That name is already taken. Try a different one.',

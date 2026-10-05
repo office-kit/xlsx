@@ -9,6 +9,7 @@ import { parseRangeAddress, rangeAddress, type Range } from './address.ts';
 import { getCellAt, isBlank } from './cells.ts';
 import type { EditorController } from './controller.svelte.ts';
 import { dataRange } from './data.ts';
+import { setFilterButton, tableAt } from './tables.ts';
 
 /** A filter and the range it covers (header row first). */
 export interface FilterOwner {
@@ -45,6 +46,13 @@ export function filterOwnerAt(ws: Worksheet, row: number, col: number): FilterOw
 export function toggleAutoFilter(ctl: EditorController): void {
   const doc = ctl.doc;
   const ws = doc.ws;
+  // Inside a table, Filter shows or hides the table's own buttons; a sheet filter would overlap it.
+  const { row, col } = doc.selection.active;
+  const table = tableAt(ws, row, col);
+  if (table) {
+    setFilterButton(ctl, table.def, table.def.autoFilter === undefined);
+    return;
+  }
   if (ws.autoFilter) {
     const range = autoFilterRange(ws);
     criteria.delete(ws.autoFilter);

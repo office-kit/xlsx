@@ -7,7 +7,7 @@ import { makeCell } from '@office-kit/xlsx/cell';
 import type { Font, HorizontalAlignment, Side, VerticalAlignment } from '@office-kit/xlsx/styles';
 import { getCellFont, getCellProtection, isDateFormat, makeColor } from '@office-kit/xlsx/styles';
 import { addWorksheet, moveSheet, removeSheet, renameSheet, setSheetState } from '@office-kit/xlsx/workbook';
-import type { Worksheet } from '@office-kit/xlsx/worksheet';
+import type { TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
 import type { PageSetup } from '@office-kit/xlsx/worksheet';
 import {
   setColumnDimension,
@@ -20,7 +20,7 @@ import { columnIndexFromLetter, columnLetterFromIndex, coordinateFromString } fr
 import { addImageAt, loadImage } from '@office-kit/xlsx/drawing';
 import { formulaReferences, fromStorageFormula, renameSheetInFormula, translateFormula } from '../calc/index.ts';
 import type { Range } from './address.ts';
-import { MAX_COL, MAX_ROW, inRange, quoteSheetName, rangeAddress } from './address.ts';
+import { MAX_COL, MAX_ROW, inRange, quoteSheetName, rangeAddress, rangesIntersect } from './address.ts';
 import { refCell } from './comments.ts';
 import { forEachCellInRange, getCellAt, isBlank } from './cells.ts';
 import { validateValue } from './validation.ts';
@@ -36,6 +36,7 @@ import { pxToColWidth, pxToPt } from './metrics.ts';
 import { currentRange } from './selection.ts';
 import { validateName } from './names.ts';
 import { applyStructuralEdit, declareStructural, structuralEdit } from './structure.ts';
+import { tableRange } from './tables.ts';
 import { recentFunctions } from './recent-functions.svelte.ts';
 
 // ---- history ------------------------------------------------------------------
@@ -189,7 +190,32 @@ export function applyBorder(ctl: EditorController, preset: BorderPreset, side: S
 }
 
 export function merge(ctl: EditorController, mode: MergeMode): void {
+  const ws = ctl.doc.ws;
+  if (mode !== 'unmerge' && ctl.doc.selection.ranges.some((r) => ws.tables.some((t) => intersectsTable(t, r)))) {
+    ctl.dialog = { kind: 'alert', props: { message: 'mergeInTable' } };
+    return;
+  }
   repeatable(ctl, () => mergeRanges(ctl.doc, ctl.doc.selection.ranges, mode));
+}
+
+function intersectsTable(def: TableDefinition, r: Range): boolean {
+  const t = tableRange(def);
+  return t !== undefined && rangesIntersect(t, r);
+}
+
+/**
+ * Why Excel refuses to shift cells under `r` (Insert / Delete Cells): the cells
+ * that move would split a table or a merged cell, moving only part of it.
+ */
+function shiftSplits(ctl: EditorController, r: Range, axis: 'row' | 'col'): 'shiftTable' | 'shiftMerge' | undefined {
+  const moving: Range = axis === 'row' ? { r1: r.r1, c1: r.c1, r2: MAX_ROW, c2: r.c2 } : { r1: r.r1, c1: r.c1, r2: r.r2, c2: MAX_COL };
+  const splits = (o: Range) => rangesIntersect(o, moving) && (axis === 'row' ? o.c1 < r.c1 || o.c2 > r.c2 : o.r1 < r.r1 || o.r2 > r.r2);
+  if (ctl.doc.ws.tables.some((t) => {
+    const range = tableRange(t);
+    return range !== undefined && splits(range);
+  })) return 'shiftTable';
+  if (ctl.doc.merges.intersecting(moving).some(splits)) return 'shiftMerge';
+  return undefined;
 }
 
 // ---- fill -------------------------------------------------------------------------
@@ -352,6 +378,11 @@ export function shiftCells(ctl: EditorController, mode: 'down' | 'right' | 'up' 
   const doc = ctl.doc;
   const ws = doc.ws;
   const r = currentRange(doc.selection);
+  const refused = shiftSplits(ctl, r, mode === 'down' || mode === 'up' ? 'row' : 'col');
+  if (refused) {
+    ctl.dialog = { kind: 'alert', props: { message: refused } };
+    return;
+  }
   doc.transact(mode === 'down' || mode === 'right' ? 'Insert Cells' : 'Delete Cells', (tx) => {
     if (mode === 'down' || mode === 'up') {
       structuralEdit(tx, doc.wb, ws, { axis: 'row', at: r.r1, count: mode === 'down' ? r.r2 - r.r1 + 1 : -(r.r2 - r.r1 + 1), band: { from: r.c1, to: r.c2 } });
