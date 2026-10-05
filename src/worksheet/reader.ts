@@ -1367,8 +1367,8 @@ const parseSheetView = (node: XmlNode): SheetView => {
 
   const paneEl = findChild(node, PANE_TAG);
   if (paneEl) opts.pane = parsePane(paneEl);
-  const selectionEl = findChild(node, SELECTION_TAG);
-  if (selectionEl) opts.selection = parseSelection(selectionEl);
+  const selections = findChildren(node, SELECTION_TAG).map(parseSelection);
+  if (selections.length > 0) opts.selections = selections;
   return makeSheetView(opts);
 };
 

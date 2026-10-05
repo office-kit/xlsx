@@ -1,11 +1,11 @@
 // SheetView / Pane / Selection. (`Worksheet.views`) + the openpyxl reference at
 // `worksheet/views.py`.
 //
-// **Stage 1**: SheetView with the most-used field subset (tabSelected, view,
-// workbookViewId, showGridLines, zoomScale, topLeftCell, pane, selection).
-// Reader / writer cover the round-trip; `setFreezePanes` builds the pane from
-// an "A1"-style top-left ref. Per-pane multi-selection blocks aren't widespread
-// in real-world fixtures, so stage-1 stores a single Selection.
+// SheetView with the most-used field subset (tabSelected, view, workbookViewId,
+// showGridLines, zoomScale, topLeftCell, pane, selections). Reader / writer
+// cover the round-trip; `setFreezePanes` builds the pane from an "A1"-style
+// top-left ref. A split or frozen view carries one selection per pane, and
+// Excel restores the active cell from the active pane's one.
 
 import { coordinateToTuple, tupleToCoordinate } from '../utils/coordinate.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
@@ -48,7 +48,8 @@ export interface SheetView {
   zoomScale?: number;
   zoomScaleNormal?: number;
   pane?: Pane;
-  selection?: Selection;
+  /** One per pane; the active pane's (see {@link activeSelection}) holds the active cell. */
+  selections?: Selection[];
 }
 
 /** Build a SheetView with sensible defaults. */
@@ -67,8 +68,14 @@ export function makeSheetView(opts: Partial<SheetView> = {}): SheetView {
     ...(opts.zoomScale !== undefined ? { zoomScale: opts.zoomScale } : {}),
     ...(opts.zoomScaleNormal !== undefined ? { zoomScaleNormal: opts.zoomScaleNormal } : {}),
     ...(opts.pane ? { pane: opts.pane } : {}),
-    ...(opts.selection ? { selection: opts.selection } : {}),
+    ...(opts.selections ? { selections: opts.selections } : {}),
   };
+}
+
+/** The selection of the view's active pane (a `<selection>` without `pane` is the top-left one). */
+export function activeSelection(view: SheetView): Selection | undefined {
+  const pane = view.pane?.activePane ?? 'topLeft';
+  return view.selections?.find((s) => (s.pane ?? 'topLeft') === pane);
 }
 
 /** How many rows / columns a freeze holds in place, counted from the top-left. */

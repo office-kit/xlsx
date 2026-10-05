@@ -96,13 +96,13 @@ describe('SheetView round-trip through saveWorkbook → loadWorkbook', () => {
   it('preserves selection blocks', async () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'S');
-    ws.views.push(makeSheetView({ tabSelected: true, selection: { activeCell: 'C5', sqref: 'C5' } }));
+    ws.views.push(makeSheetView({ tabSelected: true, selections: [{ activeCell: 'C5', sqref: 'C5' }] }));
     const bytes = await workbookToBytes(wb);
     const wb2 = await loadWorkbook(fromBuffer(bytes));
     const ws2 = expectSheet(wb2.sheets[0]?.sheet);
     expect(ws2.views[0]?.tabSelected).toBe(true);
-    expect(ws2.views[0]?.selection?.activeCell).toBe('C5');
-    expect(ws2.views[0]?.selection?.sqref).toBe('C5');
+    expect(ws2.views[0]?.selections?.[0]?.activeCell).toBe('C5');
+    expect(ws2.views[0]?.selections?.[0]?.sqref).toBe('C5');
   });
 
   it('reads sheetView from openpyxl genuine fixture', async () => {
@@ -117,6 +117,6 @@ describe('SheetView round-trip through saveWorkbook → loadWorkbook', () => {
     // empty-with-styles.xlsx has sheetView with tabSelected="1"
     expect(ws.views.length).toBeGreaterThan(0);
     expect(ws.views[0]?.tabSelected).toBe(true);
-    expect(ws.views[0]?.selection?.activeCell).toBe('A3');
+    expect(ws.views[0]?.selections?.[0]?.activeCell).toBe('A3');
   });
 });

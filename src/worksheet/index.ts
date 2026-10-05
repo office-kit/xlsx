@@ -138,7 +138,7 @@ export type {
   SheetView,
   SheetViewMode,
 } from './views.js';
-export { freezePaneRef, makeFreezePane, makeSheetView } from './views.js';
+export { activeSelection, freezePaneRef, makeFreezePane, makeSheetView } from './views.js';
 export type { LegacyComment } from './comments.js';
 export { makeLegacyComment } from './comments.js';
 export type { ThreadedComment, ThreadedCommentMention } from './threaded-comments.js';
