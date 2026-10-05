@@ -6,6 +6,7 @@ import {
   formulaReferences,
   fromStorageFormula,
   parseFormula,
+  deleteSheetInFormula,
   renameSheetInFormula,
   toggleReferenceAt,
   toStorageFormula,
@@ -119,6 +120,19 @@ describe('adjustFormulaForMove', () => {
   test('a move to another sheet qualifies the reference', () => {
     expect(adjustFormulaForMove('A1', 'S', { ...move, toSheet: 'T 2', dCol: 0 })).toBe("'T 2'!A1");
   });
+});
+
+test('deleteSheetInFormula turns references to the sheet into #REF!', () => {
+  const order = ['A', 'Gone', 'C', 'D'];
+  expect(deleteSheetInFormula("Gone!A1+'gone'!B2:C3+C!A1+SUM(Gone!X)", 'Gone', order)).toBe('#REF!+#REF!+C!A1+SUM(#REF!)');
+  expect(deleteSheetInFormula('"Gone!A1"&A1', 'Gone', order)).toBe('"Gone!A1"&A1');
+});
+
+test('deleteSheetInFormula shrinks a 3-D reference ending on the sheet', () => {
+  const order = ['Jan', 'Gone', 'Mar', 'Apr'];
+  expect(deleteSheetInFormula('SUM(Gone:Apr!A1)', 'Gone', order)).toBe('SUM(Mar:Apr!A1)');
+  expect(deleteSheetInFormula('SUM(Jan:Gone!A1)', 'Gone', order)).toBe('SUM(Jan!A1)');
+  expect(deleteSheetInFormula('SUM(Jan:Mar!A1)', 'Gone', order)).toBe('SUM(Jan:Mar!A1)');
 });
 
 test('renameSheetInFormula quotes when needed', () => {

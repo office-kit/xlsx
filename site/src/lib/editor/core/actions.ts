@@ -18,7 +18,7 @@ import {
 } from '@office-kit/xlsx/worksheet';
 import { columnIndexFromLetter, columnLetterFromIndex, coordinateFromString } from '@office-kit/xlsx/utils';
 import { addImageAt, loadImage } from '@office-kit/xlsx/drawing';
-import { formulaReferences, fromStorageFormula, renameSheetInFormula, translateFormula } from '../calc/index.ts';
+import { deleteSheetInFormula, formulaReferences, fromStorageFormula, renameSheetInFormula, translateFormula } from '../calc/index.ts';
 import type { Range } from './address.ts';
 import { MAX_COL, MAX_ROW, inRange, quoteSheetName, rangeAddress } from './address.ts';
 import { refCell } from './comments.ts';
@@ -466,10 +466,32 @@ export function deleteSheet(ctl: EditorController, index: number): void {
   const title = doc.wb.sheets[index]?.sheet.title;
   if (title === undefined) return;
   const next = Math.max(0, index >= doc.wb.sheets.length - 1 ? index - 1 : index);
+  const order = doc.wb.sheets.map((s) => s.sheet.title);
   doc.transact('Delete Sheet', (tx) => {
     tx.structural = true;
     tx.workbook('sheets', 'activeSheetIndex', 'definedNames');
     removeSheet(doc.wb, title);
+    for (const s of doc.wb.sheets) {
+      if (s.kind !== 'worksheet') continue;
+      let touched = false;
+      for (const rowMap of s.sheet.rows.values()) {
+        for (const cell of rowMap.values()) {
+          const v = cell.value;
+          if (v === null || typeof v !== 'object' || v instanceof Date || v.kind !== 'formula' || !v.formula) continue;
+          const f = deleteSheetInFormula(v.formula, title, order);
+          if (f === v.formula) continue;
+          if (!touched) {
+            tx.cells(s.sheet, { r1: 1, c1: 1, r2: MAX_ROW, c2: MAX_COL });
+            touched = true;
+          }
+          cell.value = { ...v, formula: f };
+        }
+      }
+    }
+    doc.wb.definedNames = doc.wb.definedNames.map((dn) => {
+      const value = deleteSheetInFormula(dn.value, title, order);
+      return value === dn.value ? dn : { ...dn, value };
+    });
   });
   doc.activeSheetIndex = Math.min(next, doc.wb.sheets.length - 1);
   doc.layoutVersion++;
