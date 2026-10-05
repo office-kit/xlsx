@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { fromBuffer } from '../../src/io/node.js';
 import { loadWorkbook } from '../../src/io/load.js';
 import { workbookToBytes } from '../../src/io/save.js';
-import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
+import { addWorksheet, createWorkbook, type Workbook } from '../../src/workbook/workbook.js';
 import {
   addAverageRule,
   addCellIsRule,
@@ -14,6 +14,12 @@ import {
   addTopNRule,
 } from '../../src/worksheet/conditional-formatting.js';
 import { setCell, type Worksheet } from '../../src/worksheet/worksheet.js';
+import { addDxf, makeDifferentialStyle } from '../../src/styles/differential.js';
+
+/** Differential formats for the dxfIds below to point at; a save refuses dangling ones. */
+function poolDxfs(wb: Workbook, n: number): void {
+  for (let i = 0; i < n; i++) addDxf(wb.styles, makeDifferentialStyle({ font: { size: 10 + i } }));
+}
 
 const expectSheet = (
   ws: Worksheet | import('../../src/chartsheet/chartsheet.js').Chartsheet | undefined,
@@ -122,6 +128,7 @@ describe('addDuplicateValuesRule + addFormulaRule + addTextRule', () => {
 describe('builders survive a save → load round-trip', () => {
   it('cellIs + topN + formula all preserve their attrs', async () => {
     const wb = createWorkbook();
+    poolDxfs(wb, 6);
     const ws = addWorksheet(wb, 'CF');
     setCell(ws, 1, 1, 1);
     addCellIsRule(ws, 'A1:A10', { operator: 'greaterThan', formula1: '15', dxfId: 0 });

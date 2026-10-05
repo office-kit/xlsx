@@ -14,7 +14,7 @@ import { makeColor } from '../../src/styles/colors.js';
 import { setCellBackgroundColor, setCellFont } from '../../src/styles/cell-style.js';
 import { makeFont } from '../../src/styles/fonts.js';
 import { addDefinedName } from '../../src/workbook/defined-names.js';
-import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
+import { addWorksheet, createWorkbook, type Workbook } from '../../src/workbook/workbook.js';
 import { makeAutoFilter } from '../../src/worksheet/auto-filter.js';
 import { parseMultiCellRange } from '../../src/worksheet/cell-range.js';
 import {
@@ -57,6 +57,12 @@ import {
   type Worksheet,
 } from '../../src/worksheet/worksheet.js';
 import { validateXlsx } from './validate.js';
+import { addDxf, makeDifferentialStyle } from '../../src/styles/differential.js';
+
+/** Differential formats for the dxfIds below to point at; a save refuses dangling ones. */
+function poolDxfs(wb: Workbook, n: number): void {
+  for (let i = 0; i < n; i++) addDxf(wb.styles, makeDifferentialStyle({ font: { size: 10 + i } }));
+}
 
 const dump = (issues: { tier: string; part: string; message: string }[]): string =>
   issues.map((i) => `[${i.tier}] ${i.part}: ${i.message}`).join('\n');
@@ -251,6 +257,7 @@ describe('conformance: writer feature survey', () => {
   describe('conditional formatting', () => {
     it('cellIs, formula, color scale rules combined', async () => {
       const wb = createWorkbook();
+      poolDxfs(wb, 6);
       const w = ws(addWorksheet(wb, 'CF'));
       for (let r = 1; r <= 10; r++) setCell(w, r, 1, r * 5);
       addCellIsRule(w, 'A1:A10', { operator: 'greaterThan', formula1: '20', dxfId: 0 });

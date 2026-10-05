@@ -88,6 +88,8 @@ import {
   XLTX_TYPE,
 } from '../xml/namespaces.js';
 import { type CompressionLevel, createZipWriter } from '../zip/writer.js';
+import { getDxfs } from '../styles/differential.js';
+import { multiCellRangeToString } from '../worksheet/cell-range.js';
 
 const CORE_PROPS_TYPE = 'application/vnd.openxmlformats-package.core-properties+xml';
 const EXT_PROPS_TYPE = 'application/vnd.openxmlformats-officedocument.extended-properties+xml';
@@ -276,9 +278,32 @@ const validateSheetTitles = (wb: Workbook): void => {
   }
 };
 
+/**
+ * A conditional-formatting rule whose `dxfId` points past the stylesheet's
+ * differential formats makes Excel refuse the file without even a repair
+ * dialog, so it is caught here with the sheet and range named.
+ */
+const validateDxfReferences = (wb: Workbook): void => {
+  const count = getDxfs(wb.styles).length;
+  for (const ref of wb.sheets) {
+    if (ref.kind !== 'worksheet') continue;
+    for (const cf of ref.sheet.conditionalFormatting) {
+      for (const rule of cf.rules) {
+        const id = rule.dxfId;
+        if (id === undefined || (Number.isInteger(id) && id >= 0 && id < count)) continue;
+        throw new OpenXmlSchemaError(
+          `saveWorkbook: sheet "${ref.sheet.title}" conditional formatting ${multiCellRangeToString(cf.sqref)} uses dxfId ${id}, ` +
+            `but the stylesheet has ${count} differential format${count === 1 ? '' : 's'}; add it with addDxf(wb.styles, ...) first`,
+        );
+      }
+    }
+  }
+};
+
 /** Save a workbook through the given sink. Returns once `finalize()` resolves. */
 export async function saveWorkbook(wb: Workbook, sink: XlsxSink, opts: SaveOptions = {}): Promise<void> {
   validateSheetTitles(wb);
+  validateDxfReferences(wb);
   const writer = createZipWriter(sink, opts);
   try {
     await saveWorkbookImpl(wb, writer);
