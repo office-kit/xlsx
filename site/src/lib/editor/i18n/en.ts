@@ -1,5 +1,7 @@
-// English UI strings — the source of truth for message keys. Wording follows
-// Excel for Mac so users find commands under the names they already know.
+// English UI strings — the source of truth for message keys. Command and
+// option names follow Excel for Mac so users find them where they expect, but
+// sentences (alerts, hints, help text) are written in our own words: copying
+// Microsoft's prose wholesale is not ours to redistribute.
 
 import { cfEn } from './cf.en.ts';
 import { shapesEn } from './shapes.en.ts';
@@ -18,6 +20,7 @@ const core = {
   downloadCopy: 'Download a Copy',
   print: 'Print',
   printEllipsis: 'Print…',
+  notAffiliated: 'An independent open-source project, not affiliated with Microsoft. Excel is a trademark of Microsoft.',
   edited: 'Edited',
   language: 'Language',
   discardChanges: 'You have unsaved changes. Discard them?',
@@ -266,7 +269,7 @@ const core = {
   protectWorkbook: 'Protect Workbook',
   unprotectWorkbook: 'Unprotect Workbook',
   dlgPwStructure: 'Structure',
-  dlgUnprotectWrong: 'The password you supplied is not correct. Verify that the CAPS LOCK key is off and be sure to use the correct capitalization.',
+  dlgUnprotectWrong: 'Wrong password. Passwords are case-sensitive, so check Caps Lock.',
   navigation: 'Navigation',
   navHidden: 'hidden',
   navTable: 'Table',
@@ -284,11 +287,11 @@ const core = {
   wwCell: 'Cell',
   wwValue: 'Value',
   wwFormula: 'Formula',
-  protectedCellAlert: "The cell or chart you're trying to change is on a protected sheet. To make a change, unprotect the sheet. You might be requested to enter a password.",
+  protectedCellAlert: "This sheet is protected, so this cell or chart can't be changed. Unprotect the sheet first (a password may be needed).",
   protectedStructureAlert: "The workbook's structure is protected, so sheets can't be added, deleted, moved, renamed or hidden.",
   focusCell: 'Focus Cell',
   groupFocusCell: 'Focus',
-  dvDefaultError: "This value doesn't match the data validation restrictions defined for this cell.",
+  dvDefaultError: "This value isn't allowed by the cell's data validation rule.",
   dvContinue: 'Continue?',
   dvRetry: 'Retry',
   dvYes: 'Yes',
@@ -325,7 +328,7 @@ const core = {
   gotoSpecialEllipsis: 'Go To Special…',
   notFound: "We couldn't find what you were looking for.",
   noCellsFound: 'No cells were found.',
-  mergedCellsSameSize: 'To do this, all the merged cells need to be the same size.',
+  mergedCellsSameSize: 'This only works when every merged cell in the range has the same size.',
   mergedCellConflict: "We can't do that to a merged cell.",
   invalidReference: "The reference isn't valid.",
 
@@ -450,7 +453,7 @@ const core = {
   dlgEvalReference: 'Reference:',
   dlgEvalEvaluation: 'Evaluation:',
   dlgEvalNoFormula: 'The active cell does not contain a formula.',
-  dlgEvalHint: 'To show the result of the underlined expression, click Evaluate.',
+  dlgEvalHint: 'Click Evaluate to compute the underlined part.',
   dlgEvalEvaluate: 'Evaluate',
   dlgEvalRestart: 'Restart',
   calculationOptions: 'Calculation Options',

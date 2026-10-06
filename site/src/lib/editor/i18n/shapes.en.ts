@@ -81,6 +81,6 @@ export const shapesEn = {
   spkChooseLocation: 'Choose where you want the sparklines to be placed',
   spkLocationRange: 'Location Range:',
   sparklineBadData: 'Data Range reference is not valid.',
-  sparklineBadLocation: 'Location reference is not valid. The location must be a single row or column on this sheet.',
-  sparklineSizeMismatch: 'Location reference is not valid because the cells are not the same size as the data range.',
+  sparklineBadLocation: 'The location has to be a single row or column on this sheet.',
+  sparklineSizeMismatch: 'The location has a different number of cells than the data range has rows or columns.',
 } as const;

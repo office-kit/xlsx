@@ -529,3 +529,10 @@ with `use flake`) gives a pinned Node 22 + pnpm 10 + Python 3 environment.
 ## License
 
 MIT — see [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Trademarks
+
+Microsoft and Excel are trademarks of the Microsoft group of companies.
+@office-kit/xlsx, including the browser editor on its website, is an
+independent project. It is not affiliated with, endorsed by, or sponsored by
+Microsoft.

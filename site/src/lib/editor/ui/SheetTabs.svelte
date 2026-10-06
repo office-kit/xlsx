@@ -155,7 +155,7 @@
   .tab:hover {
     background: var(--xl-hover);
   }
-  /* Excel draws the active sheet as a raised white tab with green, non-bold text. */
+  /* The active sheet is a raised white tab with accent-coloured, non-bold text. */
   .tab.active {
     background: #fff;
     color: var(--xl-accent);

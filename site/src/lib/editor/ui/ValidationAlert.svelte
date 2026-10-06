@@ -1,7 +1,7 @@
 <script lang="ts">
-  // Excel's data-validation error alert. Stop offers Retry/Cancel; Warning asks
-  // "Continue?" (Yes keeps the entry, No returns to editing); Information
-  // offers OK (keep) / Cancel (drop).
+  // The data-validation error alert, behaving like Excel's. Stop offers
+  // Retry/Cancel; Warning asks "Continue?" (Yes keeps the entry, No returns to
+  // editing); Information offers OK (keep) / Cancel (drop).
   import { getEditor } from '../core/context.ts';
   import { t } from '../i18n/i18n.svelte.ts';
 
@@ -19,7 +19,7 @@
       e.stopPropagation();
       if (e.key === 'Escape') ctl.resolveValidation(p.style === 'stop' ? 'retry' : 'cancel');
     }}>
-      <div class="head" id="xl-dv-title">{p.title ?? 'Microsoft Excel'}</div>
+      <div class="head" id="xl-dv-title">{p.title ?? t('dlgAlertTitle')}</div>
       <div class="body">
         <div class="icon {p.style}" aria-hidden="true">{p.style === 'stop' ? '×' : p.style === 'warning' ? '!' : 'i'}</div>
         <div>
