@@ -1,14 +1,15 @@
-/* Design tokens for the spreadsheet editor: an Office-like light theme with
-   Excel's green accent. Scoped under .xl-editor so nothing leaks into the
-   docs site. */
+/* Design tokens for the spreadsheet editor. The accent is the office-kit
+   blue rather than Excel's green so the editor is not mistaken for a
+   Microsoft product. Scoped under .xl-editor so nothing leaks into the docs
+   site. */
 .xl-editor {
   /* The editor has only a light theme; without this, a dark OS theme paints
      native controls (the formula bar textarea, inputs, selects, scrollbars)
      dark because the site declares `color-scheme: light dark`. */
   color-scheme: light;
-  --xl-accent: #1e7145;
-  --xl-accent-2: #2e8b57;
-  --xl-accent-soft: #e3f1e8;
+  --xl-accent: #2456c2;
+  --xl-accent-2: #3d73e0;
+  --xl-accent-soft: #e5edfb;
   --xl-bg: #f3f2f1;
   --xl-panel: #ffffff;
   --xl-ribbon: #f8f8f8;
@@ -19,7 +20,7 @@
   --xl-text-3: #8a8886;
   --xl-hover: #ebebeb;
   --xl-pressed: #dcdcdc;
-  --xl-selected: #d6eadc;
+  --xl-selected: #d5e2f8;
   --xl-danger: #a4262c;
   --xl-radius: 4px;
   --xl-shadow: 0 1.6px 3.6px rgba(0, 0, 0, 0.13), 0 0.3px 0.9px rgba(0, 0, 0, 0.1);

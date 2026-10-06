@@ -63,10 +63,10 @@ export const LIGHT_THEME: Theme = {
   headerText: '#444444',
   headerLine: '#C8C7C6',
   headerSelBg: '#D2D2D2',
-  headerSelText: '#0E5C2F',
-  headerFullBg: '#1E7145',
+  headerSelText: '#1A3F8F',
+  headerFullBg: '#2456C2',
   headerFullText: '#FFFFFF',
-  accent: '#1E7145',
+  accent: '#2456C2',
   selectionFill: 'rgba(0, 0, 0, 0.18)',
   frozenLine: '#ABABAB',
 };

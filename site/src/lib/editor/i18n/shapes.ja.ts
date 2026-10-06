@@ -81,6 +81,6 @@ export const shapesJa: Partial<Record<keyof typeof shapesEn, string>> = {
   spkChooseLocation: 'スパークラインを配置する場所を選択してください',
   spkLocationRange: '場所の範囲:',
   sparklineBadData: 'データ範囲の参照が正しくありません。',
-  sparklineBadLocation: '場所の参照が正しくありません。場所はこのシートの 1 行または 1 列である必要があります。',
-  sparklineSizeMismatch: 'セルの数がデータ範囲と一致しないため、場所の参照が正しくありません。',
+  sparklineBadLocation: '表示場所には、このシート上の 1 行または 1 列を指定してください。',
+  sparklineSizeMismatch: '表示場所のセル数が、データ範囲の行数または列数と一致しません。',
 };

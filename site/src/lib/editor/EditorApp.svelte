@@ -168,7 +168,7 @@
   });
 
   $effect(() => {
-    document.title = `${doc.dirty ? '• ' : ''}${doc.fileName} — Excel`;
+    document.title = `${doc.dirty ? '• ' : ''}${doc.fileName} — xlsx editor`;
   });
 
   function onDrop(e: DragEvent) {
@@ -248,6 +248,8 @@
           <button class="xl-menu-item" onclick={() => fileMenuRun(() => void download())}>{t('downloadCopy')}</button>
           <div class="xl-menu-sep"></div>
           <button class="xl-menu-item" onclick={() => fileMenuRun(host.print)}>{t('printEllipsis')}<span class="shortcut">⌘P</span></button>
+          <div class="xl-menu-sep"></div>
+          <p class="disclaimer">{t('notAffiliated')}</p>
         </div>
       {/if}
     </div>
@@ -351,6 +353,15 @@
     min-width: 220px;
     z-index: 50;
     color: var(--xl-text);
+  }
+  .disclaimer {
+    max-width: 220px;
+    margin: 0;
+    padding: 4px 12px 6px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--xl-text-3);
+    white-space: normal;
   }
 
   .quick {

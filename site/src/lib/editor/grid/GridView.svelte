@@ -849,12 +849,12 @@
   .guide.v {
     top: 0;
     bottom: 0;
-    border-left: 1px dashed #1e7145;
+    border-left: 1px dashed var(--xl-accent);
   }
   .guide.h {
     left: 0;
     right: 0;
-    border-top: 1px dashed #1e7145;
+    border-top: 1px dashed var(--xl-accent);
   }
   .guide span {
     position: absolute;
@@ -878,7 +878,7 @@
   .cell-editor.visible {
     opacity: 1;
     pointer-events: auto;
-    border: 2px solid #1e7145;
+    border: 2px solid var(--xl-accent);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
     padding: 0 2px;
   }

@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-  <title>Excel editor — @office-kit/xlsx</title>
+  <title>xlsx editor — @office-kit/xlsx</title>
 </svelte:head>
 
 <div class="editor-page">
