@@ -119,7 +119,7 @@ export interface MenuState {
   readonly sheetIndex?: number;
 }
 
-const REF_COLORS = ['#3B6FD8', '#D13438', '#7A43B6', '#0F8A3B', '#B05E00', '#C239B3', '#038387'];
+const REF_COLORS = ['#3B6FD8', '#C92A2A', '#7A43B6', '#0F8A3B', '#B05E00', '#C239B3', '#038387'];
 
 /** Characters after which arrow keys/clicks insert a reference instead of committing. */
 const POINTABLE = /[=(,+\-*/^&<>:;%{ ]$/;
