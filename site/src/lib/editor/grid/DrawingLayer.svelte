@@ -440,11 +440,11 @@
     height: 100%;
     background: #fafafa;
     border: 1px dashed #a6a6a6;
-    color: #605e5c;
+    color: #545b69;
     font-size: 12px;
   }
   .selected {
-    outline: 1px solid #8a8886;
+    outline: 1px solid #8a909c;
   }
   .handle {
     position: absolute;
@@ -452,7 +452,7 @@
     height: 9px;
     margin: -5px 0 0 -5px;
     background: #fff;
-    border: 1px solid #605e5c;
+    border: 1px solid #545b69;
     border-radius: 50%;
   }
   .h-nw,

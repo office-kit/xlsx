@@ -42,7 +42,7 @@
     border: 1px solid rgba(0, 0, 0, 0.3);
   }
   .swatch.none {
-    background: linear-gradient(to top right, #fff calc(50% - 1px), #d13438 50%, #fff calc(50% + 1px));
+    background: linear-gradient(to top right, #fff calc(50% - 1px), #c92a2a 50%, #fff calc(50% + 1px));
   }
   .name {
     flex: 1;

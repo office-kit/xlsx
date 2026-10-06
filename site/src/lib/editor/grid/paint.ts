@@ -63,10 +63,10 @@ export const LIGHT_THEME: Theme = {
   headerText: '#444444',
   headerLine: '#C8C7C6',
   headerSelBg: '#D2D2D2',
-  headerSelText: '#1A3F8F',
-  headerFullBg: '#2456C2',
+  headerSelText: '#0B5C5C',
+  headerFullBg: '#0B6E6E',
   headerFullText: '#FFFFFF',
-  accent: '#2456C2',
+  accent: '#0F8A8A',
   selectionFill: 'rgba(0, 0, 0, 0.18)',
   frozenLine: '#ABABAB',
 };
@@ -406,7 +406,7 @@ export interface CommentMark {
 
 const NOTE_MARK_COLOR = '#D9302C';
 const THREAD_MARK_COLOR = '#7B61C4';
-const RESOLVED_MARK_COLOR = '#8A8886';
+const RESOLVED_MARK_COLOR = '#8A909C';
 
 function paintPattern(ctx: CanvasRenderingContext2D, pattern: NonNullable<RenderStyle['pattern']>, x: number, y: number, w: number, h: number): void {
   // Patterns are drawn as a sparse dot/line texture; exact Excel bitmaps are

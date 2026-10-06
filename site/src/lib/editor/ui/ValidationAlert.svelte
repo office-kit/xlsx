@@ -87,7 +87,7 @@
     font-size: 18px;
   }
   .icon.stop {
-    background: #d13438;
+    background: #c92a2a;
   }
   .icon.warning {
     background: #e3a21a;

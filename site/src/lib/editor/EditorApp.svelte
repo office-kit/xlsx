@@ -332,8 +332,11 @@
     gap: 8px;
     height: 34px;
     padding: 0 8px;
-    background: var(--xl-accent);
-    color: #fff;
+    /* Neutral, not an accent-filled band: a colored full-width title bar is
+       the signature of the Microsoft apps. */
+    background: var(--xl-ribbon);
+    border-bottom: 1px solid var(--xl-border);
+    color: var(--xl-text);
     flex: none;
   }
 
@@ -342,7 +345,7 @@
   }
 
   .file-btn {
-    color: #fff;
+    color: var(--xl-text);
     font-weight: 600;
   }
 
@@ -370,7 +373,7 @@
   }
 
   .quick .xl-btn {
-    color: #fff;
+    color: var(--xl-text);
   }
 
   .name {

@@ -112,7 +112,7 @@
   }
   .preview {
     position: absolute;
-    border: 1px solid #605e5c;
+    border: 1px solid #545b69;
     background: rgba(68, 114, 196, 0.15);
     pointer-events: none;
   }

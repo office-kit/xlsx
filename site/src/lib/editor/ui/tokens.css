@@ -1,32 +1,32 @@
 /* Design tokens for the spreadsheet editor. The accent is the office-kit
-   blue rather than Excel's green so the editor is not mistaken for a
-   Microsoft product. Scoped under .xl-editor so nothing leaks into the docs
+   xlsx teal over the site's cool neutrals, so the editor is not mistaken
+   for a Microsoft product. Scoped under .xl-editor so nothing leaks into the docs
    site. */
 .xl-editor {
   /* The editor has only a light theme; without this, a dark OS theme paints
      native controls (the formula bar textarea, inputs, selects, scrollbars)
      dark because the site declares `color-scheme: light dark`. */
   color-scheme: light;
-  --xl-accent: #2456c2;
-  --xl-accent-2: #3d73e0;
-  --xl-accent-soft: #e5edfb;
-  --xl-bg: #f3f2f1;
+  --xl-accent: #0b6e6e; /* site-kit xlsx --accent-ink */
+  --xl-accent-2: #0f8a8a; /* site-kit xlsx --accent */
+  --xl-accent-soft: #e4f4f4;
+  --xl-bg: #f4f5f7;
   --xl-panel: #ffffff;
-  --xl-ribbon: #f8f8f8;
-  --xl-border: #e1dfdd;
-  --xl-border-strong: #c8c6c4;
-  --xl-text: #201f1e;
-  --xl-text-2: #605e5c;
-  --xl-text-3: #8a8886;
-  --xl-hover: #ebebeb;
-  --xl-pressed: #dcdcdc;
-  --xl-selected: #d5e2f8;
-  --xl-danger: #a4262c;
+  --xl-ribbon: #f7f8fa;
+  --xl-border: #dfe2e7;
+  --xl-border-strong: #c9cdd6;
+  --xl-text: #15171c;
+  --xl-text-2: #545b69;
+  --xl-text-3: #8a909c;
+  --xl-hover: #eef0f3;
+  --xl-pressed: #dfe2e7;
+  --xl-selected: #cdeaea;
+  --xl-danger: #c92a2a;
   --xl-radius: 4px;
-  --xl-shadow: 0 1.6px 3.6px rgba(0, 0, 0, 0.13), 0 0.3px 0.9px rgba(0, 0, 0, 0.1);
-  --xl-shadow-lg: 0 6.4px 14.4px rgba(0, 0, 0, 0.18), 0 1.2px 3.6px rgba(0, 0, 0, 0.11);
+  --xl-shadow: 0 1px 2px rgba(16, 18, 23, 0.08), 0 0 0 1px rgba(16, 18, 23, 0.04);
+  --xl-shadow-lg: 0 12px 32px -8px rgba(16, 18, 23, 0.22), 0 2px 6px rgba(16, 18, 23, 0.08);
   --xl-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Helvetica Neue', Arial, sans-serif;
-  --xl-mono: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+  --xl-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace;
 
   font-family: var(--xl-font);
   color: var(--xl-text);
