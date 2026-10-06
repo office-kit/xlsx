@@ -173,7 +173,7 @@
     --sheet-rule-strong: #c9cdd6;
     --sheet-ink: #15171c;
     --sheet-ink-2: #5b616e;
-    --sheet-select: #168a4f;
+    --sheet-select: #0f8a8a;
     --sheet-row-h: 28px;
     --sheet-gutter-w: 38px;
     --sheet-scale: 1;
