@@ -596,7 +596,7 @@ packages:
     engines: {node: '>= 8'}
 
   '@office-kit/site-kit@https://codeload.github.com/office-kit/office-kit.github.io/tar.gz/e74a17d5fe1908228a19ec88576c93b6ae66ef69':
-    resolution: {gitHosted: true, integrity: sha512-dkuPrVV94KbGFuPbWSaedpZvsESHsK9q7OpzbgMO2qexRivsS6XTtAW5bHa0Zcfl7XLiVwUXwVNMQfBBbOKrvQ==, tarball: https://codeload.github.com/office-kit/office-kit.github.io/tar.gz/e74a17d5fe1908228a19ec88576c93b6ae66ef69}
+    resolution: {gitHosted: true, integrity: sha512-+cmyVzpWhdAsAA6yYq9I64gq5CNNQ7mV6BXDLsLdh+DKZbIvg8O+uE+s3b2Jh1P+ohqcnIUCHC/YYrthf7ZglQ==, tarball: https://codeload.github.com/office-kit/office-kit.github.io/tar.gz/e74a17d5fe1908228a19ec88576c93b6ae66ef69}
     version: 0.1.0
     peerDependencies:
       '@sveltejs/kit': ^2.0.0
