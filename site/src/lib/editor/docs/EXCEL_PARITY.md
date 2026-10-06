@@ -6,14 +6,9 @@ editor has to cover. The goal is that a user can do any normal Excel task
 
 **Source.** Microsoft Excel for Mac **16.113.3**, inspected on 2026-10-03 through
 macOS Accessibility (System Events/JXA plus a small `AXUIElement` dumper).
-Raw dumps sit next to this file:
-
-| File | Contents | How obtained |
-| --- | --- | --- |
-| `excel-menus.raw.txt` | Full menu bar, recursive, with shortcuts | AX (`AXMenuItemCmdChar` / `AXMenuItemCmdModifiers`) |
-| `excel-ribbon.raw.txt` | Every ribbon tab, its controls and every dropdown's contents | AX (tab click + `AXShowMenu` per menu button) |
-| `excel-dialogs.raw.txt` | Format Cells (all 6 tabs), Sort, Data Validation (4 tabs), Find & Replace (+Options), Go To, Go To Special, Insert/Delete cells, Page Setup (4 tabs), Manage Rules / New Formatting Rule, Paste Special, and the cell / row / column / sheet-tab context menus | AX |
-| `screens/*.png` | Grid with selection, formula bar, status bar + sheet tabs, frozen panes (dark-mode chrome) | `screencapture` |
+The raw dumps and screenshots are not kept in the repository: they reproduce
+Microsoft's UI text and imagery, which is not ours to redistribute. Re-run the
+dumper locally when a row needs re-checking.
 
 AX does not expose ribbon **group names** (groups are anonymous `AXGroup`s).
 The group names below come from Excel's visible labels and general knowledge.
@@ -249,7 +244,7 @@ Automate, inking, and dictation/translation services.
 
 ---
 
-## 2. Menu bar (Mac only, from `excel-menus.raw.txt`)
+## 2. Menu bar (Mac only, from the menu dump)
 
 Items that duplicate a ribbon command map to the same row above. Only the
 shortcuts and the menu-only commands are listed here.
@@ -440,7 +435,7 @@ shortcuts and the menu-only commands are listed here.
 
 ## 6. Keyboard shortcuts (Mac Excel defaults)
 
-"Menu" = the shortcut appears in `excel-menus.raw.txt`; "Verified" = sent
+"Menu" = the shortcut appears in the menu dump; "Verified" = sent
 through System Events and the resulting selection/value checked;
 "Knowledge" = documented Mac Excel default not exercised here.
 
@@ -693,8 +688,9 @@ are in **points**, which equal CSS px. The macOS appearance was **Dark**, so
 the chrome colors below are dark-mode values. The cell area stays white in
 dark mode. Light-mode chrome values are given as *(knowledge)*.
 
-Screenshots: `screens/grid-selection.png`, `screens/formula-bar.png`,
-`screens/statusbar-tabs.png`, `screens/frozen-panes.png`.
+Geometry is matched; colour is not. Excel's green is its brand colour, so
+wherever the tables below say "green" the editor uses its own accent
+(`--xl-accent` in `ui/tokens.css`) so it is not mistaken for Excel.
 
 ### 8.1 Default font and cell size
 

@@ -330,7 +330,7 @@ export const cfJa: Partial<Record<keyof typeof cfEn, string>> = {
   chLockAspect: '縦横比を固定する',
   chResetSize: 'サイズのリセット',
   chAltText: '代替テキスト',
-  chAltTextHint: 'このオブジェクトとそのコンテキストを、視覚に障碍のある方にどのように説明しますか?',
+  chAltTextHint: 'スクリーン リーダーの利用者向けに、このオブジェクトの内容を説明してください。',
   chSelectDataTitle: 'データ ソースの選択',
   chChartDataRange: 'グラフ データの範囲:',
   chLegendSeries: '凡例項目 (系列)',

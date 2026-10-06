@@ -1,6 +1,6 @@
 // Strings for the Table Design tab, the Data tab's analysis tools (Subtotal,
 // Consolidate, Advanced Filter, What-If Analysis) and header/footer setup.
-// Wording follows Excel for Mac.
+// Command names follow Excel for Mac (see the note in en.ts).
 
 export const dataEn = {
   // Table Design contextual tab
@@ -27,8 +27,8 @@ export const dataEn = {
   dtClearStyle: 'Clear',
   dtCustomStyle: 'Custom style',
   dtTableNameEmpty: 'Enter a name for the table.',
-  dtTableNameInvalid: 'The name that you entered is not valid. Make sure the name begins with a letter or underscore, has no spaces, and does not look like a cell reference.',
-  dtTableNameTaken: 'A table or range name with this name already exists. Enter a unique name.',
+  dtTableNameInvalid: 'Table names must start with a letter or underscore, contain no spaces, and not look like a cell reference such as A1.',
+  dtTableNameTaken: 'Another table or name already uses this name. Choose a different one.',
   dtTotalLabel: 'Total',
   dtTotNone: 'None',
   dtTotAverage: 'Average',
@@ -41,7 +41,7 @@ export const dataEn = {
   dtTotVar: 'Var',
   dtTotMore: 'More Functions…',
   dtResizePrompt: 'Select the new data range for your table:',
-  dtResizeNote: 'Note: The headers must remain in the same row, and the resulting table range must overlap the original table range.',
+  dtResizeNote: 'The header row has to stay where it is, and the new range has to overlap the current one.',
   dtResizeHeaderRow: 'The headers must remain in the same row.',
   dtResizeOverlap: 'The new table range must overlap the original table range.',
   dtResizeTooSmall: 'The table must keep at least one data row.',
