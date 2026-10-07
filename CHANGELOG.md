@@ -1,5 +1,11 @@
 # @office-kit/xlsx
 
+## 0.24.1
+
+### Patch Changes
+
+- [#300](https://github.com/office-kit/xlsx/pull/300) [`a85c818`](https://github.com/office-kit/xlsx/commit/a85c818e4c16d7434bf820be0c98c796928b08ca) Thanks [@baseballyama](https://github.com/baseballyama)! - chore: republish 0.24.0 unchanged. The 0.24.0 GitHub release and its tag were withdrawn after the repository history was rewritten to remove third-party material. The npm package 0.24.0 is still valid and identical in code to 0.24.1.
+
 ## 0.24.0
 
 ### Minor Changes
