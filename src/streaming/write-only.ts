@@ -30,7 +30,6 @@ import {
   ARC_STYLE,
   ARC_WORKBOOK,
   ARC_WORKBOOK_RELS,
-  PKG_REL_NS,
   REL_NS,
   SHARED_STRINGS_TYPE,
   SHEET_MAIN_NS,
@@ -45,8 +44,6 @@ import { createWriteOnlyStringTable } from './string-table.js';
 const escapeAttr = escapeXmlAttr;
 
 export interface WriteOnlyOptions {
-  /** Reserved — currently ignored (the buffered backend doesn't honour it). */
-  estimatedMaxRow?: number;
   /**
    * Last-modified timestamp for every ZIP entry. Same reproducibility story as
    * `SaveOptions.mtime`: unset, fflate stamps the wall clock per entry and two
@@ -381,7 +378,6 @@ async function finalizeImpl(state: WorkbookState, writer: WorkbookState['writer'
     target: 'xl/workbook.xml',
   });
   await writer.addEntry(ARC_ROOT_RELS, relsToBytes(rootRels));
-  void PKG_REL_NS; // imported for future docProps support
 
   // 7. [Content_Types].xml.
   const manifest = makeManifest();
