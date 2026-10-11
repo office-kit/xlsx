@@ -22,8 +22,8 @@
   {
     "id": "cdata-text",
     "regression": "XML character data preservation",
-    "file": "src/xml/iterparse.ts",
-    "before": "parser.on('cdata', pushText);",
+    "file": "src/streaming/read-only.ts",
+    "before": "parser.on('cdata', onText);",
     "after": "parser.on('cdata', () => {});",
     "tests": [
       "tests/conformance/corpus.test.ts"
