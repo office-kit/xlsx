@@ -131,6 +131,25 @@ export function coordinateFromString(coord: string): CellCoordinate {
  * numeric index. Thin convenience for the worksheet read path.
  */
 export function coordinateToTuple(coord: string): CellCoordinateNumeric {
+  // Every `<c r>` a reader walks comes through here, almost always as plain
+  // upper-case "AB12", so that shape is read off the char codes without the
+  // regex, the upper-casing and the cache lookup. Anything else, including an
+  // out-of-range reference, takes the general path and its errors.
+  let i = 0;
+  let col = 0;
+  for (let c = coord.charCodeAt(0); c >= 65 /* A */ && c <= 90 /* Z */ && i < 3; c = coord.charCodeAt(++i)) {
+    col = col * 26 + (c - 64);
+  }
+  const lead = coord.charCodeAt(i);
+  if (i > 0 && col <= MAX_COL && lead >= 49 /* 1 */ && lead <= 57 /* 9 */ && coord.length - i <= 7) {
+    let row = 0;
+    for (; i < coord.length; i++) {
+      const d = coord.charCodeAt(i);
+      if (d < 48 /* 0 */ || d > 57 /* 9 */) break;
+      row = row * 10 + (d - 48);
+    }
+    if (i === coord.length && row <= MAX_ROW) return { col, row };
+  }
   const c = coordinateFromString(coord);
   return { col: columnIndexFromLetter(c.column), row: c.row };
 }

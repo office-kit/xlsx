@@ -3,7 +3,7 @@
 // `loadWorkbookStream` opens the zip + parses workbook.xml / sharedStrings.xml
 // / styles.xml metadata up front (small even on million-row archives), then
 // exposes a lazy `openWorksheet(name)` that SAX-iterates the sheet body via
-// `iterParse`. The iterator streams rows without materialising the full sheet
+// `feedSax`. The iterator streams rows without materialising the full sheet
 // in memory.
 
 import { normalizeStrictArchive } from '../io/strict.js';
@@ -14,7 +14,7 @@ import {
   type SharedStringEntry,
   type SharedStringsTable,
 } from '../workbook/shared-strings.js';
-import { ARC_CONTENT_TYPES, ARC_ROOT_RELS, localNameOf } from '../xml/namespaces.js';
+import { ARC_CONTENT_TYPES, ARC_ROOT_RELS, qname } from '../xml/namespaces.js';
 import { findById, findByType, makeRelationships, relsFromBytes } from '../packaging/relationships.js';
 import { manifestFromBytes } from '../packaging/manifest.js';
 import { parseCellNumber } from '../utils/cell-number.js';
@@ -35,7 +35,9 @@ import { parseCellDate } from '../utils/cell-date.js';
 import { parseCellErrorCode } from '../utils/cell-error.js';
 import { unknownCellType } from '../utils/cell-text.js';
 import { parseXsdBoolean } from '../utils/xsd-boolean.js';
-import { iterParse, type SaxEvent, type SaxInput } from '../xml/iterparse.js';
+import { SaxesParser } from 'saxes';
+import type { SaxInput } from '../xml/iterparse.js';
+import { buildAttrsClark, feedSax } from '../xml/sax-feed.js';
 import { el, type XmlNode } from '../xml/tree.js';
 import { resolveRelTarget } from '../packaging/part-name.js';
 import { parseXml } from '../xml/parser.js';
@@ -182,7 +184,6 @@ async function* iterSheetRows(
   const minCol = opts.minCol ?? 1;
   const maxCol = opts.maxCol ?? Number.POSITIVE_INFINITY;
 
-  let inSheetData = false;
   // -1: outside a <row>. 0: inside one that carried no `@r`, whose number the
   // first located cell settles. `nextRow` is the high-water mark a row with
   // neither an `@r` nor a located cell falls back to.
@@ -223,112 +224,126 @@ async function* iterSheetRows(
   const isStack: XmlNode[] = [];
 
   let checkedRoot = false;
-  for await (const ev of iterParse(sheetInput)) {
-    const e = ev as SaxEvent;
-    if (e.kind === 'start') {
-      if (!checkedRoot) {
-        assertNotStrictRoot(e.name);
-        checkedRoot = true;
-      }
-      // Inside `<is>`, every descendant belongs to the subtree, so this runs
-      // ahead of the local-name switch rather than through it.
-      if (isStack.length > 0) {
-        const child = el(e.name, { ...e.attrs });
-        isStack[isStack.length - 1]?.children.push(child);
-        isStack.push(child);
-        continue;
-      }
-      const local = localNameOf(e.name);
-      if (!inSheetData) {
-        if (local === 'sheetData') inSheetData = true;
-        continue;
-      }
-      if (local === 'is' && cellOpen) {
-        isNode = el(e.name);
-        isStack.push(isNode);
-        continue;
-      }
-      switch (local) {
-        case 'row': {
-          // `@r` is optional on CT_Row (ECMA-376 §18.3.1.73); such a row waits
-          // for its first cell to name it.
-          const rRaw = e.attrs['r'];
-          if (rRaw === undefined) {
-            chargeRow(budget, title, undefined);
-            currentRow = 0;
-          } else {
-            currentRow = rowNumberFromAttr(rRaw, 'loadWorkbookStream');
-            nextRow = Math.max(nextRow, currentRow + 1);
-            // Charged here rather than at `</row>` so a row past the cap is
-            // refused before its cells are decoded. Unnumbered rows are
-            // charged at their opening tag too, before buffering any cells.
-            chargeRow(budget, title, currentRow);
-          }
-          currentCells = [];
-          pendingCells = [];
-          nextCol = 1;
-          break;
-        }
-        case 'c': {
-          if (currentRow < 0) break;
-          const ref = e.attrs['r'];
-          if (currentRow === 0 && ref) settleRow(coordinateToTuple(ref).row);
-          // Skip cell-attr parsing entirely when the row is outside the
-          // requested band — saves the parseInt + coordinateToTuple hit on
-          // every cell of every excluded row.
-          if (currentRow !== 0 && (currentRow < minRow || currentRow > maxRow)) break;
-          cellType = e.attrs['t'] ?? 'n';
-          const sRaw = e.attrs['s'];
-          cellStyleId = sRaw ? Number.parseInt(sRaw, 10) || 0 : 0;
-          if (ref) {
-            const tup = coordinateToTuple(ref);
-            cellRow = tup.row;
-            cellCol = tup.col;
-          } else {
-            cellRow = currentRow;
-            cellCol = nextCol;
-          }
-          nextCol = cellCol + 1;
-          cellOpen = cellCol >= minCol && cellCol <= maxCol;
-          if (cellOpen) {
-            // An unresolved row might be selected later, so its buffered cells
-            // consume budget even if its eventual number is outside the band.
-            chargeCell(budget, title, cellCol, cellRow === 0 ? undefined : cellRow);
-          }
-          vText = '';
-          isNode = undefined;
-          isStack.length = 0;
-          break;
-        }
-        case 'v':
-          if (cellOpen) inV = true;
-          break;
-        default:
-          break;
-      }
-      continue;
+  let inSheetData = false;
+  // Set once `</sheetData>` closes or the band is passed. The rest of the
+  // current feed still runs through saxes, but contributes nothing.
+  let finished = false;
+  // Rows completed by the current feed. The handlers below run synchronously
+  // inside saxes, one feed at a time, so a whole-sheet pass costs one async
+  // step per feed rather than one per SAX event. On a wide sheet of styled
+  // empty cells the per-event path is what dominated (#302).
+  const ready: ReadOnlyCell[][] = [];
+
+  const parser = new SaxesParser({ xmlns: true });
+  parser.on('opentag', (node) => {
+    if (finished) return;
+    if (!checkedRoot) {
+      assertNotStrictRoot(qname(node.uri, node.local));
+      checkedRoot = true;
     }
-    if (e.kind === 'text') {
-      if (inV) vText += e.text;
-      else if (isStack.length > 0) {
-        // Text events for one element accumulate before `parseRichString` sees
-        // them, so a chunk boundary inside a `<t>` cannot split an escape
-        // sequence, and adjacent runs cannot join into one.
-        const top = isStack[isStack.length - 1];
-        if (top !== undefined) top.text = (top.text ?? '') + e.text;
-      }
-      continue;
+    // Inside `<is>`, every descendant belongs to the subtree, so this runs
+    // ahead of the local-name switch rather than through it.
+    if (isStack.length > 0) {
+      const child = el(qname(node.uri, node.local), buildAttrsClark(node.attributes));
+      isStack[isStack.length - 1]?.children.push(child);
+      isStack.push(child);
+      return;
     }
-    // end
+    const local = node.local;
+    if (!inSheetData) {
+      if (local === 'sheetData') inSheetData = true;
+      return;
+    }
+    if (local === 'is' && cellOpen) {
+      isNode = el(qname(node.uri, node.local));
+      isStack.push(isNode);
+      return;
+    }
+    switch (local) {
+      case 'row': {
+        // `@r` is optional on CT_Row (ECMA-376 §18.3.1.73); such a row waits
+        // for its first cell to name it.
+        const rRaw = node.attributes['r']?.value;
+        if (rRaw === undefined) {
+          chargeRow(budget, title, undefined);
+          currentRow = 0;
+        } else {
+          currentRow = rowNumberFromAttr(rRaw, 'loadWorkbookStream');
+          nextRow = Math.max(nextRow, currentRow + 1);
+          // Charged here rather than at `</row>` so a row past the cap is
+          // refused before its cells are decoded. Unnumbered rows are
+          // charged at their opening tag too, before buffering any cells.
+          chargeRow(budget, title, currentRow);
+        }
+        currentCells = [];
+        pendingCells = [];
+        nextCol = 1;
+        break;
+      }
+      case 'c': {
+        if (currentRow < 0) break;
+        const ref = node.attributes['r']?.value;
+        if (currentRow === 0 && ref) settleRow(coordinateToTuple(ref).row);
+        // Skip cell-attr parsing entirely when the row is outside the
+        // requested band — saves the parseInt + coordinateToTuple hit on
+        // every cell of every excluded row.
+        if (currentRow !== 0 && (currentRow < minRow || currentRow > maxRow)) break;
+        cellType = node.attributes['t']?.value ?? 'n';
+        const sRaw = node.attributes['s']?.value;
+        cellStyleId = sRaw ? Number.parseInt(sRaw, 10) || 0 : 0;
+        if (ref) {
+          const tup = coordinateToTuple(ref);
+          cellRow = tup.row;
+          cellCol = tup.col;
+        } else {
+          cellRow = currentRow;
+          cellCol = nextCol;
+        }
+        nextCol = cellCol + 1;
+        cellOpen = cellCol >= minCol && cellCol <= maxCol;
+        if (cellOpen) {
+          // An unresolved row might be selected later, so its buffered cells
+          // consume budget even if its eventual number is outside the band.
+          chargeCell(budget, title, cellCol, cellRow === 0 ? undefined : cellRow);
+        }
+        vText = '';
+        isNode = undefined;
+        isStack.length = 0;
+        break;
+      }
+      case 'v':
+        if (cellOpen) inV = true;
+        break;
+      default:
+        break;
+    }
+  });
+
+  const onText = (text: string): void => {
+    if (finished) return;
+    if (inV) vText += text;
+    else if (isStack.length > 0) {
+      // Text events for one element accumulate before `parseRichString` sees
+      // them, so a chunk boundary inside a `<t>` cannot split an escape
+      // sequence, and adjacent runs cannot join into one.
+      const top = isStack[isStack.length - 1];
+      if (top !== undefined) top.text = (top.text ?? '') + text;
+    }
+  };
+  parser.on('text', onText);
+  // A CDATA section is character data like any other.
+  parser.on('cdata', onText);
+
+  parser.on('closetag', (node) => {
+    if (finished) return;
     if (isStack.length > 0) {
       isStack.pop();
-      continue;
+      return;
     }
-    const local = localNameOf(e.name);
-    if (!inSheetData) continue;
-    switch (local) {
+    if (!inSheetData) return;
+    switch (node.local) {
       case 'sheetData':
-        inSheetData = false;
+        finished = true;
         return;
       case 'row': {
         // A row that held no located cell still consumes a slot, so settle it
@@ -337,13 +352,13 @@ async function* iterSheetRows(
           settleRow(derivedRowNumber(nextRow, 'loadWorkbookStream'));
         }
         if (currentRow >= minRow && currentRow <= maxRow && currentCells.length > 0) {
-          yield currentCells;
+          ready.push(currentCells);
         }
         // Once we've crossed maxRow there are no more rows to yield — every
         // subsequent <row> would just be parsed and dropped. Stop iterating
         // early. ECMA-376 emits rows in ascending order.
         if (currentRow > maxRow) {
-          inSheetData = false;
+          finished = true;
           return;
         }
         currentRow = -1;
@@ -367,6 +382,20 @@ async function* iterSheetRows(
       default:
         break;
     }
+  });
+
+  try {
+    for await (const _ of feedSax(sheetInput, parser)) {
+      yield* ready;
+      ready.length = 0;
+      if (finished) return;
+    }
+  } catch (err) {
+    // A feed that failed part-way still completed the rows ahead of the
+    // failure; a caller reading up to a content limit or a corrupt cell gets
+    // them before the error, as it would from a walk one event at a time.
+    yield* ready;
+    throw err;
   }
 }
 
