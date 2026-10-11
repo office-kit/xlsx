@@ -1,5 +1,11 @@
 # @office-kit/xlsx
 
+## 0.24.2
+
+### Patch Changes
+
+- [#303](https://github.com/office-kit/xlsx/pull/303) [`77a8f6e`](https://github.com/office-kit/xlsx/commit/77a8f6eec4940b5c2a635da9590b6a915ece5d97) Thanks [@baseballyama](https://github.com/baseballyama)! - perf: `loadWorkbookStream`'s `iterRows` / `iterValues` no longer slow down on wide sheets full of styled empty cells (`<c r="X1" s="n"/>`), the shape many business exports have. The row walk now drives the XML parser directly instead of handing each SAX event through an async iterator, which makes it several times faster on such sheets; cell references are also parsed without a regex, which speeds up `loadWorkbook` too ([#302](https://github.com/office-kit/xlsx/issues/302))
+
 ## 0.24.1
 
 ### Patch Changes
