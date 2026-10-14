@@ -12,9 +12,8 @@
         pkgs = import nixpkgs { inherit system; };
         # Pin to the same Node major used by CI / engines.node in package.json.
         nodejs = pkgs.nodejs_22;
-        # pnpm 10 is required (see package.json#packageManager). nodePackages.pnpm
-        # tracks a recent stable; we override to the major we pin against in CI.
-        pnpm = pkgs.nodePackages.pnpm;
+        # Pin the pnpm major used by CI / package.json#packageManager.
+        pnpm = pkgs.pnpm_11;
       in
       {
         devShells.default = pkgs.mkShell {
