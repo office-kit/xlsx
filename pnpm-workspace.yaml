@@ -1,5 +1,8 @@
 packages:
   - .
   - site
+strictPeerDependencies: false
+autoInstallPeers: true
+shamefullyHoist: false
 allowBuilds:
   esbuild: true

@@ -158,11 +158,6 @@
     "vitest": "^4.1.9"
   },
   "packageManager": "pnpm@11.10.0",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
-  },
   "dependencies": {
     "fflate": "^0.8.3",
     "saxes": "^6.0.0"
