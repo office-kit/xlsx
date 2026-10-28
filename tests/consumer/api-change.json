@@ -1,6 +1,6 @@
 {
   "kind": "breaking",
-  "reason": "FontScheme (and InlineFont.scheme) gain 'none', the third ST_FontScheme value, so stylesheet and rich-text fonts with <scheme val=\"none\"/> load and keep it on save. Breaking because an exhaustive switch or Record over FontScheme needs a 'none' case.",
-  "baselineSha256": "fb3efb6558f8aff788f0d5ccc4c811d93350785a482e6e1c14dccf9126d30106",
-  "changeset": ".changeset/fix-font-scheme-none.md"
+  "reason": "WriteOnlyOptions.estimatedMaxRow is removed. It was documented as ignored and nothing read it; breaking only because a TypeScript caller passing it now gets an excess-property error.",
+  "baselineSha256": "6d7a82cdcf1472c26c28da3145680c9f50e1928d2cb3c8e554505c53540c2aa8",
+  "changeset": ".changeset/drop-dead-write-only-surface.md"
 }
