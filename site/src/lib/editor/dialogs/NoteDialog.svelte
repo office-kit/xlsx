@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { makeLegacyComment } from '@office-kit/xlsx/worksheet';
+  import { type LegacyComment, makeLegacyComment } from '@office-kit/xlsx/worksheet';
   import { cellAddress } from '../core/address.ts';
   import { getEditor } from '../core/context.ts';
   import { t } from '../i18n/i18n.svelte.ts';
@@ -19,7 +19,14 @@
     doc.transact(remove ? 'Delete Note' : existing ? 'Edit Note' : 'New Note', (tx) => {
       tx.sheet(ws, 'legacyComments');
       const others = ws.legacyComments.filter((c) => !isHere(c.ref));
-      ws.legacyComments = remove ? others : [...others, makeLegacyComment({ ref, author: author.trim(), text })];
+      if (remove) {
+        ws.legacyComments = others;
+        return;
+      }
+      // Keep the box's position and visibility; the runs only survive an unchanged text.
+      const { richText, ...kept }: Partial<LegacyComment> = existing ?? {};
+      const runs = richText !== undefined && existing?.text === text ? { richText } : {};
+      ws.legacyComments = [...others, makeLegacyComment({ ...kept, ...runs, ref, author: author.trim(), text })];
     });
   }
 

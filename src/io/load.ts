@@ -38,7 +38,7 @@ import type { DefinedName } from '../workbook/defined-names.js';
 import { makeDefinedName } from '../workbook/defined-names.js';
 import { parseSharedStringsXml, type SharedStringsTable } from '../workbook/shared-strings.js';
 import { createWorkbook, type SheetRef, type SheetState, type Workbook } from '../workbook/workbook.js';
-import { parseCommentsXml } from '../worksheet/comments-xml.js';
+import { applyCommentVml, parseCommentsXml } from '../worksheet/comments-xml.js';
 import {
   PERSON_REL,
   parsePersonsXml,
@@ -662,6 +662,13 @@ function loadWorkbookFromArchive(archive: ZipArchive, contentLimits: ResolvedCon
         if (tcRel.type !== THREADED_COMMENT_REL) continue;
         const tcPath = resolveRelTarget(sheetPath, tcRel.target);
         if (archive.has(tcPath)) (ws.threadedComments ??= []).push(...parseThreadedCommentsXml(archive.read(tcPath)));
+      }
+    }
+    if (sheetRels && ws.legacyComments.length > 0) {
+      for (const vmlRel of sheetRels.rels) {
+        if (vmlRel.type !== VML_DRAWING_REL) continue;
+        const vmlPath = resolveRelTarget(sheetPath, vmlRel.target);
+        if (vml.isCommentVml(vmlPath)) applyCommentVml(ws.legacyComments, vml.read(vmlPath));
       }
     }
     if (ws.threadedComments && ws.threadedComments.length > 0) {

@@ -44,7 +44,7 @@ import { makeSharedStrings, sharedStringsToBytes } from '../workbook/shared-stri
 import { type SheetRef, type Workbook, validateSheetTitle } from '../workbook/workbook.js';
 import type { Worksheet } from '../worksheet/worksheet.js';
 import type { LegacyComment } from '../worksheet/comments.js';
-import { commentsToBytes, placeholderVmlDrawing } from '../worksheet/comments-xml.js';
+import { commentsToBytes, commentsVmlDrawing } from '../worksheet/comments-xml.js';
 import type { ThreadedComment } from '../worksheet/threaded-comments.js';
 import {
   PERSON_REL,
@@ -557,7 +557,7 @@ async function saveWorkbookImpl(wb: Workbook, writer: ReturnType<typeof createZi
       commentEmits.push({
         id,
         commentsBytes: commentsToBytes(entries),
-        vmlBytes: placeholderVmlDrawing(entries),
+        vmlBytes: commentsVmlDrawing(entries),
       });
       return { vmlRelId };
     };

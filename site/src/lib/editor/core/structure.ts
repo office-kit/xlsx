@@ -13,6 +13,7 @@ import type { Workbook } from '@office-kit/xlsx/workbook';
 import type { DataValidation, PivotTable, TableColumn, TableDefinition, Worksheet } from '@office-kit/xlsx/worksheet';
 import { adjustFormulaForStructure } from '../calc/index.ts';
 import { mapChartRefs } from './charts.ts';
+import { moveNote } from './comments.ts';
 import type { Range } from './address.ts';
 import { colLetter, MAX_COL, MAX_ROW, parseRangeAddress } from './address.ts';
 import type { Transaction } from './history.ts';
@@ -201,7 +202,7 @@ function shiftSheetObjects(ws: Worksheet, e: Edit, dropped: DroppedColumns[]): v
   });
   ws.legacyComments = ws.legacyComments.flatMap((c) => {
     const ref = mapRefText(c.ref, e);
-    return ref ? [{ ...c, ref }] : [];
+    return ref ? [moveNote(c, ref)] : [];
   });
   // Replies share their root's ref, so a deleted cell drops the whole thread.
   ws.threadedComments = (ws.threadedComments ?? []).flatMap((c) => {
