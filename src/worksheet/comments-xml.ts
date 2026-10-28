@@ -179,8 +179,8 @@ export function applyCommentVml(comments: LegacyComment[], bytes: Uint8Array): v
     // x:Visible is a VML boolean whose empty content means true.
     const visible = findChild(data, VISIBLE_TAG);
     if (visible) box.visible = !/^(f|false|0)$/i.test(visible.text?.trim() ?? '');
-    const anchorText = findChild(data, ANCHOR_TAG)?.text;
-    const anchor = anchorText !== undefined ? parseAnchor(anchorText) : undefined;
+    const rawAnchor = findChild(data, ANCHOR_TAG)?.text;
+    const anchor = rawAnchor !== undefined ? parseAnchor(rawAnchor) : undefined;
     if (anchor) box.anchor = anchor;
     boxes.set(boxKey(Number(row), Number(col)), box);
   }
