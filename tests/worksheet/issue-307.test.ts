@@ -5,11 +5,10 @@ import { fromBuffer } from '../../src/io/node.js';
 import { workbookToBytes } from '../../src/io/save.js';
 import type { Workbook } from '../../src/workbook/workbook.js';
 import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
-import type { LegacyComment } from '../../src/worksheet/comments.js';
 import type { Worksheet } from '../../src/worksheet/worksheet.js';
-import { editCommentAuthor, editCommentText, setComment, setComments } from '../../src/worksheet/worksheet.js';
+import { editCommentAuthor, editCommentText, renameCommentAuthor, setComment, setComments } from '../../src/worksheet/worksheet.js';
 import { OpenXmlSchemaError } from '../../src/utils/exceptions.js';
-import { makeLegacyComment } from '../../src/worksheet/comments.js';
+import { type LegacyComment, makeLegacyComment } from '../../src/worksheet/comments.js';
 import { SHEET_MAIN_NS } from '../../src/xml/namespaces.js';
 import { validateXlsx } from '../conformance/validate.js';
 
@@ -132,6 +131,24 @@ describe('issue #307 — notes keep their rich text and their box', () => {
     ]);
   });
 
+  it('renames the author of a note whose text was edited directly', async () => {
+    const ws = firstSheet(await loadWorkbook(fromBuffer(await fixture())));
+    const b1 = ws.legacyComments[0];
+    assert(b1, 'expected a note');
+    b1.text = 'changed';
+    expect(renameCommentAuthor(ws, 'Yegor Kozlov', 'Z')).toBe(3);
+    expect(ws.legacyComments.map((c) => [c.author, c.richText !== undefined])).toEqual([
+      ['Z', false],
+      ['Z', true],
+      ['Z', true],
+    ]);
+    const b2 = ws.legacyComments[1];
+    assert(b2, 'expected a note');
+    b2.text = 'also changed';
+    expect(editCommentAuthor(ws, 'B2', 'Q')).toBe(true);
+    expect(ws.legacyComments[1]).not.toHaveProperty('richText');
+  });
+
   it('writes notes built from scratch with a box', async () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'Sheet1');
@@ -179,6 +196,7 @@ describe('issue #307 — notes keep their rich text and their box', () => {
     ['VML that is not well-formed XML', vml(shape('1, 0, 0, 0, 3, 0, 4, 0', 0).replace("<div style='text-align:left'></div>", '<div>a<br>b</div>'))],
     ['an anchor with the wrong number of values', vml(shape('1, 0, 0, 0, 3, 0, 4', 0))],
     ['an anchor with a negative value', vml(shape('1, 0, 0, 0, 3, 0, 4, -1', 0))],
+    ['an anchor too large to hold exactly', vml(shape('1, 0, 0, 0, 3, 0, 4, 99999999999999999999', 0))],
   ])('still loads %s, without a box', async (_label, vmlXml) => {
     const ws = firstSheet(await loadWorkbook(fromBuffer(await fixture(vmlXml))));
     expect(ws.legacyComments).toHaveLength(3);

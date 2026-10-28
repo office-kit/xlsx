@@ -32,7 +32,7 @@ import {
   shiftRange,
 } from './cell-range.js';
 import type { LegacyComment } from './comments.js';
-import { makeLegacyComment } from './comments.js';
+import { currentRichText, makeLegacyComment } from './comments.js';
 import type { ThreadedComment } from './threaded-comments.js';
 import type { ConditionalFormatting } from './conditional-formatting.js';
 import type { DataValidation } from './data-validations.js';
@@ -2569,6 +2569,13 @@ export function editCommentText(ws: Worksheet, ref: string, newText: string): bo
   return true;
 }
 
+/** `c` by another author, without runs a direct `text` edit has left stale. */
+const withAuthor = (c: LegacyComment, author: string): LegacyComment => {
+  const { richText: _runs, ...rest } = c;
+  const runs = currentRichText(c);
+  return makeLegacyComment({ ...rest, author, ...(runs !== undefined ? { richText: runs } : {}) });
+};
+
 /**
  * Replace just the author of an existing comment, leaving everything else
  * untouched. Returns `true` when the comment was found.
@@ -2578,7 +2585,7 @@ export function editCommentAuthor(ws: Worksheet, ref: string, newAuthor: string)
   if (i < 0) return false;
   const c = ws.legacyComments[i];
   if (!c) return false;
-  ws.legacyComments[i] = makeLegacyComment({ ...c, author: newAuthor });
+  ws.legacyComments[i] = withAuthor(c, newAuthor);
   return true;
 }
 
@@ -2593,7 +2600,7 @@ export function renameCommentAuthor(ws: Worksheet, oldName: string, newName: str
   for (let i = 0; i < ws.legacyComments.length; i++) {
     const c = ws.legacyComments[i];
     if (c && c.author === oldName) {
-      ws.legacyComments[i] = makeLegacyComment({ ...c, author: newName });
+      ws.legacyComments[i] = withAuthor(c, newName);
       n++;
     }
   }

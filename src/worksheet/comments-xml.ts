@@ -9,7 +9,7 @@ import { MARKUP_COMPAT_NS, SHEET_MAIN_NS, X16_NS } from '../xml/namespaces.js';
 import { parseXml } from '../xml/parser.js';
 import { findChild, findChildren, type XmlNode } from '../xml/tree.js';
 import type { LegacyComment, LegacyCommentAnchor } from './comments.js';
-import { makeLegacyComment } from './comments.js';
+import { currentRichText, makeLegacyComment } from './comments.js';
 
 const COMMENTS_TAG = `{${SHEET_MAIN_NS}}comments`;
 const AUTHORS_TAG = `{${SHEET_MAIN_NS}}authors`;
@@ -96,8 +96,8 @@ export function serializeComments(comments: ReadonlyArray<CommentEntry>): string
   for (const c of comments) {
     const id = authorIndex.get(c.author) ?? 0;
     const uid = c.uid !== undefined ? ` shapeId="0" xr:uid="${escapeAttr(c.uid)}"` : '';
-    const body: SharedStringEntry =
-      c.richText !== undefined && richTextToString(c.richText) === c.text ? { kind: 'rich-text', runs: c.richText } : c.text;
+    const runs = currentRichText(c);
+    const body: SharedStringEntry = runs !== undefined ? { kind: 'rich-text', runs } : c.text;
     parts.push(`<comment ref="${escapeAttr(c.ref)}" authorId="${id}"${uid}><text>${serializeRichString(body)}</text></comment>`);
   }
   parts.push('</commentList></comments>');
@@ -133,6 +133,8 @@ const parseAnchor = (raw: string): LegacyCommentAnchor | undefined => {
   const parts = raw.split(',').map((part) => part.trim());
   if (parts.length !== ANCHOR_FIELDS.length || !parts.every((part) => UINT.test(part))) return undefined;
   const nums = parts.map(Number);
+  // The writer refuses what JS can't hold exactly; such a box is dropped here instead.
+  if (!nums.every((n) => Number.isSafeInteger(n))) return undefined;
   const at = (i: number): number => nums[i] ?? 0;
   return {
     fromCol: at(0), fromColOffset: at(1), fromRow: at(2), fromRowOffset: at(3),

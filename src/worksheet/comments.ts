@@ -47,6 +47,13 @@ export interface LegacyComment {
 }
 
 /**
+ * The runs that still format `c.text`, or undefined once `text` has changed
+ * under them. The writer and the edit helpers keep only these.
+ */
+export const currentRichText = (c: LegacyComment): RichText | undefined =>
+  c.richText !== undefined && richTextToString(c.richText) === c.text ? c.richText : undefined;
+
+/**
  * Build a note. Throws `OpenXmlSchemaError` when `richText` is given but its
  * runs do not join to `text`: the writer would drop them.
  */
