@@ -11,6 +11,7 @@ import { addDxf, getDxfs } from '../../src/styles/differential.js';
 import { makeFont } from '../../src/styles/fonts.js';
 import { FontSchema } from '../../src/styles/fonts.schema.js';
 import { OpenXmlSchemaError } from '../../src/utils/exceptions.js';
+import { parseRichString, serializeRichString } from '../../src/workbook/shared-strings.js';
 import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
 import { getCell, setCell } from '../../src/worksheet/worksheet.js';
 import { SHEET_MAIN_NS } from '../../src/xml/namespaces.js';
@@ -53,6 +54,19 @@ describe('issue #306 — fonts opted out of the theme with scheme none', () => {
 
   it.each(['None', 'body', ''])('still rejects invalid scheme value %j', (value) => {
     expect(() => parseFont(`<scheme val="${value}"/>`)).toThrow(OpenXmlSchemaError);
+  });
+
+  it('validates a rich-text run scheme the way the stylesheet does', () => {
+    const run = (scheme: string) => parseXml(`<si xmlns="${SHEET_MAIN_NS}"><r><rPr><scheme val="${scheme}"/></rPr><t>x</t></r></si>`);
+    expect(parseRichString(run('none'))).toEqual({ kind: 'rich-text', runs: [{ text: 'x', font: { scheme: 'none' } }] });
+    expect(() => parseRichString(run('body'))).toThrow(OpenXmlSchemaError);
+  });
+
+  it('escapes run attributes that reach the writer unvalidated', () => {
+    const si = parseXml(`<si xmlns="${SHEET_MAIN_NS}"><r><rPr><u val="a&quot;/&gt;&lt;b/&gt;"/></rPr><t>x</t></r></si>`);
+    const xml = serializeRichString(parseRichString(si));
+    expect(xml).toContain('<u val="a&quot;/&gt;&lt;b/&gt;"/>');
+    expect(parseRichString(parseXml(`<si xmlns="${SHEET_MAIN_NS}">${xml}</si>`))).toEqual(parseRichString(si));
   });
 
   it('loads, edits and saves cell, rich-text and differential fonts without losing none', async () => {

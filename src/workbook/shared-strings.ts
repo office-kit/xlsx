@@ -13,6 +13,7 @@
 
 import type { RichText } from '../cell/rich-text.js';
 import { type Color, colorToHex } from '../styles/colors.js';
+import { FONT_SCHEMES } from '../styles/fonts.js';
 import { escapeCellString, escapeXmlAttr, escapeXmlText, unescapeCellString } from '../utils/escape.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
 import { stableStringify } from '../utils/stable-stringify.js';
@@ -207,9 +208,15 @@ const parseRunPr = (rPr: XmlNode): import('../cell/rich-text.js').InlineFont | u
       case 'charset':
         if (valAttr !== undefined) f.charset = Number.parseInt(valAttr, 10);
         break;
-      case 'scheme':
-        if (valAttr !== undefined) f.scheme = valAttr as import('../styles/fonts.js').FontScheme;
+      case 'scheme': {
+        if (valAttr === undefined) break;
+        const scheme = FONT_SCHEMES.find((s) => s === valAttr);
+        if (scheme === undefined) {
+          throw new OpenXmlSchemaError(`rich-text run scheme must be one of [${FONT_SCHEMES.join(', ')}]; got "${valAttr}"`);
+        }
+        f.scheme = scheme;
         break;
+      }
       case 'color': {
         const c: { rgb?: string; theme?: number; indexed?: number; tint?: number; auto?: boolean } = {};
         if (child.attrs['rgb'] !== undefined) c.rgb = child.attrs['rgb'];
@@ -293,9 +300,11 @@ const serializeInlineFont = (f: import('../cell/rich-text.js').InlineFont): stri
   if (f.extend) parts.push('<extend/>');
   if (f.color) parts.push(serializeRunColor(f.color));
   if (f.sz !== undefined) parts.push(`<sz val="${f.sz}"/>`);
-  if (f.u) parts.push(`<u val="${f.u}"/>`);
-  if (f.vertAlign) parts.push(`<vertAlign val="${f.vertAlign}"/>`);
-  if (f.scheme) parts.push(`<scheme val="${f.scheme}"/>`);
+  // The reader passes u / vertAlign through unvalidated and plain-JS callers
+  // bypass the types, so these strings may hold anything.
+  if (f.u) parts.push(`<u val="${escapeXmlAttr(f.u)}"/>`);
+  if (f.vertAlign) parts.push(`<vertAlign val="${escapeXmlAttr(f.vertAlign)}"/>`);
+  if (f.scheme) parts.push(`<scheme val="${escapeXmlAttr(f.scheme)}"/>`);
   parts.push('</rPr>');
   return parts.join('');
 };
