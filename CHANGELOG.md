@@ -1,5 +1,17 @@
 # @office-kit/xlsx
 
+## 0.25.0
+
+### Minor Changes
+
+- [#196](https://github.com/office-kit/xlsx/pull/196) [`d0bfad9`](https://github.com/office-kit/xlsx/commit/d0bfad99f85272cfe274e96c14c1839daf9ff2ad) Thanks [@kibertoad](https://github.com/kibertoad)! - Breaking (types only): remove `WriteOnlyOptions.estimatedMaxRow`. It was documented as "Reserved, currently ignored", so passing it never did anything. TypeScript callers that pass it get an excess-property error; delete the property from the `createWriteOnlyWorkbook` options object. Runtime behaviour is unchanged.
+
+- [#308](https://github.com/office-kit/xlsx/pull/308) [`f3363d6`](https://github.com/office-kit/xlsx/commit/f3363d67b2ee9200fb6ee63601d7f8da00247468) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: `loadWorkbook` threw `OpenXmlSchemaError: expected one of [major, minor], got "none"` on a stylesheet font with `<scheme val="none"/>`, which Excel writes for fonts that opt out of the theme ([#306](https://github.com/office-kit/xlsx/issues/306)). `FontScheme` now includes `'none'`, and the value is kept on save in cell, differential and rich-text fonts alike. A rich-text run with a scheme outside `none` / `major` / `minor` now throws `OpenXmlSchemaError` on load, as the same value in `styles.xml` already did.
+
+  Breaking (types only): code that switches exhaustively over `FontScheme`, or builds a `Record<FontScheme, …>`, needs a `'none'` entry.
+
+- [#309](https://github.com/office-kit/xlsx/pull/309) [`104c199`](https://github.com/office-kit/xlsx/commit/104c199b08b15f74e83d375e8d05f5fd402419da) Thanks [@baseballyama](https://github.com/baseballyama)! - fix: notes (legacy comments) lost their formatting and their box on save ([#307](https://github.com/office-kit/xlsx/issues/307)). A loaded note now keeps its rich-text runs in the new `LegacyComment.richText`, and its box's `anchor` (position and size) and `visible` (shown, not only on hover) from the VML drawing; all three are written back. `text` stays the note's content: runs are written only while they join to exactly `text`, and `editCommentText` drops them. `makeLegacyComment`, `setComment` and `setComments` accept the new fields. `makeLegacyComment` throws when `richText` does not join to `text`, and saving throws when an `anchor` value is not a non-negative integer. Comment text now decodes and encodes `_xHHHH_` escapes as cell strings already do, so a note's line breaks are written as `_x000A_` (Excel and LibreOffice read them back as line breaks).
+
 ## 0.24.2
 
 ### Patch Changes
