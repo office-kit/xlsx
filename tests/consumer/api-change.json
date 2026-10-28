@@ -1,6 +1,6 @@
 {
-  "kind": "breaking",
-  "reason": "WriteOnlyOptions.estimatedMaxRow is removed. It was documented as ignored and nothing read it; breaking only because a TypeScript caller passing it now gets an excess-property error.",
-  "baselineSha256": "6d7a82cdcf1472c26c28da3145680c9f50e1928d2cb3c8e554505c53540c2aa8",
-  "changeset": ".changeset/drop-dead-write-only-surface.md"
+  "kind": "additive",
+  "reason": "LegacyComment gains optional richText, visible and anchor (with the new LegacyCommentAnchor type), and makeLegacyComment / setComment / setComments accept them, so a note's runs and its VML box survive load and save.",
+  "baselineSha256": "3df30e972dc018e76491f08b90b3f0be74135fdfa4e79ef5b6ced24b2d157794",
+  "changeset": ".changeset/legacy-comment-fidelity.md"
 }
