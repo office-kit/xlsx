@@ -93,6 +93,23 @@ describe('threaded comments', () => {
     expect(ctl.doc.ws.threadedComments?.[0]?.ref).toBe('B4');
   });
 
+  test('a note that moves drops its saved box position and keeps its visibility', () => {
+    const ctl = new EditorController();
+    const anchor = { fromCol: 2, fromColOffset: 15, fromRow: 0, fromRowOffset: 2, toCol: 4, toColOffset: 15, toRow: 4, toRowOffset: 8 };
+    ctl.doc.ws.legacyComments.push(
+      makeLegacyComment({ ref: 'A1', author: 'x', text: 'stays', visible: true, anchor }),
+      makeLegacyComment({ ref: 'A3', author: 'x', text: 'moves', visible: true, anchor }),
+    );
+    ctl.selectCell({ row: 2, col: 1 });
+    A.insertLines(ctl, 'row');
+    expect(ctl.doc.ws.legacyComments).toEqual([
+      { ref: 'A1', author: 'x', text: 'stays', visible: true, anchor },
+      { ref: 'A4', author: 'x', text: 'moves', visible: true },
+    ]);
+    ctl.doc.undo();
+    expect(ctl.doc.ws.legacyComments[1]).toEqual({ ref: 'A3', author: 'x', text: 'moves', visible: true, anchor });
+  });
+
   test('a cell with a note gets no comment, and Delete Note keeps threads', () => {
     const ctl = new EditorController();
     ctl.doc.ws.legacyComments.push(makeLegacyComment({ ref: 'A1', author: 'x', text: 'note' }));

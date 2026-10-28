@@ -9,6 +9,7 @@ import { translateFormula } from '../calc/index.ts';
 import type { Range } from './address.ts';
 import { cellAddress, colLetter, inRange, MAX_ROW, parseRangeAddress, rangeAddress } from './address.ts';
 import { getCellAt, isBlank } from './cells.ts';
+import { moveNote } from './comments.ts';
 import type { EditorController } from './controller.svelte.ts';
 import { currentRegion } from './navigation.ts';
 import { currentRange, selectRange } from './selection.ts';
@@ -181,7 +182,7 @@ export function sortRange(ctl: EditorController, range: Range, keys: readonly So
     const moves = <T extends { ref: string }>(items: readonly T[]) => items.some((o) => moveRef(o.ref) !== o.ref);
     if (moves(ws.legacyComments)) {
       tx.sheet(ws, 'legacyComments');
-      for (const c of ws.legacyComments) c.ref = moveRef(c.ref);
+      ws.legacyComments = ws.legacyComments.map((c) => moveNote(c, moveRef(c.ref)));
     }
     if (ws.threadedComments && moves(ws.threadedComments)) {
       tx.sheet(ws, 'threadedComments');
@@ -365,7 +366,7 @@ export function removeDuplicates(ctl: EditorController, range: Range, cols: read
     });
     ws.legacyComments = ws.legacyComments.flatMap((n) => {
       const ref = remap(n.ref);
-      return ref === null ? [] : [ref === n.ref ? n : { ...n, ref }];
+      return ref === null ? [] : [moveNote(n, ref)];
     });
     ws.threadedComments = (ws.threadedComments ?? []).flatMap((n) => {
       const ref = remap(n.ref);

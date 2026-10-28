@@ -2505,7 +2505,7 @@ export function removeAllTables(ws: Worksheet): number {
 // ---- legacy comments -----------------------------------------------------
 
 /** Add or replace the comment at `ref`. */
-export function setComment(ws: Worksheet, opts: { ref: string; author: string; text: string }): LegacyComment {
+export function setComment(ws: Worksheet, opts: LegacyComment): LegacyComment {
   const i = ws.legacyComments.findIndex((c) => c.ref === opts.ref);
   const c = makeLegacyComment(opts);
   if (i < 0) ws.legacyComments.push(c);
@@ -2524,7 +2524,7 @@ export function setComment(ws: Worksheet, opts: { ref: string; author: string; t
  */
 export function setComments(
   ws: Worksheet,
-  entries: ReadonlyArray<{ ref: string; author: string; text: string }>,
+  entries: ReadonlyArray<LegacyComment>,
 ): LegacyComment[] {
   const prepared = entries.map((entry) => makeLegacyComment(entry));
   applyRefBatch(ws.legacyComments, prepared, 'in-place');
@@ -2555,20 +2555,22 @@ export function removeAllComments(ws: Worksheet): number {
 }
 
 /**
- * Replace just the text of an existing comment, leaving its ref and author
- * untouched. Returns `true` when the comment was found.
+ * Replace just the text of an existing comment, leaving its ref, author and
+ * box untouched. Its run formatting is dropped, since it described the old
+ * text. Returns `true` when the comment was found.
  */
 export function editCommentText(ws: Worksheet, ref: string, newText: string): boolean {
   const i = ws.legacyComments.findIndex((c) => c.ref === ref);
   if (i < 0) return false;
   const c = ws.legacyComments[i];
   if (!c) return false;
-  ws.legacyComments[i] = makeLegacyComment({ ref: c.ref, author: c.author, text: newText });
+  const { richText: _oldRuns, ...kept } = c;
+  ws.legacyComments[i] = makeLegacyComment({ ...kept, text: newText });
   return true;
 }
 
 /**
- * Replace just the author of an existing comment, leaving its ref and text
+ * Replace just the author of an existing comment, leaving everything else
  * untouched. Returns `true` when the comment was found.
  */
 export function editCommentAuthor(ws: Worksheet, ref: string, newAuthor: string): boolean {
@@ -2576,7 +2578,7 @@ export function editCommentAuthor(ws: Worksheet, ref: string, newAuthor: string)
   if (i < 0) return false;
   const c = ws.legacyComments[i];
   if (!c) return false;
-  ws.legacyComments[i] = makeLegacyComment({ ref: c.ref, author: newAuthor, text: c.text });
+  ws.legacyComments[i] = makeLegacyComment({ ...c, author: newAuthor });
   return true;
 }
 
@@ -2591,7 +2593,7 @@ export function renameCommentAuthor(ws: Worksheet, oldName: string, newName: str
   for (let i = 0; i < ws.legacyComments.length; i++) {
     const c = ws.legacyComments[i];
     if (c && c.author === oldName) {
-      ws.legacyComments[i] = makeLegacyComment({ ref: c.ref, author: newName, text: c.text });
+      ws.legacyComments[i] = makeLegacyComment({ ...c, author: newName });
       n++;
     }
   }

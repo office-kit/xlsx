@@ -1,12 +1,14 @@
-// xl/commentsN.xml read/write.
+// xl/commentsN.xml read/write, plus the VML drawing that carries each note's box.
 
+import { richTextToString } from '../cell/rich-text.js';
+import { coordinateToTuple } from '../utils/coordinate.js';
 import { escapeXmlAttr, escapeXmlText } from '../utils/escape.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
+import { parseRichString, serializeRichString, type SharedStringEntry } from '../workbook/shared-strings.js';
 import { MARKUP_COMPAT_NS, SHEET_MAIN_NS, X16_NS } from '../xml/namespaces.js';
 import { parseXml } from '../xml/parser.js';
 import { findChild, findChildren, type XmlNode } from '../xml/tree.js';
-import { coordinateToTuple } from '../utils/coordinate.js';
-import type { LegacyComment } from './comments.js';
+import type { LegacyComment, LegacyCommentAnchor } from './comments.js';
 import { makeLegacyComment } from './comments.js';
 
 const COMMENTS_TAG = `{${SHEET_MAIN_NS}}comments`;
@@ -15,29 +17,20 @@ const AUTHOR_TAG = `{${SHEET_MAIN_NS}}author`;
 const COMMENT_LIST_TAG = `{${SHEET_MAIN_NS}}commentList`;
 const COMMENT_TAG = `{${SHEET_MAIN_NS}}comment`;
 const TEXT_TAG = `{${SHEET_MAIN_NS}}text`;
-const T_TAG = `{${SHEET_MAIN_NS}}t`;
-const R_TAG = `{${SHEET_MAIN_NS}}r`;
+
+const VML_NS = 'urn:schemas-microsoft-com:vml';
+const VML_EXCEL_NS = 'urn:schemas-microsoft-com:office:excel';
+const VML_SHAPE_TAG = `{${VML_NS}}shape`;
+const CLIENT_DATA_TAG = `{${VML_EXCEL_NS}}ClientData`;
+const ANCHOR_TAG = `{${VML_EXCEL_NS}}Anchor`;
+const VISIBLE_TAG = `{${VML_EXCEL_NS}}Visible`;
+const ROW_TAG = `{${VML_EXCEL_NS}}Row`;
+const COLUMN_TAG = `{${VML_EXCEL_NS}}Column`;
 
 const XML_HEADER = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
 
 const escapeText = escapeXmlText;
 const escapeAttr = escapeXmlAttr;
-
-/** Concatenate every `<t>` text node found inside a `<text>` body. */
-const collectText = (textEl: XmlNode): string => {
-  const direct = findChild(textEl, T_TAG);
-  if (direct) return direct.text ?? '';
-  let out = '';
-  for (const child of textEl.children) {
-    if (child.name === R_TAG) {
-      const t = findChild(child, T_TAG);
-      if (t?.text) out += t.text;
-    } else if (child.name === T_TAG && child.text) {
-      out += child.text;
-    }
-  }
-  return out;
-};
 
 /** Parse a `xl/commentsN.xml` payload into a flat LegacyComment list. */
 export function parseCommentsXml(bytes: Uint8Array | string): LegacyComment[] {
@@ -60,8 +53,13 @@ export function parseCommentsXml(bytes: Uint8Array | string): LegacyComment[] {
     const authorId = authorIdRaw !== undefined ? Number.parseInt(authorIdRaw, 10) : 0;
     const author = authors[authorId] ?? '';
     const textEl = findChild(c, TEXT_TAG);
-    const text = textEl ? collectText(textEl) : '';
-    out.push(makeLegacyComment({ ref, author, text }));
+    // <text> is a CT_Rst, the same body as a shared string.
+    const body = textEl ? parseRichString(textEl) : '';
+    out.push(
+      typeof body === 'string'
+        ? makeLegacyComment({ ref, author, text: body })
+        : makeLegacyComment({ ref, author, text: richTextToString(body.runs), richText: body.runs }),
+    );
   }
   return out;
 }
@@ -98,18 +96,91 @@ export function serializeComments(comments: ReadonlyArray<CommentEntry>): string
   for (const c of comments) {
     const id = authorIndex.get(c.author) ?? 0;
     const uid = c.uid !== undefined ? ` shapeId="0" xr:uid="${escapeAttr(c.uid)}"` : '';
-    parts.push(
-      `<comment ref="${escapeAttr(c.ref)}" authorId="${id}"${uid}><text><t>${escapeText(c.text)}</t></text></comment>`,
-    );
+    const body: SharedStringEntry =
+      c.richText !== undefined && richTextToString(c.richText) === c.text ? { kind: 'rich-text', runs: c.richText } : c.text;
+    parts.push(`<comment ref="${escapeAttr(c.ref)}" authorId="${id}"${uid}><text>${serializeRichString(body)}</text></comment>`);
   }
   parts.push('</commentList></comments>');
   return parts.join('');
 }
 
+/** The parts of a note's VML shape that {@link commentsVmlDrawing} writes back. */
+type CommentBox = Pick<LegacyComment, 'visible' | 'anchor'>;
+
+const boxKey = (row: number, col: number): string => `${row}:${col}`;
+
 /**
- * Bare-bones VML drawing payload Excel tolerates as a comment-shape
- * placeholder. We don't preserve the original VML shapes (stage-1 trade-off);
- * this stub guarantees the worksheet rels stay consistent.
+ * The zero-based row / column VML `<x:Row>` / `<x:Column>` give a note: the
+ * top-left cell of its ref, which may be a range.
+ */
+const noteCell = (ref: string): { row: number; col: number } | undefined => {
+  try {
+    const t = coordinateToTuple(ref.split(':')[0] ?? ref);
+    return { row: t.row - 1, col: t.col - 1 };
+  } catch {
+    return undefined;
+  }
+};
+
+const ANCHOR_FIELDS = [
+  'fromCol', 'fromColOffset', 'fromRow', 'fromRowOffset', 'toCol', 'toColOffset', 'toRow', 'toRowOffset',
+] as const satisfies ReadonlyArray<keyof LegacyCommentAnchor>;
+
+const UINT = /^\d+$/;
+
+const parseAnchor = (raw: string): LegacyCommentAnchor | undefined => {
+  const nums = raw.split(',').map((part) => part.trim());
+  if (nums.length !== ANCHOR_FIELDS.length || !nums.every((n) => UINT.test(n))) return undefined;
+  // The length check above means the defaults never apply; they only type the slots.
+  const [
+    fromCol = 0, fromColOffset = 0, fromRow = 0, fromRowOffset = 0, toCol = 0, toColOffset = 0, toRow = 0, toRowOffset = 0,
+  ] = nums.map(Number);
+  return { fromCol, fromColOffset, fromRow, fromRowOffset, toCol, toColOffset, toRow, toRowOffset };
+};
+
+/**
+ * Read each note's box out of a comment VML part and copy it onto the comment
+ * on the same cell.
+ *
+ * The box is presentation only: Excel lays out a default one when it is
+ * missing. So a VML part that is not well-formed XML (Excel 2003-era files put
+ * bare `<br>` in the text box) or an unreadable `<x:Anchor>` yields no box
+ * rather than failing a load that never depended on it.
+ */
+export function applyCommentVml(comments: LegacyComment[], bytes: Uint8Array): void {
+  let root: XmlNode;
+  try {
+    root = parseXml(bytes);
+  } catch (err) {
+    if (err instanceof OpenXmlSchemaError) return;
+    throw err;
+  }
+  const boxes = new Map<string, CommentBox>();
+  for (const shape of findChildren(root, VML_SHAPE_TAG)) {
+    const data = findChild(shape, CLIENT_DATA_TAG);
+    if (data?.attrs['ObjectType'] !== 'Note') continue;
+    const row = findChild(data, ROW_TAG)?.text?.trim();
+    const col = findChild(data, COLUMN_TAG)?.text?.trim();
+    if (row === undefined || col === undefined || !UINT.test(row) || !UINT.test(col)) continue;
+    const box: CommentBox = {};
+    // x:Visible is a VML boolean whose empty content means true.
+    const visible = findChild(data, VISIBLE_TAG);
+    if (visible) box.visible = !/^(f|false|0)$/i.test(visible.text?.trim() ?? '');
+    const anchorText = findChild(data, ANCHOR_TAG)?.text;
+    const anchor = anchorText !== undefined ? parseAnchor(anchorText) : undefined;
+    if (anchor) box.anchor = anchor;
+    boxes.set(boxKey(Number(row), Number(col)), box);
+  }
+  for (const c of comments) {
+    const cell = noteCell(c.ref);
+    const box = cell && boxes.get(boxKey(cell.row, cell.col));
+    if (box?.visible !== undefined) c.visible = box.visible;
+    if (box?.anchor !== undefined) c.anchor = box.anchor;
+  }
+}
+
+/**
+ * The VML drawing paired with a comments part: one note shape per comment.
  *
  * Excel won't open the file unless every legacy comment is paired with a
  * `<v:shape>` carrying `<x:ClientData ObjectType="Note">` plus the cell anchor
@@ -119,7 +190,7 @@ export function serializeComments(comments: ReadonlyArray<CommentEntry>): string
  * The `<v:shapetype id="_x0000_t202">` / `<v:shape type="#_x0000_t202">` pair
  * mirrors what openpyxl's ShapeWriter emits.
  */
-export function placeholderVmlDrawing(comments: ReadonlyArray<LegacyComment> = []): Uint8Array {
+export function commentsVmlDrawing(comments: ReadonlyArray<LegacyComment> = []): Uint8Array {
   const parts: string[] = [
     '<xml xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">',
     '<o:shapelayout v:ext="edit"><o:idmap v:ext="edit" data="1"/></o:shapelayout>',
@@ -134,21 +205,13 @@ export function placeholderVmlDrawing(comments: ReadonlyArray<LegacyComment> = [
     parts.push('<v:shape type="#_x0000_t202" style="visibility:hidden"><x:ClientData ObjectType="Note"/></v:shape>');
   } else {
     for (const c of comments) {
-      // The ref may be a single cell or a range; anchor at the top-left.
-      const firstRef = c.ref.split(':')[0] ?? c.ref;
-      let row = 0;
-      let col = 0;
-      try {
-        const t = coordinateToTuple(firstRef);
-        row = t.row - 1; // VML uses 0-based row/column.
-        col = t.col - 1;
-      } catch {
-        // Leave at 0,0 if the ref can't be parsed.
-      }
+      // Leave at 0,0 if the ref can't be parsed.
+      const { row, col } = noteCell(c.ref) ?? { row: 0, col: 0 };
       const idAttr = `_x0000_s${String(shapeId).padStart(4, '0')}`;
       shapeId++;
+      const visibility = c.visible ? 'visible' : 'hidden';
       parts.push(
-        `<v:shape id="${idAttr}" type="#_x0000_t202" style="position:absolute;margin-left:59.25pt;margin-top:1.5pt;width:108pt;height:59.25pt;z-index:1;visibility:hidden" fillcolor="#ffffe1" o:insetmode="auto">`,
+        `<v:shape id="${idAttr}" type="#_x0000_t202" style="position:absolute;margin-left:59.25pt;margin-top:1.5pt;width:108pt;height:59.25pt;z-index:1;visibility:${visibility}" fillcolor="#ffffe1" o:insetmode="auto">`,
         '<v:fill color2="#ffffe1"/>',
         '<v:shadow color="black" obscured="t"/>',
         '<v:path o:connecttype="none"/>',
@@ -156,12 +219,12 @@ export function placeholderVmlDrawing(comments: ReadonlyArray<LegacyComment> = [
         '<x:ClientData ObjectType="Note">',
         '<x:MoveWithCells/>',
         '<x:SizeWithCells/>',
-        '<x:AutoFill>False</x:AutoFill>',
-        `<x:Row>${row}</x:Row>`,
-        `<x:Column>${col}</x:Column>`,
-        '</x:ClientData>',
-        '</v:shape>',
       );
+      // Child order follows what Excel writes.
+      if (c.anchor) parts.push(`<x:Anchor>${ANCHOR_FIELDS.map((field) => c.anchor?.[field]).join(', ')}</x:Anchor>`);
+      parts.push('<x:AutoFill>False</x:AutoFill>', `<x:Row>${row}</x:Row>`, `<x:Column>${col}</x:Column>`);
+      if (c.visible) parts.push('<x:Visible/>');
+      parts.push('</x:ClientData>', '</v:shape>');
     }
   }
   parts.push('</xml>');

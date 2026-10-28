@@ -4,7 +4,7 @@
 
 import type { Person, Workbook } from '@office-kit/xlsx/workbook';
 import { makePerson } from '@office-kit/xlsx/workbook';
-import type { ThreadedComment, Worksheet } from '@office-kit/xlsx/worksheet';
+import type { LegacyComment, ThreadedComment, Worksheet } from '@office-kit/xlsx/worksheet';
 import { makeThreadedComment } from '@office-kit/xlsx/worksheet';
 import { columnIndexFromLetter, coordinateFromString } from '@office-kit/xlsx/utils';
 import { cellAddress, inRange } from './address.ts';
@@ -51,6 +51,16 @@ export function hasNoteAt(ws: Worksheet, row: number, col: number): boolean {
     const p = refCell(c.ref);
     return p.row === row && p.col === col;
   });
+}
+
+/**
+ * A note moved to `ref`. Its box position was saved against the old cell, so
+ * it is dropped and Excel lays out a fresh box next to the new one.
+ */
+export function moveNote(note: LegacyComment, ref: string): LegacyComment {
+  if (ref === note.ref) return note;
+  const { anchor: _oldBox, ...rest } = note;
+  return { ...rest, ref };
 }
 
 export function personName(wb: Workbook, personId: string): string {
