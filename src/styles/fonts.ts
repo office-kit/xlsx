@@ -22,8 +22,9 @@ export const UNDERLINE_STYLES: ReadonlyArray<UnderlineStyle> = Object.freeze([
 export type VertAlign = 'baseline' | 'superscript' | 'subscript';
 export const VERT_ALIGNS: ReadonlyArray<VertAlign> = Object.freeze(['baseline', 'superscript', 'subscript']);
 
-export type FontScheme = 'major' | 'minor';
-export const FONT_SCHEMES: ReadonlyArray<FontScheme> = Object.freeze(['major', 'minor']);
+/** Theme font slot per ECMA-376 ST_FontScheme; `none` opts the font out of the theme. */
+export type FontScheme = 'major' | 'minor' | 'none';
+export const FONT_SCHEMES: ReadonlyArray<FontScheme> = Object.freeze(['major', 'minor', 'none']);
 
 const UNDERLINE_SET: ReadonlySet<string> = new Set(UNDERLINE_STYLES);
 const VERT_SET: ReadonlySet<string> = new Set(VERT_ALIGNS);

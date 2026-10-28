@@ -208,7 +208,7 @@ const parseRunPr = (rPr: XmlNode): import('../cell/rich-text.js').InlineFont | u
         if (valAttr !== undefined) f.charset = Number.parseInt(valAttr, 10);
         break;
       case 'scheme':
-        if (valAttr !== undefined) f.scheme = valAttr as 'major' | 'minor';
+        if (valAttr !== undefined) f.scheme = valAttr as import('../styles/fonts.js').FontScheme;
         break;
       case 'color': {
         const c: { rgb?: string; theme?: number; indexed?: number; tint?: number; auto?: boolean } = {};

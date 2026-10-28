@@ -1,6 +1,6 @@
 {
   "kind": "additive",
-  "reason": "PieChart gains optional firstSliceAng (and makePieChart accepts it) so a rotated pie keeps its rotation.",
-  "baselineSha256": "f4a8fbd623e1ac41a57350f42bb0d7e592c6ce50515ce0af9eb3cc000dfeabf5",
-  "changeset": ".changeset/pie-first-slice-angle.md"
+  "reason": "FontScheme (and InlineFont.scheme) gain 'none', the third ST_FontScheme value, so stylesheet and rich-text fonts with <scheme val=\"none\"/> load and keep it on save. Code that switches exhaustively over FontScheme needs a 'none' case.",
+  "baselineSha256": "fb3efb6558f8aff788f0d5ccc4c811d93350785a482e6e1c14dccf9126d30106",
+  "changeset": ".changeset/fix-font-scheme-none.md"
 }

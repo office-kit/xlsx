@@ -8,6 +8,7 @@
 // renaming.
 
 import type { Color } from '../styles/colors.js';
+import type { FontScheme } from '../styles/fonts.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
 
 /** Underline styles per openpyxl's cell-level NestedNoneSet. */
@@ -30,7 +31,7 @@ export interface InlineFont {
   readonly color?: Color;
   readonly family?: number;
   readonly charset?: number;
-  readonly scheme?: 'major' | 'minor';
+  readonly scheme?: FontScheme;
 }
 
 export interface TextRun {
