@@ -6,7 +6,8 @@
 // (fill, shadow, CSS margins) is not carried, and Excel places the box by
 // `<x:Anchor>` rather than by those margins.
 
-import type { RichText } from '../cell/rich-text.js';
+import { type RichText, richTextToString } from '../cell/rich-text.js';
+import { OpenXmlSchemaError } from '../utils/exceptions.js';
 
 /**
  * Where a note's box sits, as VML `<x:Anchor>` writes it: each edge is a
@@ -45,7 +46,14 @@ export interface LegacyComment {
   anchor?: LegacyCommentAnchor;
 }
 
+/**
+ * Build a note. Throws `OpenXmlSchemaError` when `richText` is given but its
+ * runs do not join to `text`: the writer would drop them.
+ */
 export function makeLegacyComment(opts: LegacyComment): LegacyComment {
+  if (opts.richText !== undefined && richTextToString(opts.richText) !== opts.text) {
+    throw new OpenXmlSchemaError(`comment ${opts.ref}: richText runs must join to text`);
+  }
   return {
     ref: opts.ref,
     author: opts.author,

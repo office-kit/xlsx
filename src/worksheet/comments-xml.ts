@@ -3,7 +3,7 @@
 import { richTextToString } from '../cell/rich-text.js';
 import { coordinateToTuple } from '../utils/coordinate.js';
 import { escapeXmlAttr, escapeXmlText } from '../utils/escape.js';
-import { OpenXmlSchemaError } from '../utils/exceptions.js';
+import { OpenXmlError, OpenXmlSchemaError } from '../utils/exceptions.js';
 import { parseRichString, serializeRichString, type SharedStringEntry } from '../workbook/shared-strings.js';
 import { MARKUP_COMPAT_NS, SHEET_MAIN_NS, X16_NS } from '../xml/namespaces.js';
 import { parseXml } from '../xml/parser.js';
@@ -117,8 +117,9 @@ const noteCell = (ref: string): { row: number; col: number } | undefined => {
   try {
     const t = coordinateToTuple(ref.split(':')[0] ?? ref);
     return { row: t.row - 1, col: t.col - 1 };
-  } catch {
-    return undefined;
+  } catch (err) {
+    if (err instanceof OpenXmlError) return undefined;
+    throw err;
   }
 };
 
@@ -129,23 +130,35 @@ const ANCHOR_FIELDS = [
 const UINT = /^\d+$/;
 
 const parseAnchor = (raw: string): LegacyCommentAnchor | undefined => {
-  const nums = raw.split(',').map((part) => part.trim());
-  if (nums.length !== ANCHOR_FIELDS.length || !nums.every((n) => UINT.test(n))) return undefined;
-  // The length check above means the defaults never apply; they only type the slots.
-  const [
-    fromCol = 0, fromColOffset = 0, fromRow = 0, fromRowOffset = 0, toCol = 0, toColOffset = 0, toRow = 0, toRowOffset = 0,
-  ] = nums.map(Number);
-  return { fromCol, fromColOffset, fromRow, fromRowOffset, toCol, toColOffset, toRow, toRowOffset };
+  const parts = raw.split(',').map((part) => part.trim());
+  if (parts.length !== ANCHOR_FIELDS.length || !parts.every((part) => UINT.test(part))) return undefined;
+  const nums = parts.map(Number);
+  const at = (i: number): number => nums[i] ?? 0;
+  return {
+    fromCol: at(0), fromColOffset: at(1), fromRow: at(2), fromRowOffset: at(3),
+    toCol: at(4), toColOffset: at(5), toRow: at(6), toRowOffset: at(7),
+  };
 };
+
+/** Anchor values go into the VML verbatim, so anything but a non-negative integer is refused. */
+const anchorText = (anchor: LegacyCommentAnchor, ref: string): string =>
+  ANCHOR_FIELDS.map((field) => {
+    const v = anchor[field];
+    if (!Number.isSafeInteger(v) || v < 0) {
+      throw new OpenXmlSchemaError(`comment ${ref}: anchor ${field} must be a non-negative integer; got ${String(v)}`);
+    }
+    return v;
+  }).join(', ');
 
 /**
  * Read each note's box out of a comment VML part and copy it onto the comment
  * on the same cell.
  *
  * The box is presentation only: Excel lays out a default one when it is
- * missing. So a VML part that is not well-formed XML (Excel 2003-era files put
- * bare `<br>` in the text box) or an unreadable `<x:Anchor>` yields no box
- * rather than failing a load that never depended on it.
+ * missing. So a VML part the XML parser rejects (Excel 2003-era files put bare
+ * `<br>` in the text box; a DOCTYPE lands here too, unexpanded) or an
+ * unreadable `<x:Anchor>` yields no box rather than failing a load that never
+ * depended on it. The part itself is regenerated on save, not carried.
  */
 export function applyCommentVml(comments: LegacyComment[], bytes: Uint8Array): void {
   let root: XmlNode;
@@ -221,7 +234,7 @@ export function commentsVmlDrawing(comments: ReadonlyArray<LegacyComment> = []):
         '<x:SizeWithCells/>',
       );
       // Child order follows what Excel writes.
-      if (c.anchor) parts.push(`<x:Anchor>${ANCHOR_FIELDS.map((field) => c.anchor?.[field]).join(', ')}</x:Anchor>`);
+      if (c.anchor) parts.push(`<x:Anchor>${anchorText(c.anchor, c.ref)}</x:Anchor>`);
       parts.push('<x:AutoFill>False</x:AutoFill>', `<x:Row>${row}</x:Row>`, `<x:Column>${col}</x:Column>`);
       if (c.visible) parts.push('<x:Visible/>');
       parts.push('</x:ClientData>', '</v:shape>');

@@ -8,6 +8,8 @@ import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
 import type { LegacyComment } from '../../src/worksheet/comments.js';
 import type { Worksheet } from '../../src/worksheet/worksheet.js';
 import { editCommentAuthor, editCommentText, setComment, setComments } from '../../src/worksheet/worksheet.js';
+import { OpenXmlSchemaError } from '../../src/utils/exceptions.js';
+import { makeLegacyComment } from '../../src/worksheet/comments.js';
 import { SHEET_MAIN_NS } from '../../src/xml/namespaces.js';
 import { validateXlsx } from '../conformance/validate.js';
 
@@ -22,10 +24,10 @@ const COMMENTS_XML =
   '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
   `<comments xmlns="${SHEET_MAIN_NS}"><authors><author>Yegor Kozlov</author></authors><commentList>` +
   `${note('B1', 'first cell')}${note('B2', 'second cell')}${note('B3:C4', 'third cell')}</commentList></comments>`;
-const shape = (anchor: string, row: number, extra = '') =>
+const shape = (anchor: string, row: number, extra = '', objectType = 'Note') =>
   `<v:shape id="_x0000_s1025" type="#_x0000_t202" style='position:absolute;\n margin-left:107.25pt;width:96pt;height:55.5pt;z-index:1;\n visibility:hidden' fillcolor="infoBackground [80]" o:insetmode="auto">` +
   `<v:textbox style='mso-direction-alt:auto'>\n <div style='text-align:left'></div>\n</v:textbox>` +
-  `<x:ClientData ObjectType="Note">\n <x:MoveWithCells/>\n <x:SizeWithCells/>\n <x:Anchor>\n    ${anchor}</x:Anchor>\n` +
+  `<x:ClientData ObjectType="${objectType}">\n <x:MoveWithCells/>\n <x:SizeWithCells/>\n <x:Anchor>\n    ${anchor}</x:Anchor>\n` +
   ` <x:AutoFill>False</x:AutoFill>\n <x:Row>${row}</x:Row>\n <x:Column>1</x:Column>${extra}\n</x:ClientData></v:shape>`;
 const vml = (shapes: string) =>
   '<xml xmlns:v="urn:schemas-microsoft-com:vml"\n xmlns:o="urn:schemas-microsoft-com:office:office"\n xmlns:x="urn:schemas-microsoft-com:office:excel">\n' +
@@ -146,6 +148,31 @@ describe('issue #307 — notes keep their rich text and their box', () => {
     const ws = firstSheet(await loadWorkbook(fromBuffer(await fixture(vml(shape('1, 0, 0, 0, 3, 0, 4, 0', 0, '<x:Visible>False</x:Visible>'))))));
     expect(ws.legacyComments[0]).toMatchObject({ visible: false });
     expect(ws.legacyComments[1]).not.toHaveProperty('anchor');
+  });
+
+  it('matches shapes to notes by cell, not by order, and ignores other objects', async () => {
+    const shuffled = vml(
+      shape('9, 0, 9, 0, 9, 0, 9, 0', 0, '', 'Checkbox') +
+        shape('2, 15, 1, 7, 4, 15, 5, 13', 2, '<x:Visible/>') +
+        shape('2, 15, 0, 2, 4, 15, 4, 8', 0),
+    );
+    const ws = firstSheet(await loadWorkbook(fromBuffer(await fixture(shuffled))));
+    expect(ws.legacyComments.map((c) => [c.ref, c.anchor?.fromRowOffset, c.visible])).toEqual([
+      ['B1', 2, undefined],
+      ['B2', undefined, undefined],
+      ['B3:C4', 7, true],
+    ]);
+  });
+
+  it('refuses runs that do not join to the text, and anchors that are not non-negative integers', async () => {
+    expect(() => makeLegacyComment({ ref: 'A1', author: 'a', text: 'plain', richText: [{ text: 'bold', font: { b: true } }] })).toThrow(
+      OpenXmlSchemaError,
+    );
+    const wb = createWorkbook();
+    const ws = addWorksheet(wb, 'Sheet1');
+    const anchor = { fromCol: 1, fromColOffset: 0, fromRow: 0, fromRowOffset: 0, toCol: 3, toColOffset: 0, toRow: 4, toRowOffset: 1.5 };
+    setComment(ws, { ref: 'A1', author: 'me', text: 'hi', anchor });
+    await expect(workbookToBytes(wb)).rejects.toThrow(OpenXmlSchemaError);
   });
 
   it.each([
