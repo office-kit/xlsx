@@ -581,8 +581,23 @@ export interface SeriesAxis extends AxisShared {
 
 export interface PlotArea {
   chart: ChartKind;
+  /**
+   * Further chart groups drawn in the same plot area after {@link chart}, which is
+   * how Excel builds a combo chart (columns + a line, or a series on a secondary
+   * axis). Each one names its axes through its own `axIds`; an id that `catAx`,
+   * `valAx` or the `additional*Ax` lists don't define makes the serializer throw.
+   */
+  additionalCharts?: ChartKind[];
   catAx?: CategoryAxis;
   valAx?: ValueAxis;
+  /** Category axes beyond `catAx`, for the chart groups in {@link additionalCharts}. */
+  additionalCatAx?: CategoryAxis[];
+  /**
+   * Value axes beyond `valAx`, for the chart groups in {@link additionalCharts}.
+   * A secondary axis is one of these with `crosses: 'max'`, which puts it on the
+   * opposite side of the plot.
+   */
+  additionalValAx?: ValueAxis[];
   /**
    * The X axis of a scatter or bubble chart, which is a value axis where other
    * charts have `catAx`. `valAx` is then the Y axis.
@@ -619,8 +634,19 @@ export interface Layout {
   manualLayout?: ManualLayout;
 }
 
+/**
+ * `<c:legendEntry>`: an override for the legend row of one series (or, on a
+ * chart that varies colours by point, one point). `idx` counts series across
+ * every chart group in the plot area, in document order.
+ */
+export type LegendEntry =
+  | { idx: number; delete: true }
+  | { idx: number; txPr: TextBody };
+
 export interface Legend {
   position: LegendPosition;
+  /** Per-entry overrides, e.g. hiding the row of a helper series. */
+  legendEntry?: LegendEntry[];
   overlay?: boolean;
   layout?: Layout;
   spPr?: ShapeProperties;

@@ -11,6 +11,7 @@ import reportStyles from './report-styles.ts?raw';
 import numberFormats from './number-formats.ts?raw';
 import formulas from './formulas.ts?raw';
 import addBarChart from './add-bar-chart.ts?raw';
+import addComboChart from './add-combo-chart.ts?raw';
 import insertImage from './insert-image.ts?raw';
 import tablesWithFilter from './tables-with-filter.ts?raw';
 import inputColumn from './input-column.ts?raw';
@@ -283,6 +284,20 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
           'addChartAt',
           'makeSunburstChart',
         ],
+      },
+      {
+        slug: 'add-combo-chart',
+        title: 'Combine columns and a line on a secondary axis',
+        teaser:
+          'Put a second chart group in `additionalCharts` and give it a value axis of its own in `additionalValAx`.',
+        path: 'site/src/lib/examples/recipes/add-combo-chart.ts',
+        source: addComboChart,
+        notes: [
+          'Every chart group in `additionalCharts` names its axes through `axIds`. Sharing the category axis id lines both groups up on the same categories; an id the plot area does not define makes `chartToBytes` throw.',
+          '`crosses: "max"` puts the secondary value axis on the opposite side of the plot.',
+          'Series `idx` counts across all chart groups, and so does `legend.legendEntry[].idx` — use `{ idx, delete: true }` to hide the legend row of a helper series.',
+        ],
+        relatedApi: ['makeBarChart', 'makeLineChart', 'makeChartSpace', 'addChartAt'],
       },
       {
         slug: 'insert-image',
