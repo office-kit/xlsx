@@ -771,8 +771,9 @@ const parseCategoryRef = (parent: XmlNode): CategoryRef | undefined => {
 const parseSeriesTx = (serEl: XmlNode): BarSeries['tx'] => {
   const txEl = findChild(serEl, TX_TAG);
   if (!txEl) return undefined;
-  const literal = findChild(txEl, V_TAG)?.text;
-  if (literal !== undefined) return { kind: 'literal', value: literal };
+  const literalEl = findChild(txEl, V_TAG);
+  // `<c:v/>` is an empty name, which Excel and PowerPoint use to keep a helper series out of the legend.
+  if (literalEl) return { kind: 'literal', value: literalEl.text ?? '' };
   const strRef = findChild(txEl, STR_REF_TAG);
   if (!strRef) return undefined;
   const ref = findChild(strRef, F_TAG)?.text ?? '';

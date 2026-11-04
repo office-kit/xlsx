@@ -164,3 +164,19 @@ describe('legend entries', () => {
     expect(parseChartXml(xml).legend).not.toHaveProperty('legendEntry');
   });
 });
+
+describe('series names', () => {
+  it('keeps an empty literal name through a round-trip', () => {
+    const space = comboSpace();
+    if (space.plotArea.chart.kind !== 'bar') throw new Error('expected bar');
+    const [first] = space.plotArea.chart.series;
+    if (!first) throw new Error('expected a series');
+    const named: ChartSpace = {
+      ...space,
+      plotArea: { ...space.plotArea, chart: { ...space.plotArea.chart, series: [{ ...first, tx: { kind: 'literal', value: '' } }] } },
+    };
+    const back = parseChartXml(chartToBytes(named));
+    if (back.plotArea.chart.kind !== 'bar') throw new Error('expected bar');
+    expect(back.plotArea.chart.series[0]?.tx).toEqual({ kind: 'literal', value: '' });
+  });
+});
