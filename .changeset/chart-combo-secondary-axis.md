@@ -7,3 +7,5 @@ feat(chart): write and read combo charts. `PlotArea.additionalCharts` holds furt
 feat(chart): `Legend.legendEntry` hides (`{ idx, delete: true }`) or restyles (`{ idx, txPr }`) the legend row of a single series, and survives load and save.
 
 fix(chart): a series named with an empty literal (`<c:tx><c:v/></c:tx>`) lost its name on load, so re-saving put the helper series that name hides back into the legend.
+
+fix(chart): a chart number format containing double quotes (for example `0.0"%"` or `0,"万"`) was written into the `formatCode` attribute unescaped, so Excel reported the file as damaged.

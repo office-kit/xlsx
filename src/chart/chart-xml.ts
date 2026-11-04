@@ -13,7 +13,7 @@ import {
 } from '../drawing/dml/dml-xml.js';
 import type { ShapeProperties } from '../drawing/dml/shape-properties.js';
 import type { TextBody } from '../drawing/dml/text.js';
-import { escapeXmlText } from '../utils/escape.js';
+import { escapeXmlAttr, escapeXmlText } from '../utils/escape.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
 import { CHART_NS, REL_NS, SHEET_DRAWING_NS } from '../xml/namespaces.js';
 import { parseXml } from '../xml/parser.js';
@@ -362,7 +362,7 @@ const parseNumberFormat = (el: XmlNode | undefined): ChartNumberFormat | undefin
 
 const serializeNumberFormat = (n: ChartNumberFormat): string => {
   const sl = n.sourceLinked !== undefined ? ` sourceLinked="${n.sourceLinked ? '1' : '0'}"` : '';
-  return `<c:numFmt formatCode="${escapeText(n.formatCode)}"${sl}/>`;
+  return `<c:numFmt formatCode="${escapeXmlAttr(n.formatCode)}"${sl}/>`;
 };
 
 interface DataLabelCommon {
