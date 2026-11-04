@@ -40,6 +40,7 @@ export type {
   LayoutMode,
   LayoutTarget,
   Legend,
+  LegendEntry,
   LegendPosition,
   Line3DChart,
   LineChart,

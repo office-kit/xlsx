@@ -23,6 +23,7 @@ import { deflateSync, Zip, ZipDeflate, ZipPassThrough, type DeflateOptions } fro
 import type { XlsxSink } from '../io/sink.js';
 import { OpenXmlIoError } from '../utils/exceptions.js';
 import { applyZip64EntryCountPatch } from './zip64-patch.js';
+import { isUint8Array } from '../utils/bytes.js';
 
 // fflate 0.8.3's streaming compressor can reference its zero-filled lookback
 // before the first input byte for some binary payloads. A complete entry uses
@@ -259,7 +260,7 @@ export function createZipWriter(sink: XlsxSink, opts: ZipWriterOptions = {}): Zi
 
   return {
     async addEntry(path, bytes, entryOpts) {
-      if (!(bytes instanceof Uint8Array)) {
+      if (!isUint8Array(bytes)) {
         throw new OpenXmlIoError(
           'createZipWriter: ReadableStream entries are not yet supported (deferred to streaming writer)',
         );
@@ -293,7 +294,7 @@ export function createZipWriter(sink: XlsxSink, opts: ZipWriterOptions = {}): Zi
       return {
         write(chunk: Uint8Array): void {
           if (ended) throw new OpenXmlIoError(`createZipWriter: write after end on "${path}"`);
-          if (!(chunk instanceof Uint8Array)) {
+          if (!isUint8Array(chunk)) {
             throw new OpenXmlIoError(`createZipWriter: streaming entry "${path}" chunk is not a Uint8Array`);
           }
           if (chunk.byteLength === 0) return;

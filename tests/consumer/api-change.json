@@ -1,6 +1,6 @@
 {
   "kind": "additive",
-  "reason": "LegacyComment gains optional richText, visible and anchor (with the new LegacyCommentAnchor type), and makeLegacyComment / setComment / setComments accept them, so a note's runs and its VML box survive load and save.",
-  "baselineSha256": "3df30e972dc018e76491f08b90b3f0be74135fdfa4e79ef5b6ced24b2d157794",
-  "changeset": ".changeset/legacy-comment-fidelity.md"
+  "reason": "PlotArea gains optional additionalCharts, additionalCatAx and additionalValAx so a plot area can hold a combo chart and a secondary value axis, and Legend gains optional legendEntry (with the new LegendEntry type) to hide or restyle one series' legend row.",
+  "baselineSha256": "be2fd6c8ea06fd29d9d3b206d5cf8472d3073864c4d67b0f9696c39a7e84d696",
+  "changeset": ".changeset/chart-combo-secondary-axis.md"
 }

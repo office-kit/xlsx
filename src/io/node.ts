@@ -9,6 +9,7 @@
 import { OpenXmlIoError } from '../utils/exceptions.js';
 import type { BufferedSinkWriter, XlsxSink } from './sink.js';
 import type { XlsxSource } from './source.js';
+import { isUint8Array } from '../utils/bytes.js';
 
 /**
  * Wrap a Buffer or Uint8Array as an XlsxSource. The underlying bytes are
@@ -16,7 +17,7 @@ import type { XlsxSource } from './source.js';
  * use.
  */
 export function fromBuffer(buf: Buffer | Uint8Array): XlsxSource {
-  if (!(buf instanceof Uint8Array)) {
+  if (!isUint8Array(buf)) {
     throw new OpenXmlIoError('fromBuffer expects a Buffer or Uint8Array');
   }
   // Buffer is a subclass of Uint8Array, so a single normalisation suffices.
@@ -67,7 +68,7 @@ export function toBuffer(): XlsxSink & { toBytes(): BufferedSinkWriter; result()
           if (finalised !== undefined) {
             throw new OpenXmlIoError('toBuffer sink: write after finish');
           }
-          if (!(chunk instanceof Uint8Array)) {
+          if (!isUint8Array(chunk)) {
             throw new OpenXmlIoError('toBuffer sink: chunk is not a Uint8Array');
           }
           chunks.push(chunk);

@@ -90,6 +90,7 @@ import {
 import { type CompressionLevel, createZipWriter } from '../zip/writer.js';
 import { getDxfs } from '../styles/differential.js';
 import { multiCellRangeToString } from '../worksheet/cell-range.js';
+import { isUint8Array } from '../utils/bytes.js';
 
 const CORE_PROPS_TYPE = 'application/vnd.openxmlformats-package.core-properties+xml';
 const EXT_PROPS_TYPE = 'application/vnd.openxmlformats-officedocument.extended-properties+xml';
@@ -171,7 +172,7 @@ const toUint8ArraySink = (): XlsxSink & { result(): Uint8Array } => {
           if (finalised !== undefined) {
             throw new OpenXmlIoError('workbookToBytes sink: write after finish');
           }
-          if (!(chunk instanceof Uint8Array)) {
+          if (!isUint8Array(chunk)) {
             throw new OpenXmlIoError('workbookToBytes sink: chunk is not a Uint8Array');
           }
           chunks.push(chunk);

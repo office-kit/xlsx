@@ -13,7 +13,7 @@ import {
 } from '../drawing/dml/dml-xml.js';
 import type { ShapeProperties } from '../drawing/dml/shape-properties.js';
 import type { TextBody } from '../drawing/dml/text.js';
-import { escapeXmlText } from '../utils/escape.js';
+import { escapeXmlAttr, escapeXmlText } from '../utils/escape.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
 import { CHART_NS, REL_NS, SHEET_DRAWING_NS } from '../xml/namespaces.js';
 import { parseXml } from '../xml/parser.js';
@@ -52,6 +52,7 @@ import {
   type Gridlines,
   type GroupingType,
   type Legend,
+  type LegendEntry,
   type LegendPosition,
   type Line3DChart,
   type LineChart,
@@ -230,6 +231,7 @@ const Y_TAG = `{${CHART_NS}}y`;
 const W_TAG = `{${CHART_NS}}w`;
 const H_TAG = `{${CHART_NS}}h`;
 const LEGEND_TAG = `{${CHART_NS}}legend`;
+const LEGEND_ENTRY_TAG = `{${CHART_NS}}legendEntry`;
 const LEGEND_POS_TAG = `{${CHART_NS}}legendPos`;
 const PLOT_VIS_ONLY_TAG = `{${CHART_NS}}plotVisOnly`;
 const DISP_BLANKS_AS_TAG = `{${CHART_NS}}dispBlanksAs`;
@@ -360,7 +362,7 @@ const parseNumberFormat = (el: XmlNode | undefined): ChartNumberFormat | undefin
 
 const serializeNumberFormat = (n: ChartNumberFormat): string => {
   const sl = n.sourceLinked !== undefined ? ` sourceLinked="${n.sourceLinked ? '1' : '0'}"` : '';
-  return `<c:numFmt formatCode="${escapeText(n.formatCode)}"${sl}/>`;
+  return `<c:numFmt formatCode="${escapeXmlAttr(n.formatCode)}"${sl}/>`;
 };
 
 interface DataLabelCommon {
@@ -769,8 +771,9 @@ const parseCategoryRef = (parent: XmlNode): CategoryRef | undefined => {
 const parseSeriesTx = (serEl: XmlNode): BarSeries['tx'] => {
   const txEl = findChild(serEl, TX_TAG);
   if (!txEl) return undefined;
-  const literal = findChild(txEl, V_TAG)?.text;
-  if (literal !== undefined) return { kind: 'literal', value: literal };
+  const literalEl = findChild(txEl, V_TAG);
+  // `<c:v/>` is an empty name, which Excel and PowerPoint use to keep a helper series out of the legend.
+  if (literalEl) return { kind: 'literal', value: literalEl.text ?? '' };
   const strRef = findChild(txEl, STR_REF_TAG);
   if (!strRef) return undefined;
   const ref = findChild(strRef, F_TAG)?.text ?? '';
@@ -1170,40 +1173,44 @@ const parseSurface3DChart = (surfaceEl: XmlNode): Surface3DChart => {
   });
 };
 
-const parsePlotChart = (plotAreaEl: XmlNode): ChartKind => {
-  const bar = findChild(plotAreaEl, BAR_CHART_TAG);
-  if (bar) return parseBarChart(bar);
-  const line = findChild(plotAreaEl, LINE_CHART_TAG);
-  if (line) return parseLineChart(line);
-  const area = findChild(plotAreaEl, AREA_CHART_TAG);
-  if (area) return parseAreaChart(area);
-  const pie = findChild(plotAreaEl, PIE_CHART_TAG);
-  if (pie) return parsePieChart(pie);
-  const donut = findChild(plotAreaEl, DOUGHNUT_CHART_TAG);
-  if (donut) return parseDoughnutChart(donut);
-  const scatter = findChild(plotAreaEl, SCATTER_CHART_TAG);
-  if (scatter) return parseScatterChart(scatter);
-  const radar = findChild(plotAreaEl, RADAR_CHART_TAG);
-  if (radar) return parseRadarChart(radar);
-  const bubble = findChild(plotAreaEl, BUBBLE_CHART_TAG);
-  if (bubble) return parseBubbleChart(bubble);
-  const stock = findChild(plotAreaEl, STOCK_CHART_TAG);
-  if (stock) return parseStockChart(stock);
-  const surface = findChild(plotAreaEl, SURFACE_CHART_TAG);
-  if (surface) return parseSurfaceChart(surface);
-  const ofPie = findChild(plotAreaEl, OF_PIE_CHART_TAG);
-  if (ofPie) return parseOfPieChart(ofPie);
-  const bar3D = findChild(plotAreaEl, BAR3D_CHART_TAG);
-  if (bar3D) return parseBar3DChart(bar3D);
-  const line3D = findChild(plotAreaEl, LINE3D_CHART_TAG);
-  if (line3D) return parseLine3DChart(line3D);
-  const pie3D = findChild(plotAreaEl, PIE3D_CHART_TAG);
-  if (pie3D) return parsePie3DChart(pie3D);
-  const area3D = findChild(plotAreaEl, AREA3D_CHART_TAG);
-  if (area3D) return parseArea3DChart(area3D);
-  const surface3D = findChild(plotAreaEl, SURFACE3D_CHART_TAG);
-  if (surface3D) return parseSurface3DChart(surface3D);
-  throw new OpenXmlSchemaError('parseChartXml: no supported chart kind found inside <plotArea>');
+const PLOT_CHART_PARSERS: ReadonlyMap<string, (el: XmlNode) => ChartKind> = new Map<string, (el: XmlNode) => ChartKind>([
+  [BAR_CHART_TAG, parseBarChart],
+  [LINE_CHART_TAG, parseLineChart],
+  [AREA_CHART_TAG, parseAreaChart],
+  [PIE_CHART_TAG, parsePieChart],
+  [DOUGHNUT_CHART_TAG, parseDoughnutChart],
+  [SCATTER_CHART_TAG, parseScatterChart],
+  [RADAR_CHART_TAG, parseRadarChart],
+  [BUBBLE_CHART_TAG, parseBubbleChart],
+  [STOCK_CHART_TAG, parseStockChart],
+  [SURFACE_CHART_TAG, parseSurfaceChart],
+  [OF_PIE_CHART_TAG, parseOfPieChart],
+  [BAR3D_CHART_TAG, parseBar3DChart],
+  [LINE3D_CHART_TAG, parseLine3DChart],
+  [PIE3D_CHART_TAG, parsePie3DChart],
+  [AREA3D_CHART_TAG, parseArea3DChart],
+  [SURFACE3D_CHART_TAG, parseSurface3DChart],
+]);
+
+/** Every chart group inside `<c:plotArea>`, in document order (a combo chart has several). */
+const parsePlotCharts = (plotAreaEl: XmlNode): [ChartKind, ...ChartKind[]] => {
+  const charts: ChartKind[] = [];
+  for (const child of plotAreaEl.children) {
+    const parse = PLOT_CHART_PARSERS.get(child.name);
+    if (parse) charts.push(parse(child));
+  }
+  const [first, ...rest] = charts;
+  if (!first) throw new OpenXmlSchemaError('parseChartXml: no supported chart kind found inside <plotArea>');
+  return [first, ...rest];
+};
+
+/** Split axis elements into the one the primary chart group uses and the rest. */
+const splitPrimaryAxis = (els: XmlNode[], primaryAxIds: ReadonlySet<number>): { primary?: XmlNode; rest: XmlNode[] } => {
+  const primary = els.find((el) => {
+    const id = intVal(findChild(el, AX_ID_TAG));
+    return id !== undefined && primaryAxIds.has(id);
+  }) ?? els[0];
+  return { ...(primary ? { primary } : {}), rest: els.filter((el) => el !== primary) };
 };
 
 const VALID_LAYOUT_MODES: ReadonlyArray<string> = ['edge', 'factor'];
@@ -1510,6 +1517,22 @@ const parseValueAxis = (axEl: XmlNode): ValueAxis => {
   };
 };
 
+const parseLegendEntries = (legendEl: XmlNode): LegendEntry[] => {
+  const out: LegendEntry[] = [];
+  for (const el of findChildren(legendEl, LEGEND_ENTRY_TAG)) {
+    const idx = intVal(findChild(el, IDX_TAG));
+    if (idx === undefined) throw new OpenXmlSchemaError('parseChartXml: <legendEntry> missing <idx>');
+    if (boolVal(findChild(el, DELETE_TAG)) === true) {
+      out.push({ idx, delete: true });
+      continue;
+    }
+    const txPr = parseTxPrSlot(el);
+    // An entry that neither hides nor restyles its row changes nothing, so it isn't kept.
+    if (txPr) out.push({ idx, txPr });
+  }
+  return out;
+};
+
 /** Parse a `xl/charts/chartN.xml` payload. */
 export function parseChartXml(bytes: Uint8Array | string): ChartSpace {
   const root = parseXml(bytes);
@@ -1520,18 +1543,25 @@ export function parseChartXml(bytes: Uint8Array | string): ChartSpace {
   if (!chartEl) throw new OpenXmlSchemaError('parseChartXml: <chartSpace> missing <chart>');
   const plotAreaEl = findChild(chartEl, PLOT_AREA_TAG);
   if (!plotAreaEl) throw new OpenXmlSchemaError('parseChartXml: <chart> missing <plotArea>');
-  const chart = parsePlotChart(plotAreaEl);
-  const catAxEl = findChild(plotAreaEl, CAT_AX_TAG);
+  const [chart, ...additionalCharts] = parsePlotCharts(plotAreaEl);
+  const primaryAxIds = new Set<number>('axIds' in chart ? chart.axIds : []);
+  const catAxes = splitPrimaryAxis(findChildren(plotAreaEl, CAT_AX_TAG), primaryAxIds);
   // Scatter and bubble charts have two value axes; the X one is first in the chart's axId list.
   const valAxEls = findChildren(plotAreaEl, VAL_AX_TAG);
   const xAxId = 'axIds' in chart && (chart.kind === 'scatter' || chart.kind === 'bubble') ? chart.axIds?.[0] : undefined;
   const xValAxEl = xAxId === undefined || valAxEls.length < 2 ? undefined : valAxEls.find((el) => intVal(findChild(el, AX_ID_TAG)) === xAxId);
-  const valAxEl = valAxEls.find((el) => el !== xValAxEl);
+  const valAxes = splitPrimaryAxis(
+    valAxEls.filter((el) => el !== xValAxEl),
+    primaryAxIds,
+  );
   const plotAreaSpPr = parseSpPrSlot(plotAreaEl);
   const plotArea: PlotArea = {
     chart,
-    ...(catAxEl ? { catAx: parseCategoryAxis(catAxEl) } : {}),
-    ...(valAxEl ? { valAx: parseValueAxis(valAxEl) } : {}),
+    ...(additionalCharts.length > 0 ? { additionalCharts } : {}),
+    ...(catAxes.primary ? { catAx: parseCategoryAxis(catAxes.primary) } : {}),
+    ...(valAxes.primary ? { valAx: parseValueAxis(valAxes.primary) } : {}),
+    ...(catAxes.rest.length > 0 ? { additionalCatAx: catAxes.rest.map(parseCategoryAxis) } : {}),
+    ...(valAxes.rest.length > 0 ? { additionalValAx: valAxes.rest.map(parseValueAxis) } : {}),
     ...(xValAxEl ? { xValAx: parseValueAxis(xValAxEl) } : {}),
     ...((): { dateAx?: DateAxis; serAx?: SeriesAxis; layout?: Layout } => {
       const out: { dateAx?: DateAxis; serAx?: SeriesAxis; layout?: Layout } = {};
@@ -1559,8 +1589,10 @@ export function parseChartXml(bytes: Uint8Array | string): ChartSpace {
     const legendTxPr = parseTxPrSlot(legendEl);
     const legendLayoutEl = findChild(legendEl, LAYOUT_TAG);
     const legendLayout = legendLayoutEl ? parseLayout(legendLayoutEl) : undefined;
+    const legendEntry = parseLegendEntries(legendEl);
     legend = {
       position: posRaw ?? 'r',
+      ...(legendEntry.length > 0 ? { legendEntry } : {}),
       ...(overlay !== undefined ? { overlay } : {}),
       ...(legendLayout ? { layout: legendLayout } : {}),
       ...(legendSpPr ? { spPr: legendSpPr } : {}),
@@ -2106,20 +2138,46 @@ const serializeChartKind = (chart: ChartKind): string => {
 
 const serializePlotArea = (plotArea: PlotArea): string => {
   const parts: string[] = ['<c:plotArea>', serializeLayout(plotArea.layout)];
+  const additionalCharts = plotArea.additionalCharts ?? [];
   parts.push(serializeChartKind(plotArea.chart));
+  for (const chart of additionalCharts) parts.push(serializeChartKind(chart));
   // Excel rejects charts that reference axIds in a chart-kind element but don't
   // define matching catAx/valAx siblings under plotArea. Fill in sensible
-  // defaults when callers omit them.
-  const axes = inferAxesForChart(plotArea);
-  for (const ax of axes) parts.push(ax);
-  if (plotArea.dateAx) parts.push(serializeAxis('dateAx', plotArea.dateAx));
-  if (plotArea.serAx) parts.push(serializeAxis('serAx', plotArea.serAx));
+  // defaults for the primary chart group when callers omit them.
+  const axes: Array<{ tag: AxisTag; axis: AxisLike }> = [
+    ...inferAxesForChart(plotArea),
+    ...(plotArea.additionalCatAx ?? []).map((axis) => ({ tag: 'catAx' as const, axis })),
+    ...(plotArea.additionalValAx ?? []).map((axis) => ({ tag: 'valAx' as const, axis })),
+  ];
+  if (plotArea.dateAx) axes.push({ tag: 'dateAx', axis: plotArea.dateAx });
+  if (plotArea.serAx) axes.push({ tag: 'serAx', axis: plotArea.serAx });
+  assertAdditionalChartAxesDefined(additionalCharts, axes);
+  for (const { tag, axis } of axes) parts.push(serializeAxis(tag, axis));
   if (plotArea.spPr) parts.push(serializeShapeProperties(plotArea.spPr));
   parts.push('</c:plotArea>');
   return parts.join('');
 };
 
-const inferAxesForChart = (plotArea: PlotArea): string[] => {
+// The primary group gets default axes, but an additional group's axIds can only be
+// satisfied by axes the caller passed; a dangling id makes Excel refuse the file.
+const assertAdditionalChartAxesDefined = (
+  charts: ReadonlyArray<ChartKind>,
+  axes: ReadonlyArray<{ axis: AxisLike }>,
+): void => {
+  const defined = new Set(axes.map(({ axis }) => axis.axId));
+  for (const chart of charts) {
+    if (!('axIds' in chart)) {
+      throw new OpenXmlSchemaError(`chartToBytes: a "${chart.kind}" chart has no axes and can't be an additional chart group`);
+    }
+    for (const id of chart.axIds) {
+      if (!defined.has(id)) {
+        throw new OpenXmlSchemaError(`chartToBytes: additional "${chart.kind}" chart references axis ${id}, which the plot area doesn't define`);
+      }
+    }
+  }
+};
+
+const inferAxesForChart = (plotArea: PlotArea): Array<{ tag: AxisTag; axis: AxisLike }> => {
   const chart = plotArea.chart;
   if (!('axIds' in chart)) return [];
   const ids = chart.axIds;
@@ -2128,16 +2186,24 @@ const inferAxesForChart = (plotArea: PlotArea): string[] => {
   const isXValueAxis = chart.kind === 'scatter' || chart.kind === 'bubble';
   const cat = (isXValueAxis ? plotArea.xValAx : undefined) ?? plotArea.catAx ?? { axId: ids[0], crossAx: ids[1], position: 'b' as const };
   const val = plotArea.valAx ?? { axId: ids[1], crossAx: ids[0], position: 'l' as const };
-  const out: string[] = [];
-  out.push(serializeAxis(isXValueAxis ? 'valAx' : 'catAx', cat));
-  out.push(serializeAxis('valAx', val));
-  return out;
+  return [
+    { tag: isXValueAxis ? 'valAx' : 'catAx', axis: cat },
+    { tag: 'valAx', axis: val },
+  ];
 };
 
 const serializeLegend = (legend: Legend): string => {
   // ECMA-376 sequence inside <c:legend>: legendPos, legendEntry*, layout?,
   // overlay?, spPr?, txPr?.
   const parts: string[] = ['<c:legend>', `<c:legendPos val="${legend.position}"/>`];
+  for (const entry of legend.legendEntry ?? []) {
+    parts.push(
+      '<c:legendEntry>',
+      `<c:idx val="${entry.idx}"/>`,
+      'delete' in entry ? '<c:delete val="1"/>' : serializeTextBody(entry.txPr, 'c:txPr'),
+      '</c:legendEntry>',
+    );
+  }
   if (legend.layout) parts.push(serializeLayout(legend.layout));
   if (legend.overlay !== undefined) parts.push(`<c:overlay val="${legend.overlay ? '1' : '0'}"/>`);
   if (legend.spPr) parts.push(serializeShapeProperties(legend.spPr));
