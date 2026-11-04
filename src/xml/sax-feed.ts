@@ -11,6 +11,7 @@ import type { SaxesAttributeNS, SaxesParser } from 'saxes';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
 import type { SaxInput } from './iterparse.js';
 import { qname } from './namespaces.js';
+import { isUint8Array } from '../utils/bytes.js';
 
 /**
  * Recognize declarations only in the prologue, skipping comments and processing
@@ -113,7 +114,7 @@ async function* decodedChunks(input: SaxInput): AsyncIterableIterator<string> {
     return;
   }
   const td = decoder();
-  if (input instanceof Uint8Array) {
+  if (isUint8Array(input)) {
     yield* decodeAtFeedSize(input, td);
   } else if (isReadableStream(input)) {
     const reader = input.getReader();

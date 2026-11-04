@@ -14,6 +14,7 @@ import { Readable, Writable } from 'node:stream';
 import { OpenXmlIoError } from '../utils/exceptions.js';
 import type { BufferedSinkWriter, XlsxSink } from './sink.js';
 import type { XlsxSource } from './source.js';
+import { isUint8Array } from '../utils/bytes.js';
 
 const EMPTY_BYTES = new Uint8Array(0);
 
@@ -136,7 +137,7 @@ export function toFile(path: string): XlsxSink & { toBytes(): BufferedSinkWriter
       return {
         write(chunk: Uint8Array): void {
           if (finalised !== undefined) throw new OpenXmlIoError(`toFile sink: write after finish ("${path}")`);
-          if (!(chunk instanceof Uint8Array)) {
+          if (!isUint8Array(chunk)) {
             throw new OpenXmlIoError(`toFile sink: chunk is not a Uint8Array ("${path}")`);
           }
           if (pendingError) throw new OpenXmlIoError(`toFile sink: write error on "${path}"`, { cause: pendingError });
@@ -214,7 +215,7 @@ export function fromReadable(readable: Readable): XlsxSource {
       bytes = (async () => {
         const chunks: Uint8Array[] = [];
         for await (const c of readable) {
-          chunks.push(c instanceof Uint8Array ? c : new Uint8Array(c));
+          chunks.push(isUint8Array(c) ? c : new Uint8Array(c));
         }
         let total = 0;
         for (const c of chunks) total += c.byteLength;
@@ -261,7 +262,7 @@ export function toWritable(writable: Writable): XlsxSink & { toBytes(): Buffered
       return {
         write(chunk: Uint8Array): void {
           if (finalised !== undefined) throw new OpenXmlIoError('toWritable sink: write after finish');
-          if (!(chunk instanceof Uint8Array)) throw new OpenXmlIoError('toWritable sink: chunk is not a Uint8Array');
+          if (!isUint8Array(chunk)) throw new OpenXmlIoError('toWritable sink: chunk is not a Uint8Array');
           if (pendingError) throw new OpenXmlIoError('toWritable sink: write error', { cause: pendingError });
           writeQueue = writeQueue.then(async () => {
             if (pendingError) return;

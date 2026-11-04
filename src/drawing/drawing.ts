@@ -153,6 +153,7 @@ export function makeShapeDrawingItem(anchor: DrawingAnchor, shape: ShapeReferenc
 import { loadImage } from './image.js';
 import { makeOneCellAnchor } from './anchor.js';
 import type { Worksheet } from '../worksheet/worksheet.js';
+import { isUint8Array } from '../utils/bytes.js';
 
 /**
  * Drop an image onto a worksheet at a single-cell anchor. Lazy-allocates
@@ -172,7 +173,7 @@ export const addImageAt = (
   image: XlsxImage | Uint8Array,
   opts: { widthPx?: number; heightPx?: number } = {},
 ): DrawingItem => {
-  const xlsxImage: XlsxImage = image instanceof Uint8Array ? loadImage(image) : image;
+  const xlsxImage: XlsxImage = isUint8Array(image) ? loadImage(image) : image;
   const anchor = makeOneCellAnchor({
     from: at,
     widthPx: opts.widthPx ?? 96,

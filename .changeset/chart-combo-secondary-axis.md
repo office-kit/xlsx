@@ -9,3 +9,5 @@ feat(chart): `Legend.legendEntry` hides (`{ idx, delete: true }`) or restyles (`
 fix(chart): a series named with an empty literal (`<c:tx><c:v/></c:tx>`) lost its name on load, so re-saving put the helper series that name hides back into the legend.
 
 fix(chart): a chart number format containing double quotes (for example `0.0"%"` or `0,"万"`) was written into the `formatCode` attribute unescaped, so Excel reported the file as damaged.
+
+fix(io): saving and loading rejected byte arrays created in another JavaScript realm — for example `TextEncoder` output or file bytes under a jsdom test environment — with "ReadableStream entries are not yet supported" or "fromBuffer expects a Buffer or Uint8Array".

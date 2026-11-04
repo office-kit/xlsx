@@ -8,6 +8,7 @@
 import { OpenXmlIoError } from '../utils/exceptions.js';
 import type { BufferedSinkWriter, XlsxSink } from './sink.js';
 import type { XlsxSource } from './source.js';
+import { isArrayBuffer, isUint8Array } from '../utils/bytes.js';
 
 /**
  * Wrap a Blob (or File, since File extends Blob) as an XlsxSource. The
@@ -134,9 +135,9 @@ export function fromStream(stream: ReadableStream<Uint8Array>): XlsxSource {
  */
 export function fromArrayBuffer(buf: ArrayBuffer | Uint8Array): XlsxSource {
   let bytes: Uint8Array;
-  if (buf instanceof Uint8Array) {
+  if (isUint8Array(buf)) {
     bytes = buf;
-  } else if (buf instanceof ArrayBuffer) {
+  } else if (isArrayBuffer(buf)) {
     bytes = new Uint8Array(buf);
   } else {
     throw new OpenXmlIoError('fromArrayBuffer expects an ArrayBuffer or Uint8Array');
@@ -190,7 +191,7 @@ export function toBlob(
       return {
         write(chunk: Uint8Array): void {
           if (finalised !== undefined) throw new OpenXmlIoError('toBlob sink: write after finish');
-          if (!(chunk instanceof Uint8Array)) throw new OpenXmlIoError('toBlob sink: chunk is not a Uint8Array');
+          if (!isUint8Array(chunk)) throw new OpenXmlIoError('toBlob sink: chunk is not a Uint8Array');
           chunks.push(chunk);
         },
         async finish(): Promise<Uint8Array> {
@@ -229,7 +230,7 @@ export function toArrayBuffer(): XlsxSink & { toBytes(): BufferedSinkWriter; res
       return {
         write(chunk: Uint8Array): void {
           if (finalised !== undefined) throw new OpenXmlIoError('toArrayBuffer sink: write after finish');
-          if (!(chunk instanceof Uint8Array)) throw new OpenXmlIoError('toArrayBuffer sink: chunk is not a Uint8Array');
+          if (!isUint8Array(chunk)) throw new OpenXmlIoError('toArrayBuffer sink: chunk is not a Uint8Array');
           chunks.push(chunk);
         },
         async finish(): Promise<Uint8Array> {
