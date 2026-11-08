@@ -1,5 +1,11 @@
 # @office-kit/xlsx
 
+## 0.26.1
+
+### Patch Changes
+
+- [#315](https://github.com/office-kit/xlsx/pull/315) [`27c42da`](https://github.com/office-kit/xlsx/commit/27c42da157aac469d58caf06ae63141744fe0d6a) Thanks [@aqeelat](https://github.com/aqeelat)! - perf(worksheet): coalesce adjacent columns with identical properties into a single `<col>` range when serializing `<cols>`, on both the modelled and the write-only writer. A uniform band (for example 2,451 columns at `width="0.3"`) now emits one `<col min max>` element instead of thousands, shrinking the worksheet part and speeding up reloads. Entries are merged only at serialization time — the `columnDimensions` map, the public API, and files with differing properties or gaps are unchanged, and output stays functionally equivalent in Excel.
+
 ## 0.26.0
 
 ### Minor Changes
