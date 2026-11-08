@@ -611,7 +611,26 @@ const maxOutlineLevel = (
 const serializeCols = (cols: ReadonlyMap<number, ColumnDimension>): string => {
   const sorted = [...cols.values()].sort((a, b) => a.min - b.min);
   const parts: string[] = ['<cols>'];
-  for (const dim of sorted) parts.push(serializeColumnDimension(dim));
+  // Contiguous entries that would emit identical attributes merge into one
+  // <col> range, so a uniform band of columns serializes as a single element
+  // instead of thousands. Comparing the serialized attributes (not the raw
+  // fields) keeps the width default and the customWidth auto-emit inside the
+  // equivalence. The worksheet's map is read, never rewritten.
+  let run: ColumnDimension | undefined;
+  let runAttrs = '';
+  let runMax = 0;
+  for (const dim of sorted) {
+    const attrs = columnAttrs(dim);
+    if (run !== undefined && dim.min === runMax + 1 && attrs === runAttrs) {
+      runMax = dim.max;
+      continue;
+    }
+    if (run !== undefined) parts.push(`<col min="${run.min}" max="${runMax}"${runAttrs}/>`);
+    run = dim;
+    runAttrs = attrs;
+    runMax = dim.max;
+  }
+  if (run !== undefined) parts.push(`<col min="${run.min}" max="${runMax}"${runAttrs}/>`);
   parts.push('</cols>');
   return parts.join('');
 };
@@ -630,8 +649,8 @@ const assertWritableSize = (element: string, attr: string, value: number): void 
   }
 };
 
-const serializeColumnDimension = (dim: ColumnDimension): string => {
-  let attrs = ` min="${dim.min}" max="${dim.max}"`;
+const columnAttrs = (dim: ColumnDimension): string => {
+  let attrs = '';
   // Excel rejects `<col>` without `width` — even hidden columns need it.
   // Default to the workbook's stock 9.140625 (Calibri 11pt) so the viewport
   // width stays consistent with what Excel itself emits.
@@ -647,7 +666,7 @@ const serializeColumnDimension = (dim: ColumnDimension): string => {
   if (dim.customWidth || dim.width !== undefined) attrs += ' customWidth="1"';
   if (dim.outlineLevel !== undefined) attrs += ` outlineLevel="${dim.outlineLevel}"`;
   if (dim.collapsed) attrs += ' collapsed="1"';
-  return `<col${attrs}/>`;
+  return attrs;
 };
 
 const serializeConditionalFormatting = (cf: ConditionalFormatting): string => {

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { fromBuffer, toBuffer } from '../../src/io/node.js';
 import { loadWorkbook } from '../../src/io/load.js';
 import { createWriteOnlyWorkbook } from '../../src/streaming/write-only.js';
+import { getColumnDimension } from '../../src/worksheet/index.js';
 import { iterRows } from '../../src/worksheet/worksheet.js';
 
 const collect = async (
@@ -216,6 +217,57 @@ describe('createWriteOnlyWorkbook — column widths', () => {
     if (!ws || ws.kind !== 'worksheet') throw new Error('expected worksheet');
     expect(ws.sheet.columnDimensions.get(1)?.width).toBe(25.5);
     expect(ws.sheet.columnDimensions.get(3)?.width).toBe(10);
+  });
+
+  it('coalesces contiguous equal widths into ranges', async () => {
+    const bytes = await writeWorkbook(async (wb) => {
+      const ws = await wb.addWorksheet('Wide');
+      ws.setColumnWidth(1, 25.5);
+      ws.setColumnWidth(2, 25.5);
+      ws.setColumnWidth(4, 10);
+      await ws.appendRow(['a', 'b', 'c']);
+      await ws.close();
+    });
+    const wb2 = await loadWorkbook(fromBuffer(bytes));
+    const ws = wb2.sheets[0];
+    if (!ws || ws.kind !== 'worksheet') throw new Error('expected worksheet');
+    const runs = [...ws.sheet.columnDimensions.values()].map((d) => [d.min, d.max, d.width]);
+    expect(runs).toEqual([
+      [1, 2, 25.5],
+      [4, 4, 10],
+    ]);
+    expect(getColumnDimension(ws.sheet, 2)?.width).toBe(25.5);
+  });
+
+  it('keeps a zero-width column 1 out of the sentinel run', async () => {
+    const bytes = await writeWorkbook(async (wb) => {
+      const ws = await wb.addWorksheet('Wide');
+      ws.setColumnWidth(1, 0);
+      await ws.appendRow(['a', 'b', 'c']);
+      await ws.close();
+    });
+    const wb2 = await loadWorkbook(fromBuffer(bytes));
+    const ws = wb2.sheets[0];
+    if (!ws || ws.kind !== 'worksheet') throw new Error('expected worksheet');
+    expect(getColumnDimension(ws.sheet, 1)?.width).toBe(0);
+  });
+
+  it('keeps a zero-width column 1 when a different width follows', async () => {
+    const bytes = await writeWorkbook(async (wb) => {
+      const ws = await wb.addWorksheet('Wide');
+      ws.setColumnWidth(1, 0);
+      ws.setColumnWidth(2, 5);
+      await ws.appendRow(['a', 'b', 'c']);
+      await ws.close();
+    });
+    const wb2 = await loadWorkbook(fromBuffer(bytes));
+    const ws = wb2.sheets[0];
+    if (!ws || ws.kind !== 'worksheet') throw new Error('expected worksheet');
+    const runs = [...ws.sheet.columnDimensions.values()].map((d) => [d.min, d.max, d.width]);
+    expect(runs).toEqual([
+      [1, 1, 0],
+      [2, 2, 5],
+    ]);
   });
 });
 
