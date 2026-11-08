@@ -1,0 +1,5 @@
+---
+'@office-kit/xlsx': minor
+---
+
+feat(worksheet): `insertRows(wb, ws, at, count?)` and `deleteRows(wb, ws, at, count?)` insert and delete whole rows the way Excel does ([#313](https://github.com/office-kit/xlsx/issues/313)). Everything that carries a row position follows: cells, row heights, merges, hyperlinks, notes, threaded comments, data validations, conditional formats, tables, the AutoFilter, sort state, protected ranges, selections, page breaks, sparklines, pictures and charts, pivot tables and defined names (print areas included). Every formula in the workbook that points at the sheet is rewritten: references move with their cells, a range that straddles the edit grows or shrinks, and a reference to deleted cells becomes `#REF!`. Inserted rows take the height and cell styles of the row above. An edit that would leave a wrong file — cutting through an array formula or a pivot table, deleting a table's header row or a pivot's whole source, or moving a sheet that holds a pivot table the library cannot model or OLE objects / form controls — throws `OpenXmlSchemaError` and leaves the workbook unchanged.

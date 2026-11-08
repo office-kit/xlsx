@@ -271,3 +271,4 @@ export type {
   SparklineType,
 } from './sparklines.js';
 export { makeSparklineGroup } from './sparklines.js';
+export { deleteRows, insertRows } from './structure.js';

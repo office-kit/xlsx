@@ -149,6 +149,16 @@ Every style primitive has a `make*` constructor — `makeFont`,
 | `ws.max_row`              | `getMaxRow(ws)`                       |
 | `ws.max_column`           | `getMaxCol(ws)`                       |
 | `ws.dimensions`           | `getCellExtentRef(ws)`                |
+| `ws.insert_rows(5, 2)`    | `insertRows(wb, ws, 5, 2)`            |
+| `ws.delete_rows(5, 2)`    | `deleteRows(wb, ws, 5, 2)`            |
+
+`insertRows` / `deleteRows` differ from openpyxl's on purpose: openpyxl moves
+only the cells, while these move everything that carries a row position
+(merges, row heights, validations, conditional formats, tables, charts,
+defined names, …) and rewrite every formula in the workbook that points at the
+sheet, the way Excel does. An edit they cannot carry out correctly (cutting
+through an array formula, deleting a table's header row, …) throws and leaves
+the workbook unchanged.
 
 Sheet titles are validated at save time against Excel's rules (1–31 chars,
 forbidden `: \ / ? * [ ]`, no leading/trailing apostrophe, reserved name
