@@ -4,10 +4,11 @@
 //
 // **Stage 1**: width / height / hidden / customWidth / customHeight / bestFit /
 // outlineLevel + style fall-back. The reader keeps one entry per `<col>`
-// element and the writer emits one `<col>` per entry, sorted by `min`; neither
-// side merges adjacent equal entries or splits a wide one. A loaded sheet can
-// therefore hold runs spanning thousands of columns, and editing one column
-// inside such a run splits it rather than dropping it.
+// element; the writer sorts entries by `min` and coalesces contiguous ones
+// whose emitted attributes are identical into a single wider `<col>` (the
+// map itself is never rewritten). Neither side splits a wide run on load, so
+// a loaded sheet can hold runs spanning thousands of columns, and editing one
+// column inside such a run splits it rather than dropping it.
 
 /**
  * Single-column-or-range dimension entry. Mirrors the OOXML `<col>` element.
