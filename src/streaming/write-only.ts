@@ -21,8 +21,9 @@ import { OpenXmlIoError, OpenXmlSchemaError } from '../utils/exceptions.js';
 import { utf8ByteLength } from '../utils/utf8.js';
 import { makeSharedStrings } from '../workbook/shared-strings.js';
 import { validateSheetTitle } from '../workbook/workbook.js';
+import type { ColumnDimension } from '../worksheet/dimensions.js';
 import { isUsableDimensionSize } from '../worksheet/worksheet.js';
-import { serializeCell } from '../worksheet/writer.js';
+import { serializeCell, serializeCols } from '../worksheet/writer.js';
 import {
   ARC_CONTENT_TYPES,
   ARC_ROOT_RELS,
@@ -176,30 +177,9 @@ const makeWriteOnlyWorksheet = (state: WorkbookState, title: string, sheetId: nu
     let header = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
     header += `<worksheet xmlns="${SHEET_MAIN_NS}" xmlns:r="${REL_NS}">`;
     if (columnWidths.size > 0) {
-      header += '<cols>';
-      const sorted = [...columnWidths.entries()].sort((a, b) => a[0] - b[0]);
-      // Contiguous columns of equal width merge into one <col> range — the
-      // same coalescing the modelled writer's serializeCols applies. Widths
-      // are validated >= 0, so -1 marks "no run yet" without colliding with a
-      // real first run (column 1 at width 0).
-      let min = 0;
-      let max = 0;
-      let width = -1;
-      const emitRun = (): void => {
-        header += `<col min="${min}" max="${max}" width="${width}" customWidth="1"/>`;
-      };
-      for (const [col, w] of sorted) {
-        if (col === max + 1 && w === width) {
-          max = col;
-          continue;
-        }
-        if (min > 0) emitRun();
-        min = col;
-        max = col;
-        width = w;
-      }
-      if (min > 0) emitRun();
-      header += '</cols>';
+      const cols = new Map<number, ColumnDimension>();
+      for (const [col, width] of columnWidths) cols.set(col, { min: col, max: col, width });
+      header += serializeCols(cols);
     }
     header += '<sheetData>';
     writeText(header);

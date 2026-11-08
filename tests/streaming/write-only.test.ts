@@ -239,7 +239,7 @@ describe('createWriteOnlyWorkbook — column widths', () => {
     expect(getColumnDimension(ws.sheet, 2)?.width).toBe(25.5);
   });
 
-  it('keeps a zero-width column 1 out of the sentinel run', async () => {
+  it('keeps a lone zero-width column 1', async () => {
     const bytes = await writeWorkbook(async (wb) => {
       const ws = await wb.addWorksheet('Wide');
       ws.setColumnWidth(1, 0);
