@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { makeArrayFormula, makeFormula, makeSharedFormula } from '../../src/cell/cell.js';
 import { makeBarChart, makeBarSeries, makeChartSpace } from '../../src/chart/chart.js';
@@ -7,12 +9,13 @@ import { registerCellStyle } from '../../src/styles/cell-style.js';
 import { fromBuffer } from '../../src/io/node.js';
 import { workbookToBytes } from '../../src/io/save.js';
 import { addDefinedName } from '../../src/workbook/defined-names.js';
-import { addWorksheet, createWorkbook, type Workbook } from '../../src/workbook/workbook.js';
+import { addWorksheet, createWorkbook, getSheet, type Workbook } from '../../src/workbook/workbook.js';
 import { makeConditionalFormatting, makeCfRule } from '../../src/worksheet/conditional-formatting.js';
 import { makeDataValidation } from '../../src/worksheet/data-validations.js';
 import { addPivotTable } from '../../src/worksheet/pivot-table.js';
 import { makeSparklineGroup } from '../../src/worksheet/sparklines.js';
 import { deleteRows, insertRows } from '../../src/worksheet/structure.js';
+import { rangeToString } from '../../src/worksheet/cell-range.js';
 import { addExcelTable } from '../../src/worksheet/table.js';
 import {
   addConditionalFormatting,
@@ -353,6 +356,70 @@ describe('formulas anchored at a range', () => {
     expect(ws.dataValidations[0]?.formula1).toBe('C5<>#REF!');
   });
 
+  const formatted = (sqref: string, formula: string) => {
+    const wb = createWorkbook();
+    const ws = addWorksheet(wb, 'S');
+    addConditionalFormatting(ws, makeConditionalFormatting({ sqref, rules: [makeCfRule({ type: 'expression', priority: 1, formulas: [formula] })] }));
+    addDataValidation(ws, makeDataValidation({ type: 'custom', sqref, formula1: formula }));
+    const parts = () => ({
+      cf: ws.conditionalFormatting.map((cf) => [cf.sqref.ranges.map(rangeToString).join(' '), cf.rules[0]?.formulas[0], cf.rules[0]?.priority]),
+      dv: ws.dataValidations.map((dv) => [dv.sqref.ranges.map(rangeToString).join(' '), dv.formula1]),
+    });
+    return { wb, ws, parts };
+  };
+
+  it('grows a format or validation ending right above inserted rows over them', () => {
+    const { wb, ws, parts } = formatted('H2:H3', 'H2>0');
+    insertRows(wb, ws, 4);
+    expect(parts()).toEqual({ cf: [['H2:H4', 'H2>0', 1]], dv: [['H2:H4', 'H2>0']] });
+  });
+
+  it('splits a format whose relative references no longer agree across the edit', () => {
+    // B6 (was B5) still compares with B4; every other cell with the row above.
+    const { wb, ws, parts } = formatted('B2:B10', 'B2>B1');
+    insertRows(wb, ws, 5);
+    expect(parts()).toEqual({
+      cf: [
+        ['B2:B5 B7:B11', 'B2>B1', 1],
+        ['B6', 'B6>B4', 1],
+      ],
+      dv: [
+        ['B2:B5 B7:B11', 'B2>B1'],
+        ['B6', 'B6>B4'],
+      ],
+    });
+  });
+
+  it('splits at the edit where the cells above and below now read different offsets', () => {
+    const { wb, ws, parts } = formatted('B10:B12', 'A11>0');
+    insertRows(wb, ws, 11);
+    expect(parts().dv).toEqual([
+      ['B10:B11', 'A12>0'],
+      ['B12:B13', 'A13>0'],
+    ]);
+  });
+
+  it('keeps a reference reaching left at one offset, as Excel does', () => {
+    const { wb, ws, parts } = formatted('B5:B10', 'A4>0');
+    insertRows(wb, ws, 5);
+    expect(parts().dv).toEqual([['B6:B11', 'A4>0']]);
+  });
+
+  it('keeps a format anchored on rows inserted at the top of a table body', () => {
+    const wb = createWorkbook();
+    const ws = addWorksheet(wb, 'S');
+    setCell(ws, 3, 1, 'h');
+    for (let r = 4; r <= 8; r++) setCell(ws, r, 1, r);
+    addExcelTable(wb, ws, { name: 'T', ref: 'A3:A8', columns: ['h'] });
+    setCell(ws, 1, 3, makeFormula('SUM(A4:A8)'));
+    addConditionalFormatting(ws, makeConditionalFormatting({ sqref: 'A4:A8', rules: [makeCfRule({ type: 'expression', priority: 1, formulas: ['A4>0'] })] }));
+    insertRows(wb, ws, 4);
+    expect(formulaAt(ws, 'C1')).toBe('SUM(A4:A9)');
+    expect(ws.tables[0]?.ref).toBe('A3:A9');
+    expect(ws.conditionalFormatting[0]?.sqref.ranges.map(rangeToString)).toEqual(['A4:A9']);
+    expect(ws.conditionalFormatting[0]?.rules[0]?.formulas).toEqual(['A4>0']);
+  });
+
   it('keeps a picture deleted with its rows at the top of the next row', () => {
     const wb = createWorkbook();
     const ws = addWorksheet(wb, 'S');
@@ -361,5 +428,68 @@ describe('formulas anchored at a range', () => {
     item.anchor.from.rowOff = 1000;
     deleteRows(wb, ws, 3, 4);
     expect(item.anchor.from).toMatchObject({ row: 2, rowOff: 0 });
+  });
+});
+
+describe('recalculation after an edit', () => {
+  const sample = 'reference/openpyxl/openpyxl/tests/data/genuine/sample.xlsx';
+
+  it.each([
+    ['insertRows', (wb: Workbook, ws: Worksheet) => insertRows(wb, ws, 1)],
+    ['deleteRows', (wb: Workbook, ws: Worksheet) => deleteRows(wb, ws, 1)],
+  ])('%s drops the stale calc chain and asks Excel to recalculate', async (_name, edit) => {
+    const wb = await loadWorkbook(fromBuffer(readFileSync(sample)));
+    const ws = getSheet(wb, 'Sheet3 - Formulas');
+    if (!ws) throw new Error('expected the formulas sheet');
+    edit(wb, ws);
+    const parts = unzipSync(await workbookToBytes(wb));
+    const text = (path: string): string => new TextDecoder().decode(parts[path]);
+    expect(parts['xl/calcChain.xml']).toBeUndefined();
+    expect(text('[Content_Types].xml')).not.toContain('calcChain');
+    expect(text('xl/_rels/workbook.xml.rels')).not.toContain('calcChain');
+    expect(text('xl/workbook.xml')).toMatch(/<calcPr[^>]*fullCalcOnLoad="1"/);
+  });
+
+  it('keeps the calc chain of a workbook that was not edited', async () => {
+    const wb = await loadWorkbook(fromBuffer(readFileSync(sample)));
+    expect(unzipSync(await workbookToBytes(wb))['xl/calcChain.xml']).toBeDefined();
+  });
+});
+
+describe('pivot tables the model does not carry', () => {
+  const fixture = 'reference/openpyxl/openpyxl/reader/tests/data/pivot.xlsx';
+  const part = (wb: Workbook, path: string): string => new TextDecoder().decode(wb.passthrough?.get(path));
+
+  it('moves the report with its rows', async () => {
+    const wb = await loadWorkbook(fromBuffer(readFileSync(fixture)));
+    const ws = getSheet(wb, 'ptsheet');
+    if (!ws) throw new Error('expected ptsheet');
+    insertRows(wb, ws, 1, 2);
+    expect(part(wb, 'xl/pivotTables/pivotTable1.xml')).toContain('<location ref="A5:E16"');
+    deleteRows(wb, ws, 1);
+    expect(part(wb, 'xl/pivotTables/pivotTable1.xml')).toContain('<location ref="A4:E15"');
+    expect(await validateXlsx(await workbookToBytes(wb))).toMatchObject({ status: 'valid' });
+  });
+
+  it('refuses to cut through the report', async () => {
+    const wb = await loadWorkbook(fromBuffer(readFileSync(fixture)));
+    const ws = getSheet(wb, 'ptsheet');
+    if (!ws) throw new Error('expected ptsheet');
+    expect(() => insertRows(wb, ws, 5)).toThrow(/cuts through pivot table/);
+    expect(() => deleteRows(wb, ws, 14)).toThrow(/cuts through pivot table/);
+    expect(part(wb, 'xl/pivotTables/pivotTable1.xml')).toContain('<location ref="A3:E14"');
+  });
+
+  it('grows and shrinks a source range on the edited sheet', async () => {
+    const wb = await loadWorkbook(fromBuffer(readFileSync(fixture)));
+    const cache = 'xl/pivotCache/pivotCacheDefinition1.xml';
+    wb.passthrough?.set(cache, new TextEncoder().encode(part(wb, cache).replace('<worksheetSource name="mydata"/>', '<worksheetSource ref="A1:E10" sheet="raw"/>')));
+    const raw = getSheet(wb, 'raw');
+    if (!raw) throw new Error('expected raw');
+    insertRows(wb, raw, 5, 2);
+    expect(part(wb, cache)).toContain('<worksheetSource ref="A1:E12" sheet="raw"/>');
+    deleteRows(wb, raw, 1, 3);
+    expect(part(wb, cache)).toContain('<worksheetSource ref="A1:E9" sheet="raw"/>');
+    expect(() => deleteRows(wb, raw, 1, 9)).toThrow(/whole source of the pivot cache/);
   });
 });

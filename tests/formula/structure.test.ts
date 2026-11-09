@@ -73,7 +73,35 @@ describe('adjustFormulaForRowEdit — deletion', () => {
     ['SUM(A1:A5)', 'SUM(A1:A4)'],
     ['SUM(4:6)', 'SUM(4:4)'],
     ['SUM(A:A)', 'SUM(A:A)'],
+    ['SUM(A3:A1048576)', 'SUM(A3:A1048576)'],
+    ['SUM(A8:A1048576)', 'SUM(A6:A1048576)'],
   ])('%s → %s (delete rows 5..6)', (input, output) => {
     expect(adjustFormulaForRowEdit(input, 'S', remove(5, 2))).toBe(output);
+  });
+});
+
+describe('adjustFormulaForRowEdit — table bodies', () => {
+  // Header at 3, data 4..8, totals at 9, columns A..C.
+  const table = { header: 3, firstData: 4, lastData: 8, totals: 9, minCol: 1, maxCol: 3 };
+  const at = (row: number): RowEdit => ({ sheet: 'S', at: row, count: 1, tables: [table] });
+
+  it.each([
+    ['SUM(A4:A8)', 'SUM(A4:A9)'],
+    ['SUM(A3:A8)', 'SUM(A3:A9)'],
+    ['SUM($A$4:$C$8)', 'SUM($A$4:$C$9)'],
+    ['SUM(A4:A7)', 'SUM(A5:A8)'],
+    ['SUM(A4:D8)', 'SUM(A5:D9)'],
+    ['SUM(D4:D8)', 'SUM(D5:D9)'],
+  ])('%s → %s (insert at the first data row)', (input, output) => {
+    expect(adjustFormulaForRowEdit(input, 'S', at(4))).toBe(output);
+  });
+
+  it.each([
+    ['SUM(A4:A8)', 'SUM(A4:A9)'],
+    ['SUM(A3:A8)', 'SUM(A3:A9)'],
+    ['SUM(A5:A8)', 'SUM(A5:A8)'],
+    ['SUM(A4:D8)', 'SUM(A4:D8)'],
+  ])('%s → %s (insert at the totals row)', (input, output) => {
+    expect(adjustFormulaForRowEdit(input, 'S', at(9))).toBe(output);
   });
 });

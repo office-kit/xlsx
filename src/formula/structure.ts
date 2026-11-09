@@ -5,7 +5,7 @@
 // straddling the edit grows or shrinks, and a reference whose every cell was
 // deleted becomes `#REF!` — Excel's rules.
 
-import { MAX_ROW } from '../utils/coordinate.js';
+import { columnIndexFromLetter, MAX_COL, MAX_ROW } from '../utils/coordinate.js';
 import { OPERAND, RANGE, TokenizerError, tokenize, WSPACE } from './tokenizer.js';
 
 const REF_ERROR = '#REF!';
@@ -17,6 +17,18 @@ export interface RowEdit {
   readonly at: number;
   /** > 0 inserts `count` rows before `at`; < 0 deletes `-count` rows starting at `at`. */
   readonly count: number;
+  /** The edited sheet's tables, for {@link adjustArea}. */
+  readonly tables?: ReadonlyArray<TableBand>;
+}
+
+/** Where a table's rows sit, 1-based. */
+export interface TableBand {
+  readonly header?: number;
+  readonly firstData: number;
+  readonly lastData: number;
+  readonly totals?: number;
+  readonly minCol: number;
+  readonly maxCol: number;
 }
 
 /**
@@ -34,8 +46,31 @@ export function adjustRowSpan(lo: number, hi: number, edit: RowEdit): [number, n
   const last = at - count - 1;
   if (lo >= at && hi <= last) return undefined;
   const newLo = lo < at ? lo : lo > last ? lo + count : at;
-  const newHi = hi < at ? hi : hi > last ? hi + count : at - 1;
+  // Pinned to the last row on deletion too, as Excel keeps `A5:A1048576`.
+  const newHi = hi === MAX_ROW ? MAX_ROW : hi < at ? hi : hi > last ? hi + count : at - 1;
   return [newLo, newHi];
+}
+
+/**
+ * {@link adjustRowSpan} for an area within columns [minCol, maxCol]. Excel
+ * reads an area covering a table's whole data body (with or without its
+ * header or totals row) as a reference to the table's columns, so rows
+ * inserted anywhere into the body — at the first data row or at the totals
+ * row included, where a plain range would shift or stay — widen it.
+ */
+export function adjustArea(lo: number, hi: number, minCol: number, maxCol: number, edit: RowEdit): [number, number] | undefined {
+  if (edit.count > 0) {
+    for (const t of edit.tables ?? []) {
+      if (minCol < t.minCol || maxCol > t.maxCol) continue;
+      const atStart = edit.at === t.firstData && t.header !== undefined;
+      const atTotals = edit.at === t.totals;
+      if (!atStart && !atTotals) continue;
+      const fromTop = lo === t.firstData || (lo === t.header && t.header !== undefined);
+      const toBottom = hi === t.lastData || (hi === t.totals && atStart);
+      if (fromTop && toBottom) return [lo, Math.min(hi + edit.count, MAX_ROW)];
+    }
+  }
+  return adjustRowSpan(lo, hi, edit);
 }
 
 // `Sheet!`, `'My sheet'!`. A `:` or `[` in the prefix is a 3-D or an external
@@ -61,6 +96,7 @@ const onGrid = (row: number): boolean => row >= 1 && row <= MAX_ROW;
 // Compared as text so a past-the-grid column never reaches the index parser.
 const LAST_COL = 'XFD';
 const colOnGrid = (letters: string): boolean => letters.length < LAST_COL.length || letters <= LAST_COL;
+const colIndex = (text: string): number => columnIndexFromLetter(text.replace('$', '').toUpperCase());
 
 function parseCell(text: string): { col: string; part: RowPart } | undefined {
   const m = CELL_RE.exec(text);
@@ -119,7 +155,8 @@ function adjustReferenceForRowEdit(operand: string, hostSheet: string | undefine
   if (area === undefined) return operand;
   const [p1, p2] = area.rows;
   const flip = p1.row > p2.row;
-  const span = adjustRowSpan(Math.min(p1.row, p2.row), Math.max(p1.row, p2.row), edit);
+  const [c1, c2] = area.cols[0] !== '' ? [colIndex(area.cols[0]), colIndex(area.cols[1])] : [1, MAX_COL];
+  const span = adjustArea(Math.min(p1.row, p2.row), Math.max(p1.row, p2.row), Math.min(c1, c2), Math.max(c1, c2), edit);
   if (span === undefined) return `${prefix}${REF_ERROR}`;
   const [lo, hi] = span;
   const r1 = flip ? hi : lo;
@@ -165,4 +202,26 @@ export function adjustFormulaForRowEdit(formula: string, hostSheet: string | und
   }
   out += formula.slice(cursor);
   return out === formula ? formula : out;
+}
+
+/**
+ * The relative (un-`$`) row parts of `formula`'s references to `sheet`, read
+ * from `hostSheet` as in {@link adjustFormulaForRowEdit}, each with the
+ * column its reference starts at (`undefined` for a row range). They are
+ * what a copy of the formula moves, so where they land against an edit
+ * decides whether copies at different rows still agree.
+ */
+export function relativeRows(formula: string, hostSheet: string, sheet: string): Array<{ row: number; col: number | undefined }> {
+  const out: Array<{ row: number; col: number | undefined }> = [];
+  for (const t of tokenize(`=${formula}`)) {
+    if (t.type !== OPERAND || t.subtype !== RANGE) continue;
+    const prefixMatch = PREFIX_RE.exec(t.value);
+    const named = prefixMatch === null ? hostSheet : (prefixMatch[1]?.replaceAll("''", "'") ?? prefixMatch[2]);
+    if (named === undefined || named.toLowerCase() !== sheet.toLowerCase()) continue;
+    const area = parseArea(t.value.slice(prefixMatch?.[0].length ?? 0));
+    if (area === undefined) continue;
+    const col = area.cols[0] === '' ? undefined : colIndex(area.cols[0]);
+    for (const part of area.rows) if (part.abs === '') out.push({ row: part.row, col });
+  }
+  return out;
 }
