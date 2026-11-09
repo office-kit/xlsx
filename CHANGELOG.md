@@ -1,5 +1,11 @@
 # @office-kit/xlsx
 
+## 0.27.0
+
+### Minor Changes
+
+- [#318](https://github.com/office-kit/xlsx/pull/318) [`49e1821`](https://github.com/office-kit/xlsx/commit/49e182187df4919bd15d654c776f69460cb5e487) Thanks [@baseballyama](https://github.com/baseballyama)! - feat(worksheet): `insertRows(wb, ws, at, count?)` and `deleteRows(wb, ws, at, count?)` insert and delete whole rows the way Excel does ([#313](https://github.com/office-kit/xlsx/issues/313)). Everything that carries a row position follows: cells, row heights, merges, hyperlinks, notes, threaded comments, data validations, conditional formats, tables, the AutoFilter, sort state, protected ranges, selections, page breaks, sparklines, pictures and charts, pivot tables and defined names (print areas included). Every formula in the workbook that points at the sheet is rewritten: references move with their cells, a range that straddles the edit grows or shrinks, and a reference to deleted cells becomes `#REF!`. Inserted rows take the height, cell styles, conditional formats and validations of the row above. The result was compared against real Excel on the same edits. Cached formula results are kept, the workbook is flagged to recalculate on open, and its calc chain is dropped so Excel does not ask to repair the file. An edit that would leave a wrong file (cutting through an array formula or a pivot table, deleting a table's header row or a pivot's whole source, or moving a sheet that holds OLE objects / form controls) throws `OpenXmlSchemaError` and leaves the workbook unchanged.
+
 ## 0.26.1
 
 ### Patch Changes
