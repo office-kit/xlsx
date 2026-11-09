@@ -1,6 +1,6 @@
 {
   "kind": "additive",
-  "reason": "PlotArea gains optional additionalCharts, additionalCatAx and additionalValAx so a plot area can hold a combo chart and a secondary value axis, and Legend gains optional legendEntry (with the new LegendEntry type) to hide or restyle one series' legend row.",
-  "baselineSha256": "be2fd6c8ea06fd29d9d3b206d5cf8472d3073864c4d67b0f9696c39a7e84d696",
-  "changeset": ".changeset/chart-combo-secondary-axis.md"
+  "reason": "@office-kit/xlsx/worksheet gains insertRows and deleteRows, which insert and delete whole rows and move every positioned object and formula reference with them.",
+  "baselineSha256": "8acd528a079582e9aa43b02e7939c9270492503e7ce0e8e82861ea549178e70b",
+  "changeset": ".changeset/insert-delete-rows.md"
 }
