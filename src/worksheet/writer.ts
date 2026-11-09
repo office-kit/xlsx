@@ -608,7 +608,7 @@ const maxOutlineLevel = (
   return max;
 };
 
-const serializeCols = (cols: ReadonlyMap<number, ColumnDimension>): string => {
+export const serializeCols = (cols: ReadonlyMap<number, ColumnDimension>): string => {
   const sorted = [...cols.values()].sort((a, b) => a.min - b.min);
   const parts: string[] = ['<cols>'];
   // Contiguous entries that would emit identical attributes merge into one
