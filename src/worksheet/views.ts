@@ -7,7 +7,7 @@
 // top-left ref. A split or frozen view carries one selection per pane, and
 // Excel restores the active cell from the active pane's one.
 
-import { coordinateToTuple, tupleToCoordinate } from '../utils/coordinate.js';
+import { columnLetterFromIndex, coordinateToTuple, tupleToCoordinate } from '../utils/coordinate.js';
 import { OpenXmlSchemaError } from '../utils/exceptions.js';
 
 export type PaneType = 'bottomRight' | 'topRight' | 'bottomLeft' | 'topLeft';
@@ -111,6 +111,32 @@ export function makeFreezePane(topLeftRef: string): Pane {
   if (ySplit > 0) pane.ySplit = ySplit;
   return pane;
 }
+
+/**
+ * The frozen Pane for a `setFreezePanes` argument. Shared by the modelled and
+ * the write-only `setFreezePanes` so both accept the same inputs and reject
+ * the same ones with the same messages. Internal: not re-exported from the
+ * `worksheet` subpath.
+ */
+export function freezePaneFor(topLeft: string | FreezeCounts): Pane {
+  return makeFreezePane(typeof topLeft === 'string' ? topLeft : freezeCountsToRef(topLeft));
+}
+
+/**
+ * Translate freeze counts to the A1 ref of the first unfrozen cell. Zero on
+ * both axes composes to `"A1"`, rejected by {@link makeFreezePane} as the
+ * no-op freeze, so that condition has one message in one place however it was
+ * spelled.
+ */
+const freezeCountsToRef = ({ rows, cols }: FreezeCounts): string => {
+  if (!Number.isInteger(rows) || rows < 0) {
+    throw new OpenXmlSchemaError(`setFreezePanes: rows must be a non-negative integer; got ${rows}`);
+  }
+  if (!Number.isInteger(cols) || cols < 0) {
+    throw new OpenXmlSchemaError(`setFreezePanes: cols must be a non-negative integer; got ${cols}`);
+  }
+  return `${columnLetterFromIndex(cols + 1)}${rows + 1}`;
+};
 
 /** Inverse of {@link makeFreezePane}. Returns the top-left ref of the bottomRight pane, or undefined. */
 export function freezePaneRef(view: SheetView): string | undefined {

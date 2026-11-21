@@ -3,9 +3,12 @@
 import { describe, expect, it } from 'vitest';
 import { fromBuffer, toBuffer } from '../../src/io/node.js';
 import { loadWorkbook } from '../../src/io/load.js';
+import { workbookToBytes } from '../../src/io/save.js';
 import { createWriteOnlyWorkbook } from '../../src/streaming/write-only.js';
+import { addWorksheet, createWorkbook } from '../../src/workbook/workbook.js';
 import { getColumnDimension } from '../../src/worksheet/index.js';
-import { iterRows } from '../../src/worksheet/worksheet.js';
+import { getFreezePanes, iterRows, setFreezePanes } from '../../src/worksheet/worksheet.js';
+import { validateXlsx } from '../conformance/validate.js';
 
 const collect = async (
   fn: (cb: (sink: ReturnType<typeof toBuffer>) => Promise<void>) => Promise<void>,
@@ -268,6 +271,99 @@ describe('createWriteOnlyWorkbook — column widths', () => {
       [1, 1, 0],
       [2, 2, 5],
     ]);
+  });
+});
+
+describe('createWriteOnlyWorkbook — freeze panes', () => {
+  const sheetXml = async (bytes: Uint8Array): Promise<string> => {
+    const { unzipSync } = await import('fflate');
+    const entry = unzipSync(bytes)['xl/worksheets/sheet1.xml'];
+    if (!entry) throw new Error('missing sheet1.xml');
+    return new TextDecoder().decode(entry);
+  };
+
+  it('setFreezePanes survives the round-trip and passes conformance', async () => {
+    const bytes = await writeWorkbook(async (wb) => {
+      const ws = await wb.addWorksheet('Logs');
+      ws.setFreezePanes({ rows: 1, cols: 0 });
+      ws.setColumnWidth(1, 20);
+      await ws.appendRow(['time', 'message']);
+      await ws.appendRow([1, 'started']);
+      await ws.close();
+    });
+    expect((await validateXlsx(bytes)).issues).toEqual([]);
+    const wb2 = await loadWorkbook(fromBuffer(bytes));
+    const ws = wb2.sheets[0];
+    if (!ws || ws.kind !== 'worksheet') throw new Error('expected worksheet');
+    expect(getFreezePanes(ws.sheet)).toBe('A2');
+    expect(ws.sheet.columnDimensions.get(1)?.width).toBe(20);
+  });
+
+  it('writes the same <sheetViews> as the modelled writer', async () => {
+    const streamed = await writeWorkbook(async (wb) => {
+      const ws = await wb.addWorksheet('S');
+      ws.setFreezePanes('C3');
+      await ws.appendRow(['a']);
+      await ws.close();
+    });
+    const modelled = createWorkbook();
+    setFreezePanes(addWorksheet(modelled, 'S'), 'C3');
+    const pick = (xml: string): string | undefined => /<sheetViews>.*<\/sheetViews>/.exec(xml)?.[0];
+    const expected = pick(await sheetXml(await workbookToBytes(modelled)));
+    expect(expected).toBeDefined();
+    expect(pick(await sheetXml(streamed))).toBe(expected);
+  });
+
+  it('keeps the last call before the first row', async () => {
+    const bytes = await writeWorkbook(async (wb) => {
+      const ws = await wb.addWorksheet('S');
+      ws.setFreezePanes('B2');
+      ws.setFreezePanes({ rows: 0, cols: 1 });
+      await ws.close();
+    });
+    const wb2 = await loadWorkbook(fromBuffer(bytes));
+    const ws = wb2.sheets[0];
+    if (!ws || ws.kind !== 'worksheet') throw new Error('expected worksheet');
+    expect(getFreezePanes(ws.sheet)).toBe('B1');
+  });
+
+  it('writes no <sheetViews> when the pane is never set', async () => {
+    const bytes = await writeWorkbook(async (wb) => {
+      const ws = await wb.addWorksheet('S');
+      await ws.appendRow(['a']);
+      await ws.close();
+    });
+    expect(await sheetXml(bytes)).not.toContain('<sheetViews');
+  });
+
+  it('rejects the inputs the modelled setFreezePanes rejects, with the same messages', async () => {
+    const sink = toBuffer();
+    const wb = await createWriteOnlyWorkbook(sink);
+    const ws = await wb.addWorksheet('S');
+    const modelled = addWorksheet(createWorkbook(), 'M');
+    for (const bad of ['A1', { rows: 0, cols: 0 }, { rows: -1, cols: 0 }, { rows: 1.5, cols: 0 }, 'not a ref']) {
+      let expected: unknown;
+      try {
+        setFreezePanes(modelled, bad);
+      } catch (err) {
+        expected = err;
+      }
+      expect(expected).toBeInstanceOf(Error);
+      expect(() => ws.setFreezePanes(bad)).toThrowError((expected as Error).message);
+    }
+    await ws.close();
+    await wb.finalize();
+  });
+
+  it('rejects a call after the first appendRow or after close', async () => {
+    const sink = toBuffer();
+    const wb = await createWriteOnlyWorkbook(sink);
+    const ws = await wb.addWorksheet('S');
+    await ws.appendRow(['a']);
+    expect(() => ws.setFreezePanes('A2')).toThrowError(/before the first appendRow/);
+    await ws.close();
+    expect(() => ws.setFreezePanes('A2')).toThrowError(/already closed/);
+    await wb.finalize();
   });
 });
 

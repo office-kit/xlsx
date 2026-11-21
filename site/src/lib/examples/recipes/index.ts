@@ -355,7 +355,7 @@ export const recipeGroups: Array<{ title: string; recipes: Recipe[] }> = [
         path: 'site/src/lib/examples/streaming-write.ts',
         source: streamingWrite,
         notes: [
-          '`setColumnWidth` must run *before* the first `appendRow` — once any row is written, `<cols>` is locked.',
+          '`setColumnWidth` and `setFreezePanes` must run *before* the first `appendRow` — once any row is written, `<cols>` and `<sheetViews>` are locked.',
           '`ws.close()` and `wb.finalize()` are required — that\'s when the central directory is written.',
         ],
         relatedApi: ['createWriteOnlyWorkbook', 'toFile'],

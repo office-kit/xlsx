@@ -201,6 +201,7 @@ import { toFile } from '@office-kit/xlsx/node';
 const wb = await createWriteOnlyWorkbook(toFile('big.xlsx'));
 const ws = await wb.addWorksheet('Data');
 ws.setColumnWidth(1, 20); // must precede the first appendRow
+ws.setFreezePanes({ rows: 1, cols: 0 }); // freeze_panes = 'A2'; same rule
 for (const row of source) {
   await ws.appendRow(row);
 }
@@ -208,9 +209,9 @@ await ws.close();
 await wb.finalize();
 ```
 
-Notable difference: `setColumnWidth` must be called before the first
-`appendRow` because `<cols>` is part of the worksheet header that flushes on
-the first row. openpyxl is more lenient about this.
+Notable difference: `setColumnWidth` and `setFreezePanes` must be called
+before the first `appendRow` because `<cols>` and `<sheetViews>` are part of
+the worksheet header that flushes on the first row. openpyxl is more lenient about this.
 
 ## Streaming read (`read_only=True`)
 
