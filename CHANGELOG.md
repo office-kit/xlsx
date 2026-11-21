@@ -1,5 +1,11 @@
 # @office-kit/xlsx
 
+## 0.28.0
+
+### Minor Changes
+
+- [#321](https://github.com/office-kit/xlsx/pull/321) [`11b75e3`](https://github.com/office-kit/xlsx/commit/11b75e3d1d7b26eac32adf834d7a30ece9df8d8f) Thanks [@baseballyama](https://github.com/baseballyama)! - feat(streaming): a write-only worksheet can freeze panes ([#320](https://github.com/office-kit/xlsx/issues/320)). `ws.setFreezePanes(topLeft)` takes the same `"A2"` ref or `{ rows, cols }` counts as the modelled `setFreezePanes` and rejects the same inputs. Like `setColumnWidth`, call it before the first `appendRow`; a later call throws `OpenXmlIoError`. A sheet that never calls it is written as before.
+
 ## 0.27.0
 
 ### Minor Changes
