@@ -526,7 +526,7 @@ const describeValue = (value: CellValue): string => {
 const xmlBoolAttr = (key: string, v: boolean | undefined): string =>
   v === undefined ? '' : ` ${key}="${v ? '1' : '0'}"`;
 
-const serializeSheetViews = (views: ReadonlyArray<SheetView>): string => {
+export const serializeSheetViews = (views: ReadonlyArray<SheetView>): string => {
   const parts: string[] = ['<sheetViews>'];
   for (const v of views) parts.push(serializeSheetView(v));
   parts.push('</sheetViews>');

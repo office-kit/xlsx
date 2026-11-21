@@ -1,6 +1,6 @@
 {
   "kind": "additive",
-  "reason": "@office-kit/xlsx/worksheet gains insertRows and deleteRows, which insert and delete whole rows and move every positioned object and formula reference with them.",
-  "baselineSha256": "8acd528a079582e9aa43b02e7939c9270492503e7ce0e8e82861ea549178e70b",
-  "changeset": ".changeset/insert-delete-rows.md"
+  "reason": "WriteOnlyWorksheet in @office-kit/xlsx/streaming gains setFreezePanes, which freezes panes on a write-only worksheet with the same argument as the modelled setFreezePanes.",
+  "baselineSha256": "4c6cb1fcdd677c49916309d404b6f0f71f68a533932982e77cf028986956e2ac",
+  "changeset": ".changeset/write-only-freeze-panes.md"
 }

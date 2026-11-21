@@ -23,7 +23,8 @@ import { makeSharedStrings } from '../workbook/shared-strings.js';
 import { validateSheetTitle } from '../workbook/workbook.js';
 import type { ColumnDimension } from '../worksheet/dimensions.js';
 import { isUsableDimensionSize } from '../worksheet/worksheet.js';
-import { serializeCell, serializeCols } from '../worksheet/writer.js';
+import { freezePaneFor, type FreezeCounts, makeSheetView, type Pane } from '../worksheet/views.js';
+import { serializeCell, serializeCols, serializeSheetViews } from '../worksheet/writer.js';
 import {
   ARC_CONTENT_TYPES,
   ARC_ROOT_RELS,
@@ -69,6 +70,12 @@ export interface WriteOnlyWorksheet {
   readonly title: string;
   appendRow(row: WriteOnlyRowItem[]): Promise<void>;
   setColumnWidth(col: number, width: number): void;
+  /**
+   * Freeze the rows / columns above and left of `topLeft`, which takes the
+   * same forms as the modelled `setFreezePanes`. Like `setColumnWidth`, call it
+   * before the first `appendRow`: the pane is part of the worksheet header.
+   */
+  setFreezePanes(topLeft: string | FreezeCounts): void;
   close(): Promise<void>;
 }
 
@@ -140,15 +147,17 @@ const FLUSH_THRESHOLD_BYTES = 64 * 1024;
  * The worksheet streams its `<sheetData>` body chunk-by-chunk through the ZIP
  * writer's `addStreamingEntry` API. Row buffering stays at ~64 KB plus the
  * current row and deflate scratch; strings have a separate workbook-wide cap.
- * The XML envelope (decl / worksheet open / cols / sheetData open) flushes on
- * the first `appendRow` (or `close()` if the sheet is empty);
- * column widths staged via `setColumnWidth` *must* land before the first row.
+ * The XML envelope (decl / worksheet open / sheetViews / cols / sheetData
+ * open) flushes on the first `appendRow` (or `close()` if the sheet is empty);
+ * column widths and the freeze pane staged via `setColumnWidth` /
+ * `setFreezePanes` *must* land before the first row.
  */
 const makeWriteOnlyWorksheet = (state: WorkbookState, title: string, sheetId: number): WriteOnlyWorksheet => {
   let nextRow = 1;
   let closed = false;
   let headerFlushed = false;
   const columnWidths = new Map<number, number>();
+  let freezePane: Pane | undefined;
   // Strings use the bounded workbook-wide writer; other cells still need
   // the regular serialization context (notably the shared style pool).
   const dummyCtx = { sharedStrings: makeSharedStrings(), styles: state.styles };
@@ -176,6 +185,7 @@ const makeWriteOnlyWorksheet = (state: WorkbookState, title: string, sheetId: nu
     headerFlushed = true;
     let header = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
     header += `<worksheet xmlns="${SHEET_MAIN_NS}" xmlns:r="${REL_NS}">`;
+    if (freezePane) header += serializeSheetViews([makeSheetView({ pane: freezePane })]);
     if (columnWidths.size > 0) {
       const cols = new Map<number, ColumnDimension>();
       for (const [col, width] of columnWidths) cols.set(col, { min: col, max: col, width });
@@ -239,6 +249,17 @@ const makeWriteOnlyWorksheet = (state: WorkbookState, title: string, sheetId: nu
     columnWidths.set(col, width);
   };
 
+  const setFreezePanes = (topLeft: string | FreezeCounts): void => {
+    if (closed) throw new OpenXmlIoError('setFreezePanes: worksheet already closed');
+    const pane = freezePaneFor(topLeft);
+    if (headerFlushed) {
+      throw new OpenXmlIoError(
+        'setFreezePanes: must be called before the first appendRow — the pane is emitted as part of the worksheet header',
+      );
+    }
+    freezePane = pane;
+  };
+
   const close = async (): Promise<void> => {
     if (closed) return;
     closed = true;
@@ -254,7 +275,7 @@ const makeWriteOnlyWorksheet = (state: WorkbookState, title: string, sheetId: nu
     state.hasOpenWorksheet = false;
   };
 
-  return { title, appendRow, setColumnWidth, close };
+  return { title, appendRow, setColumnWidth, setFreezePanes, close };
 };
 
 /**

@@ -13,7 +13,6 @@ import {
   boundariesToRangeString,
   type CellCoordinateNumeric,
   columnIndexFromLetter,
-  columnLetterFromIndex,
   coordinateToTuple,
   formatSheetQualifiedRef,
   MAX_COL,
@@ -52,7 +51,7 @@ import { type Hyperlink, makeHyperlink } from './hyperlinks.js';
 import type { PivotTable } from './pivot-table.js';
 import type { TableDefinition } from './table.js';
 import { validateTableAgainstSheet } from './table-validate.js';
-import { activeSelection, type FreezeCounts, freezePaneRef, makeFreezePane, makeSheetView, type Selection, type SheetView } from './views.js';
+import { activeSelection, type FreezeCounts, freezePaneFor, freezePaneRef, makeSheetView, type Selection, type SheetView } from './views.js';
 
 export interface Worksheet {
   title: string;
@@ -1195,26 +1194,9 @@ export function setFreezePanes(ws: Worksheet, topLeft: string | FreezeCounts | u
     if (ws.views[0]) delete ws.views[0].pane;
     return;
   }
-  const ref = typeof topLeft === 'string' ? topLeft : freezeCountsToRef(topLeft);
-  const view = ensurePrimaryView(ws);
-  view.pane = makeFreezePane(ref);
+  const pane = freezePaneFor(topLeft);
+  ensurePrimaryView(ws).pane = pane;
 }
-
-/**
- * Translate freeze counts to the A1 ref of the first unfrozen cell. Zero on
- * both axes composes to `"A1"`, rejected by {@link makeFreezePane} as the
- * no-op freeze, so that condition has one message in one place however it was
- * spelled.
- */
-const freezeCountsToRef = ({ rows, cols }: FreezeCounts): string => {
-  if (!Number.isInteger(rows) || rows < 0) {
-    throw new OpenXmlSchemaError(`setFreezePanes: rows must be a non-negative integer; got ${rows}`);
-  }
-  if (!Number.isInteger(cols) || cols < 0) {
-    throw new OpenXmlSchemaError(`setFreezePanes: cols must be a non-negative integer; got ${cols}`);
-  }
-  return `${columnLetterFromIndex(cols + 1)}${rows + 1}`;
-};
 
 /** Inverse of {@link setFreezePanes}; returns the top-left ref or undefined when no freeze is active. */
 export function getFreezePanes(ws: Worksheet): string | undefined {
